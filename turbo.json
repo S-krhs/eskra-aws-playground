@@ -9,6 +9,10 @@
 			"dependsOn": ["^build"],
 			"outputs": ["dist/**"]
 		},
+		"test": {
+			"dependsOn": ["^build"],
+			"outputs": []
+		},
 		"typecheck": {
 			"dependsOn": ["^build"],
 			"outputs": []
@@ -17,7 +21,7 @@
 			"outputs": []
 		},
 		"validate": {
-			"dependsOn": ["typecheck", "lint"],
+			"dependsOn": ["typecheck", "lint", "test"],
 			"outputs": []
 		}
 	}

@@ -1,5 +1,6 @@
 # Dependencies
 /node_modules/
+**/node_modules/
 
 # Build artifacts
 /dist/
@@ -8,6 +9,7 @@ function.zip
 /.sst/
 /.turbo/
 /.tmp/
+**/.vite/
 
 # Environment files
 .env
