@@ -3,8 +3,7 @@
 
 /** Lambda から受け取るバッチ起動イベント。 */
 export interface LambdaEvent {
-	job?: string;
-	webhookUrl?: string;
+	job?: unknown;
 	[key: string]: unknown;
 }
 

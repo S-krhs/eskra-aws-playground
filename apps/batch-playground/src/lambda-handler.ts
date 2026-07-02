@@ -12,8 +12,6 @@ export const handler = async (
 
 	console.log("Starting batch job", {
 		jobName,
-		hasWebhookUrl:
-			typeof event.webhookUrl === "string" && Boolean(event.webhookUrl),
 	});
 
 	const result = await batchJob(event);

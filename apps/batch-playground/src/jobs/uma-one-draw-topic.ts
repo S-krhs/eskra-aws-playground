@@ -22,9 +22,7 @@ export const umaOneDrawTopicJobHandler: BatchHandler = async (
 		throw new Error("webhookUrl が設定されていません");
 	}
 
-	console.log("UMA ワンドロお題通知 送信開始", {
-		hasWebhookUrl: true,
-	});
+	console.log("UMA ワンドロお題通知 送信開始");
 
 	// 2. feature で UMA ワンドロのお題メッセージを生成する。
 	const message = buildUmaOneDrawTopicMessage();
