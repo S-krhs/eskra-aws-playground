@@ -2,11 +2,35 @@
 
 const appName = "lambda-batch-playground";
 const NOT_SET = "NOT_SET";
-const DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE = "cron(0 21 * * ? *)";
+type ScheduleExpression =
+	| `cron(${string})`
+	| `rate(${string})`
+	| `at(${string})`;
+
+const DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE = "cron(0 21 * * ? *)" as const;
 const DEFAULT_UMA_ONE_DRAW_TOPIC_TIMEZONE = "Asia/Tokyo";
-const umaOneDrawTopicSchedule =
+
+const isScheduleExpression = (value: string): value is ScheduleExpression =>
+	/^(cron|rate|at)\(.+\)$/.test(value);
+
+const resolveScheduleExpression = (
+	value: string,
+	envName: string,
+): ScheduleExpression => {
+	if (isScheduleExpression(value)) {
+		return value;
+	}
+
+	throw new Error(
+		`${envName} must be an EventBridge schedule expression: cron(...), rate(...), or at(...).`,
+	);
+};
+
+const umaOneDrawTopicSchedule = resolveScheduleExpression(
 	process.env.UMA_ONE_DRAW_TOPIC_SCHEDULE ||
-	DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE;
+		DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE,
+	"UMA_ONE_DRAW_TOPIC_SCHEDULE",
+);
 const umaOneDrawTopicTimezone =
 	process.env.UMA_ONE_DRAW_TOPIC_TIMEZONE ||
 	DEFAULT_UMA_ONE_DRAW_TOPIC_TIMEZONE;
