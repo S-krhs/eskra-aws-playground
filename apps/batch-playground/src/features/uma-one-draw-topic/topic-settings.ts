@@ -14,4 +14,4 @@ export const UMA_ONE_DRAW_TOPIC_NAMES = {
 
 /** UMA ワンドロのお題メッセージテンプレート。 */
 export const UMA_ONE_DRAW_TOPIC_MESSAGE_TEMPLATE =
-	"今日のお題は {{selectedName}} です";
+	"今日のお題は {{selectedName}} になります";
