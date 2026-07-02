@@ -15,9 +15,7 @@ export const getJobName = (event: LambdaEvent): string => {
 
 /** ジョブ名に対応するバッチハンドラーを返す。 */
 export const resolveBatchJob = (jobName: string): BatchHandler => {
-	const normalizedName = jobName.trim().toLowerCase();
-
-	switch (normalizedName) {
+	switch (jobName) {
 		case batchRoutes.umaOneDrawTopic:
 			return umaOneDrawTopicJobHandler;
 		default:
