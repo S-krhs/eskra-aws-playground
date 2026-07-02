@@ -27,12 +27,12 @@ const resolveScheduleExpression = (
 };
 
 const umaOneDrawTopicSchedule = resolveScheduleExpression(
-	process.env.UMA_ONE_DRAW_TOPIC_SCHEDULE ||
+	process.env.UMA_ONE_DRAW_TOPIC_SCHEDULE?.trim() ||
 		DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE,
 	"UMA_ONE_DRAW_TOPIC_SCHEDULE",
 );
 const umaOneDrawTopicTimezone =
-	process.env.UMA_ONE_DRAW_TOPIC_TIMEZONE ||
+	process.env.UMA_ONE_DRAW_TOPIC_TIMEZONE?.trim() ||
 	DEFAULT_UMA_ONE_DRAW_TOPIC_TIMEZONE;
 
 export default $config({
