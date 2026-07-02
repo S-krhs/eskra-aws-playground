@@ -5,6 +5,7 @@
 /dist/
 function.zip
 /.sst/
+/.tmp/
 
 # Environment files
 .env
