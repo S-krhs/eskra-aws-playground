@@ -1,41 +1,10 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
+// SST app と AWS リソース名の接頭辞として使うアプリ名
 const appName = "lambda-batch-playground";
-const NOT_SET = "NOT_SET";
-type ScheduleExpression =
-	| `cron(${string})`
-	| `rate(${string})`
-	| `at(${string})`;
-
-const DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE = "cron(0 21 * * ? *)" as const;
-const DEFAULT_UMA_ONE_DRAW_TOPIC_TIMEZONE = "Asia/Tokyo";
-
-const isScheduleExpression = (value: string): value is ScheduleExpression =>
-	/^(cron|rate|at)\(.+\)$/.test(value);
-
-const resolveScheduleExpression = (
-	value: string,
-	envName: string,
-): ScheduleExpression => {
-	if (isScheduleExpression(value)) {
-		return value;
-	}
-
-	throw new Error(
-		`${envName} must be an EventBridge schedule expression: cron(...), rate(...), or at(...).`,
-	);
-};
-
-const umaOneDrawTopicSchedule = resolveScheduleExpression(
-	process.env.UMA_ONE_DRAW_TOPIC_SCHEDULE?.trim() ||
-		DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE,
-	"UMA_ONE_DRAW_TOPIC_SCHEDULE",
-);
-const umaOneDrawTopicTimezone =
-	process.env.UMA_ONE_DRAW_TOPIC_TIMEZONE?.trim() ||
-	DEFAULT_UMA_ONE_DRAW_TOPIC_TIMEZONE;
 
 export default $config({
+	// デプロイ stage に応じた SST app の基本設定
 	app(input) {
 		return {
 			name: appName,
@@ -45,23 +14,34 @@ export default $config({
 		};
 	},
 	async run() {
+		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "apps/batch-playground/src/lambda-handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "30 seconds",
 			memory: "128 MB",
-			environment: {
-				DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL || NOT_SET,
-			},
 		});
 
+		// UMA ワンドロお題通知用の Discord Webhook URL を取得
+		const umaOneDrawTopicWebhookUrl =
+			process.env.UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL?.trim() ||
+			process.env.DEFAULT_DISCORD_WEBHOOK_URL?.trim();
+
+		if (!umaOneDrawTopicWebhookUrl) {
+			throw new Error(
+				"UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL or DEFAULT_DISCORD_WEBHOOK_URL must be set.",
+			);
+		}
+
+		// UMA ワンドロお題通知を毎日 JST 21:00 に起動する Scheduler を作成
 		new sst.aws.CronV2("UmaOneDrawTopicSchedule", {
 			function: batchFunction,
-			schedule: umaOneDrawTopicSchedule,
-			timezone: umaOneDrawTopicTimezone,
+			schedule: "cron(0 21 * * ? *)",
+			timezone: "Asia/Tokyo",
 			retries: 0,
 			event: {
 				job: "uma-one-draw-topic",
+				webhookUrl: umaOneDrawTopicWebhookUrl,
 			},
 		});
 	},

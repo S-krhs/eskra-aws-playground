@@ -6,7 +6,10 @@ import { handler } from "./lambda-handler.js";
 config();
 
 const job = process.env.BATCH_JOB ?? "uma-one-draw-topic";
-const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+const webhookUrl =
+	process.env[
+		`${job.replaceAll("-", "_").toUpperCase()}_DISCORD_WEBHOOK_URL`
+	] || process.env.DEFAULT_DISCORD_WEBHOOK_URL;
 
 const event = {
 	job,

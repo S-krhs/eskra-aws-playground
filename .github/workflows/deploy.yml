@@ -49,6 +49,5 @@ jobs:
       - name: Deploy SST app
         run: npm run deploy
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          UMA_ONE_DRAW_TOPIC_SCHEDULE: ${{ vars.UMA_ONE_DRAW_TOPIC_SCHEDULE }}
-          UMA_ONE_DRAW_TOPIC_TIMEZONE: ${{ vars.UMA_ONE_DRAW_TOPIC_TIMEZONE }}
+          DEFAULT_DISCORD_WEBHOOK_URL: ${{ secrets.DEFAULT_DISCORD_WEBHOOK_URL }}
+          UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL: ${{ secrets.UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL }}

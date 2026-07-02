@@ -10,23 +10,14 @@ import type {
 } from "../shared/infra/lambda.js";
 
 const BATCH_JOB_NAME = "uma-one-draw-topic";
-const NOT_SET = "NOT_SET";
-
-const resolveWebhookUrl = (event: LambdaEvent): string | undefined => {
-	const webhookUrl =
-		typeof event.webhookUrl === "string" && event.webhookUrl.trim()
-			? event.webhookUrl.trim()
-			: process.env.DISCORD_WEBHOOK_URL?.trim();
-
-	return webhookUrl && webhookUrl !== NOT_SET ? webhookUrl : undefined;
-};
 
 /** UMA ワンドロのお題を Discord へ通知するバッチジョブ。 */
 export const umaOneDrawTopicJobHandler: BatchHandler = async (
 	event: LambdaEvent,
 ): Promise<BatchResponse> => {
 	// 1. イベントから送信先 Discord Webhook URL を取得する。
-	const webhookUrl = resolveWebhookUrl(event);
+	const webhookUrl =
+		typeof event.webhookUrl === "string" ? event.webhookUrl.trim() : "";
 
 	if (!webhookUrl) {
 		throw new Error("webhookUrl が設定されていません");

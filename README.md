@@ -20,28 +20,24 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 ```
 
 - `job` は必須です。
-- `webhookUrl` は Discord Webhook URL を直接指定します。未指定の場合は `DISCORD_WEBHOOK_URL` を使います。
+- `webhookUrl` は Discord Webhook URL を直接指定します。未指定の場合はエラーになります。
 - 未登録の `job` を指定すると `Unknown batch job` エラーになります。
 
 ## 環境変数
 
 Discord Webhook:
 
-- `DISCORD_WEBHOOK_URL`
+- `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
+- `DEFAULT_DISCORD_WEBHOOK_URL`
 
 ローカル実行:
 
 - `BATCH_JOB`
 
-SST デプロイでスケジュールを上書きする場合:
-
-- `UMA_ONE_DRAW_TOPIC_SCHEDULE`
-- `UMA_ONE_DRAW_TOPIC_TIMEZONE`
-
 例:
 
 ```bash
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/fallback/yyy
+DEFAULT_DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/fallback/yyy
 BATCH_JOB=uma-one-draw-topic
 ```
 
@@ -78,14 +74,11 @@ BATCH_JOB=uma-one-draw-topic
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
-- `DISCORD_WEBHOOK_URL`
+- `DEFAULT_DISCORD_WEBHOOK_URL`
 
-任意の GitHub Actions Variables:
+任意の GitHub Actions シークレット:
 
-- `UMA_ONE_DRAW_TOPIC_SCHEDULE`
-- `UMA_ONE_DRAW_TOPIC_TIMEZONE`
-
-これらの Variables は未設定でも動きます。未設定時は `sst.config.ts` の `DEFAULT_UMA_ONE_DRAW_TOPIC_SCHEDULE` と `DEFAULT_UMA_ONE_DRAW_TOPIC_TIMEZONE` を使います。
+- `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
 
 ## ドキュメント
 
