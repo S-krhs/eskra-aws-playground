@@ -20,7 +20,7 @@ export default $config({
 
 		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
-			handler: "apps/batch-playground/src/lambda-handler.handler",
+			handler: "../apps/batch-playground/src/lambda-handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "30 seconds",
 			memory: "128 MB",
