@@ -6,7 +6,7 @@
 	"scripts": {
 		"clean": "rm -rf dist function.zip",
 		"build": "npm run clean && tsc -p tsconfig.json",
-		"deploy": "sst deploy --stage production",
+		"deploy": "sst deploy --stage develop",
 		"local": "node --loader ts-node/esm src/local-runner.ts",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"lint": "biome ci src docs README.md package.json tsconfig.json sst.config.ts .github",
