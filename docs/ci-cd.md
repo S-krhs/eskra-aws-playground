@@ -65,7 +65,7 @@ GitHub Actions で `Node.js xx is deprecated. The following actions target Node.
 ## ローカルとの差分
 
 ローカル実行に SST 用の schedule/timezone 変数は不要です。
-`.env.example` は `npm run local` に必要な値だけを載せます。
+app 配下の `.env.example` は `npm run local` に必要な値だけを載せます。
 
 ローカルで SST の構成確認をする場合:
 

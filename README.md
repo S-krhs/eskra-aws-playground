@@ -19,23 +19,11 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 ```
 
 - `job` は必須です。
-- 未登録の `job` を指定すると `Unknown batch job` エラーになります。
-
-## 環境変数
-
-ローカル実行:
-
-- `BATCH_JOB`
-
-例:
-
-```bash
-BATCH_JOB=uma-one-draw-topic
-```
+- 未登録の `job` は実行されません。
 
 ## ローカル実行
 
-1. `.env.example` をコピーして `.env` を作成します。
+1. `apps/batch-playground/.env.example` を `apps/batch-playground/.env` にコピーします。
 2. `npm install`
 3. `npm run local`
 

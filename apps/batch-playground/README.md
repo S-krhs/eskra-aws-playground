@@ -42,7 +42,7 @@ BATCH_JOB=uma-one-draw-topic
 
 ## ローカル実行
 
-1. リポジトリルートで `.env.example` をコピーして `.env` を作成します。
+1. `apps/batch-playground/.env.example` を `apps/batch-playground/.env` にコピーします。
 2. `npm install`
 3. `npm run local`
 
