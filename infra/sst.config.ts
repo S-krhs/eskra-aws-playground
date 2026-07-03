@@ -18,24 +18,19 @@ export default $config({
 			"../apps/batch-playground/src/shared/routes/batch-routes.js"
 		);
 
+		// UMA ワンドロお題通知用の Discord Webhook URL を Secret として扱う
+		const umaOneDrawTopicWebhookUrl = new sst.Secret(
+			"UmaOneDrawTopicDiscordWebhook",
+		);
+
 		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "../apps/batch-playground/src/lambda-handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "30 seconds",
 			memory: "128 MB",
+			link: [umaOneDrawTopicWebhookUrl],
 		});
-
-		// UMA ワンドロお題通知用の Discord Webhook URL を取得
-		const umaOneDrawTopicWebhookUrl =
-			process.env.UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL?.trim() ||
-			process.env.DEFAULT_DISCORD_WEBHOOK_URL?.trim();
-
-		if (!umaOneDrawTopicWebhookUrl) {
-			throw new Error(
-				"UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL or DEFAULT_DISCORD_WEBHOOK_URL must be set.",
-			);
-		}
 
 		// UMA ワンドロお題通知を毎日 JST 12:00 に起動する Scheduler を作成
 		new sst.aws.CronV2("UmaOneDrawTopicSchedule", {
@@ -45,7 +40,6 @@ export default $config({
 			retries: 0,
 			event: {
 				job: batchRoutes.umaOneDrawTopic,
-				webhookUrl: umaOneDrawTopicWebhookUrl,
 			},
 		});
 	},

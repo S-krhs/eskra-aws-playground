@@ -7,14 +7,9 @@ import { batchRoutes } from "./shared/routes/batch-routes.js";
 config();
 
 const job = process.env.BATCH_JOB ?? batchRoutes.umaOneDrawTopic;
-const webhookUrl =
-	process.env[
-		`${job.replaceAll("-", "_").toUpperCase()}_DISCORD_WEBHOOK_URL`
-	] || process.env.DEFAULT_DISCORD_WEBHOOK_URL;
 
 const event = {
 	job,
-	webhookUrl,
 };
 
 handler(event)

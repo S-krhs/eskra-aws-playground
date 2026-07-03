@@ -14,21 +14,14 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 ```json
 {
-  "job": "uma-one-draw-topic",
-  "webhookUrl": "https://discord.com/api/webhooks/xxx/yyy"
+  "job": "uma-one-draw-topic"
 }
 ```
 
 - `job` は必須です。
-- `webhookUrl` は Discord Webhook URL を直接指定します。未指定の場合はエラーになります。
 - 未登録の `job` を指定すると `Unknown batch job` エラーになります。
 
 ## 環境変数
-
-Discord Webhook:
-
-- `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
-- `DEFAULT_DISCORD_WEBHOOK_URL`
 
 ローカル実行:
 
@@ -37,7 +30,6 @@ Discord Webhook:
 例:
 
 ```bash
-DEFAULT_DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/fallback/yyy
 BATCH_JOB=uma-one-draw-topic
 ```
 
@@ -69,17 +61,15 @@ BATCH_JOB=uma-one-draw-topic
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
-- `DEFAULT_DISCORD_WEBHOOK_URL`
 
-任意の GitHub Actions シークレット:
-
-- `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
+アプリやジョブ固有のシークレットは、各 app の README を参照してください。
 
 ## ドキュメント
 
 - アーキテクチャ: [docs/architecture.md](docs/architecture.md)
 - 実装ルール: [docs/implementation-rules.md](docs/implementation-rules.md)
 - CI/CD: [docs/ci-cd.md](docs/ci-cd.md)
-- Batch Playground: [apps/batch-playground/docs/architecture.md](apps/batch-playground/docs/architecture.md)
+- Batch Playground app: [apps/batch-playground/README.md](apps/batch-playground/README.md)
+- Batch Playground architecture: [apps/batch-playground/docs/architecture.md](apps/batch-playground/docs/architecture.md)
 - Discord integration: [packages/integrations/discord/docs/architecture.md](packages/integrations/discord/docs/architecture.md)
 - Libs: [packages/libs/docs/architecture.md](packages/libs/docs/architecture.md)

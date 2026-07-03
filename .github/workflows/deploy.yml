@@ -51,5 +51,4 @@ jobs:
       - name: Deploy SST app
         run: npm run deploy
         env:
-          DEFAULT_DISCORD_WEBHOOK_URL: ${{ secrets.DEFAULT_DISCORD_WEBHOOK_URL }}
-          UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL: ${{ secrets.UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL }}
+          SST_SECRET_UmaOneDrawTopicDiscordWebhook: ${{ secrets.UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL }}

@@ -11,7 +11,7 @@
 | `src/routing/` | `job` の取得、正規化、ジョブ名に対応する handler への解決 | 各ジョブの処理内容、メッセージ生成、外部 API 詳細 |
 | `src/jobs/` | イベント値の正規化、feature 呼び出し、integration 呼び出し、共通レスポンス作成 | ルーティング判定、内部処理の詳細、外部 API 詳細 |
 | `src/features/<concern>/` | 機能単位の処理、ドメイン寄りの値 | Lambda イベント解釈、バッチレスポンス作成、別 feature の実装 |
-| `src/shared/infra/` | Lambda など実行基盤に近い共通型・補助処理 | 個別 feature の値、外部サービス固有の型 |
+| `src/shared/infra/` | Lambda など実行基盤に近い共通型、linked secret 解決、薄い補助処理 | 個別 feature の値、外部サービス固有の型 |
 | `src/local-runner.ts` | `.env` を使ったローカル起動 | 本番 Lambda 固有の制御、ジョブ内部処理 |
 
 ## 依存方向

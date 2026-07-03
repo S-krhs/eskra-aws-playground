@@ -9,7 +9,7 @@
 - `src/routing/batch-router.ts` の `resolveBatchJob` にジョブ名と handler を追加する。
 - ジョブ handler はイベント値の正規化、feature 呼び出し、integration 呼び出し、共通レスポンス作成に集中する。
 - オーケストレーション手順は、処理セクションごとに 1 行コメントを残す。
-- 新しいジョブを追加したら、root `README.md` の実行できるジョブと環境変数を更新する。
+- 新しいジョブを追加したら、app `README.md` の実行できるジョブと環境変数を更新する。
 
 ## 入力・レスポンス・ログ
 

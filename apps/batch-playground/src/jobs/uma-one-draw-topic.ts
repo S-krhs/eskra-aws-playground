@@ -8,19 +8,15 @@ import type {
 	BatchResponse,
 	LambdaEvent,
 } from "../shared/infra/lambda.js";
+import { resolveSecrets } from "../shared/infra/secrets.js";
 import { batchRoutes } from "../shared/routes/batch-routes.js";
 
 /** UMA ワンドロのお題を Discord へ通知するバッチジョブ。 */
 export const umaOneDrawTopicJobHandler: BatchHandler = async (
-	event: LambdaEvent,
+	_event: LambdaEvent,
 ): Promise<BatchResponse> => {
-	// 1. イベントから送信先 Discord Webhook URL を取得する。
-	const webhookUrl =
-		typeof event.webhookUrl === "string" ? event.webhookUrl.trim() : "";
-
-	if (!webhookUrl) {
-		throw new Error("webhookUrl が設定されていません");
-	}
+	// 1. 設定から送信先 Discord Webhook URL を取得する。
+	const { discordWebhookUrl } = resolveSecrets();
 
 	console.log("UMA ワンドロお題通知 送信開始");
 
@@ -28,7 +24,7 @@ export const umaOneDrawTopicJobHandler: BatchHandler = async (
 	const message = buildUmaOneDrawTopicMessage();
 
 	// 3. Discord Webhook integration へ送信を委譲する。
-	const webhookClient = new DiscordWebhookClient(webhookUrl);
+	const webhookClient = new DiscordWebhookClient(discordWebhookUrl);
 	await webhookClient.postMessage(message.content);
 
 	console.log("UMA ワンドロお題通知 送信完了");
