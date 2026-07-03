@@ -5,6 +5,7 @@
 ## 責務
 
 - Discord 固有の型、HTTP 通信、レスポンスエラー変換を置く。
+- Discord Webhook URL が Discord の HTTPS Webhook API を指すことを検証する。
 - Webhook URL の解決、ジョブ判定、メッセージ生成は行わない。
 - app 固有の型や feature 固有の値を import しない。
 

@@ -34,7 +34,7 @@ export class DiscordWebhookClient {
 	private readonly defaultTimeoutMs = 10_000;
 
 	constructor(webhookUrl: string) {
-		this.webhookUrl = webhookUrl;
+		this.webhookUrl = validateDiscordWebhookUrl(webhookUrl);
 	}
 
 	/** Discord Webhook API へ payload を POST する。 */
@@ -104,3 +104,35 @@ export class DiscordWebhookClient {
 		);
 	}
 }
+
+const validateDiscordWebhookUrl = (webhookUrl: string): string => {
+	const normalizedWebhookUrl = webhookUrl.trim();
+
+	let parsedWebhookUrl: URL;
+	try {
+		parsedWebhookUrl = new URL(normalizedWebhookUrl);
+	} catch {
+		throw new DiscordWebhookError("Discord Webhook URL の形式が不正です");
+	}
+
+	const allowedHostnames = ["discord.com", "discordapp.com"];
+	if (parsedWebhookUrl.protocol !== "https:") {
+		throw new DiscordWebhookError(
+			"Discord Webhook URL は https である必要があります",
+		);
+	}
+
+	if (!allowedHostnames.includes(parsedWebhookUrl.hostname)) {
+		throw new DiscordWebhookError(
+			"Discord Webhook URL の送信先ホストが許可されていません",
+		);
+	}
+
+	if (!parsedWebhookUrl.pathname.startsWith("/api/webhooks/")) {
+		throw new DiscordWebhookError(
+			"Discord Webhook URL のパスが Discord Webhook API ではありません",
+		);
+	}
+
+	return normalizedWebhookUrl;
+};
