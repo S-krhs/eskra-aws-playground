@@ -1,5 +1,9 @@
 // やること: 指定された Discord Webhook URL へ HTTP リクエストを送信する
 // やらないこと: Webhook URL の解決、メッセージ内容の生成、ジョブ判定を行う
+import { sanitizeText } from "@lambda-batch-playground/libs/string/text-sanitizer.js";
+
+const DISCORD_WEBHOOK_URL_PATTERN =
+	/https:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/[^\s"'<>]+/gi;
 
 /** Discord Webhook API に送る payload。 */
 export interface DiscordPayload {
@@ -15,6 +19,12 @@ export interface DiscordMessageOptions {
 		parse: readonly string[];
 	};
 	timeoutMs?: number;
+}
+
+/** Discord Webhook 失敗応答の安全化済み詳細。 */
+export interface DiscordWebhookResponseDetails {
+	status: number;
+	body: string;
 }
 
 /** Discord Webhook 連携で発生した失敗を表すエラー。 */
@@ -78,12 +88,21 @@ export class DiscordWebhookClient {
 
 		if (!response.ok) {
 			const text = await response.text();
+			const responseDetails: DiscordWebhookResponseDetails = {
+				status: response.status,
+				body: sanitizeText(text, {
+					replacements: [
+						{
+							pattern: DISCORD_WEBHOOK_URL_PATTERN,
+							replacement: "[redacted-discord-webhook-url]",
+						},
+					],
+				}),
+			};
+
 			throw new DiscordWebhookError(
-				`Discord Webhook 応答が失敗しました: ${response.status} ${text}`,
-				{
-					status: response.status,
-					body: text,
-				},
+				`Discord Webhook 応答が失敗しました: ${response.status}`,
+				responseDetails,
 			);
 		}
 	}

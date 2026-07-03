@@ -4,6 +4,6 @@
 		"outDir": "dist",
 		"rootDir": "."
 	},
-	"include": ["gacha/**/*.ts"],
-	"exclude": ["dist", "node_modules", "gacha/**/*.test.ts"]
+	"include": ["gacha/**/*.ts", "string/**/*.ts"],
+	"exclude": ["dist", "node_modules", "**/*.test.ts"]
 }

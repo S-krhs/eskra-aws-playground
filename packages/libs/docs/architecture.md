@@ -11,6 +11,9 @@ packages/libs/
   gacha/
     gacha-pool.ts
     gacha-pool.test.ts
+  string/
+    text-sanitizer.ts
+    text-sanitizer.test.ts
 ```
 
 ## 依存方向
