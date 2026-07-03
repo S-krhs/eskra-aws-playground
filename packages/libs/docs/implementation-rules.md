@@ -1,9 +1,10 @@
 # Libs 実装ルール
 
-- 純粋関数を基本とし、環境変数、時刻、乱数、HTTP 通信などの副作用を直接扱わない。
+- npm ライブラリ依存を持たない処理は `packages/libs/utils` に置く。
+- browser 実行などライブラリ依存が必要な処理は `packages/libs/browser` に置く。
 - `gacha`、`string`、`date`、`array` など処理の関心でディレクトリを切る。
 - `index.ts` とバレルファイルは作らない。
-- integration や app の都合が混ざり始めた場合は、引数で関数や interface を受け取る。
+- integration や app の都合が混ざり始めた場合は境界を見直す。DI は複雑さを減らす具体的な理由がある場合だけ使う。
 - 新しい lib を追加する前に、この package の `docs/architecture.md` と `docs/implementation-rules.md` を読み、配置・依存方向・公開方法を確認する。
 - 1 ファイルに型、検証、選択アルゴリズム、公開 API をまとめない。責務が複数ある場合は、関心ごとにファイルを分ける。
 - ファイル先頭コメントを書く場合は、そのファイル固有の責務だけを書く。モジュール全体の説明や仮置きの説明を各ファイルに流用しない。
