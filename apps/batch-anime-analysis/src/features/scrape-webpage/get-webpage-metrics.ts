@@ -1,5 +1,5 @@
-// やること: 指定の webpage URL から HTML を取得し、metric 一覧へ変換する
-// やらないこと: ブラウザ起動やレンダリングの制御、アプリ固有の変換ルール定義
+// In scope: 指定の webpage URL から HTML を取得し、metric 一覧へ変換する
+// Out of scope: ブラウザ起動やレンダリングの制御、アプリ固有の変換ルール定義
 import { fetchWebpageHtml } from "@lambda-batch-playground/libs-browser/html-scraper/webpage-html.js";
 import type { Metric } from "../../shared/intermediate/metric.js";
 import {

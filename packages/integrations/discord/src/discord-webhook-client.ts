@@ -1,5 +1,5 @@
-// やること: 指定された Discord Webhook URL へ HTTP リクエストを送信する
-// やらないこと: Webhook URL の解決、メッセージ内容の生成、ジョブ判定を行う
+// In scope: 指定された Discord Webhook URL へ HTTP リクエストを送信する
+// Out of scope: Webhook URL の解決、メッセージ内容の生成、ジョブ判定を行う
 import { sanitizeText } from "@lambda-batch-playground/libs/string/text-sanitizer.js";
 
 const DISCORD_WEBHOOK_URL_PATTERN =

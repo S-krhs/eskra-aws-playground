@@ -1,5 +1,5 @@
-// やること: app 内の処理間で受け渡す metric 中間表現の型と正規化処理を提供する
-// やらないこと: データ取得、selector 解釈、通知文生成を扱う
+// In scope: app 内の処理間で受け渡す metric 中間表現の型と正規化処理を提供する
+// Out of scope: データ取得、selector 解釈、通知文生成を扱う
 
 /** app 内の処理間で受け渡す対象名に紐づく数値 metric。 */
 export interface Metric {

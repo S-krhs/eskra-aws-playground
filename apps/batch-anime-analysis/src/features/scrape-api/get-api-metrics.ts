@@ -1,5 +1,5 @@
-// やること: 指定の API URL から JSON を取得し、metric 一覧へ変換する
-// やらないこと: HTTP クライアントの設定やリトライ、アプリ固有の定義変換を行う
+// In scope: 指定の API URL から JSON を取得し、metric 一覧へ変換する
+// Out of scope: HTTP クライアントの設定やリトライ、アプリ固有の定義変換を行う
 import type { Metric } from "../../shared/intermediate/metric.js";
 import {
 	type JsonMetricParseOptions,

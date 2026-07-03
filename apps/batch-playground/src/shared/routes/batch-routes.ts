@@ -1,5 +1,5 @@
-// やること: Lambda バッチで受け付ける route 名を一元管理する
-// やらないこと: route に対応する実行処理や外部連携の詳細を持つ
+// In scope: Lambda バッチで受け付ける route 名を一元管理する
+// Out of scope: route に対応する実行処理や外部連携の詳細を持つ
 
 export const batchRoutes = {
 	umaOneDrawTopic: "uma-one-draw-topic",

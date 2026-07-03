@@ -1,5 +1,5 @@
-// やること: JSON データから metric 一覧を作る
-// やらないこと: JSON 取得、HTML 解析、app 固有の定義変換を行う
+// In scope: JSON データから metric 一覧を作る
+// Out of scope: JSON 取得、HTML 解析、app 固有の定義変換を行う
 import { buildMetrics, type Metric } from "../../shared/intermediate/metric.js";
 
 /** JSON metric value の取得方法。 */

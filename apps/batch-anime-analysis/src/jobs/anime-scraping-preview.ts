@@ -1,5 +1,5 @@
-// やること: repository のスクレイピング定義を実行し、Discord 通知プレビューをオーケストレーションする
-// やらないこと: API/HTML レスポンス解析詳細、DB 登録、Webhook HTTP 通信の詳細を持つ
+// In scope: repository のスクレイピング定義を実行し、Discord 通知プレビューをオーケストレーションする
+// Out of scope: API/HTML レスポンス解析詳細、DB 登録、Webhook HTTP 通信の詳細を持つ
 import { DiscordWebhookClient } from "@lambda-batch-playground/integration-discord/discord-webhook-client.js";
 import { dataSourceRepository } from "@lambda-batch-playground/repositories/anime/data-source.repository.js";
 import { buildAnimeScrapingNotificationMessage } from "../features/notifications/scraping-notification.js";

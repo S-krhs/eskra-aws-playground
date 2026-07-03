@@ -1,5 +1,5 @@
-// やること: Webpage を取得して HTML を返す
-// やらないこと: HTML 解析、metric 正規化、app 固有の定義変換を行う
+// In scope: Webpage を取得して HTML を返す
+// Out of scope: HTML 解析、metric 正規化、app 固有の定義変換を行う
 import type { BrowserContextOptions, LaunchOptions } from "playwright-core";
 
 import { launchChromium } from "./chromium-browser.js";

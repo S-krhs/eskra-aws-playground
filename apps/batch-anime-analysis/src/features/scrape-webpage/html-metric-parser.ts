@@ -1,5 +1,5 @@
-// やること: HTML から metric 一覧を作る
-// やらないこと: HTML 取得、browser 起動、app 固有の定義変換を行う
+// In scope: HTML から metric 一覧を作る
+// Out of scope: HTML 取得、browser 起動、app 固有の定義変換を行う
 
 import * as cheerio from "cheerio";
 import { buildMetrics, type Metric } from "../../shared/intermediate/metric.js";

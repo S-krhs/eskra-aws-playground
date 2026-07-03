@@ -1,5 +1,5 @@
-// やること: アニメ指標スクレイピング結果から Discord 通知文を生成する
-// やらないこと: スクレイピング実行、Webhook URL 解決、HTTP 通信を行う
+// In scope: アニメ指標スクレイピング結果から Discord 通知文を生成する
+// Out of scope: スクレイピング実行、Webhook URL 解決、HTTP 通信を行う
 import type { Metric } from "../../shared/intermediate/metric.js";
 
 const DISCORD_CONTENT_LIMIT = 2_000;

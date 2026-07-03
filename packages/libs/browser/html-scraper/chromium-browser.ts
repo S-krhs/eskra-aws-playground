@@ -1,5 +1,5 @@
-// やること: Lambda 向け Chromium の Playwright 起動設定と起動処理を提供する
-// やらないこと: Webpage からの値取得、metric 正規化、app 固有の定義変換を行う
+// In scope: Lambda 向け Chromium の Playwright 起動設定と起動処理を提供する
+// Out of scope: Webpage からの値取得、metric 正規化、app 固有の定義変換を行う
 import sparticuzChromium from "@sparticuz/chromium";
 import {
 	type Browser,
