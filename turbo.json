@@ -1,5 +1,4 @@
 {
-	"$schema": "https://turbo.build/schema.json",
 	"globalEnv": [
 		"DEFAULT_DISCORD_WEBHOOK_URL",
 		"UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL"

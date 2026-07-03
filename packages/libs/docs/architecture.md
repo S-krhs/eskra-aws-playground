@@ -1,19 +1,26 @@
 # Libs アーキテクチャ
 
-`packages/libs` はドメイン非依存の純粋な汎用処理を置く package です。
+`packages/libs` は app/domain 非依存の汎用処理を置く領域です。ライブラリ依存の有無で `utils` と `browser` の 2 package に分けます。
 
 ## 配置
 
-`src/` は作らず、関心ごとのディレクトリを package 直下に置きます。
-
 ```text
 packages/libs/
-  gacha/
-    gacha-pool.ts
-    gacha-pool.test.ts
-  string/
-    text-sanitizer.ts
-    text-sanitizer.test.ts
+  utils/
+    gacha/
+      gacha-pool.ts
+      gacha-pool.test.ts
+    string/
+      text-sanitizer.ts
+      text-sanitizer.test.ts
+    package.json
+    tsconfig.json
+  browser/
+    html-scraper/
+      chromium-browser.ts
+      webpage-html.ts
+    package.json
+    tsconfig.json
 ```
 
 ## 依存方向
@@ -21,8 +28,9 @@ packages/libs/
 - `apps/*` を import しない。
 - `packages/domain/*` を import しない。
 - `packages/integrations/*` を import しない。
-- 外部連携が必要な処理は、呼び出し側から関数や interface を渡す DI で表現する。
+- `packages/libs/utils` は npm ライブラリ依存を持たない。
+- `packages/libs/browser` は browser 実行に必要な依存だけを持つ。
 
 ## 切り出し
 
-個別 lib に独立した依存、ビルド設定、version 管理が必要になった場合だけ、`packages/libs/<lib-name>` を独立 package へ切り出します。
+ライブラリ依存が必要な処理を `utils` に混ぜないでください。依存が必要な場合は `browser` など責務単位の package へ分けます。

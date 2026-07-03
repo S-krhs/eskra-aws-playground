@@ -25,11 +25,17 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 1. `apps/batch-playground/.env.example` を `apps/batch-playground/.env` にコピーします。
 2. `npm install`
-3. `npm run local`
+3. `npm run local:batch-playground`
+
+### app 指定実行
+
+- `npm run local:batch-playground`
+- `npm run local:batch-anime-analysis`
 
 ## コマンド
 
-- `npm run local`
+- `npm run local:batch-playground`
+- `npm run local:batch-anime-analysis`
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format`
