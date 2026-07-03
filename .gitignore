@@ -9,6 +9,7 @@ function.zip
 /.sst/
 /.turbo/
 /.tmp/
+**/.tmp/
 **/.vite/
 
 # Environment files
