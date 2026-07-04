@@ -34,10 +34,10 @@ describe("sanitizeText", () => {
 	});
 
 	it("maxLength が不正ならエラーにする", () => {
-		expect(() =>
-			sanitizeText("text", {
+		expect(() => {
+			return sanitizeText("text", {
 				maxLength: -1,
-			}),
-		).toThrow("maxLength は 0 以上の整数を指定してください");
+			});
+		}).toThrow("maxLength は 0 以上の整数を指定してください");
 	});
 });

@@ -18,6 +18,8 @@ describe("parseQueueMessage", () => {
 	});
 
 	it("dataSourceId が欠けた body はエラーにする", () => {
-		expect(() => parseQueueMessage(JSON.stringify({}))).toThrow("dataSourceId");
+		expect(() => {
+			return parseQueueMessage(JSON.stringify({}));
+		}).toThrow("dataSourceId");
 	});
 });

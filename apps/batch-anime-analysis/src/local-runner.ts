@@ -18,19 +18,27 @@ const logger = createBatchLogger("local-runner");
 // .env の BATCH_DATA_SOURCE_IDS（カンマ区切り）で対象を絞る。未指定なら repository 全件。
 const configuredIds = (process.env.BATCH_DATA_SOURCE_IDS || "")
 	.split(",")
-	.map((id) => id.trim())
-	.filter((id) => id.length > 0);
+	.map((id) => {
+		return id.trim();
+	})
+	.filter((id) => {
+		return id.length > 0;
+	});
 const dataSourceIds =
 	configuredIds.length > 0
 		? configuredIds
-		: dataSourceRepository.findMany().map((dataSource) => dataSource.id);
+		: dataSourceRepository.findMany().map((dataSource) => {
+				return dataSource.id;
+			});
 
 // orchestrator を介さず、worker が受け取る形の SQS event を組み立てる。
 const event: SqsBatchEvent = {
-	Records: buildQueueMessages(dataSourceIds).map((message, index) => ({
-		messageId: `local-message-${index}`,
-		body: JSON.stringify(message),
-	})),
+	Records: buildQueueMessages(dataSourceIds).map((message, index) => {
+		return {
+			messageId: `local-message-${index}`,
+			body: JSON.stringify(message),
+		};
+	}),
 };
 
 handler(event)

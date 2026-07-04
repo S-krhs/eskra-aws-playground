@@ -64,27 +64,31 @@ export const buildBatchLogRecord = (
 	name: string,
 	phase: BatchLogPhase,
 	context?: BatchLogContext,
-): BatchLogRecord => ({
-	name,
-	phase,
-	message: phaseMessages[phase],
-	...(context ? { context } : {}),
-});
+): BatchLogRecord => {
+	return {
+		name,
+		phase,
+		message: phaseMessages[phase],
+		...(context ? { context } : {}),
+	};
+};
 
 /** batch 名を固定した構造化ログ logger を作る。 */
-export const createBatchLogger = (name: string): BatchLogger => ({
-	start: (context) => {
-		console.log(buildBatchLogRecord(name, "start", context));
-	},
-	complete: (context) => {
-		console.log(buildBatchLogRecord(name, "complete", context));
-	},
-	failure: (error, context) => {
-		console.error(
-			buildBatchLogRecord(name, "failure", {
-				...context,
-				error: toBatchLogError(error),
-			}),
-		);
-	},
-});
+export const createBatchLogger = (name: string): BatchLogger => {
+	return {
+		start: (context) => {
+			console.log(buildBatchLogRecord(name, "start", context));
+		},
+		complete: (context) => {
+			console.log(buildBatchLogRecord(name, "complete", context));
+		},
+		failure: (error, context) => {
+			console.error(
+				buildBatchLogRecord(name, "failure", {
+					...context,
+					error: toBatchLogError(error),
+				}),
+			);
+		},
+	};
+};

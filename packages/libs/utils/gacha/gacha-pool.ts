@@ -102,10 +102,9 @@ export class GachaPool<TEntry extends GachaEntry = GachaEntry>
 
 	/** 候補 entry があるレアリティだけを抽選対象として正規化する。 */
 	private updateDrawableRarities(): void {
-		const drawableRarities = this.weightedRarities.filter(
-			(weightedRarity) =>
-				(this.entriesByRarity.get(weightedRarity.rarity)?.length ?? 0) > 0,
-		);
+		const drawableRarities = this.weightedRarities.filter((weightedRarity) => {
+			return (this.entriesByRarity.get(weightedRarity.rarity)?.length ?? 0) > 0;
+		});
 
 		const drawableBoundaries: DrawableRarity<RarityOf<TEntry>>[] = [];
 		let cumulativeWeight = 0;

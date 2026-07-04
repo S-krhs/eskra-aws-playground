@@ -14,14 +14,19 @@ export interface MetricInput {
 }
 
 /** 未正規化入力から metric 中間表現を作る。 */
-export const buildMetric = ({ label, value }: MetricInput): Metric => ({
-	label: normalizeMetricLabel(label),
-	value: normalizeMetricValue(value),
-});
+export const buildMetric = ({ label, value }: MetricInput): Metric => {
+	return {
+		label: normalizeMetricLabel(label),
+		value: normalizeMetricValue(value),
+	};
+};
 
 /** 未正規化入力一覧から metric 中間表現一覧を作る。 */
-export const buildMetrics = (inputs: readonly MetricInput[]): Metric[] =>
-	inputs.map((input) => buildMetric(input));
+export const buildMetrics = (inputs: readonly MetricInput[]): Metric[] => {
+	return inputs.map((input) => {
+		return buildMetric(input);
+	});
+};
 
 /** 任意の値を metric label へ変換する。 */
 export const normalizeMetricLabel = (value: unknown): string => {

@@ -38,12 +38,9 @@ export const buildScrapingReport = ({
 		return `${header}\n\n> ⚠️ 対象のデータを取得できませんでした`;
 	}
 
-	const previewLines = metrics
-		.slice(0, previewLimit)
-		.map(
-			(metric, index) =>
-				`\`${formatRank(index + 1)}\` ${metric.label} — **${formatNumber(metric.value)}**`,
-		);
+	const previewLines = metrics.slice(0, previewLimit).map((metric, index) => {
+		return `\`${formatRank(index + 1)}\` ${metric.label} — **${formatNumber(metric.value)}**`;
+	});
 	const omittedCount = metrics.length - previewLines.length;
 	const omittedLine =
 		omittedCount > 0 ? [`…ほか ${formatNumber(omittedCount)} 件`] : [];
@@ -57,7 +54,11 @@ export const buildScrapingReport = ({
 };
 
 /** 桁区切り付きで数値を整形する。 */
-const formatNumber = (value: number): string => value.toLocaleString("ja-JP");
+const formatNumber = (value: number): string => {
+	return value.toLocaleString("ja-JP");
+};
 
 /** プレビュー行の順位を右寄せ 2 桁で整形する。 */
-const formatRank = (rank: number): string => String(rank).padStart(2, "0");
+const formatRank = (rank: number): string => {
+	return String(rank).padStart(2, "0");
+};

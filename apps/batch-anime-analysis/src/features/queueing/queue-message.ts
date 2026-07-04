@@ -7,8 +7,11 @@ export interface QueueMessage {
 }
 
 /** dataSourceId ごとに SQS message を作る。 */
-export const buildQueueMessages = (dataSourceIds: string[]): QueueMessage[] =>
-	dataSourceIds.map((dataSourceId) => ({ dataSourceId }));
+export const buildQueueMessages = (dataSourceIds: string[]): QueueMessage[] => {
+	return dataSourceIds.map((dataSourceId) => {
+		return { dataSourceId };
+	});
+};
 
 /** SQS message body をアニメスクレイピング用 message として検証する。 */
 export const parseQueueMessage = (body: string): QueueMessage => {

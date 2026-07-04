@@ -8,8 +8,9 @@ import {
 	batchRoutes,
 } from "../shared/routes/batch-routes.js";
 
-const isBatchRoute = (value: string): value is BatchRoute =>
-	batchRouteList.includes(value as BatchRoute);
+const isBatchRoute = (value: string): value is BatchRoute => {
+	return batchRouteList.includes(value as BatchRoute);
+};
 
 /** Lambda イベントから実行対象のジョブ名を取得する。 */
 export const getJobName = (event: LambdaEvent): BatchRoute => {

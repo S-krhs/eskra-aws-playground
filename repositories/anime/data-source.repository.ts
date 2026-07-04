@@ -4,11 +4,15 @@ import { animeMetricDataSources } from "./data.js";
 import type { AnimeMetricDataSource } from "./types.js";
 
 export const dataSourceRepository = {
-	findMany: (): AnimeMetricDataSource[] => [...animeMetricDataSources],
+	findMany: (): AnimeMetricDataSource[] => {
+		return [...animeMetricDataSources];
+	},
 
 	findUnique: (id: string): AnimeMetricDataSource | null => {
 		const dataSource =
-			animeMetricDataSources.find((ds) => ds.id === id) ?? null;
+			animeMetricDataSources.find((ds) => {
+				return ds.id === id;
+			}) ?? null;
 		return dataSource;
 	},
 };

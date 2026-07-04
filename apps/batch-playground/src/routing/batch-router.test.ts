@@ -12,15 +12,17 @@ describe("batch-router", () => {
 	});
 
 	it("job が未設定ならエラーにする", () => {
-		expect(() => getJobName({})).toThrow("job が設定されていません");
+		expect(() => {
+			return getJobName({});
+		}).toThrow("job が設定されていません");
 	});
 
 	it("未対応の job は入力値を含めずにエラーにする", () => {
 		const unknownJob = "secret-like-value";
 
-		expect(() => getJobName({ job: unknownJob })).toThrow(
-			"未対応の batch job です",
-		);
+		expect(() => {
+			return getJobName({ job: unknownJob });
+		}).toThrow("未対応の batch job です");
 
 		try {
 			getJobName({ job: unknownJob });

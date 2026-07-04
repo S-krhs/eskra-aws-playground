@@ -27,29 +27,31 @@ export type WebpageSource = {
 /** Webpage source 定義を parser 用の HTML 解析オプションへ変換する。 */
 export const buildHtmlParseOptions = (
 	source: WebpageSource,
-): HtmlParseOptions => ({
-	wrapper: {
-		selector: source.wrapper.selector,
-		index: source.wrapper.index ?? 0,
-	},
-	itemsSelector: source.itemsSelector,
-	label: {
-		selector: source.label.selector,
-		index: source.label.index ?? 0,
-	},
-	value:
-		source.value.type === "item-index"
-			? {
-					type: "item-index",
-				}
-			: {
-					type: "element-text",
-					target: {
-						selector: source.value.target.selector,
-						index: source.value.target.index ?? 0,
+): HtmlParseOptions => {
+	return {
+		wrapper: {
+			selector: source.wrapper.selector,
+			index: source.wrapper.index ?? 0,
+		},
+		itemsSelector: source.itemsSelector,
+		label: {
+			selector: source.label.selector,
+			index: source.label.index ?? 0,
+		},
+		value:
+			source.value.type === "item-index"
+				? {
+						type: "item-index",
+					}
+				: {
+						type: "element-text",
+						target: {
+							selector: source.value.target.selector,
+							index: source.value.target.index ?? 0,
+						},
 					},
-				},
-});
+	};
+};
 
 /**
  * Webpage source 定義を受け取り、HTML を取得して metric 一覧を返す

@@ -6,4 +6,6 @@ import type { BatchResponse, LambdaEvent } from "../shared/infra/lambda.js";
 /** アニメ分析 orchestrator Lambda のエントリポイント。 */
 export const handler = async (
 	event: LambdaEvent = {},
-): Promise<BatchResponse> => orchestratorJob(event);
+): Promise<BatchResponse> => {
+	return orchestratorJob(event);
+};

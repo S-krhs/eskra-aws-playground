@@ -9,4 +9,6 @@ import type {
 /** アニメ分析 dataSource スクレイピング Lambda のエントリポイント。 */
 export const handler = async (
 	event: SqsBatchEvent,
-): Promise<SqsBatchResponse> => dataSourceJob(event);
+): Promise<SqsBatchResponse> => {
+	return dataSourceJob(event);
+};

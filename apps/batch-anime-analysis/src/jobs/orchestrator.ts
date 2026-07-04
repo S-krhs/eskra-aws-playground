@@ -15,7 +15,9 @@ export const orchestratorJob: BatchHandler =
 	async (): Promise<BatchResponse> => {
 		// 1. repository から投入対象のスクレイピング定義を取得する。
 		const dataSources = dataSourceRepository.findMany();
-		const dataSourceIds = dataSources.map((dataSource) => dataSource.id);
+		const dataSourceIds = dataSources.map((dataSource) => {
+			return dataSource.id;
+		});
 
 		// 2. dataSource 単位の実行要求 message を組み立てる。
 		const queueMessages = buildQueueMessages(dataSourceIds);
@@ -26,10 +28,12 @@ export const orchestratorJob: BatchHandler =
 		const { queueUrl } = getOrchestratorSettings();
 		const sender = new AwsSqsMessageSender(queueUrl);
 		await sender.sendMessages(
-			queueMessages.map((message, index) => ({
-				id: `message-${index}`,
-				body: message,
-			})),
+			queueMessages.map((message, index) => {
+				return {
+					id: `message-${index}`,
+					body: message,
+				};
+			}),
 		);
 
 		logger.complete({ requestedCount: queueMessages.length });
@@ -40,7 +44,9 @@ export const orchestratorJob: BatchHandler =
 			job: batchNames.animeScrapingOrchestrator,
 			details: {
 				requestedCount: queueMessages.length,
-				dataSourceIds: queueMessages.map((message) => message.dataSourceId),
+				dataSourceIds: queueMessages.map((message) => {
+					return message.dataSourceId;
+				}),
 			},
 		};
 	};

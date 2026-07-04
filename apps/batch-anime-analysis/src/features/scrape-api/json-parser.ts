@@ -33,10 +33,12 @@ export const parseJsonMetrics = (
 		throw new Error("itemsPath の取得結果が配列ではありません");
 	}
 
-	const metricInputs = items.map((item, index) => ({
-		label: readJsonPath(item, options.labelPath),
-		value: readValue(item, index, options.value),
-	}));
+	const metricInputs = items.map((item, index) => {
+		return {
+			label: readJsonPath(item, options.labelPath),
+			value: readValue(item, index, options.value),
+		};
+	});
 
 	return buildMetrics(metricInputs);
 };
@@ -56,7 +58,9 @@ const readValue = (
 
 /** "items/0/name" のような path を辿って値を取り出す。 */
 const readJsonPath = (input: unknown, path: string): unknown => {
-	const segments = path.split("/").filter((segment) => segment.length > 0);
+	const segments = path.split("/").filter((segment) => {
+		return segment.length > 0;
+	});
 
 	return segments.reduce<unknown>(readSegment, input);
 };

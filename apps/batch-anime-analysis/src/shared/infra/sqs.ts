@@ -32,10 +32,12 @@ export class AwsSqsMessageSender {
 			return;
 		}
 
-		const entries: SendMessageBatchRequestEntry[] = messages.map((message) => ({
-			Id: message.id,
-			MessageBody: JSON.stringify(message.body),
-		}));
+		const entries: SendMessageBatchRequestEntry[] = messages.map((message) => {
+			return {
+				Id: message.id,
+				MessageBody: JSON.stringify(message.body),
+			};
+		});
 
 		const result = await this.client.send(
 			new SendMessageBatchCommand({
@@ -45,7 +47,9 @@ export class AwsSqsMessageSender {
 		);
 
 		if (result.Failed && result.Failed.length > 0) {
-			const failedIds = result.Failed.map((failure) => failure.Id).join(", ");
+			const failedIds = result.Failed.map((failure) => {
+				return failure.Id;
+			}).join(", ");
 			throw new Error(`SQS message の送信に失敗しました: ${failedIds}`);
 		}
 	}

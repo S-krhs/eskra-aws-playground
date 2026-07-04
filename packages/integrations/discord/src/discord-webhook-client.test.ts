@@ -12,43 +12,39 @@ describe("DiscordWebhookClient", () => {
 	});
 
 	it("Discord Webhook URL だけを受け付ける", () => {
-		expect(
-			() =>
-				new DiscordWebhookClient(
-					"https://discord.com/api/webhooks/1234567890/token",
-				),
-		).not.toThrow();
+		expect(() => {
+			return new DiscordWebhookClient(
+				"https://discord.com/api/webhooks/1234567890/token",
+			);
+		}).not.toThrow();
 
-		expect(
-			() =>
-				new DiscordWebhookClient(
-					"https://discordapp.com/api/webhooks/1234567890/token",
-				),
-		).not.toThrow();
+		expect(() => {
+			return new DiscordWebhookClient(
+				"https://discordapp.com/api/webhooks/1234567890/token",
+			);
+		}).not.toThrow();
 	});
 
 	it("https 以外の Discord Webhook URL を拒否する", () => {
-		expect(
-			() =>
-				new DiscordWebhookClient(
-					"http://discord.com/api/webhooks/1234567890/token",
-				),
-		).toThrow(DiscordWebhookError);
+		expect(() => {
+			return new DiscordWebhookClient(
+				"http://discord.com/api/webhooks/1234567890/token",
+			);
+		}).toThrow(DiscordWebhookError);
 	});
 
 	it("Discord 以外のホストを拒否する", () => {
-		expect(
-			() =>
-				new DiscordWebhookClient(
-					"https://example.com/api/webhooks/1234567890/token",
-				),
-		).toThrow(DiscordWebhookError);
+		expect(() => {
+			return new DiscordWebhookClient(
+				"https://example.com/api/webhooks/1234567890/token",
+			);
+		}).toThrow(DiscordWebhookError);
 	});
 
 	it("Discord Webhook API 以外のパスを拒否する", () => {
-		expect(
-			() => new DiscordWebhookClient("https://discord.com/api/users/@me"),
-		).toThrow(DiscordWebhookError);
+		expect(() => {
+			return new DiscordWebhookClient("https://discord.com/api/users/@me");
+		}).toThrow(DiscordWebhookError);
 	});
 
 	it("失敗応答の本文をエラーメッセージに含めず details で安全化する", async () => {
@@ -58,7 +54,9 @@ describe("DiscordWebhookClient", () => {
 
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(async () => new Response(responseBody, { status: 400 })),
+			vi.fn(async () => {
+				return new Response(responseBody, { status: 400 });
+			}),
 		);
 
 		const client = new DiscordWebhookClient(webhookUrl);
