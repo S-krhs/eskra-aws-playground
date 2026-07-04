@@ -244,7 +244,7 @@ export default $config({
 			alarmActions: [alertTopic.arn],
 		});
 
-		// DLQ を持たない schedule 起動 Lambda（orchestrator / uma）のエラーを通知する
+		// DLQ を持たない schedule 起動の orchestrator のエラーを通知する
 		new aws.cloudwatch.MetricAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
 			name: `${appName}-${$app.stage}-anime-orchestrator-errors`,
 			alarmDescription: "アニメ分析 orchestrator の実行が失敗した",
@@ -252,22 +252,6 @@ export default $config({
 			metricName: "Errors",
 			dimensions: {
 				FunctionName: animeAnalysisOrchestratorFunction.name,
-			},
-			statistic: "Sum",
-			period: 300,
-			evaluationPeriods: 1,
-			threshold: 1,
-			comparisonOperator: "GreaterThanOrEqualToThreshold",
-			treatMissingData: "notBreaching",
-			alarmActions: [alertTopic.arn],
-		});
-		new aws.cloudwatch.MetricAlarm("UmaOneDrawTopicErrorAlarm", {
-			name: `${appName}-${$app.stage}-uma-one-draw-topic-errors`,
-			alarmDescription: "UMA ワンドロお題通知の実行が失敗した",
-			namespace: "AWS/Lambda",
-			metricName: "Errors",
-			dimensions: {
-				FunctionName: batchFunction.name,
 			},
 			statistic: "Sum",
 			period: 300,
