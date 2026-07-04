@@ -22,8 +22,8 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"@sparticuz/chromium": "^149.0.0",
-		"chromium-bidi": "^15.0.0",
-		"playwright-core": "^1.61.1"
+		"@sparticuz/chromium": "149.0.0",
+		"chromium-bidi": "15.0.0",
+		"playwright-core": "1.61.1"
 	}
 }

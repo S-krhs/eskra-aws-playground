@@ -12,7 +12,8 @@
 	],
 	"scripts": {
 		"build": "turbo run build",
-		"deploy": "npm run build && sst deploy --stage develop --config infra/sst.config.ts",
+		"build:browser-runtime-layer": "node infra/layers/browser-runtime/build.mjs",
+		"deploy": "npm run build && npm run build:browser-runtime-layer && sst deploy --stage develop --config infra/sst.config.ts",
 		"local:deps": "npm run build --workspace @lambda-batch-playground/libs-browser && npm run build --workspace @lambda-batch-playground/libs && npm run build --workspace @lambda-batch-playground/integration-discord && npm run build --workspace @lambda-batch-playground/repositories",
 		"local:batch-playground": "npm run local:deps && npm --workspace @lambda-batch-playground/batch-playground run local",
 		"local:batch-anime-analysis": "npm run local:deps && npm --workspace @lambda-batch-playground/batch-anime-analysis run local",

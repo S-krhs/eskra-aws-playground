@@ -41,6 +41,9 @@ SST は `infra/sst.config.ts` から次のリソースを管理します。
 
 app/job 固有の GitHub Actions Secrets は、該当 app の README を参照します。
 
+アニメ分析 worker は、Playwright / Chromium 実行に必要な runtime 依存を `infra/layers/browser-runtime` から Lambda Layer として発行して参照します。
+この Layer は deploy 前に `npm run build:browser-runtime-layer` で `.tmp/layers/browser-runtime` に作成します。
+
 
 ## AWS 認証
 

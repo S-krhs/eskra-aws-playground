@@ -63,6 +63,19 @@ export default $config({
 			},
 		});
 
+		// Playwright / Chromium 実行に必要な runtime 依存を Lambda Layer として発行する
+		const browserRuntimeLayer = new aws.lambda.LayerVersion(
+			"BrowserRuntimeLayer",
+			{
+				code: $asset(".tmp/layers/browser-runtime"),
+				compatibleArchitectures: ["x86_64"],
+				compatibleRuntimes: ["nodejs22.x"],
+				description:
+					"Browser runtime dependencies for anime analysis scraping worker.",
+				layerName: `${appName}-${$app.stage}-browser-runtime`,
+			},
+		);
+
 		// アニメ分析の実行計画を作り、SQS に投入する Orchestrator Lambda を作成
 		const animeAnalysisOrchestratorFunction = new sst.aws.Function(
 			"AnimeAnalysisOrchestratorFunction",
@@ -95,6 +108,16 @@ export default $config({
 				timeout: "5 minutes",
 				memory: "1 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
+				layers: [browserRuntimeLayer.arn],
+				nodejs: {
+					esbuild: {
+						external: [
+							"@sparticuz/chromium",
+							"chromium-bidi",
+							"playwright-core",
+						],
+					},
+				},
 			},
 			{
 				batch: {
