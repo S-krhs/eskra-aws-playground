@@ -163,7 +163,7 @@ export default $config({
 				handler: "../apps/batch-anime-analysis/src/handlers/sqs-worker.handler",
 				runtime: "nodejs22.x",
 				timeout: "5 minutes",
-				memory: "1 GB",
+				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
 				layers: [browserRuntimeLayer.arn],
 				nodejs: {
