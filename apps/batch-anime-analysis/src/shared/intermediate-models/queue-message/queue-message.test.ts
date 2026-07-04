@@ -1,14 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildQueueMessages, parseQueueMessage } from "./queue-message.js";
-
-describe("buildQueueMessages", () => {
-	it("dataSourceId ごとに message を作る", () => {
-		expect(buildQueueMessages(["source-a", "source-b"])).toEqual([
-			{ dataSourceId: "source-a" },
-			{ dataSourceId: "source-b" },
-		]);
-	});
-});
+import { parseQueueMessage } from "./queue-message.js";
 
 describe("parseQueueMessage", () => {
 	it("SQS message body を検証して正規化する", () => {

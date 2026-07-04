@@ -4,7 +4,6 @@ import { DiscordWebhookClient } from "@lambda-batch-playground/integration-disco
 import { createBatchLogger } from "@lambda-batch-playground/libs/logger/batch-logger.js";
 import { dataSourceRepository } from "@lambda-batch-playground/repositories/anime/data-source.repository.js";
 import { buildScrapingReport } from "../features/notifications/scraping-report.js";
-import { parseQueueMessage } from "../features/queueing/queue-message.js";
 import { getApiMetrics } from "../features/scrape-api/get-metrics.js";
 import { getWebpageMetrics } from "../features/scrape-webpage/get-metrics.js";
 import type {
@@ -12,6 +11,7 @@ import type {
 	SqsBatchItemFailure,
 } from "../shared/infra/lambda.js";
 import { getDataSourceSettings } from "../shared/infra/secrets.js";
+import { parseQueueMessage } from "../shared/intermediate-models/queue-message/queue-message.js";
 import { batchNames } from "../shared/routes/batch-names.js";
 
 const logger = createBatchLogger(batchNames.animeScrapingDataSource);

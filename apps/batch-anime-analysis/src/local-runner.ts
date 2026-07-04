@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { createBatchLogger } from "@lambda-batch-playground/libs/logger/batch-logger.js";
 import { dataSourceRepository } from "@lambda-batch-playground/repositories/anime/data-source.repository.js";
 import { config } from "dotenv";
-import { buildQueueMessages } from "./features/queueing/queue-message.js";
 import { handler } from "./handlers/sqs-worker.js";
 import type { SqsBatchEvent } from "./shared/infra/lambda.js";
 
@@ -33,10 +32,10 @@ const dataSourceIds =
 
 // orchestrator を介さず、worker が受け取る形の SQS event を組み立てる。
 const event: SqsBatchEvent = {
-	Records: buildQueueMessages(dataSourceIds).map((message, index) => {
+	Records: dataSourceIds.map((dataSourceId, index) => {
 		return {
 			messageId: `local-message-${index}`,
-			body: JSON.stringify(message),
+			body: JSON.stringify({ dataSourceId }),
 		};
 	}),
 };

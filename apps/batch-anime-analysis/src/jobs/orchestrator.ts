@@ -2,10 +2,10 @@
 // Out of scope: SQS message の受信、スクレイピング実行、DB 登録、通知送信を行う
 import { createBatchLogger } from "@lambda-batch-playground/libs/logger/batch-logger.js";
 import { dataSourceRepository } from "@lambda-batch-playground/repositories/anime/data-source.repository.js";
-import { buildQueueMessages } from "../features/queueing/queue-message.js";
 import type { BatchHandler, BatchResponse } from "../shared/infra/lambda.js";
 import { getOrchestratorSettings } from "../shared/infra/secrets.js";
 import { AwsSqsMessageSender } from "../shared/infra/sqs.js";
+import type { QueueMessage } from "../shared/intermediate-models/queue-message/queue-message.js";
 import { batchNames } from "../shared/routes/batch-names.js";
 
 const logger = createBatchLogger(batchNames.animeScrapingOrchestrator);
@@ -15,12 +15,11 @@ export const orchestratorJob: BatchHandler =
 	async (): Promise<BatchResponse> => {
 		// 1. repository から投入対象のスクレイピング定義を取得する。
 		const dataSources = dataSourceRepository.findMany();
-		const dataSourceIds = dataSources.map((dataSource) => {
-			return dataSource.id;
-		});
 
 		// 2. dataSource 単位の実行要求 message を組み立てる。
-		const queueMessages = buildQueueMessages(dataSourceIds);
+		const queueMessages: QueueMessage[] = dataSources.map((dataSource) => {
+			return { dataSourceId: dataSource.id };
+		});
 
 		logger.start({ requestedCount: queueMessages.length });
 
