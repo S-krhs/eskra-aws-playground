@@ -1,30 +1,33 @@
 // In scope: 指定の webpage URL から HTML を取得し、metric 一覧へ変換する
 // Out of scope: ブラウザ起動やレンダリングの制御、アプリ固有の変換ルール定義
 import { fetchWebpageHtml } from "@lambda-batch-playground/libs-browser/html-scraper/webpage-html.js";
-import type { Metric } from "../../shared/intermediate/metric.js";
+import type { Metric } from "../../shared/intermediate-models/metric/metric.js";
 import {
-	type HtmlMetricParseOptions,
-	type HtmlMetricValueTarget,
+	type HtmlParseOptions,
+	type HtmlValueTarget,
 	parseHtmlMetrics,
-} from "./html-metric-parser.js";
+} from "./html-parser.js";
 
+/** Webpage 上の要素を選ぶ指定。 */
 export type WebpageElementSource = {
 	selector: string;
 	index?: number;
 };
 
-export type WebpageMetricSource = {
+/** Webpage から metric を取り出すための source 定義。 */
+export type WebpageSource = {
 	type: "webpage";
 	url: string;
 	wrapper: WebpageElementSource;
 	itemsSelector: string;
 	label: WebpageElementSource;
-	value: HtmlMetricValueTarget;
+	value: HtmlValueTarget;
 };
 
-export const buildHtmlMetricParseOptions = (
-	source: WebpageMetricSource,
-): HtmlMetricParseOptions => ({
+/** Webpage source 定義を parser 用の HTML 解析オプションへ変換する。 */
+export const buildHtmlParseOptions = (
+	source: WebpageSource,
+): HtmlParseOptions => ({
 	wrapper: {
 		selector: source.wrapper.selector,
 		index: source.wrapper.index ?? 0,
@@ -54,8 +57,8 @@ export const buildHtmlMetricParseOptions = (
  * @returns 解析済みの `Metric[]`
  */
 export const getWebpageMetrics = async (
-	source: WebpageMetricSource,
+	source: WebpageSource,
 ): Promise<Metric[]> => {
 	const html = await fetchWebpageHtml(source.url);
-	return parseHtmlMetrics(html, buildHtmlMetricParseOptions(source));
+	return parseHtmlMetrics(html, buildHtmlParseOptions(source));
 };

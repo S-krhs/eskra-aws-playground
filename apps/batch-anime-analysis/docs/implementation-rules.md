@@ -5,11 +5,19 @@
 
 ## ジョブ実装
 
-- ジョブ名は実行内容が分かるバッチ名にする。例: `anime-scraping-preview`
-- `src/routing/batch-router.ts` の `resolveBatchJob` にジョブ名と handler を追加する。
+- ジョブ名は実行内容が分かるバッチ名にする。例: `anime-scraping-data-source`
 - ジョブ handler はイベント値の正規化、feature 呼び出し、integration 呼び出し、共通レスポンス作成に集中する。
+- `jobs/` には実行単位のオーケストレーションを置き、message body の生成、検証などの機能単位は `features/` に置く。
 - オーケストレーション手順は、処理セクションごとに 1 行コメントを残す。
 - 新しいジョブを追加したら、app `README.md` の実行できるジョブと環境変数を更新する。
+
+## SQS オーケストレーション
+
+- Orchestrator Lambda は実行対象の決定と SQS 投入に集中し、スクレイピングを直接実行しない。
+- Worker Lambda handler は SQS event を dataSource スクレイピング job へ渡すだけにし、message body の解釈や業務処理を持たない。
+- SQS message body の生成、検証は `src/features/queueing/message.ts` に集約する。
+- SQS 送信は `src/shared/infra/sqs.ts` に置き、queue URL 解決は handler ごとの設定解決として `src/shared/infra/secrets.ts` に置く。
+- dataSource スクレイピング job は SQS event 内の record を処理し、partial batch response で失敗 message だけを再試行対象にする。
 
 ## 入力・レスポンス・ログ
 
@@ -24,8 +32,8 @@
 
 - feature は app の業務機能に集中し、Lambda イベントや Webhook URL 解決を扱わない。
 - feature から別 feature を import しない。
-- 外部公開用ではない metric 中間表現の型、正規化は app 内の `src/shared/intermediate/metric.ts` を使う。
-- JSON/HTML から metric への変換は app 内の `src/features/metric-parser/` を使う。
+- 外部公開用ではない metric 中間表現の型、正規化は app 内の `src/shared/intermediate/metric/metric.ts` を使う。
+- JSON から metric への変換は `src/features/scrape-api/`、HTML から metric への変換は `src/features/scrape-webpage/` を使う。
 - repository のスクレイピング定義は、job で metric parser の入力指定へ変換する。
 - Playwright-core / Chromium の Webpage 実行と HTML 取得は `packages/libs/browser` に委譲する。
 - Supabase 接続と DB 登録はこの app ではまだ実装しない。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseJsonMetrics } from "./json-metric-parser.js";
+import { parseJsonMetrics } from "./json-parser.js";
 
 describe("parseJsonMetrics", () => {
 	it("JSON と path 指定から metric 一覧を作る", () => {

@@ -7,14 +7,6 @@ export interface LambdaEvent {
 	[key: string]: unknown;
 }
 
-export function getEventString(event: LambdaEvent, key: string): string {
-	const value = event[key];
-	if (typeof value !== "string" || !value.trim()) {
-		throw new Error(`event.${key} が設定されていません`);
-	}
-	return value.trim();
-}
-
 /** バッチジョブが Lambda ハンドラーへ返す共通レスポンス。 */
 export interface BatchResponse {
 	ok: true;
@@ -24,3 +16,29 @@ export interface BatchResponse {
 
 /** Lambda イベントを受け取り、共通レスポンスを返すバッチジョブ関数。 */
 export type BatchHandler = (event: LambdaEvent) => Promise<BatchResponse>;
+
+/** Lambda SQS event のうち、この app が処理に使う record 入力。 */
+export interface SqsRecord {
+	messageId: string;
+	body: string;
+}
+
+/** Lambda SQS event のうち、この app が処理に使う batch 入力。 */
+export interface SqsBatchEvent {
+	Records: SqsRecord[];
+}
+
+/** SQS partial batch response に載せる、処理に失敗した record。 */
+export interface SqsBatchItemFailure {
+	itemIdentifier: string;
+}
+
+/** SQS partial batch response として Lambda に返す処理結果。 */
+export interface SqsBatchResponse {
+	batchItemFailures: SqsBatchItemFailure[];
+}
+
+/** SQS event を受け取り、partial batch response を返す Lambda job 関数。 */
+export type SqsBatchHandler = (
+	event: SqsBatchEvent,
+) => Promise<SqsBatchResponse>;

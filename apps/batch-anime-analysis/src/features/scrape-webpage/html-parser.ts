@@ -2,7 +2,10 @@
 // Out of scope: HTML 取得、browser 起動、app 固有の定義変換を行う
 
 import * as cheerio from "cheerio";
-import { buildMetrics, type Metric } from "../../shared/intermediate/metric.js";
+import {
+	buildMetrics,
+	type Metric,
+} from "../../shared/intermediate-models/metric/metric.js";
 
 /** HTML 上の要素を選ぶ指定。 */
 export interface HtmlElementTarget {
@@ -10,7 +13,8 @@ export interface HtmlElementTarget {
 	index?: number;
 }
 
-export type HtmlMetricValueTarget =
+/** HTML metric value の取得方法。 */
+export type HtmlValueTarget =
 	| {
 			type: "item-index";
 	  }
@@ -20,17 +24,17 @@ export type HtmlMetricValueTarget =
 	  };
 
 /** HTML から metric を作るための指定。 */
-export interface HtmlMetricParseOptions {
+export interface HtmlParseOptions {
 	wrapper: HtmlElementTarget;
 	itemsSelector: string;
 	label: HtmlElementTarget;
-	value: HtmlMetricValueTarget;
+	value: HtmlValueTarget;
 }
 
 /** HTML から metric 一覧を作る。 */
 export const parseHtmlMetrics = (
 	html: string,
-	options: HtmlMetricParseOptions,
+	options: HtmlParseOptions,
 ): Metric[] => {
 	const $ = cheerio.load(html);
 	const wrapper = $(options.wrapper.selector).eq(options.wrapper.index ?? 0);
@@ -53,8 +57,9 @@ export const parseHtmlMetrics = (
 const readText = (
 	element: ReturnType<cheerio.CheerioAPI>,
 	target: HtmlElementTarget,
-): string =>
-	element
+): string => {
+	return element
 		.find(target.selector)
 		.eq(target.index ?? 0)
 		.text();
+};

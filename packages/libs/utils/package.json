@@ -8,6 +8,10 @@
 			"types": "./dist/gacha/gacha-pool.d.ts",
 			"default": "./dist/gacha/gacha-pool.js"
 		},
+		"./logger/batch-logger.js": {
+			"types": "./dist/logger/batch-logger.d.ts",
+			"default": "./dist/logger/batch-logger.js"
+		},
 		"./string/text-sanitizer.js": {
 			"types": "./dist/string/text-sanitizer.d.ts",
 			"default": "./dist/string/text-sanitizer.js"
@@ -18,7 +22,7 @@
 		"build": "npm run clean && tsc -p tsconfig.json",
 		"test": "vitest run",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"lint": "biome ci README.md gacha string package.json tsconfig.json",
+		"lint": "biome ci README.md gacha logger string package.json tsconfig.json",
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	}
 }

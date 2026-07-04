@@ -13,7 +13,9 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
+		"@aws-sdk/client-sqs": "^3.1079.0",
 		"@lambda-batch-playground/integration-discord": "0.1.0",
+		"@lambda-batch-playground/libs": "0.1.0",
 		"@lambda-batch-playground/libs-browser": "0.1.0",
 		"@lambda-batch-playground/repositories": "0.1.0",
 		"cheerio": "^1.1.2",

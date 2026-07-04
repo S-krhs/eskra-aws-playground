@@ -42,5 +42,48 @@ export default $config({
 				job: batchRoutes.umaOneDrawTopic,
 			},
 		});
+
+		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
+		const animeAnalysisDiscordWebhookUrl = new sst.Secret(
+			"AnimeAnalysisDiscordWebhook",
+		);
+
+		// アニメ分析の実行要求を dataSource 単位で保持する SQS Queue を作成
+		const animeAnalysisDeadLetterQueue = new sst.aws.Queue(
+			"AnimeAnalysisDeadLetterQueue",
+		);
+		const animeAnalysisQueue = new sst.aws.Queue("AnimeAnalysisQueue", {
+			visibilityTimeout: "6 minutes",
+			dlq: {
+				queue: animeAnalysisDeadLetterQueue.arn,
+				retry: 3,
+			},
+		});
+
+		// アニメ分析の実行計画を作り、SQS に投入する Orchestrator Lambda を作成
+		new sst.aws.Function("AnimeAnalysisOrchestratorFunction", {
+			handler: "../apps/batch-anime-analysis/src/handlers/orchestrator.handler",
+			runtime: "nodejs22.x",
+			timeout: "30 seconds",
+			memory: "128 MB",
+			link: [animeAnalysisQueue],
+		});
+
+		// SQS message ごとにアニメ分析スクレイピングを実行する Worker Lambda を作成
+		animeAnalysisQueue.subscribe(
+			{
+				handler: "../apps/batch-anime-analysis/src/handlers/sqs-worker.handler",
+				runtime: "nodejs22.x",
+				timeout: "5 minutes",
+				memory: "512 MB",
+				link: [animeAnalysisDiscordWebhookUrl],
+			},
+			{
+				batch: {
+					size: 1,
+					partialResponses: true,
+				},
+			},
+		);
 	},
 });
