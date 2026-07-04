@@ -63,16 +63,74 @@ export default $config({
 			},
 		});
 
+		const browserRuntimeLayerAssetBucket = new aws.s3.Bucket(
+			"BrowserRuntimeLayerAssetBucket",
+			{
+				bucketPrefix: `sst-asset-lbp-${$app.stage}-br-`,
+				forceDestroy: $app.stage !== "production",
+			},
+		);
+		new aws.s3.BucketPublicAccessBlock(
+			"BrowserRuntimeLayerAssetBucketPublicAccessBlock",
+			{
+				blockPublicAcls: true,
+				blockPublicPolicy: true,
+				bucket: browserRuntimeLayerAssetBucket.id,
+				ignorePublicAcls: true,
+				restrictPublicBuckets: true,
+			},
+		);
+		const browserRuntimeLayerAssetBucketVersioning =
+			new aws.s3.BucketVersioning("BrowserRuntimeLayerAssetBucketVersioning", {
+				bucket: browserRuntimeLayerAssetBucket.id,
+				versioningConfiguration: {
+					status: "Enabled",
+				},
+			});
+		new aws.s3.BucketLifecycleConfiguration(
+			"BrowserRuntimeLayerAssetBucketLifecycleConfiguration",
+			{
+				bucket: browserRuntimeLayerAssetBucket.id,
+				rules: [
+					{
+						filter: {
+							prefix: "layers/",
+						},
+						id: "expire-noncurrent-layer-archives",
+						noncurrentVersionExpiration: {
+							noncurrentDays: 1,
+						},
+						status: "Enabled",
+					},
+				],
+			},
+		);
+		const browserRuntimeLayerObject = new aws.s3.BucketObjectv2(
+			"BrowserRuntimeLayerObject",
+			{
+				bucket: browserRuntimeLayerAssetBucket.id,
+				contentType: "application/zip",
+				key: "layers/browser-runtime.zip",
+				serverSideEncryption: "AES256",
+				source: $asset("../.tmp/layers/browser-runtime"),
+			},
+			{
+				dependsOn: [browserRuntimeLayerAssetBucketVersioning],
+			},
+		);
+
 		// Playwright / Chromium 実行に必要な runtime 依存を Lambda Layer として発行する
 		const browserRuntimeLayer = new aws.lambda.LayerVersion(
 			"BrowserRuntimeLayer",
 			{
-				code: $asset("../.tmp/layers/browser-runtime"),
 				compatibleArchitectures: ["x86_64"],
 				compatibleRuntimes: ["nodejs22.x"],
 				description:
 					"Browser runtime dependencies for anime analysis scraping worker.",
 				layerName: `${appName}-${$app.stage}-browser-runtime`,
+				s3Bucket: browserRuntimeLayerAssetBucket.id,
+				s3Key: browserRuntimeLayerObject.key,
+				s3ObjectVersion: browserRuntimeLayerObject.versionId,
 			},
 		);
 
