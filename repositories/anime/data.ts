@@ -15,7 +15,7 @@ const dAnimeApiSource: AnimeApiMetricSource = {
 	},
 };
 
-const myAnimeListApiSource: AnimeWebpageMetricSource = {
+const myAnimeListWebpageSource: AnimeWebpageMetricSource = {
 	type: "webpage",
 	url: "https://myanimelist.net/anime/season",
 	wrapper: {
@@ -46,6 +46,6 @@ export const animeMetricDataSources: AnimeMetricDataSource[] = [
 		websiteName: "MyAnimeList",
 		metricName: "score",
 		timeframe: "seasonal",
-		source: myAnimeListApiSource,
+		source: myAnimeListWebpageSource,
 	},
 ];
