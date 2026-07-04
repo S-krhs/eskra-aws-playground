@@ -1,5 +1,5 @@
-// やること: UMA ワンドロのお題メッセージ生成に使う設定値を定義する
-// やらないこと: お題選択、メッセージ生成、外部送信を行う
+// In scope: UMA ワンドロのお題メッセージ生成に使う設定値を定義する
+// Out of scope: お題選択、メッセージ生成、外部送信を行う
 /** UMA ワンドロのお題レアリティ。 */
 export const UMA_ONE_DRAW_TOPIC_RARITIES = ["COMMON", "RARE"] as const;
 

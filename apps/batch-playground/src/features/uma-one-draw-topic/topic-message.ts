@@ -1,5 +1,5 @@
-// やること: UMA ワンドロのお題メッセージを生成する
-// やらないこと: Discord payload 生成、外部送信、Lambda レスポンス作成を行う
+// In scope: UMA ワンドロのお題メッセージを生成する
+// Out of scope: Discord payload 生成、外部送信、Lambda レスポンス作成を行う
 import { GachaPool } from "@lambda-batch-playground/libs/gacha/gacha-pool.js";
 import {
 	UMA_ONE_DRAW_TOPIC_ENTRIES,

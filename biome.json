@@ -1,0 +1,22 @@
+{
+	"files": {
+		"includes": [
+			"**/*",
+			"!**/.sst/**",
+			"!**/node_modules/**",
+			"!**/dist/**"
+		]
+	},
+	"linter": {
+		"rules": {
+			"style": {
+				"useConsistentArrowReturn": {
+					"level": "error",
+					"options": {
+						"style": "always"
+					}
+				}
+			}
+		}
+	}
+}

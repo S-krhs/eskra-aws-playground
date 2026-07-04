@@ -1,5 +1,5 @@
-// やること: レアリティ定義からガチャ箱を作り、候補の追加と抽選を行う
-// やらないこと: app 固有の候補定義、外部送信、メッセージ生成を扱う
+// In scope: レアリティ定義からガチャ箱を作り、候補の追加と抽選を行う
+// Out of scope: app 固有の候補定義、外部送信、メッセージ生成を扱う
 
 /** ガチャの候補。利用側は rarity に加えて任意のプロパティを持たせられる。 */
 export type GachaEntry<TRarity extends string = string> = {
@@ -102,10 +102,9 @@ export class GachaPool<TEntry extends GachaEntry = GachaEntry>
 
 	/** 候補 entry があるレアリティだけを抽選対象として正規化する。 */
 	private updateDrawableRarities(): void {
-		const drawableRarities = this.weightedRarities.filter(
-			(weightedRarity) =>
-				(this.entriesByRarity.get(weightedRarity.rarity)?.length ?? 0) > 0,
-		);
+		const drawableRarities = this.weightedRarities.filter((weightedRarity) => {
+			return (this.entriesByRarity.get(weightedRarity.rarity)?.length ?? 0) > 0;
+		});
 
 		const drawableBoundaries: DrawableRarity<RarityOf<TEntry>>[] = [];
 		let cumulativeWeight = 0;

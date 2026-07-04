@@ -25,7 +25,8 @@ SST は `infra/sst.config.ts` から次のリソースを管理します。
 
 - Lambda function
 - EventBridge Scheduler
-- Scheduler から Lambda を呼び出すための IAM resource
+- SQS Queue / DLQ
+- Scheduler と SQS 連携に必要な IAM resource
 
 各 app/job の Scheduler event payload と secret は、該当 app の README を参照します。
 
@@ -35,6 +36,8 @@ SST は `infra/sst.config.ts` から次のリソースを管理します。
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
+- `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
+- `ANIME_ANALYSIS_DISCORD_WEBHOOK_URL`
 
 app/job 固有の GitHub Actions Secrets は、該当 app の README を参照します。
 

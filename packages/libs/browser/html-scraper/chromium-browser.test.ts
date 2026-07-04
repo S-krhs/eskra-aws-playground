@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const chromium = vi.hoisted(() => ({
-	executablePath: vi.fn(async () => "/tmp/chromium"),
-}));
+const chromium = vi.hoisted(() => {
+	return {
+		executablePath: vi.fn(async () => {
+			return "/tmp/chromium";
+		}),
+	};
+});
 
-vi.mock("@sparticuz/chromium", () => ({
-	default: {
-		args: ["--lambda-arg"],
-		executablePath: chromium.executablePath,
-	},
-}));
+vi.mock("@sparticuz/chromium", () => {
+	return {
+		default: {
+			args: ["--lambda-arg"],
+			executablePath: chromium.executablePath,
+		},
+	};
+});
 
 import { buildChromiumLaunchOptions } from "./chromium-browser.js";
 

@@ -1,5 +1,5 @@
-// やること: app が使う secret 値を SST link またはローカル環境変数から解決する
-// やらないこと: Lambda イベント解釈、外部サービス送信、ジョブ判定を行う
+// In scope: app が使う secret 値を SST link またはローカル環境変数から解決する
+// Out of scope: Lambda イベント解釈、外部サービス送信、ジョブ判定を行う
 import { Resource } from "sst/resource";
 
 /** Batch Playground app が使う secret 値。 */

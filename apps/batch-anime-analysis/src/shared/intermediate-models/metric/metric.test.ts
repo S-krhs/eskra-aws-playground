@@ -22,14 +22,16 @@ describe("buildMetric", () => {
 
 describe("normalizeMetricLabel", () => {
 	it("空の label はエラーにする", () => {
-		expect(() => normalizeMetricLabel(" ")).toThrow("metric label が空です");
+		expect(() => {
+			return normalizeMetricLabel(" ");
+		}).toThrow("metric label が空です");
 	});
 });
 
 describe("normalizeMetricValue", () => {
 	it("数値に変換できない value はエラーにする", () => {
-		expect(() => normalizeMetricValue("not-number")).toThrow(
-			"metric value を number に変換できません",
-		);
+		expect(() => {
+			return normalizeMetricValue("not-number");
+		}).toThrow("metric value を number に変換できません");
 	});
 });

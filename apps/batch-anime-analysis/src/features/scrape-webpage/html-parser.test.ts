@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseHtmlMetrics } from "./html-metric-parser.js";
+import { parseHtmlMetrics } from "./html-parser.js";
 
 describe("parseHtmlMetrics", () => {
 	it("HTML と selector 指定から metric 一覧を作る", () => {

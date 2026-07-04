@@ -2,31 +2,6 @@
 
 Lambda イベントの `job` に応じてバッチジョブを実行する TypeScript モノレポです。
 
-現在は UMA のワンドロのお題を Discord Webhook へ通知する `uma-one-draw-topic` ジョブを登録しています。
-`apps/batch-playground` を SST で Lambda と EventBridge Scheduler としてデプロイします。
-外部サービス連携は `packages/integrations/*` に分離しています。
-
-## 実行できるジョブ
-
-### `uma-one-draw-topic`
-
-UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
-
-```json
-{
-  "job": "uma-one-draw-topic"
-}
-```
-
-- `job` は必須です。
-- 未登録の `job` は実行されません。
-
-## ローカル実行
-
-1. `apps/batch-playground/.env.example` を `apps/batch-playground/.env` にコピーします。
-2. `npm install`
-3. `npm run local:batch-playground`
-
 ### app 指定実行
 
 - `npm run local:batch-playground`
@@ -49,12 +24,13 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 ## デプロイ
 
 `.github/workflows/deploy.yml` では、`main` ブランチへの push で SST app をデプロイします。
-`infra/sst.config.ts` は `apps/batch-playground/src/lambda-handler.ts` を handler とする Lambda と、UMA ワンドロお題通知用の EventBridge Scheduler を作成します。
 
 必要な GitHub Actions シークレット:
 
 - `AWS_REGION`
 - `AWS_ROLE_ARN`
+- `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
+- `ANIME_ANALYSIS_DISCORD_WEBHOOK_URL`
 
 アプリやジョブ固有のシークレットは、各 app の README を参照してください。
 

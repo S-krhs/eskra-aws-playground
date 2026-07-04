@@ -29,31 +29,29 @@ const createSequentialRandom = (
 
 describe("GachaPool", () => {
 	it("rarity が空だと作成時にエラーになる", () => {
-		expect(
-			() =>
-				new GachaPool<TestEntry>({
-					rarities: [],
-					rarityWeights: {
-						COMMON: 1,
-						RARE: 1,
-						LEGENDARY: 1,
-					},
-				}),
-		).toThrow("ガチャの rarity を 1 つ以上設定してください");
+		expect(() => {
+			return new GachaPool<TestEntry>({
+				rarities: [],
+				rarityWeights: {
+					COMMON: 1,
+					RARE: 1,
+					LEGENDARY: 1,
+				},
+			});
+		}).toThrow("ガチャの rarity を 1 つ以上設定してください");
 	});
 
 	it("不正な weight があると作成時にエラーになる", () => {
-		expect(
-			() =>
-				new GachaPool<TestEntry>({
-					rarities: ["COMMON", "RARE", "LEGENDARY"],
-					rarityWeights: {
-						COMMON: 1,
-						RARE: -1,
-						LEGENDARY: 1,
-					},
-				}),
-		).toThrow("ガチャのレアリティ RARE の weight が不正です");
+		expect(() => {
+			return new GachaPool<TestEntry>({
+				rarities: ["COMMON", "RARE", "LEGENDARY"],
+				rarityWeights: {
+					COMMON: 1,
+					RARE: -1,
+					LEGENDARY: 1,
+				},
+			});
+		}).toThrow("ガチャのレアリティ RARE の weight が不正です");
 	});
 
 	it("候補が空のまま draw するとエラーになる", () => {
@@ -67,9 +65,9 @@ describe("GachaPool", () => {
 			random: createSequentialRandom(0),
 		});
 
-		expect(() => gacha.draw()).toThrow(
-			"ガチャの抽選可能な候補を 1 つ以上設定してください",
-		);
+		expect(() => {
+			return gacha.draw();
+		}).toThrow("ガチャの抽選可能な候補を 1 つ以上設定してください");
 	});
 
 	it("候補が入っている rarity だけで weight を正規化して抽選する", () => {
@@ -268,8 +266,8 @@ describe("GachaPool", () => {
 
 		gacha.addEntries([{ rarity: "COMMON", id: "common-1", name: "Common" }]);
 
-		expect(() => gacha.draw()).toThrow(
-			"ガチャの random は 0 以上 1 未満の数値を返してください",
-		);
+		expect(() => {
+			return gacha.draw();
+		}).toThrow("ガチャの random は 0 以上 1 未満の数値を返してください");
 	});
 });

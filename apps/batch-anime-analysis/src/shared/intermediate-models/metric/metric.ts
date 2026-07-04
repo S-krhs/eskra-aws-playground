@@ -1,5 +1,5 @@
-// やること: app 内の処理間で受け渡す metric 中間表現の型と正規化処理を提供する
-// やらないこと: データ取得、selector 解釈、通知文生成を扱う
+// In scope: app 内の処理間で受け渡す metric 中間表現の型と正規化処理を提供する
+// Out of scope: データ取得、selector 解釈、通知文生成を扱う
 
 /** app 内の処理間で受け渡す対象名に紐づく数値 metric。 */
 export interface Metric {
@@ -14,14 +14,19 @@ export interface MetricInput {
 }
 
 /** 未正規化入力から metric 中間表現を作る。 */
-export const buildMetric = ({ label, value }: MetricInput): Metric => ({
-	label: normalizeMetricLabel(label),
-	value: normalizeMetricValue(value),
-});
+export const buildMetric = ({ label, value }: MetricInput): Metric => {
+	return {
+		label: normalizeMetricLabel(label),
+		value: normalizeMetricValue(value),
+	};
+};
 
 /** 未正規化入力一覧から metric 中間表現一覧を作る。 */
-export const buildMetrics = (inputs: readonly MetricInput[]): Metric[] =>
-	inputs.map((input) => buildMetric(input));
+export const buildMetrics = (inputs: readonly MetricInput[]): Metric[] => {
+	return inputs.map((input) => {
+		return buildMetric(input);
+	});
+};
 
 /** 任意の値を metric label へ変換する。 */
 export const normalizeMetricLabel = (value: unknown): string => {
