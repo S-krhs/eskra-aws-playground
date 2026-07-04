@@ -19,6 +19,7 @@ export default $config({
 		const { batchNames: animeBatchNames } = await import(
 			"../apps/batch-anime-analysis/src/shared/routes/batch-names.js"
 		);
+		const { alarmDescriptions } = await import("./alarm-descriptions.js");
 
 		// UMA ワンドロお題通知用の Discord Webhook URL を Secret として扱う
 		const umaOneDrawTopicWebhookUrl = new sst.Secret(
@@ -226,8 +227,7 @@ export default $config({
 		// worker が規定回数リトライしても失敗し DLQ にメッセージが滞留したら通知する
 		new aws.cloudwatch.MetricAlarm("AnimeAnalysisDlqDepthAlarm", {
 			name: `${appName}-${$app.stage}-anime-dlq-depth`,
-			alarmDescription:
-				"アニメ分析 worker が失敗し DLQ にメッセージが滞留している",
+			alarmDescription: alarmDescriptions.animeAnalysisDlqDepth,
 			namespace: "AWS/SQS",
 			metricName: "ApproximateNumberOfMessagesVisible",
 			dimensions: {
@@ -247,7 +247,7 @@ export default $config({
 		// DLQ を持たない schedule 起動の orchestrator のエラーを通知する
 		new aws.cloudwatch.MetricAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
 			name: `${appName}-${$app.stage}-anime-orchestrator-errors`,
-			alarmDescription: "アニメ分析 orchestrator の実行が失敗した",
+			alarmDescription: alarmDescriptions.animeAnalysisOrchestratorError,
 			namespace: "AWS/Lambda",
 			metricName: "Errors",
 			dimensions: {
