@@ -1,11 +1,17 @@
-// In scope: 指定の API URL から JSON を取得し、metric 一覧へ変換する
-// Out of scope: HTTP クライアントの設定やリトライ、アプリ固有の定義変換を行う
+// In scope: 指定の API URL から JSON を取得し（timeout / 応答サイズ上限つき）、metric 一覧へ変換する
+// Out of scope: リトライ制御やアプリ固有の定義変換を行う
 import type { Metric } from "../../shared/intermediate-models/metric/metric.js";
 import {
 	type JsonParseOptions,
 	type JsonValueTarget,
 	parseJsonMetrics,
 } from "./json-parser.js";
+
+/** API 取得のタイムアウト（ミリ秒）。 */
+const FETCH_TIMEOUT_MS = 10_000;
+
+/** 受け入れる API 応答の最大サイズ（バイト目安）。 */
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 
 /** API から metric を取り出すための source 定義。 */
 export type ApiSource = {
@@ -22,11 +28,26 @@ export type ApiSource = {
  * @returns 解析済みの `Metric[]`
  */
 export const getApiMetrics = async (source: ApiSource): Promise<Metric[]> => {
-	const response = await fetch(source.url);
+	const response = await fetch(source.url, {
+		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+	});
 	if (!response.ok) {
 		throw new Error(`API metric 取得に失敗しました: ${response.status}`);
 	}
-	const jsonData: unknown = await response.json();
+
+	const declaredLength = Number(response.headers.get("content-length"));
+	if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
+		throw new Error(
+			`API 応答サイズが上限を超えています: ${declaredLength} bytes`,
+		);
+	}
+
+	const body = await response.text();
+	if (body.length > MAX_RESPONSE_BYTES) {
+		throw new Error("API 応答サイズが上限を超えています");
+	}
+
+	const jsonData: unknown = JSON.parse(body);
 	const parseOptions: JsonParseOptions = {
 		itemsPath: source.itemsPath,
 		labelPath: source.labelPath,
