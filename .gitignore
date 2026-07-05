@@ -26,3 +26,6 @@ pnpm-debug.log*
 
 # Coverage
 /coverage/
+
+# Test reports
+**/vitest-report.json

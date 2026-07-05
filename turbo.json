@@ -10,7 +10,7 @@
 		},
 		"test": {
 			"dependsOn": ["^build"],
-			"outputs": []
+			"outputs": ["vitest-report.json"]
 		},
 		"typecheck": {
 			"dependsOn": ["^build"],

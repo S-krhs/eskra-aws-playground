@@ -1,12 +1,14 @@
 // In scope: UMA ワンドロのお題メッセージを生成する
 // Out of scope: Discord payload 生成、外部送信、Lambda レスポンス作成を行う
 import { GachaPool } from "@lambda-batch-playground/libs/gacha/gacha-pool.js";
+import { topicEntryRepository } from "@lambda-batch-playground/repositories/playground/topic-entry.repository.js";
 import {
-	TOPIC_ENTRIES,
-	TOPIC_MESSAGE_TEMPLATE,
 	TOPIC_RARITIES,
-	TOPIC_RARITY_WEIGHTS,
 	type TopicEntry,
+} from "@lambda-batch-playground/repositories/playground/types.js";
+import {
+	TOPIC_MESSAGE_TEMPLATE,
+	TOPIC_RARITY_WEIGHTS,
 } from "./topic-settings.js";
 
 /** UMA ワンドロのお題メッセージ。 */
@@ -20,7 +22,8 @@ const selectTopicName = (): string => {
 		rarityWeights: TOPIC_RARITY_WEIGHTS,
 	});
 
-	gacha.addEntries(TOPIC_ENTRIES);
+	const topicEntries = topicEntryRepository.findMany();
+	gacha.addEntries(topicEntries);
 
 	return gacha.draw().name;
 };

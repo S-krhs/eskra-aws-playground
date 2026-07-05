@@ -1,11 +1,11 @@
 {
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
 	"files": {
-		"includes": [
-			"**/*",
-			"!**/.sst/**",
-			"!**/node_modules/**",
-			"!**/dist/**"
-		]
+		"includes": ["**/*", "!**/package-lock.json"]
 	},
 	"linter": {
 		"rules": {

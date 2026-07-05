@@ -4,13 +4,15 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		"./anime/data.js": {
-			"types": "./dist/anime/data.d.ts",
-			"default": "./dist/anime/data.js"
+		"./anime/*.test.js": null,
+		"./anime/*.js": {
+			"types": "./dist/anime/*.d.ts",
+			"default": "./dist/anime/*.js"
 		},
-		"./anime/data-source.repository.js": {
-			"types": "./dist/anime/data-source.repository.d.ts",
-			"default": "./dist/anime/data-source.repository.js"
+		"./playground/*.test.js": null,
+		"./playground/*.js": {
+			"types": "./dist/playground/*.d.ts",
+			"default": "./dist/playground/*.js"
 		}
 	},
 	"scripts": {
@@ -18,7 +20,7 @@
 		"build": "npm run clean && tsc -p tsconfig.json",
 		"test": "vitest run",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"lint": "biome ci README.md anime package.json tsconfig.json",
+		"lint": "biome ci README.md anime playground package.json tsconfig.json",
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	}
 }
