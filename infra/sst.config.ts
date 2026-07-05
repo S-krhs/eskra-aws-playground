@@ -13,13 +13,10 @@ export default $config({
 		};
 	},
 	async run() {
-		const { batchNames: playgroundBatchNames } = await import(
-			"../apps/batch-playground/src/shared/routes/batch-names.js"
+		const { jobSchedules } = await import("./config/job-schedules.js");
+		const { alarmDescriptions } = await import(
+			"./config/alarm-descriptions.js"
 		);
-		const { batchNames: animeBatchNames } = await import(
-			"../apps/batch-anime-analysis/src/shared/routes/batch-names.js"
-		);
-		const { alarmDescriptions } = await import("./alarm-descriptions.js");
 
 		// UMA ワンドロお題通知用の Discord Webhook URL を Secret として扱う
 		const umaOneDrawTopicWebhookUrl = new sst.Secret(
@@ -35,15 +32,10 @@ export default $config({
 			link: [umaOneDrawTopicWebhookUrl],
 		});
 
-		// UMA ワンドロお題通知を毎日 JST 12:00 に起動する Scheduler を作成
+		// UMA ワンドロお題通知の Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
 		new sst.aws.CronV2("UmaOneDrawTopicSchedule", {
 			function: batchFunction,
-			schedule: "cron(0 12 * * ? *)",
-			timezone: "Asia/Tokyo",
-			retries: 0,
-			event: {
-				job: playgroundBatchNames.umaOneDrawTopic,
-			},
+			...jobSchedules.umaOneDrawTopic,
 		});
 
 		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
@@ -147,15 +139,10 @@ export default $config({
 			},
 		);
 
-		// アニメ分析 Orchestrator を毎日 JST 09:00 に起動する Scheduler を作成
+		// アニメ分析 Orchestrator の Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
 		new sst.aws.CronV2("AnimeAnalysisSchedule", {
 			function: animeAnalysisOrchestratorFunction,
-			schedule: "cron(0 9 * * ? *)",
-			timezone: "Asia/Tokyo",
-			retries: 0,
-			event: {
-				job: animeBatchNames.animeScrapingOrchestrator,
-			},
+			...jobSchedules.animeScrapingOrchestrator,
 		});
 
 		// SQS message ごとにアニメ分析スクレイピングを実行する Worker Lambda を作成
