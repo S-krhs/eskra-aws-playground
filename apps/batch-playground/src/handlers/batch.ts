@@ -8,13 +8,5 @@ export const handler = async (event: unknown = {}): Promise<BatchResponse> => {
 	const jobName = getJobName(event);
 	const batchJob = resolveBatchJob(jobName);
 
-	console.log("Starting batch job", {
-		jobName,
-	});
-
-	const result = await batchJob(event);
-
-	console.log("Batch job finished", result);
-
-	return result;
+	return batchJob(event);
 };
