@@ -13,14 +13,6 @@ export interface MetricInput {
 	value: unknown;
 }
 
-/** 未正規化入力から metric 中間表現を作る。 */
-export const buildMetric = ({ label, value }: MetricInput): Metric => {
-	return {
-		label: normalizeMetricLabel(label),
-		value: normalizeMetricValue(value),
-	};
-};
-
 /** 未正規化入力一覧から作った metric 中間表現一覧と、変換できず除外した入力の件数。 */
 export interface MetricBuildResult {
 	metrics: Metric[];
@@ -36,7 +28,11 @@ export const buildMetrics = (
 
 	for (const input of inputs) {
 		try {
-			metrics.push(buildMetric(input));
+			const metric = {
+				label: normalizeMetricLabel(input.label),
+				value: normalizeMetricValue(input.value),
+			};
+			metrics.push(metric);
 		} catch {
 			skippedCount += 1;
 		}

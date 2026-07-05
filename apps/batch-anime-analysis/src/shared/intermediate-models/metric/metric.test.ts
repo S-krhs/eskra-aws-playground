@@ -1,25 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-	buildMetric,
 	buildMetrics,
 	normalizeMetricLabel,
 	normalizeMetricValue,
 } from "./metric.js";
-
-describe("buildMetric", () => {
-	it("未正規化入力から metric 中間表現を作る", () => {
-		expect(
-			buildMetric({
-				label: " Title A ",
-				value: "1,234",
-			}),
-		).toEqual({
-			label: "Title A",
-			value: 1234,
-		});
-	});
-});
 
 describe("buildMetrics", () => {
 	it("変換できない入力は除外して件数に数える", () => {
