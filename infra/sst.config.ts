@@ -140,9 +140,13 @@ export default $config({
 		);
 
 		// アニメ分析 Orchestrator の Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
-		new sst.aws.CronV2("AnimeAnalysisSchedule", {
+		new sst.aws.CronV2("AnimeAnalysisSchedule9", {
 			function: animeAnalysisOrchestratorFunction,
-			...jobSchedules.animeScrapingOrchestrator,
+			...jobSchedules.animeScrapingOrchestrator9,
+		});
+		new sst.aws.CronV2("AnimeAnalysisSchedule22", {
+			function: animeAnalysisOrchestratorFunction,
+			...jobSchedules.animeScrapingOrchestrator22,
 		});
 
 		// SQS message ごとにアニメ分析スクレイピングを実行する Worker Lambda を作成

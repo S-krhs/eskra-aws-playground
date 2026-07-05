@@ -13,7 +13,11 @@ export type JobSchedule = {
 	/** 起動失敗時のリトライ回数。 */
 	readonly retries: number;
 	/** Lambda に渡すイベント。batch-router がこの job 名でジョブを解決する。 */
-	readonly event: { readonly job: string };
+	readonly event: {
+		readonly job: string;
+		/** 起動スケジュールごとに対象を切り替える job（アニメ orchestrator）へ渡す時刻。 */
+		readonly scheduleHour?: number;
+	};
 };
 
 /** schedule 起動する batch job のスケジュール設定を job 単位で一元管理する。 */
@@ -26,10 +30,17 @@ export const jobSchedules = {
 		event: { job: playgroundBatchNames.umaOneDrawTopic },
 	},
 	/** アニメ分析 orchestrator を毎日 JST 09:00 に起動する。 */
-	animeScrapingOrchestrator: {
+	animeScrapingOrchestrator9: {
 		schedule: "cron(0 9 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
-		event: { job: animeBatchNames.animeScrapingOrchestrator },
+		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 9 },
+	},
+	/** アニメ分析 orchestrator を毎日 JST 22:00 に起動する。 */
+	animeScrapingOrchestrator22: {
+		schedule: "cron(0 22 * * ? *)",
+		timezone: "Asia/Tokyo",
+		retries: 0,
+		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 22 },
 	},
 } as const satisfies Record<string, JobSchedule>;

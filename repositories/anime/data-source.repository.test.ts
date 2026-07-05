@@ -10,12 +10,10 @@ describe("dataSourceRepository", () => {
 
 	it("id に一致する data source を返す", () => {
 		const dataSource = animeMetricDataSources.find((ds) => {
-			return ds.id === "danime-night-rank";
+			return ds.id === "danime-rank";
 		});
 
-		expect(dataSourceRepository.findUnique("danime-night-rank")).toEqual(
-			dataSource,
-		);
+		expect(dataSourceRepository.findUnique("danime-rank")).toEqual(dataSource);
 	});
 
 	it("id に一致する data source がない場合は null を返す", () => {

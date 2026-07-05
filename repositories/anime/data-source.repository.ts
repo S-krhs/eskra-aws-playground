@@ -8,6 +8,12 @@ export const dataSourceRepository = {
 		return [...animeMetricDataSources];
 	},
 
+	findManyByScheduleHour: (scheduleHour: number): AnimeMetricDataSource[] => {
+		return animeMetricDataSources.filter((dataSource) => {
+			return dataSource.scheduleHour === scheduleHour;
+		});
+	},
+
 	findUnique: (id: string): AnimeMetricDataSource | null => {
 		const dataSource =
 			animeMetricDataSources.find((ds) => {

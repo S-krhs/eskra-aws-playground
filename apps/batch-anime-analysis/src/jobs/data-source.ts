@@ -53,7 +53,6 @@ export const dataSourceJob: SqsBatchHandler = async (event) => {
 				source: {
 					websiteName: dataSource.websiteName,
 					metricName: dataSource.metricName,
-					timeframe: dataSource.timeframe,
 				},
 				metrics,
 			});

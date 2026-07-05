@@ -10,7 +10,6 @@ const TRUNCATION_NOTE = "\n…（文字数上限のため以降を省略）";
 export interface ScrapingReportSource {
 	websiteName: string;
 	metricName: string;
-	timeframe: string;
 }
 
 /** アニメ指標スクレイピング結果レポートの入力。 */
@@ -30,7 +29,6 @@ export const buildScrapingReport = ({
 		"📊 **アニメ指標スクレイピング結果**",
 		`> 🌐 サイト：${source.websiteName}`,
 		`> 📈 指標：${source.metricName}`,
-		`> 🗓️ 期間：${source.timeframe}`,
 		`> 🔢 件数：${formatNumber(metrics.length)} 件`,
 	].join("\n");
 
