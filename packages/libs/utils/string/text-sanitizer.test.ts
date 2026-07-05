@@ -21,6 +21,20 @@ describe("sanitizeText", () => {
 		).toBe("token=[redacted] user=user");
 	});
 
+	it("string pattern は全ての出現を置換する", () => {
+		expect(
+			sanitizeText("alice met alice", {
+				replacements: [
+					{
+						pattern: "alice",
+						replacement: "user",
+					},
+				],
+				maxLength: 100,
+			}),
+		).toBe("user met user");
+	});
+
 	it("置換後の文字列を最大文字数で切り詰める", () => {
 		expect(
 			sanitizeText("0123456789", {

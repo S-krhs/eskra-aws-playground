@@ -7,14 +7,16 @@
 
 - ジョブ名は実行内容が分かるバッチ名にする。例: `uma-one-draw-topic`
 - `src/routing/batch-router.ts` の `resolveBatchJob` にジョブ名と handler を追加する。
-- ジョブ handler はイベント値の正規化、feature 呼び出し、integration 呼び出し、共通レスポンス作成に集中する。
+- ジョブ handler は実行時設定の解決、feature 呼び出し、integration 呼び出し、共通レスポンス作成に集中する。
+- job ごとの実行時設定の解決は `src/jobs/runtime-settings/<job>-setting-resolver.ts` に置く。
 - オーケストレーション手順は、処理セクションごとに 1 行コメントを残す。
 - 新しいジョブを追加したら、app `README.md` の実行できるジョブと環境変数を更新する。
 
 ## 入力・レスポンス・ログ
 
-- `LambdaEvent` は外部入力として扱い、使う直前に型チェック、trim、正規化を行う。
+- 起動イベントは `unknown` として受け取り、routing で使う直前に schema で検証・正規化する。
 - レスポンスは `BatchResponse` に合わせ、呼び出し元が機械的に扱える形にする。
+- 境界データの型・契約は `src/shared/schemas/` に置く（Lambda handler は `lambda/<handler>/event.ts`・`response.ts`）。実行時設定の型と解決は `src/jobs/runtime-settings/` に置き、外部システムと話す実装は `packages/integrations/*` に置く。
 - `details` には調査に役立つ安全な情報だけを入れる。
 - 開始/終了ログには、ジョブ名や URL の有無など安全な値だけを出す。
 - 設定不足、入力不備、外部 API 失敗はエラーメッセージで区別できるようにする。

@@ -46,7 +46,7 @@ export const dataSourceJob = async (
 
 			// 3. 定義の取得方式に合わせて metric を取得する。
 			const sourceType = dataSource.source.type;
-			const metrics =
+			const { metrics, skippedCount } =
 				sourceType === "api"
 					? await getApiMetrics(dataSource.source)
 					: await getWebpageMetrics(dataSource.source);
@@ -58,6 +58,7 @@ export const dataSourceJob = async (
 					metricName: dataSource.metricName,
 				},
 				metrics,
+				skippedCount,
 			});
 			if (!discordWebhookClient) {
 				const { discordWebhookUrl } = getDataSourceSettings();
@@ -71,6 +72,7 @@ export const dataSourceJob = async (
 				websiteName: dataSource.websiteName,
 				metricName: dataSource.metricName,
 				resultCount: metrics.length,
+				skippedCount,
 			});
 		} catch (error) {
 			logger.failure(error, {

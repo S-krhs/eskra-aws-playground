@@ -1,21 +1,27 @@
 import { describe, expect, it } from "vitest";
 
 import {
-	buildMetric,
+	buildMetrics,
 	normalizeMetricLabel,
 	normalizeMetricValue,
 } from "./metric.js";
 
-describe("buildMetric", () => {
-	it("未正規化入力から metric 中間表現を作る", () => {
+describe("buildMetrics", () => {
+	it("変換できない入力は除外して件数に数える", () => {
 		expect(
-			buildMetric({
-				label: " Title A ",
-				value: "1,234",
-			}),
+			buildMetrics([
+				{ label: "Title A", value: "1,234" },
+				{ label: "Title B", value: "N/A" },
+				{ label: "", value: 10 },
+			]),
 		).toEqual({
-			label: "Title A",
-			value: 1234,
+			metrics: [
+				{
+					label: "Title A",
+					value: 1234,
+				},
+			],
+			skippedCount: 2,
 		});
 	});
 });
@@ -33,5 +39,17 @@ describe("normalizeMetricValue", () => {
 		expect(() => {
 			return normalizeMetricValue("not-number");
 		}).toThrow("metric value を number に変換できません");
+	});
+
+	it("空文字の value は 0 とみなさずエラーにする", () => {
+		expect(() => {
+			return normalizeMetricValue(" ");
+		}).toThrow("metric value が空です");
+	});
+
+	it("欠損値の value はエラーにする", () => {
+		expect(() => {
+			return normalizeMetricValue(undefined);
+		}).toThrow("metric value が空です");
 	});
 });

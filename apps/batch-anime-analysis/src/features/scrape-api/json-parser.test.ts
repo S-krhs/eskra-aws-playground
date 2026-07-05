@@ -29,16 +29,54 @@ describe("parseJsonMetrics", () => {
 					},
 				},
 			),
-		).toEqual([
-			{
-				label: "Title A",
-				value: 1234,
-			},
-			{
-				label: "Title B",
-				value: 567,
-			},
-		]);
+		).toEqual({
+			metrics: [
+				{
+					label: "Title A",
+					value: 1234,
+				},
+				{
+					label: "Title B",
+					value: 567,
+				},
+			],
+			skippedCount: 0,
+		});
+	});
+
+	it("metric に変換できない item は除外して件数に数える", () => {
+		expect(
+			parseJsonMetrics(
+				{
+					items: [
+						{
+							title: "Title A",
+							score: "N/A",
+						},
+						{
+							title: "Title B",
+							score: 567,
+						},
+					],
+				},
+				{
+					itemsPath: "items",
+					labelPath: "title",
+					value: {
+						type: "path",
+						path: "score",
+					},
+				},
+			),
+		).toEqual({
+			metrics: [
+				{
+					label: "Title B",
+					value: 567,
+				},
+			],
+			skippedCount: 1,
+		});
 	});
 
 	it("item-index を metric value にできる", () => {
@@ -62,15 +100,18 @@ describe("parseJsonMetrics", () => {
 					},
 				},
 			),
-		).toEqual([
-			{
-				label: "Title A",
-				value: 1,
-			},
-			{
-				label: "Title B",
-				value: 2,
-			},
-		]);
+		).toEqual({
+			metrics: [
+				{
+					label: "Title A",
+					value: 1,
+				},
+				{
+					label: "Title B",
+					value: 2,
+				},
+			],
+			skippedCount: 0,
+		});
 	});
 });

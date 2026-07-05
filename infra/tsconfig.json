@@ -5,6 +5,6 @@
 		"declaration": false
 	},
 	// sst.config.ts は SST が生成する .sst/platform の型に依存し CI には存在しないため検査対象外。
-	// 設定値を持つ config/ のみ型検査する。
-	"include": ["config"]
+	// 設定値を持つ config/ と、layer 定義の検証テストを持つ layers/ を型検査する。
+	"include": ["config", "layers"]
 }

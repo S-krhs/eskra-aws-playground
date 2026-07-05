@@ -48,7 +48,7 @@ export default $config({
 			"AnimeAnalysisDeadLetterQueue",
 		);
 		const animeAnalysisQueue = new sst.aws.Queue("AnimeAnalysisQueue", {
-			visibilityTimeout: "6 minutes",
+			visibilityTimeout: "12 minutes",
 			dlq: {
 				queue: animeAnalysisDeadLetterQueue.arn,
 				retry: 3,
@@ -154,7 +154,7 @@ export default $config({
 			{
 				handler: "../apps/batch-anime-analysis/src/handlers/sqs-worker.handler",
 				runtime: "nodejs22.x",
-				timeout: "5 minutes",
+				timeout: "2 minutes",
 				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
 				layers: [browserRuntimeLayer.arn],

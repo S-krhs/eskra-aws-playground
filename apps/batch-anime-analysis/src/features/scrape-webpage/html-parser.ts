@@ -4,7 +4,7 @@
 import * as cheerio from "cheerio";
 import {
 	buildMetrics,
-	type Metric,
+	type MetricBuildResult,
 } from "../../shared/intermediate-models/metric/metric.js";
 
 /** HTML 上の要素を選ぶ指定。 */
@@ -31,11 +31,11 @@ export interface HtmlParseOptions {
 	value: HtmlValueTarget;
 }
 
-/** HTML から metric 一覧を作る。 */
+/** HTML から metric 一覧を作る。変換できない item は除外して件数に数える。 */
 export const parseHtmlMetrics = (
 	html: string,
 	options: HtmlParseOptions,
-): Metric[] => {
+): MetricBuildResult => {
 	const $ = cheerio.load(html);
 	const wrapper = $(options.wrapper.selector).eq(options.wrapper.index ?? 0);
 	const items = wrapper.find(options.itemsSelector).toArray();

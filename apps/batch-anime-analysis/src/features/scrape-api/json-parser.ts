@@ -2,7 +2,7 @@
 // Out of scope: JSON 取得、HTML 解析、app 固有の定義変換を行う
 import {
 	buildMetrics,
-	type Metric,
+	type MetricBuildResult,
 } from "../../shared/intermediate-models/metric/metric.js";
 
 /** JSON metric value の取得方法。 */
@@ -22,11 +22,11 @@ export interface JsonParseOptions {
 	value: JsonValueTarget;
 }
 
-/** JSON データから metric 一覧を作る。 */
+/** JSON データから metric 一覧を作る。変換できない item は除外して件数に数える。 */
 export const parseJsonMetrics = (
 	jsonData: unknown,
 	options: JsonParseOptions,
-): Metric[] => {
+): MetricBuildResult => {
 	const items = readJsonPath(jsonData, options.itemsPath);
 
 	if (!Array.isArray(items)) {

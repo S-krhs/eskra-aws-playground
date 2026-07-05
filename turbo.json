@@ -9,8 +9,7 @@
 			"outputs": ["dist/**"]
 		},
 		"test": {
-			"dependsOn": ["^build"],
-			"outputs": ["vitest-report.json"]
+			"dependsOn": ["^build"]
 		},
 		"typecheck": {
 			"dependsOn": ["^build"],

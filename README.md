@@ -2,11 +2,6 @@
 
 AWS Lambda と SST でバッチジョブを運用する TypeScript モノレポです。
 
-### app 指定実行
-
-- `npm run local:batch-playground`
-- `npm run local:batch-anime-analysis`
-
 ## コマンド
 
 - `npm run local:batch-playground`

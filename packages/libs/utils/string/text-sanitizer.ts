@@ -1,7 +1,7 @@
 // In scope: 文字列に置換リストと最大長制限を適用する
 // Out of scope: 特定サービス固有の secret 判定やログ出力を行う
 
-/** 文字列 sanitizer で適用する置換ルール。 */
+/** 文字列 sanitizer で適用する置換ルール。string pattern は全ての出現を置換し、RegExp は flag に従う。 */
 export interface TextReplacement {
 	pattern: string | RegExp;
 	replacement: string;
@@ -28,10 +28,16 @@ export const sanitizeText = (
 
 	let replacedText = text;
 	for (const replacementRule of replacements) {
-		replacedText = replacedText.replace(
-			replacementRule.pattern,
-			replacementRule.replacement,
-		);
+		replacedText =
+			typeof replacementRule.pattern === "string"
+				? replacedText.replaceAll(
+						replacementRule.pattern,
+						replacementRule.replacement,
+					)
+				: replacedText.replace(
+						replacementRule.pattern,
+						replacementRule.replacement,
+					);
 	}
 
 	return replacedText.length > maxLength

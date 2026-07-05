@@ -16,6 +16,8 @@ export interface ScrapingReportSource {
 export interface ScrapingReportInput {
 	source: ScrapingReportSource;
 	metrics: readonly Metric[];
+	/** metric へ変換できず除外した件数。 */
+	skippedCount?: number;
 	previewLimit?: number;
 }
 
@@ -23,14 +25,19 @@ export interface ScrapingReportInput {
 export const buildScrapingReport = ({
 	source,
 	metrics,
+	skippedCount = 0,
 	previewLimit = DEFAULT_PREVIEW_LIMIT,
 }: ScrapingReportInput): string => {
-	const header = [
+	const headerLines = [
 		"📊 **アニメ指標スクレイピング結果**",
 		`> 🌐 サイト：${source.websiteName}`,
 		`> 📈 指標：${source.metricName}`,
 		`> 🔢 件数：${formatNumber(metrics.length)} 件`,
-	].join("\n");
+	];
+	if (skippedCount > 0) {
+		headerLines.push(`> ⚠️ 変換除外：${formatNumber(skippedCount)} 件`);
+	}
+	const header = headerLines.join("\n");
 
 	if (metrics.length === 0) {
 		return `${header}\n\n> ⚠️ 対象のデータを取得できませんでした`;

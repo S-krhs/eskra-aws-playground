@@ -1,14 +1,14 @@
-// In scope: app が使う secret 値を SST link またはローカル環境変数から解決する
+// In scope: UMA ワンドロお題通知 job が使う実行時設定の型と、SST link/環境変数からの解決を提供する
 // Out of scope: Lambda イベント解釈、外部サービス送信、ジョブ判定を行う
 import { Resource } from "sst/resource";
 
-/** Batch Playground app が使う secret 値。 */
-export interface BatchPlaygroundSecrets {
+/** UMA ワンドロお題通知 job が使う実行時設定。 */
+export interface UmaOneDrawTopicSettings {
 	discordWebhookUrl: string;
 }
 
-/** Batch Playground app が使う secret 値を解決する。 */
-export const resolveSecrets = (): BatchPlaygroundSecrets => {
+/** UMA ワンドロお題通知 job が使う実行時設定を解決する。 */
+export const getUmaOneDrawTopicSettings = (): UmaOneDrawTopicSettings => {
 	let linkedDiscordWebhookUrl = "";
 
 	try {

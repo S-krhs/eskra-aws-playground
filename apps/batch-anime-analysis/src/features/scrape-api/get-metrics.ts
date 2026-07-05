@@ -1,6 +1,6 @@
 // In scope: 指定の API URL から JSON を取得し（timeout / 応答サイズ上限つき）、metric 一覧へ変換する
 // Out of scope: リトライ制御やアプリ固有の定義変換を行う
-import type { Metric } from "../../shared/intermediate-models/metric/metric.js";
+import type { MetricBuildResult } from "../../shared/intermediate-models/metric/metric.js";
 import {
 	type JsonParseOptions,
 	type JsonValueTarget,
@@ -25,9 +25,11 @@ export type ApiSource = {
 /**
  * API の source 定義を受け取り、JSON を取得して metric 一覧を返す
  * @param source API から metric を取り出す定義
- * @returns 解析済みの `Metric[]`
+ * @returns 解析済み metric 一覧と変換できず除外した件数
  */
-export const getApiMetrics = async (source: ApiSource): Promise<Metric[]> => {
+export const getApiMetrics = async (
+	source: ApiSource,
+): Promise<MetricBuildResult> => {
 	const response = await fetch(source.url, {
 		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
