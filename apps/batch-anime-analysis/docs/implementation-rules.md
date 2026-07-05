@@ -43,4 +43,4 @@
 - JSON から metric への変換は `src/features/scrape-api/`、HTML から metric への変換は `src/features/scrape-webpage/` を使う。
 - repository のスクレイピング定義は、job で metric parser の入力指定へ変換する。
 - Playwright-core / Chromium の Webpage 実行と HTML 取得は `packages/libs/browser` に委譲する。
-- Supabase 接続と DB 登録はこの app ではまだ実装しない。
+- DB client、SQL、テーブル行構造は app に置かない。DB 登録は repository 境界に閉じ込める。

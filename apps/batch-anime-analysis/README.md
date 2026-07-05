@@ -2,7 +2,7 @@
 
 アニメ関連のランキングや指標をスクレイピングし、結果を Discord Webhook へ通知する app です。
 
-Supabase 接続、DB 登録はまだ行いません。SQS キューイングは Orchestrator Lambda と Worker Lambda に分け、dataSource 単位で再実行できる構成にしています。
+SQS キューイングは Orchestrator Lambda と Worker Lambda に分け、dataSource 単位で再実行できる構成にしています。
 
 ## 実行できるジョブ
 

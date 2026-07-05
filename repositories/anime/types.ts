@@ -1,5 +1,5 @@
-// In scope: repository 由来のアニメ指標スクレイピング定義の型を定義する
-// Out of scope: スクレイピング実行、DB 登録、外部通知を行う
+// In scope: アニメ指標スクレイピング定義の型を定義する
+// Out of scope: スクレイピング実行、永続化用の DB 行型、外部通知を行う
 
 /** スクレイピング対象の取得方式。 */
 export type AnimeMetricSourceType = "api" | "webpage";
