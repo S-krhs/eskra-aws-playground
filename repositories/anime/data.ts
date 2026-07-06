@@ -116,14 +116,15 @@ const myAnimeListScoreWebpageSource: AnimeWebpageMetricSource = {
 	wrapper: {
 		selector: ".js-categories-seasonal",
 	},
-	itemsSelector: ".title",
+	// .title の中の .js-score は非表示のソート用要素で、未評価の作品には MAL 側が "0" を入れているため使えない。
+	itemsSelector: ".seasonal-anime",
 	label: {
 		selector: ".js-title",
 	},
 	value: {
 		type: "element-text",
 		target: {
-			selector: ".js-score",
+			selector: ".score-label",
 		},
 	},
 };
