@@ -62,21 +62,32 @@ export const dataSourceJob = async (
 				metrics,
 			});
 
-			// 5. Discord 通知文を生成して送信する。
-			const reportMessage = buildScrapingReport({
-				source: {
-					websiteName: dataSource.websiteName,
-					metricName: dataSource.metricName,
-					higherIsBetter: dataSource.higherIsBetter,
-				},
-				metrics,
-				skippedCount,
-			});
-			if (!discordWebhookClient) {
-				const { discordWebhookUrl } = getDataSourceSettings();
-				discordWebhookClient = new DiscordWebhookClient(discordWebhookUrl);
+			// 5. Discord 通知は保存後の副作用として扱い、失敗しても record retry しない。
+			let notificationSucceeded = false;
+			try {
+				const reportMessage = buildScrapingReport({
+					source: {
+						websiteName: dataSource.websiteName,
+						metricName: dataSource.metricName,
+						higherIsBetter: dataSource.higherIsBetter,
+					},
+					metrics,
+					skippedCount,
+				});
+				if (!discordWebhookClient) {
+					const { discordWebhookUrl } = getDataSourceSettings();
+					discordWebhookClient = new DiscordWebhookClient(discordWebhookUrl);
+				}
+				await discordWebhookClient.postMessage(reportMessage);
+				notificationSucceeded = true;
+			} catch (notificationError) {
+				logger.failure(notificationError, {
+					messageId,
+					dataSourceId: dataSource.id,
+					operation: "discord-notification",
+					retryable: false,
+				});
 			}
-			await discordWebhookClient.postMessage(reportMessage);
 
 			logger.complete({
 				messageId,
@@ -85,6 +96,7 @@ export const dataSourceJob = async (
 				metricName: dataSource.metricName,
 				resultCount: metrics.length,
 				skippedCount,
+				notificationSucceeded,
 			});
 		} catch (error) {
 			logger.failure(error, {
