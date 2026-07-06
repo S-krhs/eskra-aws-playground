@@ -30,7 +30,7 @@ docs/
 - `infra/`: SST など、アプリをデプロイするためのインフラ定義。
 - `repositories/`: 複数 app から参照するデータアクセス境界。静的データ、DB、外部ストレージの詳細を隠蔽する。
 - `packages/integrations/*`: 外部サービス接続先ごとの integration package。
-- `packages/libs/utils`: ライブラリ依存を持たない汎用処理 package。
+- `packages/libs/utils`: 汎用処理 package。dayjs のような軽量な npm 依存は持てる。
 - `packages/libs/browser`: Playwright-core など browser 実行依存を持つ汎用処理 package。
 
 将来的に複数 app で共有する業務関心が出た場合は、`packages/domain/` を追加できます。
@@ -44,10 +44,10 @@ docs/
 apps/* -> packages/libs/browser
 apps/* -> packages/libs/utils
 apps/* -> packages/integrations/* -> packages/libs/utils
-apps/* -> repositories
+apps/* -> repositories -> packages/libs/utils
 ```
 
-- `repositories` は app へ依存しない。
+- `repositories` は app へ依存しない。`packages/libs/utils` には依存できる。
 - DB client、SQL、テーブル行構造は app へ漏らさず、repository package 内に閉じ込める。
 - `packages/libs/*` から `apps/*`、`packages/domain/*`、`packages/integrations/*` を import しない。
 - `packages/domain/*` から `apps/*`、`packages/integrations/*` を import しない。
@@ -71,7 +71,7 @@ apps/* -> repositories
 ## Package 方針
 
 - integration は接続先ごとに package を分ける。重い通信ライブラリや認証 SDK が接続先ごとに増えるため。
-- libs はライブラリ依存の有無で `packages/libs/utils` と `packages/libs/browser` に分ける。
-- `packages/libs/utils` は npm ライブラリ依存を持たない純粋処理を置く。
+- libs は依存の重さで `packages/libs/utils` と `packages/libs/browser` に分ける。
+- `packages/libs/utils` は純粋処理を置く。dayjs のような軽量な npm 依存は持てるが、実行環境に影響する重い依存は持たない。
 - `packages/libs/browser` は Playwright-core など browser 実行に必要な依存を持つ処理を置く。
 - app 固有の parser や domain 型は libs に置かず、app の `features/` または `shared/` に置く。

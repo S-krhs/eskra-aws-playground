@@ -4,7 +4,7 @@
 
 ## Package
 
-- `utils`: npm ライブラリ依存を持たない純粋処理。
+- `utils`: 汎用の純粋処理。dayjs のような軽量な npm 依存は持てる。
 - `browser`: Playwright-core など browser 実行に必要な依存を持つ処理。
 
 ## 置かないもの

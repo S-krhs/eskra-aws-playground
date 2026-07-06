@@ -4,6 +4,10 @@
 	"private": true,
 	"type": "module",
 	"exports": {
+		"./date/current-jst-date.js": {
+			"types": "./dist/date/current-jst-date.d.ts",
+			"default": "./dist/date/current-jst-date.js"
+		},
 		"./gacha/gacha-pool.js": {
 			"types": "./dist/gacha/gacha-pool.d.ts",
 			"default": "./dist/gacha/gacha-pool.js"
@@ -24,5 +28,8 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"lint": "biome ci .",
 		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"dependencies": {
+		"dayjs": "^1.11.21"
 	}
 }
