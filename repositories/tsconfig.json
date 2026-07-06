@@ -4,6 +4,11 @@
 		"outDir": "dist",
 		"rootDir": "."
 	},
-	"include": ["anime/**/*.ts", "playground/**/*.ts"],
+	"include": [
+		"anime/**/*.ts",
+		"db/**/*.ts",
+		"generated/**/*.ts",
+		"playground/**/*.ts"
+	],
 	"exclude": ["dist", "node_modules"]
 }
