@@ -36,11 +36,11 @@ export const jobSchedules = {
 		retries: 0,
 		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 9 },
 	},
-	/** アニメ分析 orchestrator を毎日 JST 22:00 に起動する。 */
-	animeScrapingOrchestrator22: {
-		schedule: "cron(0 22 * * ? *)",
+	/** アニメ分析 orchestrator を毎日 JST 23:00 に起動する。 */
+	animeScrapingOrchestrator23: {
+		schedule: "cron(0 23 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
-		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 22 },
+		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 23 },
 	},
 } as const satisfies Record<string, JobSchedule>;

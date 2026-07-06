@@ -147,9 +147,9 @@ export default $config({
 			function: animeAnalysisOrchestratorFunction,
 			...jobSchedules.animeScrapingOrchestrator9,
 		});
-		new sst.aws.CronV2("AnimeAnalysisSchedule22", {
+		new sst.aws.CronV2("AnimeAnalysisSchedule23", {
 			function: animeAnalysisOrchestratorFunction,
-			...jobSchedules.animeScrapingOrchestrator22,
+			...jobSchedules.animeScrapingOrchestrator23,
 		});
 
 		// SQS message ごとにアニメ分析スクレイピングを実行する Worker Lambda を作成

@@ -14,7 +14,7 @@ app の内部型や DB の行構造ではなく、どのサイトからどの指
   "websiteName": "MyAnimeList",
   "metricName": "score",
   "higherIsBetter": true,
-  "scheduleHourJst": 9,
+  "scheduleHourJst": 23,
   "source": {
     "type": "api",
     "url": "https://example.com/api",

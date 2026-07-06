@@ -165,7 +165,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "bilibili",
 		metricName: "rank",
 		higherIsBetter: false,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: bilibiliRankApiSource,
 	},
 	{
@@ -173,7 +173,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "bilibili",
 		metricName: "view",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: bilibiliViewApiSource,
 	},
 	{
@@ -181,7 +181,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "bilibili",
 		metricName: "danmaku",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: bilibiliDanmakuApiSource,
 	},
 	{
@@ -189,7 +189,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "bilibili",
 		metricName: "follow",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: bilibiliFollowApiSource,
 	},
 	{
@@ -197,7 +197,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "bilibili",
 		metricName: "series_follow",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: bilibiliSeriesFollowApiSource,
 	},
 	{
@@ -205,7 +205,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "danime",
 		metricName: "rank",
 		higherIsBetter: false,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: dAnimeRankApiSource,
 	},
 	{
@@ -213,7 +213,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "danime",
 		metricName: "users",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: dAnimeUsersApiSource,
 	},
 	{
@@ -221,7 +221,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "danime",
 		metricName: "favs",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: dAnimeFavsApiSource,
 	},
 	{
@@ -229,7 +229,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "danime",
 		metricName: "total_number",
 		higherIsBetter: true,
-		scheduleHourJst: 22,
+		scheduleHourJst: 23,
 		source: dAnimeTotalNumberApiSource,
 	},
 	{
@@ -237,7 +237,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "MyAnimeList",
 		metricName: "members",
 		higherIsBetter: true,
-		scheduleHourJst: 9,
+		scheduleHourJst: 23,
 		source: myAnimeListMembersWebpageSource,
 	},
 	{
@@ -245,7 +245,7 @@ export const animeMetricDataSources: readonly AnimeMetricDataSource[] = [
 		websiteName: "MyAnimeList",
 		metricName: "score",
 		higherIsBetter: true,
-		scheduleHourJst: 9,
+		scheduleHourJst: 23,
 		source: myAnimeListScoreWebpageSource,
 	},
 	{

@@ -8,15 +8,16 @@ SQS キューイングは Orchestrator Lambda と Worker Lambda に分け、data
 
 ### `anime-scraping-orchestrator`
 
-`repositories/anime/data.ts` にある全スクレイピング定義について、dataSource 単位の実行要求を SQS に投入します。EventBridge Scheduler が毎日 JST 09:00 に起動します。
+`repositories/anime/data.ts` にあるスクレイピング定義のうち、起動時刻に対応する dataSource について、dataSource 単位の実行要求を SQS に投入します。EventBridge Scheduler が毎日 JST 09:00 / 23:00 に起動します。
 
 ```json
 {
-  "job": "anime-scraping-orchestrator"
+  "job": "anime-scraping-orchestrator",
+  "scheduleHour": 9
 }
 ```
 
-- イベントの追加フィールドは読みません。常に repository の全 dataSource を投入します。
+- `scheduleHour` に一致する `scheduleHourJst` の dataSource だけを投入します。
 - SQS は Standard Queue です。順序は保証せず、再試行と DLQ は SQS に委譲します。
 
 ### `anime-scraping-data-source`
@@ -76,7 +77,7 @@ Worker のローカル実行:
 - Worker Lambda
 - Notifier Lambda（CloudWatch alarm を SNS 経由で受け、Discord へ通知する）
 - SQS Queue / DLQ
-- Orchestrator を毎日 JST 09:00 に起動する EventBridge Scheduler
+- Orchestrator を毎日 JST 09:00 / 23:00 に起動する EventBridge Scheduler
 - Playwright / Chromium 実行用の browser runtime Lambda Layer
 - 失敗検知用の SNS Topic と CloudWatch alarm（DLQ 滞留、Orchestrator エラー）
 

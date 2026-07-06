@@ -20,6 +20,32 @@ describe("dataSourceRepository", () => {
 		expect(dataSourceRepository.findUnique("unknown")).toBeNull();
 	});
 
+	it("schedule hour に一致する data source だけを返す", () => {
+		expect(
+			dataSourceRepository.findManyByScheduleHour(9).map((dataSource) => {
+				return dataSource.id;
+			}),
+		).toEqual(["netflix-jp-tv-rank", "netflix-jp-movie-rank"]);
+
+		expect(
+			dataSourceRepository.findManyByScheduleHour(23).map((dataSource) => {
+				return dataSource.id;
+			}),
+		).toEqual([
+			"bilibili-rank",
+			"bilibili-view",
+			"bilibili-danmaku",
+			"bilibili-follow",
+			"bilibili-series-follow",
+			"danime-rank",
+			"danime-users",
+			"danime-favs",
+			"danime-total-number",
+			"my-anime-list-members",
+			"my-anime-list-score",
+		]);
+	});
+
 	it("一覧は防御的コピーとして返す", () => {
 		const dataSources = dataSourceRepository.findMany();
 		dataSources.pop();
