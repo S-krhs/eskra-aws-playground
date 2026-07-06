@@ -1,7 +1,7 @@
 # Libs 実装ルール
 
-- npm ライブラリ依存を持たない処理は `packages/libs/utils` に置く。
-- browser 実行などライブラリ依存が必要な処理は `packages/libs/browser` に置く。
+- 汎用処理は `packages/libs/utils` に置く。dayjs のような軽量な npm 依存は持てる。
+- browser 実行など重いライブラリ依存が必要な処理は `packages/libs/browser` に置く。
 - `gacha`、`string`、`date`、`array` など処理の関心でディレクトリを切る。
 - `index.ts` とバレルファイルは作らない。
 - integration や app の都合が混ざり始めた場合は境界を見直す。DI は複雑さを減らす具体的な理由がある場合だけ使う。

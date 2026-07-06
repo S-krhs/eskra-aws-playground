@@ -1,0 +1,31 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../repositories/generated/prisma"
+  importFileExtension = "js"
+}
+
+generator zod {
+  provider = "prisma-zod-generator"
+  output   = "../repositories/generated/zod"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["anime"]
+}
+
+model ScrapingMetric {
+  id           BigInt   @id @default(autoincrement())
+  /// @zod.string.min(1)
+  dataSourceId String   @map("data_source_id")
+  /// @zod.string.min(1)
+  label        String
+  /// @zod.number.finite()
+  value        Float
+  scrapedDate  DateTime @map("scraped_date") @db.Date
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([dataSourceId, scrapedDate])
+  @@map("scraping_metrics")
+  @@schema("anime")
+}

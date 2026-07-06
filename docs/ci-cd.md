@@ -14,7 +14,8 @@
 4. `npm run lint`
 5. `npm run test`
 6. AWS OIDC 認証
-7. `npm run deploy`
+7. `npm run db:migrate`（DB migration。`DIRECT_DATABASE_URL` はこの step の env にだけ渡す）
+8. `npm run deploy`
 
 `npm run typecheck` と `npm run lint` は Turbo 経由で workspace ごとに実行します。
 `infra` も workspace として typecheck / lint の対象に含めます。
@@ -43,14 +44,33 @@ SST は `infra/sst.config.ts` から次のリソースを管理します。
 - `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL`
 - `ANIME_ANALYSIS_DISCORD_WEBHOOK_URL`
 - `ALERT_DISCORD_WEBHOOK_URL`
+- `DATABASE_URL`（develop 用 Neon branch の pooled 接続文字列。`SST_SECRET_DatabaseUrl` として worker へ渡す）
+- `DIRECT_DATABASE_URL`（develop 用 Neon branch の direct 接続文字列。migration step だけが使う）
 
-これらは deploy job で `SST_SECRET_*` env として SST secret に渡します。
+Webhook 系は deploy job で `SST_SECRET_*` env として SST secret に渡します。
 app/job 固有の GitHub Actions Secrets は、該当 app の README を参照します。
 
 アニメ分析 worker は、Playwright / Chromium 実行に必要な runtime 依存を `infra/layers/browser-runtime` から Lambda Layer として発行して参照します。
 この Layer は deploy 前に `npm run build:browser-runtime-layer` で `.tmp/layers/browser-runtime` に作成します。
 Layer archive は Lambda の direct upload 上限を避けるため、versioning を有効にした `sst-asset-*` S3 bucket に置いてから publish します。
 
+
+## DB migration
+
+CD は deploy の直前に `npm run db:migrate`（`prisma migrate deploy`）を常に実行します。適用されるのは commit 済みの `migration/migrations/` だけです。
+
+- migration の作成・ルール・コマンドは [migration/README.md](../migration/README.md) を参照します。
+- 破壊的 migration（column の drop / rename / 型変更）を含む PR は、その旨を PR 本文に明記しレビュー承認を必須とします。
+- rollback は forward-only（打ち消し migration を新規作成）とします。
+
+### Neon の手動セットアップ（記録）
+
+Neon project の作成だけは console での手作業を許容し、内容をここに記録します。
+
+- Neon project を AWS ap-southeast-1 に作成。
+- default branch を develop 用として使い、ローカル用に child branch `local` を作成。
+- 接続文字列 3 つを取得: develop の pooled（GitHub Secret `DATABASE_URL`）、develop の direct（GitHub Secret `DIRECT_DATABASE_URL`）、local の direct（手元の `.env`）。
+- schema / table は console で作成しない。`CREATE SCHEMA` も含めてすべて Prisma migration で行う（console は読み取りのみ）。
 
 ## AWS 認証
 
@@ -94,6 +114,8 @@ npx sst diff --stage develop --config infra/sst.config.ts
 - workflow の default permissions が read-only で、OIDC は deploy job だけに付与されているか。
 - workflow 内の `uses:` action が deprecated Node.js runtime を target していないか。
 - 新しい必須 env を追加した場合、GitHub Secrets と該当 app の README を更新したか。
+- 破壊的 migration（column の drop / rename / 型変更）を含む場合、PR 本文に明記したか。
+- `DIRECT_DATABASE_URL` が migration step 以外に渡っていないか。
 - Scheduler の event payload が該当 app の routing の job 名と一致し、secret 値を含んでいないか。
 - `npm run validate` が通るか。
 - `npx sst diff --stage develop --config infra/sst.config.ts` で意図しない差分が出ていないか。

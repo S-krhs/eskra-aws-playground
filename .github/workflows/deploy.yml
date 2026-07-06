@@ -34,9 +34,15 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-actions
+      # DIRECT_DATABASE_URL はこの step にだけ渡す(他の step へ漏らさない)
+      - name: Run DB migration
+        run: npm run db:migrate
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
       - name: Deploy SST app
         run: npm run deploy
         env:
           SST_SECRET_UmaOneDrawTopicDiscordWebhook: ${{ secrets.UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL }}
           SST_SECRET_AnimeAnalysisDiscordWebhook: ${{ secrets.ANIME_ANALYSIS_DISCORD_WEBHOOK_URL }}
           SST_SECRET_AlertDiscordWebhook: ${{ secrets.ALERT_DISCORD_WEBHOOK_URL }}
+          SST_SECRET_DatabaseUrl: ${{ secrets.DATABASE_URL }}

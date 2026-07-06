@@ -43,6 +43,9 @@ export default $config({
 			"AnimeAnalysisDiscordWebhook",
 		);
 
+		// DB(Neon)の pooled 接続文字列を Secret として扱う
+		const databaseUrl = new sst.Secret("DatabaseUrl");
+
 		// アニメ分析の実行要求を dataSource 単位で保持する SQS Queue を作成
 		const animeAnalysisDeadLetterQueue = new sst.aws.Queue(
 			"AnimeAnalysisDeadLetterQueue",
@@ -157,6 +160,11 @@ export default $config({
 				timeout: "2 minutes",
 				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
+				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
+				// link ではなく environment で渡す(SST 外のローカル実行・テストと同一経路にする)
+				environment: {
+					DATABASE_URL: databaseUrl.value,
+				},
 				layers: [browserRuntimeLayer.arn],
 				nodejs: {
 					esbuild: {

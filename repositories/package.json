@@ -22,5 +22,11 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"lint": "biome ci .",
 		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"dependencies": {
+		"@eskra-aws-playground/libs": "0.1.0",
+		"@prisma/adapter-pg": "^7.8.0",
+		"@prisma/client": "^7.8.0",
+		"zod": "^3.25.76"
 	}
 }

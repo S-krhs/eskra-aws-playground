@@ -12,6 +12,10 @@
 		"repositories"
 	],
 	"scripts": {
+		"postinstall": "prisma generate",
+		"db:generate": "prisma generate",
+		"db:migrate": "prisma migrate deploy",
+		"db:migrate:dev": "prisma migrate dev",
 		"build": "turbo run build",
 		"build:browser-runtime-layer": "node infra/layers/browser-runtime/build.mjs",
 		"deploy": "npm run build && npm run build:browser-runtime-layer && sst deploy --stage develop --config infra/sst.config.ts",
@@ -30,6 +34,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",
 		"@types/node": "^26.1.0",
+		"prisma": "^7.8.0",
+		"prisma-zod-generator": "^2.1.4",
 		"sst": "^4.17.0",
 		"turbo": "^2.6.1",
 		"typescript": "^5.5.4",

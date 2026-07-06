@@ -34,7 +34,7 @@ jobs -> repositories/anime -> DB
 - 外部サービス連携は `packages/integrations/*` の公開 API に委譲する。
 - 複数 feature を組み合わせる処理は `jobs/` に置く。
 - スクレイピング対象の静的定義は `repositories/anime/data.ts` に置き、イベントには定義本体を持たせない。
-- DB 登録に必要な `newTitles`、`scrapingHistory`、`scrapedData` の永続化は `repositories/anime/` に置き、app からは repository API として呼び出す。
+- スクレイピング結果 metrics の永続化は `repositories/anime/scraping-metric.repository.ts` に置き、app からは repository API（`saveScrapingResult`）として呼び出す。保存は metric 取得後・Discord 通知前に行い、失敗した record は batchItemFailure として SQS の再試行に委譲する。
 - app 側には DB client や接続解決を置かない。DB 接続情報を解決する場合も repository package 側の infra として扱う。
 - 外部公開用ではない metric 中間表現の型、正規化は app 内の `src/shared/intermediate-models/metric/metric.ts` に置く。
 - JSON から metric への変換は `src/features/scrape-api/`、HTML から metric への変換は `src/features/scrape-webpage/` が扱う。

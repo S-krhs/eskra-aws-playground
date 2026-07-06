@@ -21,7 +21,7 @@ SQS キューイングは Orchestrator Lambda と Worker Lambda に分け、data
 
 ### `anime-scraping-data-source`
 
-SQS message で指定された dataSource のスクレイピング定義を実行し、取得結果を Discord Webhook へ通知します。Worker Lambda が SQS message ごとに実行します。
+SQS message で指定された dataSource のスクレイピング定義を実行し、取得結果を DB(`anime.scraping_metrics`)へ保存してから Discord Webhook へ通知します。Worker Lambda が SQS message ごとに実行します。保存に失敗した record は batchItemFailure として SQS の再試行に委譲します。
 
 SQS message body:
 
@@ -45,7 +45,7 @@ SQS message body:
 
 ## 環境変数
 
-`npm run local:batch-anime-analysis` は Worker（dataSource スクレイピング）を実行します。ローカル実行に必要なのは Discord Webhook と対象指定だけです。
+`npm run local:batch-anime-analysis` は Worker（dataSource スクレイピング）を実行します。ローカル実行に必要なのは Discord Webhook、DB 接続、対象指定です。
 
 Worker 用 Discord Webhook:
 
@@ -55,6 +55,7 @@ Worker 用 Discord Webhook:
 Worker のローカル実行:
 
 - `BATCH_DATA_SOURCE_IDS`（カンマ区切り。未指定なら全 dataSource を対象にする）
+- `DATABASE_URL`（ローカル用 Neon branch の pooled 接続文字列。develop 用の値は置かない）
 
 その他 handler のローカル fallback（SST link がない場合に参照）:
 
