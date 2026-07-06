@@ -23,4 +23,8 @@ CLI の設定(schema / migrations の場所、接続先の解決)は root の `p
 - Neon console で schema や table を作成・変更しない。schema 作成(`CREATE SCHEMA`)も含めて、すべて Prisma migration で行う(console は SELECT などの読み取りのみ)。
 - 破壊的 migration(column の drop / rename / 型変更)を含む PR は、その旨を PR 本文に明記しレビュー承認を必須とする。
 - rollback は forward-only とする。打ち消したい場合は逆向きの migration を新規作成する。
-- データの backfill は migration に書かない。一回きりの import は root `scripts/`、継続的なものは batch app にする。
+- データの backfill は migration に書かない。一回きりの import は手順書に残し、継続的なものは batch app にする。
+
+## 一回きりの import 手順
+
+- [Scraping Metrics Backfill](./docs/backfill/scraping-metrics.md)
