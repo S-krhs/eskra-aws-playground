@@ -1,0 +1,79 @@
+name: Cleanup old SST app
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Action to run for the old SST app."
+        required: true
+        default: state-list
+        type: choice
+        options:
+          - state-list
+          - remove
+      confirmation:
+        description: "Required for remove: lambda-batch-playground/develop"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      OLD_APP_COMMIT: 4d8ac1af2105f3e50c224d8f0a461e9eb07b67d6
+      OLD_APP_NAME: lambda-batch-playground
+      OLD_STAGE: develop
+    steps:
+      - name: Checkout old SST app config
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.OLD_APP_COMMIT }}
+          fetch-depth: 0
+
+      - name: Verify checkout target
+        run: |
+          grep 'const appName = "lambda-batch-playground";' infra/sst.config.ts
+          git rev-parse HEAD
+
+      - name: Use Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-old-sst-cleanup
+
+      - name: List old SST app state
+        run: npm exec -- sst state list --stage "$OLD_STAGE" --config infra/sst.config.ts
+
+      - name: Confirm remove target
+        if: ${{ inputs.mode == 'remove' }}
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "$OLD_APP_NAME/$OLD_STAGE" ]; then
+            echo "confirmation must be '$OLD_APP_NAME/$OLD_STAGE'"
+            exit 1
+          fi
+
+      - name: Build browser runtime layer asset for config evaluation
+        if: ${{ inputs.mode == 'remove' }}
+        run: npm run build:browser-runtime-layer
+
+      - name: Remove old SST app
+        if: ${{ inputs.mode == 'remove' }}
+        run: npm exec -- sst remove --stage "$OLD_STAGE" --config infra/sst.config.ts
