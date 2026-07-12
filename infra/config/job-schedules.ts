@@ -22,9 +22,13 @@ export type JobSchedule = {
 
 /** schedule 起動する batch job のスケジュール設定を job 単位で一元管理する。 */
 export const jobSchedules = {
-	/** UMA ワンドロお題通知を毎日 JST 12:00 に起動する。 */
+	/**
+	 * UMA ワンドロお題通知を毎日 JST 12:00-18:00 の間の 1 時間に起動する。
+	 * 実行対象の時刻は job 側 (uma-one-draw-topic/execution-window.ts) が
+	 * 日付ごとに決定的に選び、対象外の時刻は起動を skip する。
+	 */
 	umaOneDrawTopic: {
-		schedule: "cron(0 12 * * ? *)",
+		schedule: "cron(0 12-18 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: playgroundBatchNames.umaOneDrawTopic },
