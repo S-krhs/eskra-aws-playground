@@ -1,0 +1,23 @@
+{
+	"name": "@eskra-aws-playground/integration-scheduler",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./one-time-schedule-client.js": {
+			"types": "./dist/one-time-schedule-client.d.ts",
+			"default": "./dist/one-time-schedule-client.js"
+		}
+	},
+	"dependencies": {
+		"@aws-sdk/client-scheduler": "^3.1079.0"
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc -p tsconfig.json",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	}
+}
