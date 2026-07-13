@@ -18,37 +18,16 @@ export type JobSchedule = {
 		/** 起動スケジュールごとに対象を切り替える job（アニメ orchestrator）へ渡す時刻。 */
 		readonly scheduleHour?: number;
 	};
-	/**
-	 * CronV2 が生成する EventBridge Scheduler リソースへの transform。
-	 * CI に SST 生成型が無いため、必要なプロパティのみ構造的に型付けする。
-	 */
-	readonly transform?: {
-		readonly schedule?: (args: {
-			flexibleTimeWindow?: {
-				mode: "OFF" | "FLEXIBLE";
-				maximumWindowInMinutes?: number;
-			};
-		}) => void;
-	};
 };
 
 /** schedule 起動する batch job のスケジュール設定を job 単位で一元管理する。 */
 export const jobSchedules = {
-	/** UMA ワンドロお題通知を毎日 JST 12:00-18:00 のランダムな時刻に起動する。 */
-	umaOneDrawTopic: {
-		schedule: "cron(0 12 * * ? *)",
+	/** UMA ワンドロお題の scheduler job を毎日 JST 00:00 に起動する。job が当日 12:00-18:00 のランダム時刻へお題通知の one-time schedule を登録する。 */
+	umaOneDrawTopicScheduler: {
+		schedule: "cron(0 0 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
-		event: { job: playgroundBatchNames.umaOneDrawTopic },
-		transform: {
-			// 12:00 を起点に 360 分の flexible time window を設定し、window 内のランダムな時刻に起動する
-			schedule(args) {
-				args.flexibleTimeWindow = {
-					mode: "FLEXIBLE",
-					maximumWindowInMinutes: 360,
-				};
-			},
-		},
+		event: { job: playgroundBatchNames.umaOneDrawTopicScheduler },
 	},
 	/** アニメ分析 orchestrator を毎日 JST 09:00 に起動する。 */
 	animeScrapingOrchestrator9: {

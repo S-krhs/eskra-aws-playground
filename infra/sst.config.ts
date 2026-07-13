@@ -23,6 +23,24 @@ export default $config({
 			"UmaOneDrawTopicDiscordWebhook",
 		);
 
+		// scheduler job が登録するお題通知の one-time schedule を所属させる group
+		const umaOneDrawTopicScheduleGroup = new aws.scheduler.ScheduleGroup(
+			"UmaOneDrawTopicScheduleGroup",
+			{
+				name: `${appName}-${$app.stage}-uma-one-draw-topic`,
+			},
+		);
+
+		// one-time schedule が batch Lambda を起動するときに引き受ける role
+		const umaOneDrawTopicScheduleRole = new aws.iam.Role(
+			"UmaOneDrawTopicScheduleRole",
+			{
+				assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
+					Service: "scheduler.amazonaws.com",
+				}),
+			},
+		);
+
 		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "../apps/batch-playground/src/handlers/batch.handler",
@@ -30,12 +48,46 @@ export default $config({
 			timeout: "30 seconds",
 			memory: "128 MB",
 			link: [umaOneDrawTopicWebhookUrl],
+			environment: {
+				UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME:
+					umaOneDrawTopicScheduleGroup.name,
+				UMA_ONE_DRAW_TOPIC_SCHEDULER_ROLE_ARN: umaOneDrawTopicScheduleRole.arn,
+			},
+			permissions: [
+				{
+					// DeleteSchedule は実行後自動削除(ActionAfterCompletion)の登録に必要
+					actions: ["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
+					resources: [
+						$interpolate`arn:aws:scheduler:*:*:schedule/${umaOneDrawTopicScheduleGroup.name}/*`,
+					],
+				},
+				{
+					actions: ["iam:PassRole"],
+					resources: [umaOneDrawTopicScheduleRole.arn],
+				},
+			],
 		});
 
-		// UMA ワンドロお題通知の Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
-		new sst.aws.CronV2("UmaOneDrawTopicSchedule", {
+		// batch Lambda が env で role ARN を参照するため、循環参照を避けて invoke 権限は別リソースで付与する
+		new aws.iam.RolePolicy("UmaOneDrawTopicScheduleRolePolicy", {
+			role: umaOneDrawTopicScheduleRole.id,
+			policy: aws.iam.getPolicyDocumentOutput({
+				statements: [
+					{
+						actions: ["lambda:InvokeFunction"],
+						resources: [
+							batchFunction.arn,
+							$interpolate`${batchFunction.arn}:*`,
+						],
+					},
+				],
+			}).json,
+		});
+
+		// UMA ワンドロお題 scheduler job の Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
+		new sst.aws.CronV2("UmaOneDrawTopicSchedulerSchedule", {
 			function: batchFunction,
-			...jobSchedules.umaOneDrawTopic,
+			...jobSchedules.umaOneDrawTopicScheduler,
 		});
 
 		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
