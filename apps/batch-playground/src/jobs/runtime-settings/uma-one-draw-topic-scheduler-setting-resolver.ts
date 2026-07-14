@@ -1,6 +1,6 @@
 // In scope: UMA ワンドロお題 scheduler job が使う実行時設定の型と、環境変数・Lambda context からの解決を提供する
 // Out of scope: Lambda イベント解釈、起動時刻の決定、schedule の登録を行う
-import { z } from "zod";
+import { batchContextSchema } from "../../shared/schemas/lambda/batch/context.js";
 
 /** UMA ワンドロお題 scheduler job が使う実行時設定。 */
 export interface UmaOneDrawTopicSchedulerSettings {
@@ -29,13 +29,9 @@ export const getUmaOneDrawTopicSchedulerSettings =
 		};
 	};
 
-const invocationContextSchema = z.object({
-	invokedFunctionArn: z.string().trim().min(1),
-});
-
 /** one-time schedule の起動対象(この Lambda 自身)の ARN を Lambda context から解決する。ローカル実行では環境変数で代替する。 */
 export const resolveTargetFunctionArn = (context: unknown): string => {
-	const parsedContext = invocationContextSchema.safeParse(context);
+	const parsedContext = batchContextSchema.safeParse(context);
 
 	if (parsedContext.success) {
 		return parsedContext.data.invokedFunctionArn;
