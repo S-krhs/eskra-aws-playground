@@ -55,7 +55,7 @@ describe("OneTimeScheduleClient", () => {
 				Arn: "arn:aws:lambda:ap-northeast-1:123456789012:function:batch",
 				RoleArn: "arn:aws:iam::123456789012:role/example-role",
 				Input: JSON.stringify({ job: "uma-one-draw-topic" }),
-				RetryPolicy: { MaximumRetryAttempts: 0 },
+				RetryPolicy: { MaximumRetryAttempts: 3 },
 			},
 		});
 	});

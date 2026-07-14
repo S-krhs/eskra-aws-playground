@@ -50,7 +50,8 @@ export class OneTimeScheduleClient {
 						Arn: schedule.targetArn,
 						RoleArn: schedule.roleArn,
 						Input: JSON.stringify(schedule.input),
-						RetryPolicy: { MaximumRetryAttempts: 0 },
+						// 配信リトライは Lambda が受理する前の失敗にのみ働き、重複起動しない
+						RetryPolicy: { MaximumRetryAttempts: 3 },
 					},
 				}),
 			);
