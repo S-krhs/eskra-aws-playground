@@ -237,7 +237,7 @@ export default $config({
 				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
 				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
-				// link ではなく environment で渡す(SST 外のローカル実行・テストと同一経路にする)
+				// link ではなく environment で渡す(SST 外のテストと同一経路にする)
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 				},
