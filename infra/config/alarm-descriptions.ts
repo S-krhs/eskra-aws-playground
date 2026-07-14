@@ -8,4 +8,5 @@ export const alarmDescriptions = {
 	animeAnalysisOrchestratorError:
 		"アニメ分析 orchestrator の実行が失敗しました",
 	playgroundBatchError: "batch playground の実行が失敗しました",
+	discordInteractionError: "Discord interaction 応答の実行が失敗しました",
 } as const;

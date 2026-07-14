@@ -65,13 +65,29 @@ export default $config({
 			},
 		);
 
+		// 遊技チェックリマインダー投稿用の Discord Bot token を Secret として扱う
+		const discordBotToken = new sst.Secret("DiscordBotToken");
+
+		// 遊技チェックリマインダーの投稿先チャンネルと回答対象ユーザーを Secret として扱う
+		const playCheckReminderChannelId = new sst.Secret(
+			"PlayCheckReminderDiscordChannelId",
+		);
+		const playCheckReminderTargetUserId = new sst.Secret(
+			"PlayCheckReminderTargetUserId",
+		);
+
 		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "../apps/batch-playground/src/handlers/batch.handler",
 			runtime: "nodejs22.x",
 			timeout: "30 seconds",
 			memory: "128 MB",
-			link: [umaOneDrawTopicWebhookUrl],
+			link: [
+				umaOneDrawTopicWebhookUrl,
+				discordBotToken,
+				playCheckReminderChannelId,
+				playCheckReminderTargetUserId,
+			],
 			environment: {
 				UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME:
 					umaOneDrawTopicScheduleGroup.name,
@@ -113,6 +129,32 @@ export default $config({
 			function: batchFunction,
 			...jobSchedules.umaOneDrawTopicScheduler,
 		});
+
+		// 遊技チェックリマインダーの Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
+		new sst.aws.CronV2("PlayCheckReminderSchedule", {
+			function: batchFunction,
+			...jobSchedules.playCheckReminder,
+		});
+
+		// リマインダーのボタン押下を検証するための Discord application public key を Secret として扱う
+		const discordInteractionPublicKey = new sst.Secret(
+			"DiscordInteractionPublicKey",
+		);
+
+		// Discord のボタン押下(interaction)を受ける Lambda を作成。
+		// Function URL を Discord Developer Portal の Interactions Endpoint URL に設定する
+		const discordInteractionFunction = new sst.aws.Function(
+			"DiscordInteractionFunction",
+			{
+				handler:
+					"../apps/batch-playground/src/handlers/discord-interaction.handler",
+				runtime: "nodejs22.x",
+				timeout: "10 seconds",
+				memory: "128 MB",
+				link: [discordInteractionPublicKey],
+				url: true,
+			},
+		);
 
 		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
 		const animeAnalysisDiscordWebhookUrl = new sst.Secret(
@@ -355,5 +397,28 @@ export default $config({
 			treatMissingData: "notBreaching",
 			alarmActions: [alertTopic.arn],
 		});
+
+		// interaction Lambda が失敗するとボタン押下に応答できずリマインダーの回答が記録されないため検知する
+		new aws.cloudwatch.MetricAlarm("DiscordInteractionErrorAlarm", {
+			name: `${appName}-${$app.stage}-discord-interaction-errors`,
+			alarmDescription: alarmDescriptions.discordInteractionError,
+			namespace: "AWS/Lambda",
+			metricName: "Errors",
+			dimensions: {
+				FunctionName: discordInteractionFunction.name,
+			},
+			statistic: "Sum",
+			period: 300,
+			evaluationPeriods: 1,
+			threshold: 1,
+			comparisonOperator: "GreaterThanOrEqualToThreshold",
+			treatMissingData: "notBreaching",
+			alarmActions: [alertTopic.arn],
+		});
+
+		// デプロイ後に Discord Developer Portal へ登録する Interactions Endpoint URL を出力する
+		return {
+			discordInteractionUrl: discordInteractionFunction.url,
+		};
 	},
 });

@@ -29,6 +29,13 @@ export const jobSchedules = {
 		retries: 0,
 		event: { job: playgroundBatchNames.umaOneDrawTopicScheduler },
 	},
+	/** 遊技チェックリマインダーを毎日 JST 22:00 に起動する。 */
+	playCheckReminder: {
+		schedule: "cron(0 22 * * ? *)",
+		timezone: "Asia/Tokyo",
+		retries: 0,
+		event: { job: playgroundBatchNames.playCheckReminder },
+	},
 	/** アニメ分析 orchestrator を毎日 JST 09:00 に起動する。 */
 	animeScrapingOrchestrator9: {
 		schedule: "cron(0 9 * * ? *)",
