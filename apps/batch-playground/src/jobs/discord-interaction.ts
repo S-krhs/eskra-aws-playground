@@ -16,9 +16,11 @@ const logger = createBatchLogger("discord-interaction");
 
 const INTERACTION_TYPE_PING = 1;
 const INTERACTION_TYPE_MESSAGE_COMPONENT = 3;
+const INTERACTION_TYPE_AUTOCOMPLETE = 4;
 const RESPONSE_TYPE_PONG = 1;
 const RESPONSE_TYPE_CHANNEL_MESSAGE = 4;
 const RESPONSE_TYPE_UPDATE_MESSAGE = 7;
+const RESPONSE_TYPE_AUTOCOMPLETE_RESULT = 8;
 const MESSAGE_FLAG_EPHEMERAL = 64;
 
 const UNSUPPORTED_INTERACTION_CONTENT = "この操作には対応していません。";
@@ -150,7 +152,16 @@ export const discordInteractionJob = async (
 		return response;
 	}
 
-	// 7. 対応していない interaction 種別は ephemeral で対応外を返す。
+	// 7. autocomplete にはメッセージ応答が許されないため、空の候補一覧を返す。
+	if (interaction.type === INTERACTION_TYPE_AUTOCOMPLETE) {
+		logger.complete({ interactionType: interaction.type });
+		return jsonResponse(200, {
+			type: RESPONSE_TYPE_AUTOCOMPLETE_RESULT,
+			data: { choices: [] },
+		});
+	}
+
+	// 8. 対応していない interaction 種別は ephemeral で対応外を返す。
 	logger.complete({ interactionType: interaction.type });
 	return ephemeralResponse(UNSUPPORTED_INTERACTION_CONTENT);
 };

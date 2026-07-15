@@ -141,6 +141,18 @@ describe("discordInteractionJob", () => {
 		expect(responseBody.data.flags).toBe(64);
 	});
 
+	it("autocomplete には空の候補一覧を返す", async () => {
+		const response = await discordInteractionJob(
+			buildSignedEvent('{"type":4}'),
+		);
+
+		expect(response.statusCode).toBe(200);
+		expect(JSON.parse(response.body)).toEqual({
+			type: 8,
+			data: { choices: [] },
+		});
+	});
+
 	it("interaction body の JSON が不正なら 400 を返す", async () => {
 		const response = await discordInteractionJob(
 			buildSignedEvent("not-a-json"),
