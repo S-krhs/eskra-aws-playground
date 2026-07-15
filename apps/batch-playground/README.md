@@ -47,7 +47,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 ## Discord interaction handler
 
-`src/handlers/discord-interaction-function-url.ts` は、リマインダーのボタン押下（Discord interaction）を受ける Lambda Function URL の公開エンドポイントです。
+`src/handlers/function-url.ts` は、HTTP リクエストを受ける Lambda Function URL の公開エンドポイントです。現状はリマインダーのボタン押下（Discord interaction）のみを扱います。
 
 - リクエストは Discord application の public key で Ed25519 署名を検証します（不正は 401）。
 - 対象ユーザーの押下: 元メッセージを選択結果の表示へ更新し、ボタンを取り除きます（type 7）。
@@ -59,7 +59,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 1. [Discord Developer Portal](https://discord.com/developers/applications) で application を作成します。
 2. Bot の token（`DiscordBotToken`）と General Information の Public Key（`DiscordInteractionPublicKey`）を控えます。
 3. Bot を対象サーバーへ招待します（`Send Messages` 権限が必要）。
-4. デプロイ後、SST の出力 `discordInteractionUrl`（interaction Lambda の Function URL）を application の Interactions Endpoint URL に設定します。
+4. デプロイ後、SST の出力 `functionUrl`（公開エンドポイント Lambda の Function URL）を application の Interactions Endpoint URL に設定します。
 
 ## 環境変数
 

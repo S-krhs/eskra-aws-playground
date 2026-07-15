@@ -148,20 +148,17 @@ export default $config({
 			"DiscordInteractionPublicKey",
 		);
 
-		// Discord のボタン押下(interaction)を受ける Lambda を作成。
+		// HTTP リクエストを受ける公開エンドポイント Lambda を作成。job ごとに Lambda は増やさず、
+		// 公開エンドポイントはこの 1 つに集約する(現状は Discord interaction が唯一のルート)。
 		// Function URL を Discord Developer Portal の Interactions Endpoint URL に設定する
-		const discordInteractionFunction = new sst.aws.Function(
-			"DiscordInteractionFunction",
-			{
-				handler:
-					"../apps/batch-playground/src/handlers/discord-interaction-function-url.handler",
-				runtime: "nodejs22.x",
-				timeout: "10 seconds",
-				memory: "128 MB",
-				link: [discordInteractionPublicKey],
-				url: true,
-			},
-		);
+		const functionUrlFunction = new sst.aws.Function("FunctionUrlFunction", {
+			handler: "../apps/batch-playground/src/handlers/function-url.handler",
+			runtime: "nodejs22.x",
+			timeout: "10 seconds",
+			memory: "128 MB",
+			link: [discordInteractionPublicKey],
+			url: true,
+		});
 
 		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
 		const animeAnalysisDiscordWebhookUrl = new sst.Secret(
@@ -410,16 +407,16 @@ export default $config({
 			functionName: batchFunction.name,
 		});
 
-		// interaction Lambda が失敗するとボタン押下に応答できずリマインダーの回答が記録されないため検知する
-		createLambdaErrorAlarm("DiscordInteractionErrorAlarm", {
-			name: `${appName}-${$app.stage}-discord-interaction-errors`,
-			description: alarmDescriptions.discordInteractionError,
-			functionName: discordInteractionFunction.name,
+		// 公開エンドポイント Lambda が失敗すると HTTP リクエスト(ボタン押下など)に応答できないため検知する
+		createLambdaErrorAlarm("FunctionUrlErrorAlarm", {
+			name: `${appName}-${$app.stage}-function-url-errors`,
+			description: alarmDescriptions.functionUrlError,
+			functionName: functionUrlFunction.name,
 		});
 
 		// デプロイ後に Discord Developer Portal へ登録する Interactions Endpoint URL を出力する
 		return {
-			discordInteractionUrl: discordInteractionFunction.url,
+			functionUrl: functionUrlFunction.url,
 		};
 	},
 });
