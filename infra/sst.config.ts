@@ -348,6 +348,33 @@ export default $config({
 			{ dependsOn: [alertNotifierInvokePermission] },
 		);
 
+		// Lambda の Errors メトリクスを共通設定で監視し、アラートを Discord へ通知する
+		const createLambdaErrorAlarm = (
+			resourceName: string,
+			args: {
+				name: string;
+				description: string;
+				functionName: $util.Input<string>;
+			},
+		) => {
+			return new aws.cloudwatch.MetricAlarm(resourceName, {
+				name: args.name,
+				alarmDescription: args.description,
+				namespace: "AWS/Lambda",
+				metricName: "Errors",
+				dimensions: {
+					FunctionName: args.functionName,
+				},
+				statistic: "Sum",
+				period: 300,
+				evaluationPeriods: 1,
+				threshold: 1,
+				comparisonOperator: "GreaterThanOrEqualToThreshold",
+				treatMissingData: "notBreaching",
+				alarmActions: [alertTopic.arn],
+			});
+		};
+
 		// worker が規定回数リトライしても失敗し DLQ にメッセージが滞留したら通知する
 		new aws.cloudwatch.MetricAlarm("AnimeAnalysisDlqDepthAlarm", {
 			name: `${appName}-${$app.stage}-anime-dlq-depth`,
@@ -369,58 +396,25 @@ export default $config({
 		});
 
 		// DLQ を持たない schedule 起動の orchestrator のエラーを通知する
-		new aws.cloudwatch.MetricAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
+		createLambdaErrorAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
 			name: `${appName}-${$app.stage}-anime-orchestrator-errors`,
-			alarmDescription: alarmDescriptions.animeAnalysisOrchestratorError,
-			namespace: "AWS/Lambda",
-			metricName: "Errors",
-			dimensions: {
-				FunctionName: animeAnalysisOrchestratorFunction.name,
-			},
-			statistic: "Sum",
-			period: 300,
-			evaluationPeriods: 1,
-			threshold: 1,
-			comparisonOperator: "GreaterThanOrEqualToThreshold",
-			treatMissingData: "notBreaching",
-			alarmActions: [alertTopic.arn],
+			description: alarmDescriptions.animeAnalysisOrchestratorError,
+			functionName: animeAnalysisOrchestratorFunction.name,
 		});
 
 		// DLQ を持たない schedule 起動の batch Lambda のエラーを通知する。
 		// 深夜の scheduler job が失敗するとその日のお題通知が丸ごとスキップされるため検知が必要
-		new aws.cloudwatch.MetricAlarm("PlaygroundBatchErrorAlarm", {
+		createLambdaErrorAlarm("PlaygroundBatchErrorAlarm", {
 			name: `${appName}-${$app.stage}-playground-batch-errors`,
-			alarmDescription: alarmDescriptions.playgroundBatchError,
-			namespace: "AWS/Lambda",
-			metricName: "Errors",
-			dimensions: {
-				FunctionName: batchFunction.name,
-			},
-			statistic: "Sum",
-			period: 300,
-			evaluationPeriods: 1,
-			threshold: 1,
-			comparisonOperator: "GreaterThanOrEqualToThreshold",
-			treatMissingData: "notBreaching",
-			alarmActions: [alertTopic.arn],
+			description: alarmDescriptions.playgroundBatchError,
+			functionName: batchFunction.name,
 		});
 
 		// interaction Lambda が失敗するとボタン押下に応答できずリマインダーの回答が記録されないため検知する
-		new aws.cloudwatch.MetricAlarm("DiscordInteractionErrorAlarm", {
+		createLambdaErrorAlarm("DiscordInteractionErrorAlarm", {
 			name: `${appName}-${$app.stage}-discord-interaction-errors`,
-			alarmDescription: alarmDescriptions.discordInteractionError,
-			namespace: "AWS/Lambda",
-			metricName: "Errors",
-			dimensions: {
-				FunctionName: discordInteractionFunction.name,
-			},
-			statistic: "Sum",
-			period: 300,
-			evaluationPeriods: 1,
-			threshold: 1,
-			comparisonOperator: "GreaterThanOrEqualToThreshold",
-			treatMissingData: "notBreaching",
-			alarmActions: [alertTopic.arn],
+			description: alarmDescriptions.discordInteractionError,
+			functionName: discordInteractionFunction.name,
 		});
 
 		// デプロイ後に Discord Developer Portal へ登録する Interactions Endpoint URL を出力する
