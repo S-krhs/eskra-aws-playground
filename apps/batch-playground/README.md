@@ -47,7 +47,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 ## Discord interaction handler
 
-`src/handlers/discord-interaction.ts` は、リマインダーのボタン押下（Discord interaction）を受ける Lambda Function URL 用のエントリポイントです。
+`src/handlers/discord-interaction-function-url.ts` は、リマインダーのボタン押下（Discord interaction）を受ける Lambda Function URL の公開エンドポイントです。
 
 - リクエストは Discord application の public key で Ed25519 署名を検証します（不正は 401）。
 - 対象ユーザーの押下: 元メッセージを選択結果の表示へ更新し、ボタンを取り除きます（type 7）。

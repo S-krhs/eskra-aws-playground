@@ -154,7 +154,7 @@ export default $config({
 			"DiscordInteractionFunction",
 			{
 				handler:
-					"../apps/batch-playground/src/handlers/discord-interaction.handler",
+					"../apps/batch-playground/src/handlers/discord-interaction-function-url.handler",
 				runtime: "nodejs22.x",
 				timeout: "10 seconds",
 				memory: "128 MB",
