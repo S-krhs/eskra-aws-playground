@@ -13,7 +13,7 @@ import {
 	buildReminderMessage,
 	type ReminderMessage,
 } from "../../../features/play-check-reminder/reminder-message.js";
-import type { BatchResponse } from "../schemas/response.js";
+import type { BatchResponse } from "../schema.js";
 
 const logger = createBatchLogger("play-check-reminder");
 

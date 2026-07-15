@@ -6,10 +6,10 @@ import { Resource } from "sst/resource";
 
 import { resolveComponentInteraction } from "./routes.js";
 import {
+	type DiscordInteractionResponse,
 	discordInteractionFunctionUrlEventSchema,
 	discordInteractionSchema,
-} from "./schemas/event.js";
-import type { DiscordInteractionResponse } from "./schemas/response.js";
+} from "./schema.js";
 
 const logger = createBatchLogger("function-url");
 

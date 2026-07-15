@@ -16,7 +16,7 @@
 
 - 起動イベントは `unknown` として受け取り、schema で検証・正規化してから使う。
 - レスポンスは `BatchResponse` に合わせ、呼び出し元が機械的に扱える形にする。
-- 境界データの型・契約は `src/handlers/<handler>/schemas/` に置き、外部システムと話す実装は `packages/integrations/*` に置く。
+- 境界データの型・契約は `src/handlers/<handler>/schema.ts` に置き、外部システムと話す実装は `packages/integrations/*` に置く。
 - `details` には調査に役立つ安全な情報だけを入れる。
 - 開始/終了ログには、ジョブ名や URL の有無など安全な値だけを出す。
 - 設定不足、入力不備、外部 API 失敗はエラーメッセージで区別できるようにする。

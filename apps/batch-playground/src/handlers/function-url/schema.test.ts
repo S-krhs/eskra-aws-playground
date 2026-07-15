@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+
 import {
 	discordInteractionFunctionUrlEventSchema,
 	discordInteractionSchema,
-} from "./event.js";
+} from "./schema.js";
 
 describe("discordInteractionFunctionUrlEventSchema", () => {
 	it("headers と body と isBase64Encoded を受け付ける", () => {

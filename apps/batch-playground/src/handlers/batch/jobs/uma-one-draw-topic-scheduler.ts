@@ -4,8 +4,7 @@ import { OneTimeScheduleClient } from "@eskra-aws-playground/integration-schedul
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 
 import { planOneTimeInvocation } from "../../../features/uma-one-draw-topic-scheduler/one-time-invocation-plan.js";
-import { batchContextSchema } from "../schemas/context.js";
-import type { BatchResponse } from "../schemas/response.js";
+import { type BatchResponse, batchContextSchema } from "../schema.js";
 
 const logger = createBatchLogger("uma-one-draw-topic-scheduler");
 

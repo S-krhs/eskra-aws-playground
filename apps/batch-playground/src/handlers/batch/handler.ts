@@ -3,8 +3,7 @@
 import { playCheckReminderJob } from "./jobs/play-check-reminder.js";
 import { umaOneDrawTopicJob } from "./jobs/uma-one-draw-topic.js";
 import { umaOneDrawTopicSchedulerJob } from "./jobs/uma-one-draw-topic-scheduler.js";
-import { batchEventSchema } from "./schemas/event.js";
-import type { BatchResponse } from "./schemas/response.js";
+import { type BatchResponse, batchEventSchema } from "./schema.js";
 
 /** ジョブ名に対応して実行されるバッチジョブ関数。context には Lambda context を渡す。 */
 type BatchJob = (event: unknown, context?: unknown) => Promise<BatchResponse>;

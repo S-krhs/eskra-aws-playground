@@ -1,15 +1,15 @@
-// In scope: discord-interaction Lambda が受け取る起動イベントと interaction body の外部入力 schema と型を提供する
-// Out of scope: 署名検証、選択結果の判定、応答生成を行う
+// In scope: Function URL Lambda の起動イベント・interaction body の外部入力 schema と型、HTTP レスポンスの型を提供する
+// Out of scope: 署名検証、選択結果の判定、応答 body の組み立てを行う
 import { z } from "zod";
 
-/** discord-interaction Lambda が受け取る Lambda Function URL イベント schema。 */
+/** Function URL Lambda が受け取る Lambda Function URL イベント schema。 */
 export const discordInteractionFunctionUrlEventSchema = z.object({
 	headers: z.record(z.string(), z.string()),
 	body: z.string().optional(),
 	isBase64Encoded: z.boolean().optional(),
 });
 
-/** discord-interaction Lambda が受け取る Lambda Function URL イベント。 */
+/** Function URL Lambda が受け取る Lambda Function URL イベント。 */
 export type DiscordInteractionFunctionUrlEvent = z.infer<
 	typeof discordInteractionFunctionUrlEventSchema
 >;
@@ -40,3 +40,10 @@ export const discordInteractionSchema = z.object({
 
 /** リクエストの生 body をパースした Discord interaction。 */
 export type DiscordInteraction = z.infer<typeof discordInteractionSchema>;
+
+/** Function URL Lambda が Lambda Function URL へ返す HTTP レスポンス。 */
+export interface DiscordInteractionResponse {
+	statusCode: number;
+	headers: Record<string, string>;
+	body: string;
+}

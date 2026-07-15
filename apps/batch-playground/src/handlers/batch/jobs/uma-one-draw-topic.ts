@@ -5,7 +5,7 @@ import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logge
 import { Resource } from "sst/resource";
 
 import { buildTopicMessage } from "../../../features/uma-one-draw-topic/topic-message.js";
-import type { BatchResponse } from "../schemas/response.js";
+import type { BatchResponse } from "../schema.js";
 
 const logger = createBatchLogger("uma-one-draw-topic");
 
