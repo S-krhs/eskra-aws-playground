@@ -1,8 +1,7 @@
-// In scope: ボタン押下の custom_id と押下ユーザーから選択結果を判定し、応答本文を生成する
-// Out of scope: Discord interaction イベントの解釈、署名検証、応答 payload 生成、外部送信を行う
+// In scope: ボタン押下 payload と押下ユーザーから選択結果を判定し、応答本文を生成する
+// Out of scope: custom_id prefix の判別、署名検証、応答 payload 生成、外部送信を行う
 import {
 	REMINDER_CHOICES,
-	REMINDER_CUSTOM_ID_PREFIX,
 	REMINDER_CUSTOM_ID_SEPARATOR,
 	REMINDER_QUESTION,
 } from "./reminder-settings.js";
@@ -13,20 +12,20 @@ export type InteractionSelectionResult =
 	| { kind: "selected"; choiceLabel: string; targetUserId: string }
 	| { kind: "unknown" };
 
-/** custom_id と押下ユーザー ID から遊技チェックリマインダーの選択結果を判定する。 */
+/** prefix を除いた payload(`<targetUserId>:<choiceId>`)と押下ユーザー ID から選択結果を判定する。 */
 export const resolveInteractionSelection = (
-	customId: string,
+	payload: string,
 	pressedUserId: string,
 ): InteractionSelectionResult => {
-	const parts = customId.split(REMINDER_CUSTOM_ID_SEPARATOR);
+	const parts = payload.split(REMINDER_CUSTOM_ID_SEPARATOR);
 
-	if (parts.length !== 3) {
+	if (parts.length !== 2) {
 		return { kind: "unknown" };
 	}
 
-	const [prefix, targetUserId, choiceId] = parts;
+	const [targetUserId, choiceId] = parts;
 
-	if (prefix !== REMINDER_CUSTOM_ID_PREFIX || !targetUserId) {
+	if (!targetUserId) {
 		return { kind: "unknown" };
 	}
 

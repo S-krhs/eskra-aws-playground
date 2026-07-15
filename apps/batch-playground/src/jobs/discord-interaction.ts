@@ -3,11 +3,7 @@
 import { verifyInteractionSignature } from "@eskra-aws-playground/integration-discord/interaction-signature-verifier.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 
-import {
-	buildNotTargetEphemeralContent,
-	buildSelectedUpdateContent,
-	resolveInteractionSelection,
-} from "../features/play-check-reminder/interaction-selection.js";
+import { resolveComponentInteraction } from "../routing/interaction-router.js";
 import {
 	type DiscordInteraction,
 	discordInteractionFunctionUrlEventSchema,
@@ -50,7 +46,7 @@ const ephemeralResponse = (content: string): DiscordInteractionResponse => {
 	});
 };
 
-/** ボタン押下 interaction を選択結果の判定に委譲し、応答を作る。 */
+/** ボタン押下 interaction を router へ委譲し、応答内容を Discord 応答へ変換する。 */
 const handleMessageComponent = (
 	interaction: DiscordInteraction,
 ): DiscordInteractionResponse => {
@@ -61,27 +57,22 @@ const handleMessageComponent = (
 		return ephemeralResponse(UNSUPPORTED_INTERACTION_CONTENT);
 	}
 
-	const selection = resolveInteractionSelection(customId, pressedUserId);
+	const reply = resolveComponentInteraction(customId, pressedUserId);
 
-	switch (selection.kind) {
-		case "selected":
+	switch (reply.kind) {
+		case "update-message":
 			// 元メッセージを選択結果の表示へ更新し、ボタンを取り除く。
 			return jsonResponse(200, {
 				type: RESPONSE_TYPE_UPDATE_MESSAGE,
 				data: {
-					content: buildSelectedUpdateContent(
-						selection.targetUserId,
-						selection.choiceLabel,
-					),
+					content: reply.content,
 					components: [],
 					allowed_mentions: { parse: [] },
 				},
 			});
-		case "not-target":
-			return ephemeralResponse(
-				buildNotTargetEphemeralContent(selection.targetUserId),
-			);
-		case "unknown":
+		case "ephemeral":
+			return ephemeralResponse(reply.content);
+		case "unsupported":
 			return ephemeralResponse(UNSUPPORTED_INTERACTION_CONTENT);
 	}
 };
