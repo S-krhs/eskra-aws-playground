@@ -11,10 +11,6 @@
 		"./discord-bot-client.js": {
 			"types": "./dist/discord-bot-client.d.ts",
 			"default": "./dist/discord-bot-client.js"
-		},
-		"./interaction-signature-verifier.js": {
-			"types": "./dist/interaction-signature-verifier.d.ts",
-			"default": "./dist/interaction-signature-verifier.js"
 		}
 	},
 	"dependencies": {

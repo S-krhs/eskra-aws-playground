@@ -1,10 +1,9 @@
-// In scope: Bot token を使って Discord API のチャンネルへメッセージを投稿する
-// Out of scope: Bot token の解決、メッセージ内容の生成、interaction の応答処理
+// In scope: Bot token を使った完成済み Discord message payload の API 投稿
+// Out of scope: Bot token の解決、payload の構築、interaction の parse、業務ルール
 import {
 	sanitizeText,
 	type TextReplacement,
 } from "@eskra-aws-playground/libs/string/text-sanitizer.js";
-
 import {
 	type JsonPostResponseDetails,
 	postJson,
