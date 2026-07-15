@@ -9,7 +9,7 @@
 | 層 | 置くもの | 置かないもの |
 | --- | --- | --- |
 | `src/handlers/` | Lambda エントリポイント（`batch.ts`: batch 共通、`discord-interaction.ts`: Discord interaction 用 Function URL）、開始/終了ログ | ジョブ選択条件、業務ロジック、外部連携詳細 |
-| `src/routing/` | `job` の取得、正規化、ジョブ名に対応する handler への解決 | 各ジョブの処理内容、メッセージ生成、外部 API 詳細 |
+| `src/routing/` | `job` の取得、正規化、ジョブ名に対応する handler への解決、interaction の custom_id prefix に対応する feature への解決 | 各ジョブの処理内容、メッセージ生成、外部 API 詳細 |
 | `src/jobs/` | イベント値の正規化、feature 呼び出し、integration 呼び出し、共通レスポンス作成 | ルーティング判定、内部処理の詳細、外部 API 詳細 |
 | `src/features/<concern>/` | 機能単位の処理、抽選重みやテンプレートなどの feature 固有設定値 | Lambda イベント解釈、バッチレスポンス作成、共有する静的データの定義、別 feature の実装 |
 | `repositories/playground/` | 複数 app で共有するお題候補の静的カタログ、候補読み込み | Lambda イベント解釈、お題選択、メッセージ生成、抽選重みやテンプレートの保持、外部送信 |
@@ -20,7 +20,7 @@
 
 ```text
 batch -> routing -> jobs -> features
-discord-interaction -> jobs -> features
+discord-interaction -> jobs -> routing(interaction-router) -> features
 jobs -> packages/integrations/*
 jobs/features -> packages/libs
 features -> repositories
