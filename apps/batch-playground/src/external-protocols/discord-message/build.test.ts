@@ -1,12 +1,29 @@
 import { describe, expect, it } from "vitest";
 
-import { buildChoiceMessage, buildInteractionResponse } from "./build.js";
+import {
+	buildChoiceButtonsMessage,
+	buildInteractionResponse,
+	buildMentionMessage,
+} from "./build.js";
 
-describe("buildChoiceMessage", () => {
-	it("選択肢定義を Discord channel message payload へ変換する", () => {
+describe("buildMentionMessage", () => {
+	it("対象ユーザーをメンションしたテキストメッセージへ変換する", () => {
 		expect(
-			buildChoiceMessage("987654321098765432", {
-				prompt: "選択してください",
+			buildMentionMessage("987654321098765432", "選択してください"),
+		).toEqual({
+			content: "<@987654321098765432> 選択してください",
+			allowed_mentions: {
+				parse: [],
+				users: ["987654321098765432"],
+			},
+		});
+	});
+});
+
+describe("buildChoiceButtonsMessage", () => {
+	it("選択肢定義をボタンのみの Discord channel message payload へ変換する", () => {
+		expect(
+			buildChoiceButtonsMessage("987654321098765432", {
 				customIdPrefix: "test-choice",
 				choices: [
 					{ id: "primary", label: "主要", tone: "primary" },
@@ -16,7 +33,6 @@ describe("buildChoiceMessage", () => {
 				],
 			}),
 		).toEqual({
-			content: "<@987654321098765432> 選択してください",
 			components: [
 				{
 					type: 1,
@@ -50,7 +66,6 @@ describe("buildChoiceMessage", () => {
 			],
 			allowed_mentions: {
 				parse: [],
-				users: ["987654321098765432"],
 			},
 		});
 	});

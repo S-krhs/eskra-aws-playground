@@ -4,7 +4,10 @@ import { DiscordBotClient } from "@eskra-aws-playground/integration-discord/disc
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { Resource } from "sst/resource";
 
-import { buildChoiceMessage } from "../../../external-protocols/discord-message/build.js";
+import {
+	buildChoiceButtonsMessage,
+	buildMentionMessage,
+} from "../../../external-protocols/discord-message/build.js";
 import {
 	REMINDER_CHOICES,
 	REMINDER_CUSTOM_ID_PREFIX,
@@ -25,15 +28,20 @@ export const playCheckReminderJob = async (
 
 	logger.start();
 
-	// 2. 選択肢定義から Discord payload を構築し、integration へ渡して投稿する。
+	// 2. 質問メッセージを先に投稿し、続けてボタンのみのメッセージを投稿する。
 	try {
 		const botClient = new DiscordBotClient(discordBotToken);
-		const payload = buildChoiceMessage(targetUserId, {
-			prompt: REMINDER_QUESTION,
-			customIdPrefix: REMINDER_CUSTOM_ID_PREFIX,
-			choices: REMINDER_CHOICES,
-		});
-		await botClient.postChannelMessage(discordChannelId, payload);
+		await botClient.postChannelMessage(
+			discordChannelId,
+			buildMentionMessage(targetUserId, REMINDER_QUESTION),
+		);
+		await botClient.postChannelMessage(
+			discordChannelId,
+			buildChoiceButtonsMessage(targetUserId, {
+				customIdPrefix: REMINDER_CUSTOM_ID_PREFIX,
+				choices: REMINDER_CHOICES,
+			}),
+		);
 	} catch (notificationError) {
 		logger.failure(notificationError);
 		throw notificationError;

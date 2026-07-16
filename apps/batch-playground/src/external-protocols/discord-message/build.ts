@@ -12,11 +12,6 @@ const RESPONSE_TYPE_UPDATE_MESSAGE = 7;
 const RESPONSE_TYPE_AUTOCOMPLETE_RESULT = 8;
 const MESSAGE_FLAG_EPHEMERAL = 64;
 
-/** Discord へ投稿する選択肢メッセージ。 */
-export interface DiscordChoiceMessage extends DiscordChoiceDefinition {
-	prompt: string;
-}
-
 /** Discord interaction callback の生成指示。 */
 export type DiscordInteractionResponse =
 	| { kind: "pong" }
@@ -45,29 +40,36 @@ export type DiscordInteractionResponsePayload =
 	  }
 	| { type: 8; data: { choices: readonly [] } };
 
-/** 選択肢定義から Discord channel message payload を構築する。 */
-export const buildChoiceMessage = (
+/** 対象ユーザーをメンションしたテキストメッセージ payload を構築する。 */
+export const buildMentionMessage = (targetUserId: string, text: string) => {
+	return {
+		content: `<@${targetUserId}> ${text}`,
+		allowed_mentions: { parse: [] as readonly string[], users: [targetUserId] },
+	};
+};
+
+/** 選択肢定義からボタンのみの Discord channel message payload を構築する。 */
+export const buildChoiceButtonsMessage = (
 	targetUserId: string,
-	message: DiscordChoiceMessage,
+	definition: DiscordChoiceDefinition,
 ) => {
 	return {
-		content: `<@${targetUserId}> ${message.prompt}`,
 		components: [
 			{
 				type: 1 as const,
-				components: message.choices.map((choice) => {
+				components: definition.choices.map((choice) => {
 					return {
 						type: 2 as const,
 						style: DISCORD_BUTTON_STYLES[choice.tone],
 						label: choice.label,
-						custom_id: [message.customIdPrefix, targetUserId, choice.id].join(
+						custom_id: [definition.customIdPrefix, targetUserId, choice.id].join(
 							CUSTOM_ID_SEPARATOR,
 						),
 					};
 				}),
 			},
 		],
-		allowed_mentions: { parse: [] as readonly string[], users: [targetUserId] },
+		allowed_mentions: { parse: [] as readonly string[] },
 	};
 };
 

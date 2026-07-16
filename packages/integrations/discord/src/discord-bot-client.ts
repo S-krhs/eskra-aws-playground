@@ -31,7 +31,7 @@ export interface DiscordActionRow {
 
 /** Bot がチャンネルへ送るメッセージ payload。 */
 export interface DiscordChannelMessagePayload {
-	content: string;
+	content?: string;
 	components?: readonly DiscordActionRow[];
 	allowed_mentions: {
 		parse: readonly string[];
