@@ -31,23 +31,63 @@ export default $config({
 			},
 		);
 
-		// one-time schedule が batch Lambda を起動するときに引き受ける role
+		// one-time schedule が batch Lambda を起動するときに引き受ける role。
+		// confused deputy 対策として、自アカウントのこの schedule group からの引き受けに限定する
+		const callerIdentity = aws.getCallerIdentityOutput({});
 		const umaOneDrawTopicScheduleRole = new aws.iam.Role(
 			"UmaOneDrawTopicScheduleRole",
 			{
-				assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
-					Service: "scheduler.amazonaws.com",
-				}),
+				assumeRolePolicy: aws.iam.getPolicyDocumentOutput({
+					statements: [
+						{
+							actions: ["sts:AssumeRole"],
+							principals: [
+								{
+									type: "Service",
+									identifiers: ["scheduler.amazonaws.com"],
+								},
+							],
+							conditions: [
+								{
+									test: "StringEquals",
+									variable: "aws:SourceAccount",
+									values: [callerIdentity.accountId],
+								},
+								{
+									test: "ArnLike",
+									variable: "aws:SourceArn",
+									values: [umaOneDrawTopicScheduleGroup.arn],
+								},
+							],
+						},
+					],
+				}).json,
 			},
+		);
+
+		// 遊技チェックリマインダー投稿用の Discord Bot token を Secret として扱う
+		const discordBotToken = new sst.Secret("DiscordBotToken");
+
+		// 遊技チェックリマインダーの投稿先チャンネルと回答対象ユーザーを Secret として扱う
+		const playCheckReminderChannelId = new sst.Secret(
+			"PlayCheckReminderDiscordChannelId",
+		);
+		const playCheckReminderTargetUserId = new sst.Secret(
+			"PlayCheckReminderTargetUserId",
 		);
 
 		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
-			handler: "../apps/batch-playground/src/handlers/batch.handler",
+			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "30 seconds",
 			memory: "128 MB",
-			link: [umaOneDrawTopicWebhookUrl],
+			link: [
+				umaOneDrawTopicWebhookUrl,
+				discordBotToken,
+				playCheckReminderChannelId,
+				playCheckReminderTargetUserId,
+			],
 			environment: {
 				UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME:
 					umaOneDrawTopicScheduleGroup.name,
@@ -66,6 +106,13 @@ export default $config({
 					resources: [umaOneDrawTopicScheduleRole.arn],
 				},
 			],
+		});
+
+		// scheduler からの非同期起動に対する Lambda 自体の自動リトライ(既定 2 回)を止める。
+		// これにより job は失敗を throw して Errors アラームへ届けても Discord 投稿が重複しない
+		new aws.lambda.FunctionEventInvokeConfig("BatchFunctionEventInvokeConfig", {
+			functionName: batchFunction.name,
+			maximumRetryAttempts: 0,
 		});
 
 		// batch Lambda が env で role ARN を参照するため、循環参照を避けて invoke 権限は別リソースで付与する
@@ -88,6 +135,30 @@ export default $config({
 		new sst.aws.CronV2("UmaOneDrawTopicSchedulerSchedule", {
 			function: batchFunction,
 			...jobSchedules.umaOneDrawTopicScheduler,
+		});
+
+		// 遊技チェックリマインダーの Scheduler を作成。実行タイミングは config/job-schedules で一元管理する
+		new sst.aws.CronV2("PlayCheckReminderSchedule", {
+			function: batchFunction,
+			...jobSchedules.playCheckReminder,
+		});
+
+		// リマインダーのボタン押下を検証するための Discord application public key を Secret として扱う
+		const discordInteractionPublicKey = new sst.Secret(
+			"DiscordInteractionPublicKey",
+		);
+
+		// HTTP リクエストを受ける公開エンドポイント Lambda を作成。job ごとに Lambda は増やさず、
+		// 公開エンドポイントはこの 1 つに集約する(現状は Discord interaction が唯一のルート)。
+		// Function URL を Discord Developer Portal の Interactions Endpoint URL に設定する
+		const functionUrlFunction = new sst.aws.Function("FunctionUrlFunction", {
+			handler:
+				"../apps/batch-playground/src/handlers/function-url/handler.handler",
+			runtime: "nodejs22.x",
+			timeout: "10 seconds",
+			memory: "128 MB",
+			link: [discordInteractionPublicKey],
+			url: true,
 		});
 
 		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
@@ -213,7 +284,7 @@ export default $config({
 				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
 				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
-				// link ではなく environment で渡す(SST 外のローカル実行・テストと同一経路にする)
+				// link ではなく environment で渡す(SST 外のテストと同一経路にする)
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 				},
@@ -275,6 +346,33 @@ export default $config({
 			{ dependsOn: [alertNotifierInvokePermission] },
 		);
 
+		// Lambda の Errors メトリクスを共通設定で監視し、アラートを Discord へ通知する
+		const createLambdaErrorAlarm = (
+			resourceName: string,
+			args: {
+				name: string;
+				description: string;
+				functionName: $util.Input<string>;
+			},
+		) => {
+			return new aws.cloudwatch.MetricAlarm(resourceName, {
+				name: args.name,
+				alarmDescription: args.description,
+				namespace: "AWS/Lambda",
+				metricName: "Errors",
+				dimensions: {
+					FunctionName: args.functionName,
+				},
+				statistic: "Sum",
+				period: 300,
+				evaluationPeriods: 1,
+				threshold: 1,
+				comparisonOperator: "GreaterThanOrEqualToThreshold",
+				treatMissingData: "notBreaching",
+				alarmActions: [alertTopic.arn],
+			});
+		};
+
 		// worker が規定回数リトライしても失敗し DLQ にメッセージが滞留したら通知する
 		new aws.cloudwatch.MetricAlarm("AnimeAnalysisDlqDepthAlarm", {
 			name: `${appName}-${$app.stage}-anime-dlq-depth`,
@@ -296,21 +394,30 @@ export default $config({
 		});
 
 		// DLQ を持たない schedule 起動の orchestrator のエラーを通知する
-		new aws.cloudwatch.MetricAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
+		createLambdaErrorAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
 			name: `${appName}-${$app.stage}-anime-orchestrator-errors`,
-			alarmDescription: alarmDescriptions.animeAnalysisOrchestratorError,
-			namespace: "AWS/Lambda",
-			metricName: "Errors",
-			dimensions: {
-				FunctionName: animeAnalysisOrchestratorFunction.name,
-			},
-			statistic: "Sum",
-			period: 300,
-			evaluationPeriods: 1,
-			threshold: 1,
-			comparisonOperator: "GreaterThanOrEqualToThreshold",
-			treatMissingData: "notBreaching",
-			alarmActions: [alertTopic.arn],
+			description: alarmDescriptions.animeAnalysisOrchestratorError,
+			functionName: animeAnalysisOrchestratorFunction.name,
 		});
+
+		// DLQ を持たない schedule 起動の batch Lambda のエラーを通知する。
+		// 深夜の scheduler job が失敗するとその日のお題通知が丸ごとスキップされるため検知が必要
+		createLambdaErrorAlarm("PlaygroundBatchErrorAlarm", {
+			name: `${appName}-${$app.stage}-playground-batch-errors`,
+			description: alarmDescriptions.playgroundBatchError,
+			functionName: batchFunction.name,
+		});
+
+		// 公開エンドポイント Lambda が失敗すると HTTP リクエスト(ボタン押下など)に応答できないため検知する
+		createLambdaErrorAlarm("FunctionUrlErrorAlarm", {
+			name: `${appName}-${$app.stage}-function-url-errors`,
+			description: alarmDescriptions.functionUrlError,
+			functionName: functionUrlFunction.name,
+		});
+
+		// デプロイ後に Discord Developer Portal へ登録する Interactions Endpoint URL を出力する
+		return {
+			functionUrl: functionUrlFunction.url,
+		};
 	},
 });

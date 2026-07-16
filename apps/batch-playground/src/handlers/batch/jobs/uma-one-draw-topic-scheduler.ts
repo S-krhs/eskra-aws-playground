@@ -3,25 +3,31 @@
 import { OneTimeScheduleClient } from "@eskra-aws-playground/integration-scheduler/one-time-schedule-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 
-import { planOneTimeInvocation } from "../features/uma-one-draw-topic-scheduler/one-time-invocation-plan.js";
-import { batchNames } from "../shared/routes/batch-names.js";
-import type { BatchResponse } from "../shared/schemas/lambda/batch/response.js";
-import {
-	getUmaOneDrawTopicSchedulerSettings,
-	resolveTargetFunctionArn,
-} from "./runtime-settings/uma-one-draw-topic-scheduler-setting-resolver.js";
+import { planOneTimeInvocation } from "../../../features/uma-one-draw-topic-scheduler/one-time-invocation-plan.js";
+import { type BatchResponse, batchContextSchema } from "../schema.js";
 
-const logger = createBatchLogger(batchNames.umaOneDrawTopicScheduler);
+const logger = createBatchLogger("uma-one-draw-topic-scheduler");
 
 /** UMA ワンドロお題通知を当日ランダムな時刻に起動する one-time schedule を登録するバッチジョブ。 */
 export const umaOneDrawTopicSchedulerJob = async (
 	_event: unknown,
 	context?: unknown,
 ): Promise<BatchResponse> => {
-	// 1. 実行時設定から schedule group・role・起動対象 Lambda の ARN を解決する。
-	const { scheduleGroupName, schedulerRoleArn } =
-		getUmaOneDrawTopicSchedulerSettings();
-	const targetFunctionArn = resolveTargetFunctionArn(context);
+	// 1. SST が設定する環境変数から schedule group・role を、Lambda context から起動対象の ARN を解決する。
+	const scheduleGroupName = process.env.UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME;
+	const schedulerRoleArn = process.env.UMA_ONE_DRAW_TOPIC_SCHEDULER_ROLE_ARN;
+
+	if (!scheduleGroupName || !schedulerRoleArn) {
+		throw new Error("scheduler の実行時設定(環境変数)が設定されていません。");
+	}
+
+	const parsedContext = batchContextSchema.safeParse(context);
+
+	if (!parsedContext.success) {
+		throw new Error("Lambda context から起動対象の ARN を解決できません。");
+	}
+
+	const targetFunctionArn = parsedContext.data.invokedFunctionArn;
 
 	logger.start();
 
@@ -29,25 +35,27 @@ export const umaOneDrawTopicSchedulerJob = async (
 	const invocationPlan = planOneTimeInvocation();
 
 	// 3. EventBridge Scheduler integration へ one-time schedule の登録を委譲する。
+	//    当日分が登録済み(同名 schedule が存在)の場合は二重登録せず正常終了する。
 	const scheduleClient = new OneTimeScheduleClient();
-	await scheduleClient.createSchedule({
+	const { created } = await scheduleClient.createSchedule({
 		name: invocationPlan.scheduleName,
 		groupName: scheduleGroupName,
 		scheduleAt: invocationPlan.scheduleAt,
 		timezone: invocationPlan.timezone,
 		targetArn: targetFunctionArn,
 		roleArn: schedulerRoleArn,
-		input: { job: batchNames.umaOneDrawTopic },
+		input: { job: "uma-one-draw-topic" },
 	});
 
-	logger.complete({ scheduleAt: invocationPlan.scheduleAt });
+	logger.complete({ scheduleAt: invocationPlan.scheduleAt, created });
 
 	// 4. Lambda ハンドラーへ共通レスポンスを返す。
 	return {
 		ok: true,
-		job: batchNames.umaOneDrawTopicScheduler,
+		job: "uma-one-draw-topic-scheduler",
 		details: {
 			scheduleAt: invocationPlan.scheduleAt,
+			created,
 		},
 	};
 };

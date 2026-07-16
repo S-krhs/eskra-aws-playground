@@ -1,6 +1,12 @@
 // In scope: 指定された Discord Webhook URL へ HTTP リクエストを送信する
 // Out of scope: Webhook URL の解決、メッセージ内容の生成、ジョブ判定を行う
-import { sanitizeText } from "@eskra-aws-playground/libs/string/text-sanitizer.js";
+import {
+	type JsonPostResponseDetails,
+	postJson,
+} from "./internal/post-json.js";
+
+/** Discord Webhook 失敗応答の安全化済み詳細。 */
+export type DiscordWebhookResponseDetails = JsonPostResponseDetails;
 
 const DISCORD_WEBHOOK_URL_PATTERN =
 	/https:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/[^\s"'<>]+/gi;
@@ -19,12 +25,6 @@ export interface DiscordMessageOptions {
 		parse: readonly string[];
 	};
 	timeoutMs?: number;
-}
-
-/** Discord Webhook 失敗応答の安全化済み詳細。 */
-export interface DiscordWebhookResponseDetails {
-	status: number;
-	body: string;
 }
 
 /** Discord Webhook 連携で発生した失敗を表すエラー。 */
@@ -52,59 +52,21 @@ export class DiscordWebhookClient {
 		payload: DiscordPayload,
 		timeoutMs: number = this.defaultTimeoutMs,
 	): Promise<void> {
-		if (typeof globalThis.fetch !== "function") {
-			throw new DiscordWebhookError("ランタイムに fetch がありません");
-		}
-
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => {
-			controller.abort();
-		}, timeoutMs);
-
-		let response: Response;
-		try {
-			response = await fetch(this.webhookUrl, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
+		await postJson({
+			url: this.webhookUrl,
+			payload,
+			timeoutMs,
+			apiLabel: "Discord Webhook",
+			responseBodyReplacements: [
+				{
+					pattern: DISCORD_WEBHOOK_URL_PATTERN,
+					replacement: "[redacted-discord-webhook-url]",
 				},
-				body: JSON.stringify(payload),
-				signal: controller.signal,
-			});
-		} catch (error) {
-			if (error instanceof DOMException && error.name === "AbortError") {
-				throw new DiscordWebhookError(
-					`Discord Webhook リクエストがタイムアウトしました: ${timeoutMs}ms`,
-					{
-						timeoutMs,
-					},
-				);
-			}
-
-			throw error;
-		} finally {
-			clearTimeout(timeoutId);
-		}
-
-		if (!response.ok) {
-			const text = await response.text();
-			const responseDetails: DiscordWebhookResponseDetails = {
-				status: response.status,
-				body: sanitizeText(text, {
-					replacements: [
-						{
-							pattern: DISCORD_WEBHOOK_URL_PATTERN,
-							replacement: "[redacted-discord-webhook-url]",
-						},
-					],
-				}),
-			};
-
-			throw new DiscordWebhookError(
-				`Discord Webhook 応答が失敗しました: ${response.status}`,
-				responseDetails,
-			);
-		}
+			],
+			createError: (message, responseDetails) => {
+				return new DiscordWebhookError(message, responseDetails);
+			},
+		});
 	}
 
 	/** テキスト本文を Discord Webhook API へ送信する。 */

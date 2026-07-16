@@ -46,28 +46,25 @@ SQS message body:
 
 ## 環境変数
 
-`npm run local:batch-anime-analysis` は Worker（dataSource スクレイピング）を実行します。ローカル実行に必要なのは Discord Webhook、DB 接続、対象指定です。
+Webhook URL は SST link（Resource）から、DB 接続文字列は SST が Worker Lambda に設定する `DATABASE_URL` から解決します。app 側の `.env` は使いません。デプロイ時には次の SST Secret が必要です。
 
-Worker 用 Discord Webhook:
-
-- `ANIME_ANALYSIS_DISCORD_WEBHOOK_URL`
-- `DEFAULT_DISCORD_WEBHOOK_URL`
-
-Worker のローカル実行:
-
-- `BATCH_DATA_SOURCE_IDS`（カンマ区切り。未指定なら全 dataSource を対象にする）
-- `DATABASE_URL`（ローカル用 Neon branch の pooled 接続文字列。develop 用の値は置かない）
-
-その他 handler のローカル fallback（SST link がない場合に参照）:
-
-- `ANIME_ANALYSIS_QUEUE_URL`: Orchestrator が投入する SQS Queue URL。
-- `ALERT_DISCORD_WEBHOOK_URL`: Notifier が使うアラート通知用 Discord Webhook URL。
+- `AnimeAnalysisDiscordWebhook`: Worker がスクレイピング結果を通知する Discord Webhook URL。
+- `AlertDiscordWebhook`: Notifier が使うアラート通知用 Discord Webhook URL。
+- `DatabaseUrl`: DB（Neon）の pooled 接続文字列。
 
 ## ローカル実行
 
-1. `apps/batch-anime-analysis/.env.example` を `apps/batch-anime-analysis/.env` にコピーします。
-2. `npm install`
-3. `npm run local:batch-anime-analysis`
+リポジトリルートで `npm run dev` を実行すると、`sst dev` の Live Lambda として動きます。
+
+初回は personal stage に Secret を設定します。
+
+```sh
+npx sst secret set AnimeAnalysisDiscordWebhook <url> --config infra/sst.config.ts --stage <stage>
+npx sst secret set AlertDiscordWebhook <url> --config infra/sst.config.ts --stage <stage>
+npx sst secret set DatabaseUrl <接続文字列> --config infra/sst.config.ts --stage <stage>
+```
+
+Worker の動作確認は、personal stage の SQS Queue へ `{"dataSourceId": "..."}` の message を送るか、Orchestrator Lambda を invoke します。
 
 ## デプロイ
 

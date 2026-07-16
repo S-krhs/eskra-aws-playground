@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { batchEventSchema } from "./event.js";
+
+import { batchEventSchema } from "./schema.js";
 
 describe("batchEventSchema", () => {
 	it("起動イベントの job を trim と小文字化で正規化する", () => {

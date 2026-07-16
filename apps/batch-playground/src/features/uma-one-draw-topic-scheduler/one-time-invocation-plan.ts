@@ -11,7 +11,7 @@ import {
 
 /** one-time schedule の実行計画。 */
 export interface OneTimeInvocationPlan {
-	/** 日付で一意にした schedule 名。同日の二重登録を登録時の重複エラーで防ぐ。 */
+	/** 日付で一意にした schedule 名。発火前の同日二重登録は同名検知で防ぐ(発火後は自動削除で名前が解放され、防げない)。 */
 	scheduleName: string;
 	/** at() 式へ渡す timezone ローカルの起動時刻(YYYY-MM-DDTHH:mm:ss)。 */
 	scheduleAt: string;
@@ -23,14 +23,37 @@ const padTwoDigits = (value: number): string => {
 	return String(value).padStart(2, "0");
 };
 
-/** 当日 JST の起動 window からランダムに起動時刻を選び、実行計画を作る。random は [0, 1) を返す関数。 */
+const MINUTE_IN_MS = 60_000;
+
+/**
+ * 当日 JST の起動 window からランダムに起動時刻を選び、実行計画を作る。
+ * window 開始後の実行では過去時刻を選ばないよう「今+1分」以降から選び、
+ * window 終了後はエラーにする。random は [0, 1) を返す関数。
+ */
 export const planOneTimeInvocation = (
 	random: () => number = Math.random,
 ): OneTimeInvocationPlan => {
 	const date = getCurrentJstDateString();
-	const offsetMinutes = Math.floor(
-		random() * INVOCATION_WINDOW_DURATION_MINUTES,
+	// JST は夏時間がなく UTC+9 固定のため、固定オフセットで window 開始を epoch に変換する
+	const windowStartEpochMs = Date.parse(
+		`${date}T${padTwoDigits(INVOCATION_WINDOW_START_HOUR)}:00:00+09:00`,
 	);
+	const minOffsetMinutes = Math.max(
+		0,
+		Math.ceil((Date.now() + MINUTE_IN_MS - windowStartEpochMs) / MINUTE_IN_MS),
+	);
+
+	if (minOffsetMinutes >= INVOCATION_WINDOW_DURATION_MINUTES) {
+		throw new Error(
+			"当日の起動 window を過ぎているため schedule を登録できません。",
+		);
+	}
+
+	const offsetMinutes =
+		minOffsetMinutes +
+		Math.floor(
+			random() * (INVOCATION_WINDOW_DURATION_MINUTES - minOffsetMinutes),
+		);
 	const hour = INVOCATION_WINDOW_START_HOUR + Math.floor(offsetMinutes / 60);
 	const minute = offsetMinutes % 60;
 

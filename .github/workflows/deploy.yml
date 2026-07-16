@@ -46,3 +46,7 @@ jobs:
           SST_SECRET_AnimeAnalysisDiscordWebhook: ${{ secrets.ANIME_ANALYSIS_DISCORD_WEBHOOK_URL }}
           SST_SECRET_AlertDiscordWebhook: ${{ secrets.ALERT_DISCORD_WEBHOOK_URL }}
           SST_SECRET_DatabaseUrl: ${{ secrets.DATABASE_URL }}
+          SST_SECRET_DiscordBotToken: ${{ secrets.DISCORD_BOT_TOKEN }}
+          SST_SECRET_DiscordInteractionPublicKey: ${{ secrets.DISCORD_INTERACTION_PUBLIC_KEY }}
+          SST_SECRET_PlayCheckReminderDiscordChannelId: ${{ secrets.PLAY_CHECK_REMINDER_DISCORD_CHANNEL_ID }}
+          SST_SECRET_PlayCheckReminderTargetUserId: ${{ secrets.PLAY_CHECK_REMINDER_TARGET_USER_ID }}

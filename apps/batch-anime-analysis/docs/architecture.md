@@ -16,8 +16,7 @@ DB 接続、SQL、テーブル行構造、永続化の詳細は app では持た
 | `src/shared/intermediate-models/` | app 内で受け渡す metric 中間表現 | SQS 送受信、repository 定義読み込み、スクレイピング実行、通知文生成 |
 | `src/shared/schemas/` | handler ごとの起動イベント検証 schema と応答型（`lambda/<handler>/event.ts`・`response.ts`）、SQS message body の検証 schema（`sqs/<message>/message.ts`） | SQS 送受信、実行時設定の解決と型、repository 定義読み込み、スクレイピング実行、通知文生成 |
 | `src/features/notifications/` | スクレイピング結果とアラートの Discord 通知文生成、通知表示用の入力型 | HTTP 通信、スクレイピング実行、スクレイピング定義、SNS event 解釈 |
-| `src/jobs/runtime-settings/` | job ごとの実行時設定の型と、SST link / 環境変数からの解決 | 個別 feature の値、message body の業務形式、dataSource 単位実行制御、event/response/message の型・契約、外部サービスとの通信 |
-| `src/local-runner.ts` | `.env` を使ったローカル起動 | 本番 Lambda 固有の制御、ジョブ内部処理 |
+| `src/jobs/runtime-settings/` | job ごとの実行時設定の型と、SST link からの解決 | 個別 feature の値、message body の業務形式、dataSource 単位実行制御、event/response/message の型・契約、外部サービスとの通信 |
 
 ## 依存方向
 

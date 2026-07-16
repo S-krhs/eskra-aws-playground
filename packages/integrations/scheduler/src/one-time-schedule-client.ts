@@ -1,6 +1,7 @@
 // In scope: AWS SDK を使って EventBridge Scheduler へ one-time schedule を登録する
 // Out of scope: 実行時刻の決定、schedule 名や対象 ARN の解決、Lambda イベント解釈を持つ
 import {
+	ConflictException,
 	CreateScheduleCommand,
 	SchedulerClient,
 } from "@aws-sdk/client-scheduler";
@@ -23,26 +24,44 @@ export interface OneTimeScheduleInput {
 	input: unknown;
 }
 
+/** one-time schedule の登録結果。 */
+export interface OneTimeScheduleResult {
+	/** 新規に登録できたら true。同名 schedule が既に存在する場合は false。 */
+	created: boolean;
+}
+
 /** AWS SDK を使って、実行後に自動削除される one-time schedule を登録するクライアント。 */
 export class OneTimeScheduleClient {
 	private readonly client = new SchedulerClient({});
 
-	public async createSchedule(schedule: OneTimeScheduleInput): Promise<void> {
-		await this.client.send(
-			new CreateScheduleCommand({
-				Name: schedule.name,
-				GroupName: schedule.groupName,
-				ScheduleExpression: `at(${schedule.scheduleAt})`,
-				ScheduleExpressionTimezone: schedule.timezone,
-				FlexibleTimeWindow: { Mode: "OFF" },
-				ActionAfterCompletion: "DELETE",
-				Target: {
-					Arn: schedule.targetArn,
-					RoleArn: schedule.roleArn,
-					Input: JSON.stringify(schedule.input),
-					RetryPolicy: { MaximumRetryAttempts: 0 },
-				},
-			}),
-		);
+	public async createSchedule(
+		schedule: OneTimeScheduleInput,
+	): Promise<OneTimeScheduleResult> {
+		try {
+			await this.client.send(
+				new CreateScheduleCommand({
+					Name: schedule.name,
+					GroupName: schedule.groupName,
+					ScheduleExpression: `at(${schedule.scheduleAt})`,
+					ScheduleExpressionTimezone: schedule.timezone,
+					FlexibleTimeWindow: { Mode: "OFF" },
+					ActionAfterCompletion: "DELETE",
+					Target: {
+						Arn: schedule.targetArn,
+						RoleArn: schedule.roleArn,
+						Input: JSON.stringify(schedule.input),
+						// 配信リトライは Lambda が受理する前の失敗にのみ働き、重複起動しない
+						RetryPolicy: { MaximumRetryAttempts: 3 },
+					},
+				}),
+			);
+		} catch (error) {
+			if (error instanceof ConflictException) {
+				return { created: false };
+			}
+			throw error;
+		}
+
+		return { created: true };
 	}
 }

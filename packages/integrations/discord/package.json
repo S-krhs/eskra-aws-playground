@@ -7,6 +7,10 @@
 		"./discord-webhook-client.js": {
 			"types": "./dist/discord-webhook-client.d.ts",
 			"default": "./dist/discord-webhook-client.js"
+		},
+		"./discord-bot-client.js": {
+			"types": "./dist/discord-bot-client.d.ts",
+			"default": "./dist/discord-bot-client.js"
 		}
 	},
 	"dependencies": {
