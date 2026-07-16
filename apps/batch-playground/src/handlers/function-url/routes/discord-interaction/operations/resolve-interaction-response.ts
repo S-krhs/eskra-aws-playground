@@ -57,7 +57,7 @@ export const resolveInteractionResponse = (
 					kind: "FORBIDDEN",
 					data: buildInteractionResponse({
 						kind: "ephemeral",
-						content: `このリマインダーは <@${selection.targetUserId}> さん専用です。`,
+						content: `このリマインダーは <@${selection.targetUserId}> さんしか使えないのです～、よよよ……`,
 					}),
 				};
 			}
@@ -65,7 +65,7 @@ export const resolveInteractionResponse = (
 				kind: "OK",
 				data: buildInteractionResponse({
 					kind: "update-message",
-					content: `<@${selection.targetUserId}> ${REMINDER_QUESTION}\n**${selection.choiceLabel}** を選択しました`,
+					content: `でれれれれれ\n<@${selection.targetUserId}> ${REMINDER_QUESTION}\n**${selection.choiceLabel}！**`,
 				}),
 			};
 		}
