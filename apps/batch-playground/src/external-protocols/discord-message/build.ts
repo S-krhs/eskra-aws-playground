@@ -62,9 +62,11 @@ export const buildChoiceButtonsMessage = (
 						type: 2 as const,
 						style: DISCORD_BUTTON_STYLES[choice.tone],
 						label: choice.label,
-						custom_id: [definition.customIdPrefix, targetUserId, choice.id].join(
-							CUSTOM_ID_SEPARATOR,
-						),
+						custom_id: [
+							definition.customIdPrefix,
+							targetUserId,
+							choice.id,
+						].join(CUSTOM_ID_SEPARATOR),
 					};
 				}),
 			},
