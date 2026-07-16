@@ -65,7 +65,7 @@ export const resolveInteractionResponse = (
 				kind: "OK",
 				data: buildInteractionResponse({
 					kind: "update-message",
-					content: `でれれれれれ～、**${selection.choiceLabel}！**`,
+					content: `でれれれれれ～、**${selection.choiceLabel}**！`,
 				}),
 			};
 		}

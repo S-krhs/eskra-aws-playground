@@ -47,7 +47,7 @@ describe("resolveInteractionResponse", () => {
 			data: {
 				type: 7,
 				data: {
-					content: "でれれれれれ～、**はい（勝った）！**",
+					content: "でれれれれれ～、**はい（勝った）**！",
 					components: [],
 					allowed_mentions: { parse: [] },
 				},
