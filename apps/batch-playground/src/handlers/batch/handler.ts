@@ -23,7 +23,7 @@ export const handler = async (
 	const parsedEvent = batchEventSchema.safeParse(event);
 
 	if (!parsedEvent.success) {
-		throw new Error("job が設定されていません");
+		throw new Error("有効な job が指定されていません");
 	}
 
 	const batchJob = batchJobs.get(parsedEvent.data.job);

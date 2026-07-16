@@ -43,7 +43,7 @@ export const discordInteractionRoute = async (
 
 	// 3. interaction を operation で解決する。
 	const result = resolveInteractionResponse(interaction);
-	logger.complete({ interactionType: interaction.type });
+	logger.complete({ interactionType: interaction.type, outcome: result.kind });
 
 	// 4. 解決済み payload から 200 response を形成する。
 	return {
