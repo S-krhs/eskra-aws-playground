@@ -1,14 +1,18 @@
-// In scope: request の parse、認証・認可、routing 層への委譲、response の形成
-// Out of scope: operation の routing 定義、署名検証アルゴリズム、機能ごとの応答内容の解決
+// In scope: request の parse、認証・認可、interaction 種別ごとの応答解決、response の形成
+// Out of scope: 署名検証アルゴリズム、機能ごとの応答内容の生成
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { Resource } from "sst/resource";
+import type { DiscordInteractionResponsePayload } from "@/external-protocols/discord-message/interaction-response.js";
 import { verifyInteractionSignature } from "@/external-protocols/discord-signature/verify-interaction-signature.js";
+import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,
 } from "@/handlers/function-url/schema.js";
-import { findInteractionOperation } from "./operation-routing.js";
+import { commands } from "./contracts/commands.js";
 import { ephemeralOperation } from "./operations/ephemeral-operation.js";
+import { inuihiroshiCommandOperation } from "./operations/inuihiroshi-command-operation.js";
+import { pingOperation } from "./operations/ping-operation.js";
 import { discordInteractionRequestSchema } from "./schema.js";
 
 const logger = createBatchLogger("kaguya-bot-interaction");
@@ -44,11 +48,18 @@ export const kaguyaBotInteractionRoute = async (
 		};
 	}
 
-	// 3. route 定義から担当 operation を選択して解決する。
-	const operation = findInteractionOperation(interaction);
-	const result =
-		operation?.(interaction) ??
-		ephemeralOperation("この操作には対応していません。");
+	// 3. interaction の種類と登録済み command から応答を解決する。
+	let result: OperationResult<DiscordInteractionResponsePayload>;
+	if (interaction.kind === "ping") {
+		result = pingOperation();
+	} else if (
+		interaction.kind === "application-command" &&
+		interaction.command.name === commands.inuihiroshi.name
+	) {
+		result = inuihiroshiCommandOperation();
+	} else {
+		result = ephemeralOperation("この操作には対応していません。");
+	}
 	logger.complete({ interactionKind: interaction.kind, outcome: result.kind });
 
 	// 4. 解決済み payload から 200 response を形成する。
