@@ -3,7 +3,7 @@
 import type { DiscordChannelMessagePayload } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
 import { buttonStyles } from "@/external-protocols/discord-message/button.js";
 import { buildCustomId } from "@/external-protocols/discord-message/custom-id.js";
-import { prefixes } from "@/handlers/function-url/routes/yaccho-bot-interaction/shared/prefixes.js";
+import { prefixes } from "@/handlers/function-url/routes/yaccho-bot-interaction/contracts/prefixes.js";
 
 import { REMINDER_CHOICES, REMINDER_QUESTION } from "./reminder-settings.js";
 

@@ -5,7 +5,7 @@ import type { DiscordInteraction } from "@/external-protocols/discord-message/pa
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 import { inuihiroshiCommandOperation } from "./operations/inuihiroshi-command-operation.js";
 import { pingOperation } from "./operations/ping-operation.js";
-import { commands } from "./shared/commands.js";
+import { commands } from "./contracts/commands.js";
 
 type DiscordInteractionOperation = (
 	interaction: DiscordInteraction,

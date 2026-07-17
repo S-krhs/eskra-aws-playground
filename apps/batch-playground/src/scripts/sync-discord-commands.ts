@@ -6,8 +6,8 @@ import {
 } from "@eskra-aws-playground/integration-discord/discord-command-client.js";
 import { Resource } from "sst/resource";
 
-import { commands as kaguyaCommands } from "../handlers/function-url/routes/kaguya-bot-interaction/shared/commands.js";
-import { commands as yacchoCommands } from "../handlers/function-url/routes/yaccho-bot-interaction/shared/commands.js";
+import { commands as kaguyaCommands } from "../handlers/function-url/routes/kaguya-bot-interaction/contracts/commands.js";
+import { commands as yacchoCommands } from "../handlers/function-url/routes/yaccho-bot-interaction/contracts/commands.js";
 
 interface DiscordCommandSyncTarget {
 	botName: string;

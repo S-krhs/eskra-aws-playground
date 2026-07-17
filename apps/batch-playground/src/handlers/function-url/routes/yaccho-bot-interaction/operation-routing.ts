@@ -8,8 +8,8 @@ import { helloCommandOperation } from "./operations/hello-command-operation.js";
 import { pingOperation } from "./operations/ping-operation.js";
 import { playCheckReminderCommandOperation } from "./operations/play-check-reminder-command-operation.js";
 import { playCheckReminderOperation } from "./operations/play-check-reminder-operation.js";
-import { commands } from "./shared/commands.js";
-import { prefixes } from "./shared/prefixes.js";
+import { commands } from "./contracts/commands.js";
+import { prefixes } from "./contracts/prefixes.js";
 
 type DiscordInteractionOperation = (
 	interaction: DiscordInteraction,

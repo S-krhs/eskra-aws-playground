@@ -10,7 +10,7 @@ import {
 import type { DiscordInteraction } from "@/external-protocols/discord-message/parse.js";
 import { REMINDER_CHOICES } from "@/features/play-check-reminder/reminder-settings.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
-import { prefixes } from "../shared/prefixes.js";
+import { prefixes } from "../contracts/prefixes.js";
 
 /**
  * 遊技リマインダーのボタン押下から返す interaction callback payload を生成する。
