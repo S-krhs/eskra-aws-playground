@@ -1,9 +1,18 @@
-// In scope: 宣言済みのスラッシュコマンド定義を Discord guild へ bulk overwrite で同期する
-// Out of scope: コマンドの応答内容、interaction の解釈、コマンド定義の宣言
-import { DiscordCommandClient } from "@eskra-aws-playground/integration-discord/discord-command-client.js";
+// In scope: 宣言済みのスラッシュコマンドを Discord API の登録形式へ変換し、guild へ bulk overwrite で同期する
+// Out of scope: コマンドの宣言、応答内容、interaction の解釈
+import {
+	DiscordCommandClient,
+	type DiscordCommandDefinition,
+} from "@eskra-aws-playground/integration-discord/discord-command-client.js";
 import { Resource } from "sst/resource";
 
-import { DISCORD_COMMAND_DEFINITIONS } from "../handlers/function-url/routes/discord-interaction/command-definitions.js";
+import { COMMAND_DEFINITIONS } from "@/handlers/function-url/routes/discord-interaction/command-definitions.js";
+
+/** アプリのコマンド定義を Discord API の登録形式へ変換する。 */
+const DISCORD_COMMAND_DEFINITIONS: readonly DiscordCommandDefinition[] =
+	Object.values(COMMAND_DEFINITIONS).map(({ commandName, description }) => {
+		return { name: commandName, description };
+	});
 
 /**
  * 宣言済みコマンド定義を Discord guild へ bulk overwrite で同期する。

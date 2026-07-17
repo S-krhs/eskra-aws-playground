@@ -20,7 +20,7 @@ import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,
 } from "@/handlers/function-url/schema.js";
-import { HELLO_COMMAND_NAME } from "./command-definitions.js";
+import { COMMAND_DEFINITIONS } from "./command-definitions.js";
 import { resolveHelloCommand } from "./operations/resolve-hello-command.js";
 import { resolveReminderChoice } from "./operations/resolve-reminder-choice.js";
 import { discordInteractionRequestSchema } from "./schema.js";
@@ -98,7 +98,7 @@ const routeInteraction = (
 			};
 		case DISCORD_INTERACTION_TYPES.APPLICATION_COMMAND:
 			switch (interaction.commandName) {
-				case HELLO_COMMAND_NAME:
+				case COMMAND_DEFINITIONS.hello.commandName:
 					return resolveHelloCommand();
 				default:
 					return unsupported;
