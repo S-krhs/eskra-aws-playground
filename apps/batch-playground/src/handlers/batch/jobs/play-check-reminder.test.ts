@@ -22,14 +22,11 @@ vi.mock(
 		};
 	},
 );
-vi.mock(
-	"@eskra-aws-playground/repositories/playground/play-check-reminder-config/repository.js",
-	() => {
-		return {
-			playCheckReminderConfigRepository: reminderConfigRepository,
-		};
-	},
-);
+vi.mock("@/features/play-check-reminder/reminder-config-store.js", () => {
+	return {
+		reminderConfigStore: reminderConfigRepository,
+	};
+});
 vi.mock("sst/resource", () => {
 	return {
 		Resource: { YacchoDiscordBotToken: { value: "yaccho-token" } },

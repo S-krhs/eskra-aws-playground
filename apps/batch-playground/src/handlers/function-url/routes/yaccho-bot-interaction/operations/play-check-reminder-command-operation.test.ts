@@ -10,14 +10,11 @@ const reminderConfigRepository = vi.hoisted(() => {
 	};
 });
 
-vi.mock(
-	"@eskra-aws-playground/repositories/playground/play-check-reminder-config/repository.js",
-	() => {
-		return {
-			playCheckReminderConfigRepository: reminderConfigRepository,
-		};
-	},
-);
+vi.mock("@/features/play-check-reminder/reminder-config-store.js", () => {
+	return {
+		reminderConfigStore: reminderConfigRepository,
+	};
+});
 
 const commandInteraction = (
 	options: DiscordApplicationCommandInteraction["command"]["options"],

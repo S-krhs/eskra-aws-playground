@@ -2,9 +2,9 @@
 // Out of scope: リマインダーメッセージ生成や Discord Bot API HTTP 通信の詳細を持つ
 import { DiscordBotClient } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import { playCheckReminderConfigRepository } from "@eskra-aws-playground/repositories/playground/play-check-reminder-config/repository.js";
 import { Resource } from "sst/resource";
 
+import { reminderConfigStore } from "@/features/play-check-reminder/reminder-config-store.js";
 import {
 	buildReminderChoicesMessage,
 	buildReminderQuestionMessage,
@@ -21,7 +21,7 @@ export const playCheckReminderJob = async (
 	logger.start();
 	// 1. Yaccho Bot token と登録済みの利用者設定を解決する。
 	const discordBotToken = Resource.YacchoDiscordBotToken.value;
-	const configs = await playCheckReminderConfigRepository.findMany();
+	const configs = await reminderConfigStore.findMany();
 
 	// 2. 全設定へ質問と選択肢を投稿し、1件の失敗で他の送信を止めない。
 	const botClient = new DiscordBotClient(discordBotToken);

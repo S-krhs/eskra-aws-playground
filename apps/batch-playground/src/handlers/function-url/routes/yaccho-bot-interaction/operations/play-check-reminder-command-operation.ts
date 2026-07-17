@@ -1,7 +1,6 @@
 // In scope: /play-check-reminder command の実行場所確認、本人設定の更新、callback payload生成
 // Out of scope: command routing、DB query、HTTP response の形成
-import { playCheckReminderConfigRepository } from "@eskra-aws-playground/repositories/playground/play-check-reminder-config/repository.js";
-
+import { reminderConfigStore } from "@/features/play-check-reminder/reminder-config-store.js";
 import {
 	type DiscordEphemeralResponsePayload,
 	messageFlags,
@@ -33,7 +32,7 @@ export const playCheckReminderCommandOperation = async (
 	}
 
 	if (subcommand.name === "enable") {
-		await playCheckReminderConfigRepository.save({
+		await reminderConfigStore.save({
 			guildId: interaction.context.guildId,
 			channelId: interaction.context.channelId,
 			userId: interaction.userId,
@@ -45,7 +44,7 @@ export const playCheckReminderCommandOperation = async (
 
 	if (subcommand.name === "disable") {
 		const deleted =
-			await playCheckReminderConfigRepository.deleteByGuildIdAndUserId(
+			await reminderConfigStore.deleteByGuildIdAndUserId(
 				interaction.context.guildId,
 				interaction.userId,
 			);

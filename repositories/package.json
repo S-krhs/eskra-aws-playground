@@ -11,6 +11,11 @@
 		},
 		"./playground/*.test.js": null,
 		"./playground/*/*.test.js": null,
+		"./playground/*/*/*.test.js": null,
+		"./playground/*/*/*.js": {
+			"types": "./dist/playground/*/*/*.d.ts",
+			"default": "./dist/playground/*/*/*.js"
+		},
 		"./playground/*/*.js": {
 			"types": "./dist/playground/*/*.d.ts",
 			"default": "./dist/playground/*/*.js"
