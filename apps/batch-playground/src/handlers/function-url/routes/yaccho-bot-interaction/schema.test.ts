@@ -17,7 +17,7 @@ describe("discordInteractionRequestSchema", () => {
 			signature: "signature",
 			timestamp: "timestamp",
 			rawBody: '{"type":1}',
-			interaction: { type: 1, customId: undefined, pressedUserId: undefined },
+			interaction: { kind: "ping" },
 		});
 	});
 
@@ -34,7 +34,7 @@ describe("discordInteractionRequestSchema", () => {
 			signature: "",
 			timestamp: "",
 			rawBody: '{"type":1}',
-			interaction: { type: 1, customId: undefined, pressedUserId: undefined },
+			interaction: { kind: "ping" },
 		});
 	});
 

@@ -174,7 +174,11 @@ describe("yacchoBotInteractionRoute", () => {
 	});
 
 	it("/hello コマンドには挨拶メッセージを返す", async () => {
-		const rawBody = JSON.stringify({ type: 2, data: { name: "hello" } });
+		const rawBody = JSON.stringify({
+			type: 2,
+			data: { name: "hello" },
+			user: { id: targetUserId },
+		});
 
 		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
@@ -184,7 +188,11 @@ describe("yacchoBotInteractionRoute", () => {
 	});
 
 	it("未対応のコマンドは対応外の ephemeral メッセージを返す", async () => {
-		const rawBody = JSON.stringify({ type: 2, data: { name: "unknown" } });
+		const rawBody = JSON.stringify({
+			type: 2,
+			data: { name: "unknown" },
+			user: { id: targetUserId },
+		});
 
 		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
@@ -202,7 +210,11 @@ describe("yacchoBotInteractionRoute", () => {
 	});
 
 	it("autocomplete には空の候補一覧を返す", async () => {
-		const result = await yacchoBotInteractionRoute(buildEvent('{"type":4}'));
+		const result = await yacchoBotInteractionRoute(
+			buildEvent(
+				`{"type":4,"data":{"name":"hello"},"user":{"id":"${targetUserId}"}}`,
+			),
+		);
 
 		expect(result.statusCode).toBe(200);
 		expect(JSON.parse(result.body)).toEqual({

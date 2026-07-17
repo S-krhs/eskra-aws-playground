@@ -44,12 +44,12 @@ export const yacchoBotInteractionRoute = async (
 		};
 	}
 
-	// 3. フラットな route 定義から担当 operation を選択して解決する。
+	// 3. route 定義から担当 operation を選択して解決する。
 	const operation = findInteractionOperation(interaction);
 	const result =
 		operation?.(interaction) ??
 		ephemeralOperation("この操作には対応していません。");
-	logger.complete({ interactionType: interaction.type, outcome: result.kind });
+	logger.complete({ interactionKind: interaction.kind, outcome: result.kind });
 
 	// 4. 解決済み payload から 200 response を形成する。
 	return {

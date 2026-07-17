@@ -11,7 +11,7 @@ const execute = (customId: string, pressedUserId: string) => {
 			user: { id: pressedUserId },
 		}),
 	);
-	if (!interaction) {
+	if (interaction?.kind !== "message-component") {
 		throw new Error("test interaction の parse に失敗しました");
 	}
 

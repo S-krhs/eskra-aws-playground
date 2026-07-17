@@ -23,7 +23,11 @@ export const playCheckReminderOperation = (
 			DiscordUpdateMessageResponsePayload | DiscordEphemeralResponsePayload
 	  >
 	| undefined => {
-	if (!interaction.customId || !interaction.pressedUserId) {
+	if (interaction.kind !== "message-component") {
+		return undefined;
+	}
+
+	if (!interaction.customId) {
 		return undefined;
 	}
 
@@ -42,7 +46,7 @@ export const playCheckReminderOperation = (
 		return undefined;
 	}
 
-	if (interaction.pressedUserId !== targetUserId) {
+	if (interaction.userId !== targetUserId) {
 		return {
 			kind: "OK",
 			data: {
