@@ -1,9 +1,9 @@
 // In scope: Discord ephemeral interaction callback payload の生成
 // Out of scope: interaction 種別のルーティング、メッセージ内容の決定、HTTP response の形成
 import {
-	DISCORD_INTERACTION_CALLBACK_TYPES,
-	DISCORD_MESSAGE_FLAGS,
 	type DiscordEphemeralResponsePayload,
+	messageFlags,
+	responseTypes,
 } from "@/external-protocols/discord-message/interaction-response.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 
@@ -14,10 +14,10 @@ export const ephemeralOperation = (
 	return {
 		kind: "OK",
 		data: {
-			type: DISCORD_INTERACTION_CALLBACK_TYPES.CHANNEL_MESSAGE_WITH_SOURCE,
+			type: responseTypes.message,
 			data: {
 				content,
-				flags: DISCORD_MESSAGE_FLAGS.EPHEMERAL,
+				flags: messageFlags.ephemeral,
 				allowed_mentions: { parse: [] },
 			},
 		},

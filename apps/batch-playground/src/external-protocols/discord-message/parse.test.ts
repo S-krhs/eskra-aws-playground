@@ -28,7 +28,11 @@ describe("parseInteraction", () => {
 		).toEqual({
 			type: 3,
 			commandName: undefined,
-			customId: "test-choice:123:yes",
+			customId: {
+				prefix: "test-choice",
+				target: "123",
+				action: "yes",
+			},
 			pressedUserId: "456",
 		});
 	});
@@ -41,8 +45,36 @@ describe("parseInteraction", () => {
 		).toEqual({
 			type: 3,
 			commandName: undefined,
-			customId: "test-choice:123:no",
+			customId: {
+				prefix: "test-choice",
+				target: "123",
+				action: "no",
+			},
 			pressedUserId: "123",
+		});
+	});
+
+	it("target のない custom_id も共通規約で parse する", () => {
+		expect(
+			parseInteraction(
+				'{"type":3,"data":{"custom_id":"refresh-panel::refresh"}}',
+			),
+		).toEqual({
+			type: 3,
+			commandName: undefined,
+			customId: { prefix: "refresh-panel", action: "refresh" },
+			pressedUserId: undefined,
+		});
+	});
+
+	it("共通規約に合わない custom_id は未解釈として扱う", () => {
+		expect(
+			parseInteraction('{"type":3,"data":{"custom_id":"invalid-custom-id"}}'),
+		).toEqual({
+			type: 3,
+			commandName: undefined,
+			customId: undefined,
+			pressedUserId: undefined,
 		});
 	});
 

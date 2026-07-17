@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "./handler.js";
 
 const route = vi.hoisted(() => {
-	return { discordInteractionRoute: vi.fn() };
+	return { yacchoBotInteractionRoute: vi.fn() };
 });
 
-vi.mock("./routes/discord-interaction/route.js", () => {
-	return { discordInteractionRoute: route.discordInteractionRoute };
+vi.mock("./routes/yaccho-bot-interaction/route.js", () => {
+	return { yacchoBotInteractionRoute: route.yacchoBotInteractionRoute };
 });
 
 const buildEvent = (rawPath: string) => {
@@ -20,21 +20,21 @@ const buildEvent = (rawPath: string) => {
 };
 
 beforeEach(() => {
-	route.discordInteractionRoute.mockReset();
+	route.yacchoBotInteractionRoute.mockReset();
 });
 
 describe("handler", () => {
 	it("path に対応する route の HTTP response をそのまま返す", async () => {
-		route.discordInteractionRoute.mockResolvedValue({
+		route.yacchoBotInteractionRoute.mockResolvedValue({
 			statusCode: 200,
 			headers: { "Content-Type": "application/json" },
 			body: '{"type":1}',
 		});
-		const event = buildEvent("/discord/interactions");
+		const event = buildEvent("/discord/interactions/yaccho-bot");
 
 		const response = await handler(event);
 
-		expect(route.discordInteractionRoute).toHaveBeenCalledWith(event);
+		expect(route.yacchoBotInteractionRoute).toHaveBeenCalledWith(event);
 		expect(response).toEqual({
 			statusCode: 200,
 			headers: { "Content-Type": "application/json" },
@@ -43,13 +43,15 @@ describe("handler", () => {
 	});
 
 	it("route のエラー response をそのまま返す", async () => {
-		route.discordInteractionRoute.mockResolvedValue({
+		route.yacchoBotInteractionRoute.mockResolvedValue({
 			statusCode: 401,
 			headers: { "Content-Type": "application/json" },
 			body: '{"error":"署名が不正です。"}',
 		});
 
-		const response = await handler(buildEvent("/discord/interactions"));
+		const response = await handler(
+			buildEvent("/discord/interactions/yaccho-bot"),
+		);
 
 		expect(response.statusCode).toBe(401);
 	});
@@ -58,13 +60,13 @@ describe("handler", () => {
 		const response = await handler({ headers: {} });
 
 		expect(response.statusCode).toBe(400);
-		expect(route.discordInteractionRoute).not.toHaveBeenCalled();
+		expect(route.yacchoBotInteractionRoute).not.toHaveBeenCalled();
 	});
 
 	it("対応しないパスは 404 を返し route を呼ばない", async () => {
 		const response = await handler({ rawPath: "/unknown", headers: {} });
 
 		expect(response.statusCode).toBe(404);
-		expect(route.discordInteractionRoute).not.toHaveBeenCalled();
+		expect(route.yacchoBotInteractionRoute).not.toHaveBeenCalled();
 	});
 });

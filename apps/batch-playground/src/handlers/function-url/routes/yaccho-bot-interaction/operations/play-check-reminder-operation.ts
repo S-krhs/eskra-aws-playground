@@ -1,14 +1,16 @@
 // In scope: 遊技リマインダーのボタン押下から返す interaction callback payload の生成
 // Out of scope: interaction 種別・コマンドのルーティング、payload の構造定義、HTTP response の形成
+
 import {
-	DISCORD_INTERACTION_CALLBACK_TYPES,
-	DISCORD_MESSAGE_FLAGS,
 	type DiscordEphemeralResponsePayload,
 	type DiscordUpdateMessageResponsePayload,
+	messageFlags,
+	responseTypes,
 } from "@/external-protocols/discord-message/interaction-response.js";
 import type { DiscordInteraction } from "@/external-protocols/discord-message/parse.js";
-import { parseReminderChoiceCustomId } from "@/features/play-check-reminder/reminder-choice-custom-id.js";
+import { REMINDER_CHOICES } from "@/features/play-check-reminder/reminder-settings.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import { prefixes } from "../shared/prefixes.js";
 
 /**
  * 遊技リマインダーのボタン押下から返す interaction callback payload を生成する。
@@ -25,19 +27,29 @@ export const playCheckReminderOperation = (
 		return undefined;
 	}
 
-	const choice = parseReminderChoiceCustomId(interaction.customId);
+	if (
+		interaction.customId.prefix !== prefixes.playCheckReminder ||
+		!interaction.customId.target
+	) {
+		return undefined;
+	}
+	const { target: targetUserId, action } = interaction.customId;
+
+	const choice = REMINDER_CHOICES.find((candidate) => {
+		return candidate.id === action;
+	});
 	if (!choice) {
 		return undefined;
 	}
 
-	if (interaction.pressedUserId !== choice.targetUserId) {
+	if (interaction.pressedUserId !== targetUserId) {
 		return {
 			kind: "OK",
 			data: {
-				type: DISCORD_INTERACTION_CALLBACK_TYPES.CHANNEL_MESSAGE_WITH_SOURCE,
+				type: responseTypes.message,
 				data: {
-					content: `このリマインダーは <@${choice.targetUserId}> さんしか使えないのです～、よよよ……`,
-					flags: DISCORD_MESSAGE_FLAGS.EPHEMERAL,
+					content: `このリマインダーは <@${targetUserId}> さんしか使えないのです～、よよよ……`,
+					flags: messageFlags.ephemeral,
 					allowed_mentions: { parse: [] },
 				},
 			},
@@ -47,9 +59,9 @@ export const playCheckReminderOperation = (
 	return {
 		kind: "OK",
 		data: {
-			type: DISCORD_INTERACTION_CALLBACK_TYPES.UPDATE_MESSAGE,
+			type: responseTypes.update,
 			data: {
-				content: `でれれれれれ～、**${choice.choiceLabel}**！`,
+				content: `でれれれれれ～、**${choice.label}**！`,
 				components: [],
 				allowed_mentions: { parse: [] },
 			},

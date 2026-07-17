@@ -50,6 +50,7 @@ describe("playCheckReminderOperation", () => {
 
 	it("リマインダーの選択と解釈できない interaction には undefined を返す", () => {
 		expect(execute("unknown:payload", "123")).toBeUndefined();
+		expect(execute("play-check-reminder::won", "123")).toBeUndefined();
 		expect(execute("play-check-reminder:123:unknown", "123")).toBeUndefined();
 	});
 });

@@ -6,13 +6,13 @@ describe("functionUrlEventSchema", () => {
 	it("rawPath と headers と body と isBase64Encoded を受け付ける", () => {
 		expect(
 			functionUrlEventSchema.parse({
-				rawPath: "/discord/interactions",
+				rawPath: "/discord/interactions/yaccho-bot",
 				headers: { "x-signature-ed25519": "abc" },
 				body: '{"type":1}',
 				isBase64Encoded: false,
 			}),
 		).toEqual({
-			rawPath: "/discord/interactions",
+			rawPath: "/discord/interactions/yaccho-bot",
 			headers: { "x-signature-ed25519": "abc" },
 			body: '{"type":1}',
 			isBase64Encoded: false,

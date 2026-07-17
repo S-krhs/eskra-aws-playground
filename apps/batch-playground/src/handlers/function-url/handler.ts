@@ -1,6 +1,6 @@
 // In scope: Function URL の公開エンドポイントとして envelope を検証し、リクエストパスから担当 route へ委譲する
 // Out of scope: 署名検証、interaction 内容の解釈、応答 payload の中身を持つ
-import { discordInteractionRoute } from "./routes/discord-interaction/route.js";
+import { yacchoBotInteractionRoute } from "./routes/yaccho-bot-interaction/route.js";
 import {
 	type FunctionUrlEvent,
 	type FunctionUrlResponse,
@@ -14,7 +14,7 @@ type FunctionUrlRoute = (
 
 /** リクエストパスと担当 route の対応。route を追加したらここへ登録する(例: "/slack/events")。 */
 const routesByPath = new Map<string, FunctionUrlRoute>([
-	["/discord/interactions", discordInteractionRoute],
+	["/discord/interactions/yaccho-bot", yacchoBotInteractionRoute],
 ]);
 
 /** Lambda Function URL のエントリポイント。envelope を検証し、パスに対応する route へ委譲する。 */

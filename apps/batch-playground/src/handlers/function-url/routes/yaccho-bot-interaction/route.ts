@@ -11,10 +11,10 @@ import { findInteractionOperation } from "./operation-routing.js";
 import { ephemeralOperation } from "./operations/ephemeral-operation.js";
 import { discordInteractionRequestSchema } from "./schema.js";
 
-const logger = createBatchLogger("discord-interaction");
+const logger = createBatchLogger("yaccho-bot-interaction");
 
-/** Discord interactions endpoint の route。 */
-export const discordInteractionRoute = async (
+/** Yaccho Bot の Discord interactions endpoint route。 */
+export const yacchoBotInteractionRoute = async (
 	event: FunctionUrlEvent,
 ): Promise<FunctionUrlResponse> => {
 	// 1. request を route 固有の入力へ parse する。

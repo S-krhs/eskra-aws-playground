@@ -47,7 +47,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 ## Discord interaction handler
 
-`src/handlers/function-url/handler.ts` は、HTTP リクエストを受ける Lambda Function URL の公開エンドポイントです。リクエストパス（`rawPath`）で担当 job を振り分けます。現状は `/discord/interactions`（リマインダーのボタン押下＝Discord interaction）のみを登録しています。別サービス（例: Slack）を追加する場合は、別パスと job を `handler.ts` の `jobsByPath` に登録します。
+`src/handlers/function-url/handler.ts` は、HTTP リクエストを受ける Lambda Function URL の公開エンドポイントです。リクエストパス（`rawPath`）で担当 route を振り分けます。現状は `/discord/interactions/yaccho-bot` を Yaccho Bot の Discord interaction route として登録しています。別の Bot やサービス（例: Slack）を追加する場合は、別パスと route を `handler.ts` の `routesByPath` に登録します。
 
 - 対応しないパスは 404 を返します。
 - リクエストは Discord application の public key で Ed25519 署名を検証します（不正は 401）。
@@ -60,7 +60,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 1. [Discord Developer Portal](https://discord.com/developers/applications) で application を作成します。
 2. Bot の token（`DiscordBotToken`）と General Information の Public Key（`DiscordInteractionPublicKey`）を控えます。
 3. Bot を対象サーバーへ招待します（`Send Messages` 権限が必要）。
-4. デプロイ後、SST の出力 `functionUrl`（公開エンドポイント Lambda の Function URL）に `discord/interactions` パスを付けた URL を application の Interactions Endpoint URL に設定します。
+4. デプロイ後、SST の出力 `functionUrl`（公開エンドポイント Lambda の Function URL）に `/discord/interactions/yaccho-bot` パスを付けた URL を application の Interactions Endpoint URL に設定します。
 
 ## 環境変数
 

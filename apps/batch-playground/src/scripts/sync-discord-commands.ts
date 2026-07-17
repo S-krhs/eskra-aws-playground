@@ -6,13 +6,11 @@ import {
 } from "@eskra-aws-playground/integration-discord/discord-command-client.js";
 import { Resource } from "sst/resource";
 
-import { COMMAND_DEFINITIONS } from "../handlers/function-url/routes/discord-interaction/command-definitions.js";
+import { commands } from "../handlers/function-url/routes/yaccho-bot-interaction/shared/commands.js";
 
 /** アプリのコマンド定義を Discord API の登録形式へ変換する。 */
-const DISCORD_COMMAND_DEFINITIONS: readonly DiscordCommandDefinition[] =
-	Object.values(COMMAND_DEFINITIONS).map(({ commandName, description }) => {
-		return { name: commandName, description };
-	});
+const definitions: readonly DiscordCommandDefinition[] =
+	Object.values(commands);
 
 /**
  * 宣言済みコマンド定義を Discord guild へ bulk overwrite で同期する。
@@ -29,19 +27,17 @@ const syncDiscordCommands = async (): Promise<void> => {
 		console.log("Discord に現在登録されているコマンド:");
 		console.log(JSON.stringify(current, null, 2));
 		console.log("登録予定(コード):");
-		console.log(JSON.stringify(DISCORD_COMMAND_DEFINITIONS, null, 2));
+		console.log(JSON.stringify(definitions, null, 2));
 		return;
 	}
 
-	await client.overwriteGuildCommands(
-		applicationId,
-		guildId,
-		DISCORD_COMMAND_DEFINITIONS,
-	);
+	await client.overwriteGuildCommands(applicationId, guildId, definitions);
 
-	const registered = DISCORD_COMMAND_DEFINITIONS.map((command) => {
-		return `/${command.name}`;
-	}).join(", ");
+	const registered = definitions
+		.map((command) => {
+			return `/${command.name}`;
+		})
+		.join(", ");
 	console.log(`Discord guild コマンドを同期しました: ${registered}`);
 };
 

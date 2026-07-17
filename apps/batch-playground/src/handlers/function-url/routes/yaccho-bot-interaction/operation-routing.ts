@@ -2,16 +2,16 @@
 // Out of scope: operation の実行、未対応時の fallback、HTTP response の形成
 import type { DiscordInteractionResponsePayload } from "@/external-protocols/discord-message/interaction-response.js";
 import {
-	DISCORD_INTERACTION_TYPES,
 	type DiscordInteraction,
+	interactionTypes,
 } from "@/external-protocols/discord-message/parse.js";
-import { REMINDER_CUSTOM_ID_PREFIX } from "@/features/play-check-reminder/reminder-settings.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
-import { COMMAND_DEFINITIONS } from "./command-definitions.js";
 import { autocompleteOperation } from "./operations/autocomplete-operation.js";
 import { helloCommandOperation } from "./operations/hello-command-operation.js";
 import { pingOperation } from "./operations/ping-operation.js";
 import { playCheckReminderOperation } from "./operations/play-check-reminder-operation.js";
+import { commands } from "./shared/commands.js";
+import { prefixes } from "./shared/prefixes.js";
 
 type DiscordInteractionOperation = (
 	interaction: DiscordInteraction,
@@ -27,7 +27,7 @@ const operationRoutes = new Map<string, OperationRoute>([
 		"ping",
 		{
 			matches: (interaction) => {
-				return interaction.type === DISCORD_INTERACTION_TYPES.PING;
+				return interaction.type === interactionTypes.ping;
 			},
 			operation: pingOperation,
 		},
@@ -36,10 +36,7 @@ const operationRoutes = new Map<string, OperationRoute>([
 		"autocomplete",
 		{
 			matches: (interaction) => {
-				return (
-					interaction.type ===
-					DISCORD_INTERACTION_TYPES.APPLICATION_COMMAND_AUTOCOMPLETE
-				);
+				return interaction.type === interactionTypes.autocomplete;
 			},
 			operation: autocompleteOperation,
 		},
@@ -49,8 +46,8 @@ const operationRoutes = new Map<string, OperationRoute>([
 		{
 			matches: (interaction) => {
 				return (
-					interaction.type === DISCORD_INTERACTION_TYPES.APPLICATION_COMMAND &&
-					interaction.commandName === COMMAND_DEFINITIONS.hello.commandName
+					interaction.type === interactionTypes.command &&
+					interaction.commandName === commands.hello.name
 				);
 			},
 			operation: helloCommandOperation,
@@ -61,9 +58,8 @@ const operationRoutes = new Map<string, OperationRoute>([
 		{
 			matches: (interaction) => {
 				return (
-					interaction.type === DISCORD_INTERACTION_TYPES.MESSAGE_COMPONENT &&
-					(interaction.customId?.startsWith(`${REMINDER_CUSTOM_ID_PREFIX}:`) ??
-						false)
+					interaction.type === interactionTypes.component &&
+					interaction.customId?.prefix === prefixes.playCheckReminder
 				);
 			},
 			operation: playCheckReminderOperation,

@@ -1,20 +1,21 @@
 // In scope: Discord interaction body の JSON 構文解析と構造検証
-// Out of scope: custom_id の機能固有な解釈、署名検証、業務ルール、HTTP 通信
+// Out of scope: custom_id の機能固有な値検証、署名検証、業務ルール、HTTP 通信
 import { z } from "zod";
+import { type DiscordCustomId, parseCustomId } from "./custom-id.js";
 
 /** Discord interaction type。 */
-export const DISCORD_INTERACTION_TYPES = {
-	PING: 1,
-	APPLICATION_COMMAND: 2,
-	MESSAGE_COMPONENT: 3,
-	APPLICATION_COMMAND_AUTOCOMPLETE: 4,
+export const interactionTypes = {
+	ping: 1,
+	command: 2,
+	component: 3,
+	autocomplete: 4,
 } as const;
 
 /** Parse 済み Discord interaction。 */
 export interface DiscordInteraction {
 	type: number;
 	commandName?: string;
-	customId?: string;
+	customId?: DiscordCustomId;
 	pressedUserId?: string;
 }
 
@@ -49,7 +50,9 @@ export const parseInteraction = (
 	return {
 		type: parsed.data.type,
 		commandName: parsed.data.data?.name,
-		customId: parsed.data.data?.custom_id,
+		customId: parsed.data.data?.custom_id
+			? parseCustomId(parsed.data.data.custom_id)
+			: undefined,
 		pressedUserId: parsed.data.member?.user?.id ?? parsed.data.user?.id,
 	};
 };

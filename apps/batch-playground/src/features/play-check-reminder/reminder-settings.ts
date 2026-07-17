@@ -1,20 +1,15 @@
-// In scope: 遊技チェックリマインダーの質問文・選択肢・custom_id 形式の設定値を定義する
+// In scope: 遊技チェックリマインダーの質問文・選択肢を定義する
 // Out of scope: メッセージ生成、押下結果の判定、Discord payload 生成、外部送信を行う
+import type { DiscordButtonTone } from "@/external-protocols/discord-message/button.js";
 
 /** 遊技チェックリマインダーの質問文。 */
 export const REMINDER_QUESTION = "やおよろ～！今日は遊技した？";
-
-/** 選択肢メッセージの custom_id prefix。残りの形式はリマインダー機能内で構築する。 */
-export const REMINDER_CUSTOM_ID_PREFIX = "play-check-reminder";
-
-/** 選択肢ボタンを利用者へどう見せるかを表す意味的なtone。 */
-export type ReminderChoiceTone = "positive" | "negative" | "neutral";
 
 /** 遊技チェックリマインダーの選択肢。 */
 export interface ReminderChoice {
 	id: string;
 	label: string;
-	tone: ReminderChoiceTone;
+	tone: DiscordButtonTone;
 }
 
 /** 遊技チェックリマインダーの選択肢一覧。 */

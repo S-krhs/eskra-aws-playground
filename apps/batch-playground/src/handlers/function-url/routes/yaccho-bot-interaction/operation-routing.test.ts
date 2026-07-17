@@ -21,7 +21,11 @@ describe("findInteractionOperation", () => {
 		expect(
 			findInteractionOperation({
 				type: 3,
-				customId: "play-check-reminder:123:won",
+				customId: {
+					prefix: "play-check-reminder",
+					target: "123",
+					action: "won",
+				},
 			}),
 		).toBe(playCheckReminderOperation);
 	});
@@ -31,12 +35,19 @@ describe("findInteractionOperation", () => {
 			findInteractionOperation({ type: 2, commandName: "unknown" }),
 		).toBeUndefined();
 		expect(
-			findInteractionOperation({ type: 3, customId: "unknown:123:won" }),
+			findInteractionOperation({
+				type: 3,
+				customId: { prefix: "unknown", target: "123", action: "won" },
+			}),
 		).toBeUndefined();
 		expect(
 			findInteractionOperation({
 				type: 3,
-				customId: "play-check-reminder-other:123:won",
+				customId: {
+					prefix: "play-check-reminder-other",
+					target: "123",
+					action: "won",
+				},
 			}),
 		).toBeUndefined();
 		expect(findInteractionOperation({ type: 99 })).toBeUndefined();

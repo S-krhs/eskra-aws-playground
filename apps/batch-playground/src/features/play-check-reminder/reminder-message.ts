@@ -1,25 +1,11 @@
 // In scope: 遊技チェックリマインダーとして Discord へ投稿するメッセージ payload の生成
 // Out of scope: Discord API 通信、interaction response、押下結果の判定
-import type {
-	DiscordButtonComponent,
-	DiscordChannelMessagePayload,
-} from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
+import type { DiscordChannelMessagePayload } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
+import { buttonStyles } from "@/external-protocols/discord-message/button.js";
+import { buildCustomId } from "@/external-protocols/discord-message/custom-id.js";
+import { prefixes } from "@/handlers/function-url/routes/yaccho-bot-interaction/shared/prefixes.js";
 
-import { buildReminderChoiceCustomId } from "./reminder-choice-custom-id.js";
-import {
-	REMINDER_CHOICES,
-	REMINDER_QUESTION,
-	type ReminderChoiceTone,
-} from "./reminder-settings.js";
-
-const REMINDER_BUTTON_STYLES: Record<
-	ReminderChoiceTone,
-	DiscordButtonComponent["style"]
-> = {
-	positive: 3,
-	negative: 4,
-	neutral: 2,
-};
+import { REMINDER_CHOICES, REMINDER_QUESTION } from "./reminder-settings.js";
 
 /** 対象ユーザーへ質問する遊技チェックリマインダーメッセージを生成する。 */
 export const buildReminderQuestionMessage = (
@@ -42,9 +28,13 @@ export const buildReminderChoicesMessage = (
 				components: REMINDER_CHOICES.map((choice) => {
 					return {
 						type: 2,
-						style: REMINDER_BUTTON_STYLES[choice.tone],
+						style: buttonStyles[choice.tone],
 						label: choice.label,
-						custom_id: buildReminderChoiceCustomId(targetUserId, choice.id),
+						custom_id: buildCustomId({
+							prefix: prefixes.playCheckReminder,
+							target: targetUserId,
+							action: choice.id,
+						}),
 					};
 				}),
 			},

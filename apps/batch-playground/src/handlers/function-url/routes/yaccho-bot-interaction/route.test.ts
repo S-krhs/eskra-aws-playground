@@ -4,7 +4,7 @@ import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,
 } from "@/handlers/function-url/schema.js";
-import { discordInteractionRoute } from "./route.js";
+import { yacchoBotInteractionRoute } from "./route.js";
 
 const verifier = vi.hoisted(() => {
 	return { verifyInteractionSignature: vi.fn() };
@@ -35,7 +35,7 @@ const buildEvent = (
 	options: { base64?: boolean } = {},
 ): FunctionUrlEvent => {
 	return {
-		rawPath: "/discord/interactions",
+		rawPath: "/discord/interactions/yaccho-bot",
 		headers: {
 			"x-signature-ed25519": signature,
 			"x-signature-timestamp": timestamp,
@@ -80,25 +80,25 @@ beforeEach(() => {
 	verifier.verifyInteractionSignature.mockReturnValue(true);
 });
 
-describe("discordInteractionRoute", () => {
+describe("yacchoBotInteractionRoute", () => {
 	it("署名検証に失敗したら 401 response を返す", async () => {
 		verifier.verifyInteractionSignature.mockReturnValue(false);
 
-		const result = await discordInteractionRoute(buildEvent('{"type":1}'));
+		const result = await yacchoBotInteractionRoute(buildEvent('{"type":1}'));
 
 		expect(result.statusCode).toBe(401);
 		expect(JSON.parse(result.body)).toEqual({ error: "署名が不正です。" });
 	});
 
 	it("PING には PONG を返す", async () => {
-		const result = await discordInteractionRoute(buildEvent('{"type":1}'));
+		const result = await yacchoBotInteractionRoute(buildEvent('{"type":1}'));
 
 		expect(result.statusCode).toBe(200);
 		expect(JSON.parse(result.body)).toEqual({ type: 1 });
 	});
 
 	it("base64 エンコードされた body はデコードした raw body で署名を検証する", async () => {
-		const result = await discordInteractionRoute(
+		const result = await yacchoBotInteractionRoute(
 			buildEvent('{"type":1}', { base64: true }),
 		);
 
@@ -117,7 +117,7 @@ describe("discordInteractionRoute", () => {
 			targetUserId,
 		);
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(7);
 		expect(body.data?.components).toEqual([]);
@@ -130,7 +130,7 @@ describe("discordInteractionRoute", () => {
 			otherUserId,
 		);
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(4);
 		expect(body.data?.flags).toBe(64);
@@ -143,7 +143,7 @@ describe("discordInteractionRoute", () => {
 			targetUserId,
 		);
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(4);
 		expect(body.data?.flags).toBe(64);
@@ -155,7 +155,7 @@ describe("discordInteractionRoute", () => {
 			targetUserId,
 		);
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(4);
 		expect(body.data?.flags).toBe(64);
@@ -167,7 +167,7 @@ describe("discordInteractionRoute", () => {
 			targetUserId,
 		);
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(4);
 		expect(body.data?.flags).toBe(64);
@@ -176,7 +176,7 @@ describe("discordInteractionRoute", () => {
 	it("/hello コマンドには挨拶メッセージを返す", async () => {
 		const rawBody = JSON.stringify({ type: 2, data: { name: "hello" } });
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(4);
 		expect(body.data?.content).toBe("やおよろ～🌚");
@@ -186,7 +186,7 @@ describe("discordInteractionRoute", () => {
 	it("未対応のコマンドは対応外の ephemeral メッセージを返す", async () => {
 		const rawBody = JSON.stringify({ type: 2, data: { name: "unknown" } });
 
-		const body = okBody(await discordInteractionRoute(buildEvent(rawBody)));
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
 
 		expect(body.type).toBe(4);
 		expect(body.data?.flags).toBe(64);
@@ -194,7 +194,7 @@ describe("discordInteractionRoute", () => {
 
 	it("未対応の interaction type は対応外の ephemeral メッセージを返す", async () => {
 		const body = okBody(
-			await discordInteractionRoute(buildEvent('{"type":99}')),
+			await yacchoBotInteractionRoute(buildEvent('{"type":99}')),
 		);
 
 		expect(body.type).toBe(4);
@@ -202,7 +202,7 @@ describe("discordInteractionRoute", () => {
 	});
 
 	it("autocomplete には空の候補一覧を返す", async () => {
-		const result = await discordInteractionRoute(buildEvent('{"type":4}'));
+		const result = await yacchoBotInteractionRoute(buildEvent('{"type":4}'));
 
 		expect(result.statusCode).toBe(200);
 		expect(JSON.parse(result.body)).toEqual({
@@ -212,7 +212,7 @@ describe("discordInteractionRoute", () => {
 	});
 
 	it("interaction body の JSON が不正なら 400 response を返す", async () => {
-		const result = await discordInteractionRoute(buildEvent("not-a-json"));
+		const result = await yacchoBotInteractionRoute(buildEvent("not-a-json"));
 
 		expect(result.statusCode).toBe(400);
 		expect(JSON.parse(result.body)).toEqual({
