@@ -3,7 +3,7 @@
 import {
 	buildMetrics,
 	type MetricBuildResult,
-} from "../../shared/intermediate-models/metric/metric.js";
+} from "@/shared/intermediate-models/metric/metric.js";
 
 /** JSON metric value の取得方法。 */
 export type JsonValueTarget =

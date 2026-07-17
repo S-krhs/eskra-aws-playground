@@ -5,7 +5,7 @@ import * as cheerio from "cheerio";
 import {
 	buildMetrics,
 	type MetricBuildResult,
-} from "../../shared/intermediate-models/metric/metric.js";
+} from "@/shared/intermediate-models/metric/metric.js";
 
 /** HTML 上の要素を選ぶ指定。 */
 export interface HtmlElementTarget {

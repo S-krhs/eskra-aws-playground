@@ -4,10 +4,10 @@
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { dataSourceRepository } from "@eskra-aws-playground/repositories/anime/data-source.repository.js";
-import { batchNames } from "../shared/routes/batch-names.js";
-import { orchestratorEventSchema } from "../shared/schemas/lambda/orchestrator/event.js";
-import type { OrchestratorResponse } from "../shared/schemas/lambda/orchestrator/response.js";
-import type { DataSourceMessage } from "../shared/schemas/sqs/data-source/message.js";
+import { batchNames } from "@/shared/routes/batch-names.js";
+import { orchestratorEventSchema } from "@/shared/schemas/lambda/orchestrator/event.js";
+import type { OrchestratorResponse } from "@/shared/schemas/lambda/orchestrator/response.js";
+import type { DataSourceMessage } from "@/shared/schemas/sqs/data-source/message.js";
 import { getOrchestratorSettings } from "./runtime-settings/orchestrator-setting-resolver.js";
 
 const logger = createBatchLogger(batchNames.animeScrapingOrchestrator);

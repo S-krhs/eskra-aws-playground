@@ -3,22 +3,21 @@
 import {
 	buildInteractionResponse,
 	type DiscordInteractionResponsePayload,
-} from "../../../../../external-protocols/discord-message/build.js";
+} from "@/external-protocols/discord-message/build.js";
 import {
 	DISCORD_INTERACTION_TYPES,
 	type DiscordInteraction,
 	resolveChoice,
-} from "../../../../../external-protocols/discord-message/parse.js";
+} from "@/external-protocols/discord-message/parse.js";
 import {
 	REMINDER_CHOICES,
 	REMINDER_CUSTOM_ID_PREFIX,
-	REMINDER_QUESTION,
-} from "../../../../../features/play-check-reminder/reminder-settings.js";
+} from "@/features/play-check-reminder/reminder-settings.js";
 import type {
 	Forbidden,
 	OperationResult,
 	Unsupported,
-} from "../../intermediate-models/operation-result.js";
+} from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 
 const unsupported: Unsupported<DiscordInteractionResponsePayload> = {
 	kind: "UNSUPPORTED",

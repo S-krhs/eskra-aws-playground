@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseInteraction } from "../../../../../external-protocols/discord-message/parse.js";
+import { parseInteraction } from "@/external-protocols/discord-message/parse.js";
 import { resolveInteractionResponse } from "./resolve-interaction-response.js";
 
 const resolve = (body: object) => {

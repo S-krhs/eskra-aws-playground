@@ -3,8 +3,11 @@
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { Resource } from "sst/resource";
 
-import { verifyInteractionSignature } from "../../../../external-protocols/discord-signature/verify-interaction-signature.js";
-import type { FunctionUrlEvent, FunctionUrlResponse } from "../../schema.js";
+import { verifyInteractionSignature } from "@/external-protocols/discord-signature/verify-interaction-signature.js";
+import type {
+	FunctionUrlEvent,
+	FunctionUrlResponse,
+} from "@/handlers/function-url/schema.js";
 import { resolveInteractionResponse } from "./operations/resolve-interaction-response.js";
 import { discordInteractionRequestSchema } from "./schema.js";
 
