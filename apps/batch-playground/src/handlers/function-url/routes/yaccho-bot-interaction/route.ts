@@ -47,7 +47,7 @@ export const yacchoBotInteractionRoute = async (
 	// 3. route 定義から担当 operation を選択して解決する。
 	const operation = findInteractionOperation(interaction);
 	const result =
-		operation?.(interaction) ??
+		(await operation?.(interaction)) ??
 		ephemeralOperation("この操作には対応していません。");
 	logger.complete({ interactionKind: interaction.kind, outcome: result.kind });
 

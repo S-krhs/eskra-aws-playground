@@ -65,6 +65,9 @@ export default $config({
 			},
 		);
 
+		// runtime が利用する Neon pooled 接続文字列を Secret として扱う
+		const databaseUrl = new sst.Secret("DatabaseUrl");
+
 		// Discord application ごとの認証情報を Secret として分離する
 		const yacchoDiscordBotToken = new sst.Secret("YacchoDiscordBotToken");
 		const yacchoDiscordInteractionPublicKey = new sst.Secret(
@@ -163,6 +166,9 @@ export default $config({
 				yacchoDiscordInteractionPublicKey,
 				kaguyaDiscordInteractionPublicKey,
 			],
+			environment: {
+				DATABASE_URL: databaseUrl.value,
+			},
 			url: true,
 		});
 
@@ -170,9 +176,6 @@ export default $config({
 		const animeAnalysisDiscordWebhookUrl = new sst.Secret(
 			"AnimeAnalysisDiscordWebhook",
 		);
-
-		// DB(Neon)の pooled 接続文字列を Secret として扱う
-		const databaseUrl = new sst.Secret("DatabaseUrl");
 
 		// アニメ分析の実行要求を dataSource 単位で保持する SQS Queue を作成
 		const animeAnalysisDeadLetterQueue = new sst.aws.Queue(

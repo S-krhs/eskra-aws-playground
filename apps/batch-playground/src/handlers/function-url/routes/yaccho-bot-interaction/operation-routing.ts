@@ -6,16 +6,21 @@ import type { OperationResult } from "@/handlers/function-url/routes/intermediat
 import { autocompleteOperation } from "./operations/autocomplete-operation.js";
 import { helloCommandOperation } from "./operations/hello-command-operation.js";
 import { pingOperation } from "./operations/ping-operation.js";
+import { playCheckReminderCommandOperation } from "./operations/play-check-reminder-command-operation.js";
 import { playCheckReminderOperation } from "./operations/play-check-reminder-operation.js";
 import { commands } from "./shared/commands.js";
 import { prefixes } from "./shared/prefixes.js";
 
 type DiscordInteractionOperation = (
 	interaction: DiscordInteraction,
-) => OperationResult<DiscordInteractionResponsePayload> | undefined;
+) =>
+	| OperationResult<DiscordInteractionResponsePayload>
+	| undefined
+	| Promise<OperationResult<DiscordInteractionResponsePayload> | undefined>;
 
 const commandOperations = new Map<string, DiscordInteractionOperation>([
 	[commands.hello.name, helloCommandOperation],
+	[commands.playCheckReminder.name, playCheckReminderCommandOperation],
 ]);
 
 const messageOperations = new Map<string, DiscordInteractionOperation>([

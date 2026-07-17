@@ -5,6 +5,7 @@ import { findInteractionOperation } from "./operation-routing.js";
 import { autocompleteOperation } from "./operations/autocomplete-operation.js";
 import { helloCommandOperation } from "./operations/hello-command-operation.js";
 import { pingOperation } from "./operations/ping-operation.js";
+import { playCheckReminderCommandOperation } from "./operations/play-check-reminder-command-operation.js";
 import { playCheckReminderOperation } from "./operations/play-check-reminder-operation.js";
 
 const commandInteraction = (name: string): DiscordInteraction => {
@@ -36,6 +37,9 @@ describe("findInteractionOperation", () => {
 		expect(findInteractionOperation(commandInteraction("hello"))).toBe(
 			helloCommandOperation,
 		);
+		expect(
+			findInteractionOperation(commandInteraction("play-check-reminder")),
+		).toBe(playCheckReminderCommandOperation);
 	});
 
 	it("明示した message component prefix で routing する", () => {
