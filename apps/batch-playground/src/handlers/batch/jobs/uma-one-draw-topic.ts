@@ -4,8 +4,8 @@ import { DiscordWebhookClient } from "@eskra-aws-playground/integration-discord/
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { Resource } from "sst/resource";
 
-import { buildTopicMessage } from "../../../features/uma-one-draw-topic/topic-message.js";
-import type { BatchResponse } from "../schema.js";
+import { buildTopicMessage } from "@/features/uma-one-draw-topic/topic-message.js";
+import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger("uma-one-draw-topic");
 

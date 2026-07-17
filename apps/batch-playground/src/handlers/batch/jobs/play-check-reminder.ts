@@ -7,13 +7,13 @@ import { Resource } from "sst/resource";
 import {
 	buildChoiceButtonsMessage,
 	buildMentionMessage,
-} from "../../../external-protocols/discord-message/build.js";
+} from "@/external-protocols/discord-message/build.js";
 import {
 	REMINDER_CHOICES,
 	REMINDER_CUSTOM_ID_PREFIX,
 	REMINDER_QUESTION,
-} from "../../../features/play-check-reminder/reminder-settings.js";
-import type { BatchResponse } from "../schema.js";
+} from "@/features/play-check-reminder/reminder-settings.js";
+import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger("play-check-reminder");
 

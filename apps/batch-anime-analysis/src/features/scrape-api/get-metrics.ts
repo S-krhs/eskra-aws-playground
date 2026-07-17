@@ -1,6 +1,6 @@
 // In scope: 指定の API URL から JSON を取得し（timeout / 応答サイズ上限つき）、metric 一覧へ変換する
 // Out of scope: リトライ制御やアプリ固有の定義変換を行う
-import type { MetricBuildResult } from "../../shared/intermediate-models/metric/metric.js";
+import type { MetricBuildResult } from "@/shared/intermediate-models/metric/metric.js";
 import {
 	type JsonParseOptions,
 	type JsonValueTarget,

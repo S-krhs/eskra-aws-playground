@@ -5,13 +5,13 @@ import { getCurrentJstDateString } from "@eskra-aws-playground/libs/date/current
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { dataSourceRepository } from "@eskra-aws-playground/repositories/anime/data-source.repository.js";
 import { scrapingMetricRepository } from "@eskra-aws-playground/repositories/anime/scraping-metric.repository.js";
-import { buildScrapingReport } from "../features/notifications/scraping-report.js";
-import { getApiMetrics } from "../features/scrape-api/get-metrics.js";
-import { getWebpageMetrics } from "../features/scrape-webpage/get-metrics.js";
-import { batchNames } from "../shared/routes/batch-names.js";
-import { sqsWorkerEventSchema } from "../shared/schemas/lambda/sqs-worker/event.js";
-import type { SqsWorkerResponse } from "../shared/schemas/lambda/sqs-worker/response.js";
-import { dataSourceMessageSchema } from "../shared/schemas/sqs/data-source/message.js";
+import { buildScrapingReport } from "@/features/notifications/scraping-report.js";
+import { getApiMetrics } from "@/features/scrape-api/get-metrics.js";
+import { getWebpageMetrics } from "@/features/scrape-webpage/get-metrics.js";
+import { batchNames } from "@/shared/routes/batch-names.js";
+import { sqsWorkerEventSchema } from "@/shared/schemas/lambda/sqs-worker/event.js";
+import type { SqsWorkerResponse } from "@/shared/schemas/lambda/sqs-worker/response.js";
+import { dataSourceMessageSchema } from "@/shared/schemas/sqs/data-source/message.js";
 import { getDataSourceSettings } from "./runtime-settings/data-source-setting-resolver.js";
 
 const logger = createBatchLogger(batchNames.animeScrapingDataSource);

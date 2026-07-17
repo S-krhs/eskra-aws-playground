@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { FunctionUrlEvent, FunctionUrlResponse } from "../../schema.js";
+import type {
+	FunctionUrlEvent,
+	FunctionUrlResponse,
+} from "@/handlers/function-url/schema.js";
 import { discordInteractionRoute } from "./route.js";
 
 const verifier = vi.hoisted(() => {
@@ -8,7 +11,7 @@ const verifier = vi.hoisted(() => {
 });
 
 vi.mock(
-	"../../../../external-protocols/discord-signature/verify-interaction-signature.js",
+	"@/external-protocols/discord-signature/verify-interaction-signature.js",
 	() => {
 		return {
 			verifyInteractionSignature: verifier.verifyInteractionSignature,
