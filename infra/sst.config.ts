@@ -80,27 +80,15 @@ export default $config({
 		);
 		new sst.Secret("KaguyaDiscordApplicationId");
 
-		// 遊技チェックリマインダーの投稿先チャンネルと回答対象ユーザーを Secret として扱う
-		const playCheckReminderChannelId = new sst.Secret(
-			"PlayCheckReminderDiscordChannelId",
-		);
-		const playCheckReminderTargetUserId = new sst.Secret(
-			"PlayCheckReminderTargetUserId",
-		);
-
 		// Lambda バッチの共通エントリポイントを作成
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "30 seconds",
 			memory: "128 MB",
-			link: [
-				umaOneDrawTopicWebhookUrl,
-				yacchoDiscordBotToken,
-				playCheckReminderChannelId,
-				playCheckReminderTargetUserId,
-			],
+			link: [umaOneDrawTopicWebhookUrl, yacchoDiscordBotToken],
 			environment: {
+				DATABASE_URL: databaseUrl.value,
 				UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME:
 					umaOneDrawTopicScheduleGroup.name,
 				UMA_ONE_DRAW_TOPIC_SCHEDULER_ROLE_ARN: umaOneDrawTopicScheduleRole.arn,

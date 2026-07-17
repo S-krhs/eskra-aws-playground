@@ -52,8 +52,6 @@ jobs:
           SST_SECRET_KaguyaDiscordBotToken: ${{ secrets.KAGUYA_DISCORD_BOT_TOKEN }}
           SST_SECRET_KaguyaDiscordInteractionPublicKey: ${{ secrets.KAGUYA_DISCORD_INTERACTION_PUBLIC_KEY }}
           SST_SECRET_KaguyaDiscordApplicationId: ${{ secrets.KAGUYA_DISCORD_APPLICATION_ID }}
-          SST_SECRET_PlayCheckReminderDiscordChannelId: ${{ secrets.PLAY_CHECK_REMINDER_DISCORD_CHANNEL_ID }}
-          SST_SECRET_PlayCheckReminderTargetUserId: ${{ secrets.PLAY_CHECK_REMINDER_TARGET_USER_ID }}
       # deploy 済みのエンドポイントへ宣言済みスラッシュコマンドを bulk overwrite で同期する。
       # secret は develop stage の SST secret を sst shell 経由で参照する(build は deploy step 済み)
       - name: Sync Discord commands
