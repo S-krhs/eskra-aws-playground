@@ -148,16 +148,19 @@ export default $config({
 			"DiscordInteractionPublicKey",
 		);
 
-		// HTTP リクエストを受ける公開エンドポイント Lambda を作成。job ごとに Lambda は増やさず、
-		// 公開エンドポイントはこの 1 つに集約する(現状は Discord interaction が唯一のルート)。
-		// Function URL を Discord Developer Portal の Interactions Endpoint URL に設定する
+		// スラッシュコマンド同期スクリプト(sst shell 経由)が参照する Discord application ID と guild ID を Secret として扱う
+		const discordApplicationId = new sst.Secret("DiscordApplicationId");
+		const discordGuildId = new sst.Secret("DiscordGuildId");
+
+		// 公開エンドポイントは job ごとに増やさずこの Lambda 1 つに集約する。
+		// application ID・guild ID は Lambda では未使用だが、コマンド同期スクリプトが sst shell で参照するため link する
 		const functionUrlFunction = new sst.aws.Function("FunctionUrlFunction", {
 			handler:
 				"../apps/batch-playground/src/handlers/function-url/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "10 seconds",
 			memory: "128 MB",
-			link: [discordInteractionPublicKey],
+			link: [discordInteractionPublicKey, discordApplicationId, discordGuildId],
 			url: true,
 		});
 

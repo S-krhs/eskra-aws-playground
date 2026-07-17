@@ -9,5 +9,7 @@ declare module "sst/resource" {
 		PlayCheckReminderDiscordChannelId: { value: string };
 		PlayCheckReminderTargetUserId: { value: string };
 		DiscordInteractionPublicKey: { value: string };
+		DiscordApplicationId: { value: string };
+		DiscordGuildId: { value: string };
 	}
 }
