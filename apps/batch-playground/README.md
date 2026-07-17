@@ -43,8 +43,8 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 ```
 
 - Yaccho Bot の token は SST linked secret、対象ユーザー ID と投稿先チャンネル ID は `playground.discord_user_settings` の `user_id` と JSONB `configuration` から解決します。
-- `/play-check-reminder enable` を投稿先チャンネルで実行すると、実行者本人の設定を登録・更新します。
-- `/play-check-reminder disable` は、同じ Guild にある実行者本人の設定だけを削除します。
+- `/gamble-check-enable` を投稿先チャンネルで実行すると、実行者本人の設定を登録・更新します。
+- `/gamble-check-disable` は、同じ Guild にある実行者本人の設定だけを削除します。
 - 登録済みの全ユーザーへ投稿し、一部で失敗しても他ユーザーへの投稿を試行してからジョブ全体を失敗させます。
 - メッセージは全員に見えますが、ボタンの選択は custom_id に埋め込んだ対象ユーザーのみ受け付けます。
 
@@ -54,7 +54,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 | Bot | path | command |
 | --- | --- | --- |
-| Yaccho Bot | `/discord/interactions/yaccho-bot` | `/hello`, `/play-check-reminder` |
+| Yaccho Bot | `/discord/interactions/yaccho-bot` | `/hello`, `/gamble-check-enable`, `/gamble-check-disable` |
 | Kaguya Bot | `/discord/interactions/kaguya-bot` | `/inuihiroshi` |
 
 別の Bot やサービス（例: Slack）を追加する場合は、別パスと route を `handler.ts` の `routesByPath` に登録します。
@@ -131,7 +131,7 @@ Discord Bot 用に以下も同様に渡します。
 
 ### リマインダー設定と旧 guild command の移行
 
-今回の migration は expand-contract や旧 secret からの backfill を行いません。デプロイ後、利用者本人が投稿先チャンネルで `/play-check-reminder enable` を実行してください。
+今回の migration は expand-contract や旧 secret からの backfill を行いません。デプロイ後、利用者本人が投稿先チャンネルで `/gamble-check-enable` を実行してください。
 
 以前の Yaccho Bot guild command が残っている Guild は、一回だけ次を実行して削除します。
 
