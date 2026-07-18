@@ -22,7 +22,6 @@
 		"discord:sync": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run",
 		"discord:sync:run": "node apps/batch-playground/dist/scripts/sync-discord-commands.js",
 		"discord:sync:dry": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run -- --dry-run",
-		"discord:yaccho:guild-commands:clear": "npm run build && sst shell --config infra/sst.config.ts -- node apps/batch-playground/dist/scripts/clear-yaccho-guild-commands.js",
 		"dev": "npm run build && npm run build:browser-runtime-layer && sst dev --config infra/sst.config.ts",
 		"test": "turbo run test -- --exclude '**/dist/**'",
 		"test:ci": "turbo run test --continue -- --exclude '**/dist/**' --reporter=default --reporter=json --outputFile.json=vitest-report.json",

@@ -108,8 +108,6 @@ Discord application は API で作成できないため、初回のみ Developer
 
 `playground.discord_guild_settings` と `playground.discord_user_settings` の追加は expand-contract や旧 secret からの backfill を行いません。遊技チェックリマインダーは利用者単位の後者を使うため、migration・deploy・global command 同期の完了後、各利用者が投稿先チャンネルで `/gamble-check-enable` を実行して本人の設定を作成します。
 
-旧 Yaccho Bot guild command が残る Guild は、`npm run discord:yaccho:guild-commands:clear -- <guild-id>` を一回実行して削除します。旧 `DISCORD_GUILD_ID`・`PLAY_CHECK_REMINDER_DISCORD_CHANNEL_ID`・`PLAY_CHECK_REMINDER_TARGET_USER_ID` Secrets は runtime から参照しないため削除できます。
-
 ## AWS 認証
 
 GitHub Actions は `aws-actions/configure-aws-credentials` で OIDC 認証します。

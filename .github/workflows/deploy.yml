@@ -56,7 +56,3 @@ jobs:
       # secret は develop stage の SST secret を sst shell 経由で参照する(build は deploy step 済み)
       - name: Sync Discord commands
         run: npx sst shell --stage develop --config infra/sst.config.ts -- npm run discord:sync:run
-      # 一回限り: guild scope から global scope への移行で残る旧 Yaccho Bot guild command を削除する。
-      # 初回デプロイの成功後にこの step を削除する。guild ID は旧 DISCORD_GUILD_ID secret を CLI 引数で渡す。
-      - name: Clear old Yaccho guild commands (one-time)
-        run: npx sst shell --stage develop --config infra/sst.config.ts -- node apps/batch-playground/dist/scripts/clear-yaccho-guild-commands.js "${{ secrets.DISCORD_GUILD_ID }}"

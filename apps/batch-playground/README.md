@@ -129,15 +129,9 @@ Discord Bot 用に以下も同様に渡します。
      --payload '{"job":"uma-one-draw-topic"}' /dev/stdout
    ```
 
-### リマインダー設定と旧 guild command の移行
+### リマインダー設定
 
 今回の migration は expand-contract や旧 secret からの backfill を行いません。デプロイ後、利用者本人が投稿先チャンネルで `/gamble-check-enable` を実行してください。
-
-以前の Yaccho Bot guild command が残っている Guild は、一回だけ次を実行して削除します。
-
-```bash
-npm run discord:yaccho:guild-commands:clear -- <guild-id>
-```
 
 ## ドキュメント
 
