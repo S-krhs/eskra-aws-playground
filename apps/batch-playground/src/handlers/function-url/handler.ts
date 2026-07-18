@@ -10,9 +10,16 @@ import {
 	functionUrlEventSchema,
 } from "./schema.js";
 
-// Discord interaction の 3 秒制限に収めるため、DB 接続確立は CPU ブーストが効く
-// init フェーズで済ませる。失敗しても handler 実行時に再接続されるため握りつぶす。
-await warmupDatabaseConnection().catch(() => {});
+// CPU ブーストが効く init フェーズで DB 接続を確立し、Discord interaction の 3 秒制限に収める。
+const warmupTimeoutMs = 3000;
+await Promise.race([
+	warmupDatabaseConnection().catch((error) => {
+		console.warn("DB 接続の warmup に失敗しました。", error);
+	}),
+	new Promise<void>((resolve) => {
+		setTimeout(resolve, warmupTimeoutMs).unref();
+	}),
+]);
 
 /** Function URL のリクエストを受け取り HTTP response を返す route。 */
 type FunctionUrlRoute = (

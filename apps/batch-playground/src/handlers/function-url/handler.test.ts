@@ -10,6 +10,12 @@ const route = vi.hoisted(() => {
 	};
 });
 
+vi.mock(
+	"@eskra-aws-playground/repositories/playground/shared/db/db-warmup.js",
+	() => {
+		return { warmupDatabaseConnection: vi.fn().mockResolvedValue(undefined) };
+	},
+);
 vi.mock("./routes/kaguya-bot-interaction/route.js", () => {
 	return { kaguyaBotInteractionRoute: route.kaguyaBotInteractionRoute };
 });
