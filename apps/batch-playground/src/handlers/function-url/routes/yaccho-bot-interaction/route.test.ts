@@ -4,6 +4,7 @@ import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,
 } from "@/handlers/function-url/schema.js";
+import { paths } from "../../contracts/paths.js";
 import { yacchoBotInteractionRoute } from "./route.js";
 
 const verifier = vi.hoisted(() => {
@@ -48,7 +49,7 @@ const buildEvent = (
 	options: { base64?: boolean } = {},
 ): FunctionUrlEvent => {
 	return {
-		rawPath: "/discord/interactions/yaccho-bot",
+		rawPath: paths.yacchoBotInteraction,
 		headers: {
 			"x-signature-ed25519": signature,
 			"x-signature-timestamp": timestamp,

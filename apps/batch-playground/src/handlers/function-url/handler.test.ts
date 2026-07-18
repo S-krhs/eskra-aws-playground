@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { paths } from "./contracts/paths.js";
 import { handler } from "./handler.js";
 
 const route = vi.hoisted(() => {
@@ -37,7 +38,7 @@ describe("handler", () => {
 			headers: { "Content-Type": "application/json" },
 			body: '{"type":1}',
 		});
-		const event = buildEvent("/discord/interactions/yaccho-bot");
+		const event = buildEvent(paths.yacchoBotInteraction);
 
 		const response = await handler(event);
 
@@ -55,7 +56,7 @@ describe("handler", () => {
 			headers: { "Content-Type": "application/json" },
 			body: '{"type":1}',
 		});
-		const event = buildEvent("/discord/interactions/kaguya-bot");
+		const event = buildEvent(paths.kaguyaBotInteraction);
 
 		await handler(event);
 
@@ -70,9 +71,7 @@ describe("handler", () => {
 			body: '{"error":"署名が不正です。"}',
 		});
 
-		const response = await handler(
-			buildEvent("/discord/interactions/yaccho-bot"),
-		);
+		const response = await handler(buildEvent(paths.yacchoBotInteraction));
 
 		expect(response.statusCode).toBe(401);
 	});

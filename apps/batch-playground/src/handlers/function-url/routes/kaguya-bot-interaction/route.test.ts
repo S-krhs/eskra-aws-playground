@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FunctionUrlEvent } from "@/handlers/function-url/schema.js";
+import { paths } from "../../contracts/paths.js";
 import { kaguyaBotInteractionRoute } from "./route.js";
 
 const verifier = vi.hoisted(() => {
@@ -23,7 +24,7 @@ vi.mock("sst/resource", () => {
 
 const buildEvent = (body: string): FunctionUrlEvent => {
 	return {
-		rawPath: "/discord/interactions/kaguya-bot",
+		rawPath: paths.kaguyaBotInteraction,
 		headers: {
 			"x-signature-ed25519": "signature",
 			"x-signature-timestamp": "timestamp",
