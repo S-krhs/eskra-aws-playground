@@ -53,6 +53,7 @@ model DiscordUserSetting {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@id([applicationKey, guildId, userId, settingKey])
+  @@index([applicationKey, settingKey])
   @@map("discord_user_settings")
   @@schema("playground")
 }

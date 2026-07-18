@@ -32,3 +32,6 @@ CREATE TABLE "playground"."discord_user_settings" (
     CONSTRAINT "discord_user_settings_user_id_snowflake_check" CHECK ("user_id" ~ '^[0-9]+$'),
     CONSTRAINT "discord_user_settings_setting_key_kebab_check" CHECK ("setting_key" ~ '^[a-z0-9]+(-[a-z0-9]+)*$')
 );
+
+-- CreateIndex
+CREATE INDEX "discord_user_settings_application_key_setting_key_idx" ON "playground"."discord_user_settings"("application_key", "setting_key");
