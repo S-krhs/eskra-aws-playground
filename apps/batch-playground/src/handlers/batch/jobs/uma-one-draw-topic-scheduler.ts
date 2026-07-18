@@ -4,12 +4,13 @@ import { OneTimeScheduleClient } from "@eskra-aws-playground/integration-schedul
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 
 import { planOneTimeInvocation } from "@/features/uma-one-draw-topic-scheduler/one-time-invocation-plan.js";
+import { batchJobNames } from "@/handlers/batch/contracts/job-names.js";
 import {
 	type BatchResponse,
 	batchContextSchema,
 } from "@/handlers/batch/schema.js";
 
-const logger = createBatchLogger("uma-one-draw-topic-scheduler");
+const logger = createBatchLogger(batchJobNames.umaOneDrawTopicScheduler);
 
 /** UMA ワンドロお題通知を当日ランダムな時刻に起動する one-time schedule を登録するバッチジョブ。 */
 export const umaOneDrawTopicSchedulerJob = async (
@@ -47,7 +48,7 @@ export const umaOneDrawTopicSchedulerJob = async (
 		timezone: invocationPlan.timezone,
 		targetArn: targetFunctionArn,
 		roleArn: schedulerRoleArn,
-		input: { job: "uma-one-draw-topic" },
+		input: { job: batchJobNames.umaOneDrawTopic },
 	});
 
 	logger.complete({ scheduleAt: invocationPlan.scheduleAt, created });
@@ -55,7 +56,7 @@ export const umaOneDrawTopicSchedulerJob = async (
 	// 4. Lambda ハンドラーへ共通レスポンスを返す。
 	return {
 		ok: true,
-		job: "uma-one-draw-topic-scheduler",
+		job: batchJobNames.umaOneDrawTopicScheduler,
 		details: {
 			scheduleAt: invocationPlan.scheduleAt,
 			created,

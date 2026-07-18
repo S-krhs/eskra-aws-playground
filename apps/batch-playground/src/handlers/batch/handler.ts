@@ -1,5 +1,7 @@
 // In scope: Lambda イベントを検証し、対応する登録済みバッチジョブへ実行を委譲する
 // Out of scope: 個別ジョブの処理内容、業務ロジック、外部連携の詳細を持つ
+
+import { batchJobNames } from "./contracts/job-names.js";
 import { playCheckReminderJob } from "./jobs/play-check-reminder.js";
 import { umaOneDrawTopicJob } from "./jobs/uma-one-draw-topic.js";
 import { umaOneDrawTopicSchedulerJob } from "./jobs/uma-one-draw-topic-scheduler.js";
@@ -10,9 +12,9 @@ type BatchJob = (event: unknown, context?: unknown) => Promise<BatchResponse>;
 
 /** job 名と実行するジョブの対応。ジョブを追加したらここへ登録する。 */
 const batchJobs = new Map<string, BatchJob>([
-	["uma-one-draw-topic", umaOneDrawTopicJob],
-	["uma-one-draw-topic-scheduler", umaOneDrawTopicSchedulerJob],
-	["play-check-reminder", playCheckReminderJob],
+	[batchJobNames.umaOneDrawTopic, umaOneDrawTopicJob],
+	[batchJobNames.umaOneDrawTopicScheduler, umaOneDrawTopicSchedulerJob],
+	[batchJobNames.playCheckReminder, playCheckReminderJob],
 ]);
 
 /** Lambda の共通エントリポイント。イベントに対応するバッチジョブを実行する。 */

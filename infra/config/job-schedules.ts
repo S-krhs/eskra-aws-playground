@@ -2,6 +2,7 @@
 // Out of scope: Lambda function 本体やイベントルーティングの定義
 
 import { batchNames as animeBatchNames } from "../../apps/batch-anime-analysis/src/shared/routes/batch-names.js";
+import { batchJobNames as playgroundBatchJobNames } from "../../apps/batch-playground/src/handlers/batch/contracts/job-names.js";
 
 /** schedule 起動する batch job 1 件分のスケジュール設定。CronV2 へ spread して使う。 */
 export type JobSchedule = {
@@ -26,14 +27,14 @@ export const jobSchedules = {
 		schedule: "cron(0 0 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
-		event: { job: "uma-one-draw-topic-scheduler" },
+		event: { job: playgroundBatchJobNames.umaOneDrawTopicScheduler },
 	},
 	/** 遊技チェックリマインダーを毎日 JST 22:00 に起動する。 */
 	playCheckReminder: {
 		schedule: "cron(0 22 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
-		event: { job: "play-check-reminder" },
+		event: { job: playgroundBatchJobNames.playCheckReminder },
 	},
 	/** アニメ分析 orchestrator を毎日 JST 09:00 に起動する。 */
 	animeScrapingOrchestrator9: {
