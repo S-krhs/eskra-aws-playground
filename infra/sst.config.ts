@@ -149,7 +149,7 @@ export default $config({
 				"../apps/batch-playground/src/handlers/function-url/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "10 seconds",
-			memory: "128 MB",
+			memory: "512 MB",
 			link: [
 				yacchoDiscordInteractionPublicKey,
 				kaguyaDiscordInteractionPublicKey,

@@ -1,5 +1,6 @@
 // In scope: Function URL の公開エンドポイントとして envelope を検証し、リクエストパスから担当 route へ委譲する
 // Out of scope: 署名検証、interaction 内容の解釈、応答 payload の中身を持つ
+import { warmupDatabaseConnection } from "@eskra-aws-playground/repositories/playground/shared/db/db-warmup.js";
 import { paths } from "./contracts/paths.js";
 import { kaguyaBotInteractionRoute } from "./routes/kaguya-bot-interaction/route.js";
 import { yacchoBotInteractionRoute } from "./routes/yaccho-bot-interaction/route.js";
@@ -8,6 +9,10 @@ import {
 	type FunctionUrlResponse,
 	functionUrlEventSchema,
 } from "./schema.js";
+
+// Discord interaction の 3 秒制限に収めるため、DB 接続確立は CPU ブーストが効く
+// init フェーズで済ませる。失敗しても handler 実行時に再接続されるため握りつぶす。
+await warmupDatabaseConnection().catch(() => {});
 
 /** Function URL のリクエストを受け取り HTTP response を返す route。 */
 type FunctionUrlRoute = (
