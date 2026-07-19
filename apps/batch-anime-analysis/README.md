@@ -82,8 +82,3 @@ GitHub Actions からのデプロイには次の Secret が必要です。
 
 - `ANIME_ANALYSIS_DISCORD_WEBHOOK_URL`
 - `ALERT_DISCORD_WEBHOOK_URL`
-
-## ドキュメント
-
-- アーキテクチャ: [docs/architecture.md](docs/architecture.md)
-- 実装ルール: [docs/implementation-rules.md](docs/implementation-rules.md)

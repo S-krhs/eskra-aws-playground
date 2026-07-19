@@ -132,8 +132,3 @@ Discord Bot 用に以下も同様に渡します。
 ### リマインダー設定
 
 今回の migration は expand-contract や旧 secret からの backfill を行いません。デプロイ後、利用者本人が投稿先チャンネルで `/gamble-check-enable` を実行してください。
-
-## ドキュメント
-
-- アーキテクチャ: [docs/architecture.md](docs/architecture.md)
-- 実装ルール: [docs/implementation-rules.md](docs/implementation-rules.md)
