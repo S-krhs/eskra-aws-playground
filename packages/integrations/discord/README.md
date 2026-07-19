@@ -20,8 +20,3 @@ Discord API への実通信境界を担当する integration package です。
 - 送信先が Discord の HTTPS Webhook API であることを検証する。
 - 失敗応答の本文に含まれる Webhook URL を除去してからエラーに載せる。
 - Webhook URL の解決、payload の構築、interaction の parse、ジョブ判定、業務文言や業務上の選択肢の生成・判定は扱わない。
-
-## ドキュメント
-
-- アーキテクチャ: [docs/architecture.md](docs/architecture.md)
-- 実装ルール: [docs/implementation-rules.md](docs/implementation-rules.md)

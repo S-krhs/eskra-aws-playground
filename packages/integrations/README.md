@@ -4,16 +4,8 @@
 
 ## Package
 
-- `discord`: Discord Webhook API との通信境界。
+- [discord](discord/README.md): Discord API との通信境界（Webhook / Bot / Command の 3 クライアント）。
+- [scheduler](scheduler/README.md): EventBridge Scheduler への one-time schedule 登録境界。
+- [sqs](sqs/README.md): AWS SQS への message 送信境界。
 
-## 置くもの
-
-- 接続先固有の型、HTTP 通信、認証、失敗応答のエラー変換。
-
-## 置かないもの
-
-- Webhook URL や token の解決、ジョブ判定、メッセージ生成。
-- app 固有の型や feature 固有の値。
-- 別の `packages/integrations/*` への依存。
-
-接続先が増えるたびに package を分けます。重い通信ライブラリや認証 SDK が接続先ごとに増えるためです。
+置くもの・置かないものの基準は [.claude/rules/architecture.md](../../.claude/rules/architecture.md) の Package 方針を参照してください。

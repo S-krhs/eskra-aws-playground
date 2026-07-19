@@ -13,8 +13,3 @@ AWS SQS への message 送信境界を担当する integration package です。
 - AWS SDK を使った SQS `SendMessageBatch` の呼び出しと batch 分割（最大 10 件）を扱う。
 - 送信失敗（`Failed`）を、失敗した message id を含むエラーへ変換する。
 - queue URL の解決、message body の業務形式、ジョブ判定は扱わない。
-
-## ドキュメント
-
-- アーキテクチャ: [docs/architecture.md](docs/architecture.md)
-- 実装ルール: [docs/implementation-rules.md](docs/implementation-rules.md)
