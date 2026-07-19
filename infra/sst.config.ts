@@ -84,8 +84,8 @@ export default $config({
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
-			timeout: "30 seconds",
-			memory: "128 MB",
+			timeout: "60 seconds",
+			memory: "512 MB",
 			link: [umaOneDrawTopicWebhookUrl, yacchoDiscordBotToken],
 			environment: {
 				DATABASE_URL: databaseUrl.value,
@@ -148,7 +148,7 @@ export default $config({
 			handler:
 				"../apps/batch-playground/src/handlers/function-url/handler.handler",
 			runtime: "nodejs22.x",
-			timeout: "10 seconds",
+			timeout: "60 seconds",
 			memory: "512 MB",
 			link: [
 				yacchoDiscordInteractionPublicKey,
@@ -255,8 +255,8 @@ export default $config({
 				handler:
 					"../apps/batch-anime-analysis/src/handlers/orchestrator.handler",
 				runtime: "nodejs22.x",
-				timeout: "30 seconds",
-				memory: "128 MB",
+				timeout: "60 seconds",
+				memory: "512 MB",
 				link: [animeAnalysisQueue],
 			},
 		);
@@ -313,8 +313,8 @@ export default $config({
 				handler:
 					"../apps/batch-anime-analysis/src/handlers/alarm-notifier.handler",
 				runtime: "nodejs22.x",
-				timeout: "30 seconds",
-				memory: "128 MB",
+				timeout: "60 seconds",
+				memory: "512 MB",
 				link: [alertDiscordWebhookUrl],
 			},
 		);
