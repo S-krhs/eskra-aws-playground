@@ -80,7 +80,6 @@ describe("sqs-worker handler", () => {
 		expect(discordInteraction.constructorCalls[0]).toEqual(["999", "tok"]);
 		expect(discordInteraction.editOriginalResponse).toHaveBeenCalledWith({
 			content: "うけたまかしこまつかまつり〜",
-			flags: 64,
 			allowed_mentions: { parse: [] },
 		});
 		expect(response).toEqual({ batchItemFailures: [] });
@@ -103,7 +102,6 @@ describe("sqs-worker handler", () => {
 
 		expect(discordInteraction.editOriginalResponse).toHaveBeenCalledWith({
 			content: "よよよ……リマインダーはまだ設定されていないのです～",
-			flags: 64,
 			allowed_mentions: { parse: [] },
 		});
 	});
