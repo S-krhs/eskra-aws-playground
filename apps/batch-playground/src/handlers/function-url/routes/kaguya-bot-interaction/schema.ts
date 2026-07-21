@@ -1,7 +1,10 @@
 // In scope: Function URL eventから署名検証用の値とparse済みinteractionを取り出す
 // Out of scope: 署名検証、operation選択、response body生成
 import { z } from "zod";
-import { parseInteraction } from "@/external-protocols/discord-message/parse.js";
+import {
+	parseInteraction,
+	parseInteractionCallback,
+} from "@/external-protocols/discord-message/parse.js";
 
 /** Function URL eventからDiscord署名検証用requestとinteractionを取り出すschema。 */
 export const discordInteractionRequestSchema = z
@@ -28,5 +31,9 @@ export const discordInteractionRequestSchema = z
 			});
 			return z.NEVER;
 		}
-		return { ...request, interaction };
+		return {
+			...request,
+			interaction,
+			callback: parseInteractionCallback(request.rawBody),
+		};
 	});

@@ -2,7 +2,10 @@
 // Out of scope: 署名検証、operation の選択、応答 body の生成
 import { z } from "zod";
 
-import { parseInteraction } from "@/external-protocols/discord-message/parse.js";
+import {
+	parseInteraction,
+	parseInteractionCallback,
+} from "@/external-protocols/discord-message/parse.js";
 
 /** Function URL event から Discord 署名検証に必要な request 値と interaction を取り出す schema。 */
 export const discordInteractionRequestSchema = z
@@ -30,5 +33,9 @@ export const discordInteractionRequestSchema = z
 			return z.NEVER;
 		}
 
-		return { ...request, interaction };
+		return {
+			...request,
+			interaction,
+			callback: parseInteractionCallback(request.rawBody),
+		};
 	});

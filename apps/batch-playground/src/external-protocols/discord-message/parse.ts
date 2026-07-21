@@ -83,6 +83,14 @@ export interface DiscordAutocompleteInteraction {
 	kind: "autocomplete";
 }
 
+/** deferred 応答後の元メッセージ編集・follow-up 送信に必要な interaction の callback 情報。 */
+export interface DiscordInteractionCallback {
+	/** 応答先 application の ID。編集先 webhook URL の組み立てに使う。 */
+	applicationId: string;
+	/** interaction ごとに発行される応答用 token。発行から 15 分有効。 */
+	token: string;
+}
+
 /** アプリが対応していない Discord interaction type。 */
 export interface DiscordUnsupportedInteraction {
 	kind: "unsupported";
@@ -164,6 +172,11 @@ const interactionBodySchema = z.object({
 
 const interactionTypeSchema = z.object({ type: z.number() });
 
+const interactionCallbackSchema = z.object({
+	application_id: discordSnowflakeSchema,
+	token: z.string().min(1),
+});
+
 const toCommandOption = (
 	option: RawDiscordCommandOption,
 ): DiscordCommandOption => {
@@ -187,6 +200,31 @@ const toCommandOption = (
 		kind: "unsupported",
 		discordType: option.type,
 		name: option.name,
+	};
+};
+
+/**
+ * JSON body から deferred 応答用の callback 情報(application_id・token)を取り出す。
+ * どちらかが欠けている場合は undefined を返す。
+ */
+export const parseInteractionCallback = (
+	rawBody: string,
+): DiscordInteractionCallback | undefined => {
+	let json: unknown;
+	try {
+		json = JSON.parse(rawBody) as unknown;
+	} catch {
+		return undefined;
+	}
+
+	const parsed = interactionCallbackSchema.safeParse(json);
+	if (!parsed.success) {
+		return undefined;
+	}
+
+	return {
+		applicationId: parsed.data.application_id,
+		token: parsed.data.token,
 	};
 };
 

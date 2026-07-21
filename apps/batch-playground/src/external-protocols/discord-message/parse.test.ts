@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseInteraction } from "./parse.js";
+import { parseInteraction, parseInteractionCallback } from "./parse.js";
 
 describe("parseInteraction", () => {
 	it("PING interaction を parse する", () => {
@@ -151,6 +151,24 @@ describe("parseInteraction", () => {
 			kind: "unsupported",
 			discordType: 99,
 		});
+	});
+
+	it("callback として application_id と token を取り出す", () => {
+		expect(
+			parseInteractionCallback(
+				'{"type":2,"application_id":"999","token":"abc-token","data":{"name":"hello"}}',
+			),
+		).toEqual({ applicationId: "999", token: "abc-token" });
+	});
+
+	it("application_id か token を欠く body の callback は取り出さない", () => {
+		expect(
+			parseInteractionCallback('{"type":2,"token":"abc"}'),
+		).toBeUndefined();
+		expect(
+			parseInteractionCallback('{"type":2,"application_id":"999","token":""}'),
+		).toBeUndefined();
+		expect(parseInteractionCallback("not-a-json")).toBeUndefined();
 	});
 
 	it("不正な JSON・interaction 構造は parse しない", () => {

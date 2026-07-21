@@ -5,6 +5,8 @@
 export const responseTypes = {
 	pong: 1,
 	message: 4,
+	deferredMessage: 5,
+	deferredUpdate: 6,
 	update: 7,
 	autocomplete: 8,
 } as const;
@@ -54,10 +56,30 @@ export type DiscordEmptyAutocompleteResponsePayload = {
 	data: { choices: readonly [] };
 };
 
+/**
+ * Discord deferred message interaction callback の payload。
+ * この応答で 3 秒制限内に ACK し、確定した内容は後続の元メッセージ編集で表示する。
+ * ephemeral にする場合のみ flags を付ける。
+ */
+export type DiscordDeferredMessageResponsePayload = {
+	type: typeof responseTypes.deferredMessage;
+	data?: { flags: typeof messageFlags.ephemeral };
+};
+
+/**
+ * Discord deferred update interaction callback の payload(message component 用)。
+ * 元メッセージを保持したまま ACK し、確定した内容は後続の元メッセージ編集で反映する。
+ */
+export type DiscordDeferredUpdateResponsePayload = {
+	type: typeof responseTypes.deferredUpdate;
+};
+
 /** Discord interaction callback の payload。 */
 export type DiscordInteractionResponsePayload =
 	| DiscordPongResponsePayload
 	| DiscordChannelMessageResponsePayload
 	| DiscordEphemeralResponsePayload
 	| DiscordUpdateMessageResponsePayload
-	| DiscordEmptyAutocompleteResponsePayload;
+	| DiscordEmptyAutocompleteResponsePayload
+	| DiscordDeferredMessageResponsePayload
+	| DiscordDeferredUpdateResponsePayload;
