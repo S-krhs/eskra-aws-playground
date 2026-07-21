@@ -148,7 +148,25 @@ export default $config({
 			}).json,
 		});
 
+		// deferred 応答で ACK した interaction の後追い処理を受け渡す Queue。
+		// visibilityTimeout は worker の timeout 以上にし、処理中の再配信を防ぐ
+		const playgroundInteractionDeadLetterQueue = new sst.aws.Queue(
+			"PlaygroundInteractionDeadLetterQueue",
+		);
+		const playgroundInteractionQueue = new sst.aws.Queue(
+			"PlaygroundInteractionQueue",
+			{
+				visibilityTimeout: "1 minute",
+				dlq: {
+					queue: playgroundInteractionDeadLetterQueue.arn,
+					retry: 3,
+				},
+			},
+		);
+
 		// 公開エンドポイントは job ごとに増やさずこの Lambda 1 つに集約する。
+		// Discord の 3 秒制限内に deferred 応答を返し、実処理は Queue 経由で worker へ渡すため
+		// この Lambda 自身は DB へ接続しない
 		const functionUrlFunction = new sst.aws.Function("FunctionUrlFunction", {
 			handler:
 				"../apps/batch-playground/src/handlers/function-url/handler.handler",
@@ -158,12 +176,33 @@ export default $config({
 			link: [
 				yacchoDiscordInteractionPublicKey,
 				kaguyaDiscordInteractionPublicKey,
+				playgroundInteractionQueue,
 			],
-			environment: {
-				DATABASE_URL: databaseUrl.value,
-			},
 			url: true,
 		});
+
+		// deferred 応答済み interaction の実処理を行い、元メッセージを確定内容へ差し替える worker。
+		// Discord API は interaction token で呼ぶため Bot token の link は不要
+		playgroundInteractionQueue.subscribe(
+			{
+				handler:
+					"../apps/batch-playground/src/handlers/sqs-worker/handler.handler",
+				runtime: "nodejs22.x",
+				timeout: "30 seconds",
+				memory: "512 MB",
+				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
+				// link ではなく environment で渡す
+				environment: {
+					DATABASE_URL: databaseUrl.value,
+				},
+			},
+			{
+				batch: {
+					size: 1,
+					partialResponses: true,
+				},
+			},
+		);
 
 		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
 		const animeAnalysisDiscordWebhookUrl = new sst.Secret(
@@ -394,6 +433,27 @@ export default $config({
 			metricName: "ApproximateNumberOfMessagesVisible",
 			dimensions: {
 				QueueName: animeAnalysisDeadLetterQueue.arn.apply((arn) => {
+					return arn.split(":").pop() ?? "";
+				}),
+			},
+			statistic: "Maximum",
+			period: 300,
+			evaluationPeriods: 1,
+			threshold: 1,
+			comparisonOperator: "GreaterThanOrEqualToThreshold",
+			treatMissingData: "notBreaching",
+			alarmActions: [alertTopic.arn],
+		});
+
+		// interaction の後追いジョブが規定回数リトライしても失敗し DLQ に滞留したら通知する。
+		// deferred 応答のまま元メッセージが確定しない状態になるため検知が必要
+		new aws.cloudwatch.MetricAlarm("PlaygroundInteractionDlqDepthAlarm", {
+			name: `${appName}-${$app.stage}-playground-interaction-dlq-depth`,
+			alarmDescription: alarmDescriptions.playgroundInteractionDlqDepth,
+			namespace: "AWS/SQS",
+			metricName: "ApproximateNumberOfMessagesVisible",
+			dimensions: {
+				QueueName: playgroundInteractionDeadLetterQueue.arn.apply((arn) => {
 					return arn.split(":").pop() ?? "";
 				}),
 			},
