@@ -1,7 +1,7 @@
-// In scope: function-url handler が enqueue し sqs-worker handler が消費する interaction ジョブ message の schema と型
-// Out of scope: SQS 送信、ジョブの実行、Discord API 通信、deferred ack の生成
+// In scope: sqs-worker が受け取る interaction ジョブ message の外部入力 schema と型を提供する
+// Out of scope: SQS 送受信、ジョブの実行、Discord API 通信、deferred ack の生成
 import { z } from "zod";
-import { interactionJobNames } from "./job-names.js";
+import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
 
 const snowflakeSchema = z.string().regex(/^\d{1,20}$/);
 

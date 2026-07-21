@@ -36,7 +36,8 @@ Discord interaction は 3 秒以内に応答しないと失敗するため、`fu
 | `src/scripts/` | `sst shell` 経由で実行する運用スクリプト(`sync-discord-commands.ts`) | Lambda から呼ばれる処理 |
 | `sst-resource-links.d.ts`(package root) | SST link した secret を `Resource` proxy 経由で型付き参照するための declaration | 実行時の値解決 |
 | `src/features/<concern>/` | 機能単位の処理、抽選重みやテンプレートなどの feature 固有設定値。複数 handler から共有できる | Lambda イベント解釈、バッチレスポンス作成、別 feature の実装 |
-| `src/features/interaction-job/` | handler ツリーをまたぐ interaction ジョブ名と queue message schema | SQS 送信、ジョブの実行、Discord API 通信 |
+| `src/shared/contracts/interaction-job-names.ts` | sqs-worker が受け付ける interaction ジョブ名の一元管理 | ジョブの実装、message の構築 |
+| `src/shared/schemas/sqs/<queue>/message.ts` | handler ツリーをまたぐ SQS message の外部入力 schema と型 | SQS 送受信、ジョブの実行、Discord API 通信 |
 | `repositories/playground/` | 複数 app で共有する静的カタログと DB 設定、その取得・保存・JSONB 検証 | Lambda イベント解釈、メッセージ生成、外部送信、Discord 権限判定 |
 
 ## 依存方向
@@ -50,17 +51,19 @@ routes/operations -> external-protocols
 jobs -> external-protocols
 jobs -> packages/integrations/*
 jobs/features -> packages/libs
+routes/operations -> shared
+jobs -> shared
 features -> repositories
 ```
 
-- handler ツリー間で import しない。共有するものは `src/features/` か `packages/*` に置く。function-url と sqs-worker が共有する interaction ジョブの契約は `src/features/interaction-job/` に置く。
+- handler ツリー間で import しない。共有するものは `src/features/`(機能単位の処理)、`src/shared/`(handler をまたぐ公開契約)、`packages/*` のいずれかに置く。function-url と sqs-worker が共有する interaction ジョブの job 名と message schema は `src/shared/` に置く。
 - route から feature を直接呼び出さない。依存方向は必ず `route -> operation -> feature` とする。
 - 複数 feature の組み合わせや repository・integration の呼び出し順序は、batch では `jobs/`、function-url では `operations/` に置く。単なる repository 転送だけの feature は作らない。
 
 ## 実装ルール
 
 - job 名は実行内容が分かるバッチ名(例: `uma-one-draw-topic`)にし、`contracts/job-names.ts` へ追加して `handler.ts` の `batchJobs` 対応表に登録する。
-- interaction ジョブを追加するときは `features/interaction-job/job-names.ts` に job 名、`queue-message.ts` にその job が必要とする値だけの message を追加し、`handlers/sqs-worker/handler.ts` の振り分けへ登録する。message には interaction token を載せるため、ログや `details` へ出さない。
+- interaction ジョブを追加するときは `shared/contracts/interaction-job-names.ts` に job 名、`shared/schemas/sqs/interaction-job/message.ts` にその job が必要とする値だけの message を追加し、`handlers/sqs-worker/handler.ts` の振り分けへ登録する。message には interaction token を載せるため、ログや `details` へ出さない。
 - operation から enqueue するときは message を `InteractionJobMessage` として宣言してから `SqsMessageSender` へ渡す。`SqsMessageInput` の `body` は `unknown` のため、型注釈がないと契約違反を検出できない。
 - sqs-worker は record 単位で失敗を分離し、失敗した message だけを `batchItemFailures` で再試行対象にする。
 - 起動イベントは `unknown` として受け取り、`schema.ts` で検証・正規化してから使う。レスポンスは `BatchResponse` に合わせ、呼び出し元が機械的に扱える形にする。
@@ -68,7 +71,7 @@ features -> repositories
 - operation は `routes/<route>/operations/<operation>-operation.ts` に置き、1 ファイルにつき 1 メソッドとする。定数結果を返すだけの薄い operation は作らず、route の振り分けへインライン化する。
 - 同じ protocol の Parse / Build は同一モジュールにまとめ、役割名だけが異なる薄い Builder / Parser module へ分割しない。integration へは構築済み payload を渡す。テストは対象ファイルと同じディレクトリに置く。
 - お題候補の静的カタログは `repositories/playground/data.ts` に置き、feature からは repository 経由で読む。抽選重みやメッセージテンプレートは feature 側の設定として持つ。
-- feature 間で共有したい処理が出た場合は、まず重複を許容できるか確認する。app 内に `shared/domains` は作らない。
+- feature 間で共有したい処理が出た場合は、まず重複を許容できるか確認する。`src/shared/` は handler をまたぐ契約(job 名・schema・中間モデル)だけを置く場所とし、業務ロジックを持つ `shared/domains` は作らない。
 - `features/` 直下に実装ファイルを置かず、関心ごとのディレクトリを切る。設定値と処理はファイルを分ける(例: `topic-settings.ts` と `topic-message.ts`)。
 - オーケストレーション手順は、処理セクションごとに 1 行コメントを残す。
 - `details` と開始/終了ログには調査に役立つ安全な値だけを入れ、設定不足・入力不備・外部 API 失敗はエラーメッセージで区別できるようにする。

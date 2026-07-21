@@ -1,4 +1,4 @@
-// In scope: deferred 応答後に非同期処理する interaction ジョブ名を一元管理する
+// In scope: sqs-worker が受け付ける interaction ジョブ名を一元管理する
 // Out of scope: ジョブの実装、SQS message の構築、ルーティングを持つ
 
 /** deferred 応答済み interaction を後追い処理する SQS ジョブ名。 */

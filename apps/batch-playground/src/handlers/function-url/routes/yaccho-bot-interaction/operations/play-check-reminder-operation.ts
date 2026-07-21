@@ -12,10 +12,10 @@ import type {
 	DiscordInteraction,
 	DiscordInteractionCallback,
 } from "@/external-protocols/discord-message/parse.js";
-import { interactionJobNames } from "@/features/interaction-job/job-names.js";
-import type { InteractionJobMessage } from "@/features/interaction-job/queue-message.js";
 import { REMINDER_CHOICES } from "@/features/play-check-reminder/reminder-settings.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 import { prefixes } from "../contracts/prefixes.js";
 
 /**

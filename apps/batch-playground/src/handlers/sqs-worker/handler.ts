@@ -1,11 +1,11 @@
 // In scope: SQS event を検証し、message ごとに deferred 応答済み interaction の後追い処理へ委譲する
 // Out of scope: 個別ジョブの処理内容、Discord API 通信、deferred ack の生成を持つ
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import { interactionJobNames } from "@/features/interaction-job/job-names.js";
+import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
 import {
 	type InteractionJobMessage,
 	interactionJobMessageSchema,
-} from "@/features/interaction-job/queue-message.js";
+} from "@/shared/schemas/sqs/interaction-job/message.js";
 import { gambleCheckDisableJob } from "./jobs/gamble-check-disable-job.js";
 import { gambleCheckEnableJob } from "./jobs/gamble-check-enable-job.js";
 import { kaguyaInuihiroshiReplyJob } from "./jobs/kaguya-inuihiroshi-reply-job.js";

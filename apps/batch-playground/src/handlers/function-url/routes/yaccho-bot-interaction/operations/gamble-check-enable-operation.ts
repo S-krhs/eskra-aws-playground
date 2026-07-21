@@ -12,9 +12,9 @@ import type {
 	DiscordApplicationCommandInteraction,
 	DiscordInteractionCallback,
 } from "@/external-protocols/discord-message/parse.js";
-import { interactionJobNames } from "@/features/interaction-job/job-names.js";
-import type { InteractionJobMessage } from "@/features/interaction-job/queue-message.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 import { ephemeralOperation } from "./ephemeral-operation.js";
 
 /** gamble-check-enable の実行場所を確認し、ephemeral な deferred 応答で ACK して登録ジョブを enqueue する。 */

@@ -1,9 +1,9 @@
 // In scope: 遊技リマインダーのボタン選択に応じて、deferred update の元メッセージをボタンを外した結果へ差し替える
 // Out of scope: ジョブの振り分け、SQS event の解釈、押下ユーザーの照合(route で実施済み)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
-import type { interactionJobNames } from "@/features/interaction-job/job-names.js";
-import type { InteractionJobMessage } from "@/features/interaction-job/queue-message.js";
 import { REMINDER_CHOICES } from "@/features/play-check-reminder/reminder-settings.js";
+import type { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 
 type PlayCheckReminderChoiceMessage = Extract<
 	InteractionJobMessage,

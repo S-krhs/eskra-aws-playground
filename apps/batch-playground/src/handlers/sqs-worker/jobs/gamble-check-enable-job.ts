@@ -5,8 +5,8 @@ import { channelSettingRepository } from "@eskra-aws-playground/repositories/pla
 import { applicationKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/application-key.js";
 import { settingKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/setting-key.js";
 import { messageFlags } from "@/external-protocols/discord-message/interaction-response.js";
-import type { interactionJobNames } from "@/features/interaction-job/job-names.js";
-import type { InteractionJobMessage } from "@/features/interaction-job/queue-message.js";
+import type { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 
 type GambleCheckEnableMessage = Extract<
 	InteractionJobMessage,

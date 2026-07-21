@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { interactionJobMessageSchema } from "./queue-message.js";
+import { interactionJobMessageSchema } from "./message.js";
 
 describe("interactionJobMessageSchema", () => {
 	it("gamble-check-enable の必須項目を検証する", () => {

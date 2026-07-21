@@ -1,8 +1,8 @@
 // In scope: /hello の deferred 応答の元メッセージを、公開のあいさつ文へ差し替える
 // Out of scope: ジョブの振り分け、SQS event の解釈、interaction の検証(route で実施済み)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
-import type { interactionJobNames } from "@/features/interaction-job/job-names.js";
-import type { InteractionJobMessage } from "@/features/interaction-job/queue-message.js";
+import type { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 
 type YacchoHelloReplyMessage = Extract<
 	InteractionJobMessage,
