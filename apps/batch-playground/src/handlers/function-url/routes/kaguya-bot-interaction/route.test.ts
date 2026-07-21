@@ -96,14 +96,67 @@ describe("kaguyaBotInteractionRoute", () => {
 		expect(JSON.parse(response.body)).toEqual({ type: 5 });
 	});
 
-	it("未対応commandにはephemeralメッセージを返す", async () => {
+	it("未対応commandにはephemeralメッセージを返しenqueueしない", async () => {
 		const response = await kaguyaBotInteractionRoute(
-			buildEvent('{"type":2,"data":{"name":"unknown"},"user":{"id":"123"}}'),
+			buildEvent(
+				JSON.stringify({
+					type: 2,
+					application_id: applicationId,
+					token,
+					data: { name: "unknown" },
+					user: { id: "123" },
+				}),
+			),
 		);
 
+		expect(sqs.sendMessages).not.toHaveBeenCalled();
 		expect(JSON.parse(response.body)).toMatchObject({
 			type: 4,
-			data: { flags: 64 },
+			data: { content: "この操作には対応していません。", flags: 64 },
+		});
+	});
+
+	it("callbackを取り出せないinteractionは即時ephemeralで返す", async () => {
+		const response = await kaguyaBotInteractionRoute(
+			buildEvent(
+				'{"type":2,"data":{"name":"inuihiroshi"},"user":{"id":"123"}}',
+			),
+		);
+
+		expect(sqs.sendMessages).not.toHaveBeenCalled();
+		expect(JSON.parse(response.body)).toMatchObject({
+			type: 4,
+			data: {
+				content: "応答の準備に失敗しました。もう一度お試しください。",
+				flags: 64,
+			},
+		});
+	});
+
+	it("enqueueに失敗したらdeferredではなく再試行を促すephemeralを返す", async () => {
+		sqs.sendMessages.mockRejectedValue(
+			new Error("SQS message の送信に失敗しました: interaction-job"),
+		);
+
+		const response = await kaguyaBotInteractionRoute(
+			buildEvent(
+				JSON.stringify({
+					type: 2,
+					application_id: applicationId,
+					token,
+					data: { name: "inuihiroshi" },
+					user: { id: "123" },
+				}),
+			),
+		);
+
+		expect(response.statusCode).toBe(200);
+		expect(JSON.parse(response.body)).toMatchObject({
+			type: 4,
+			data: {
+				content: "処理の受け付けに失敗しました。もう一度お試しください。",
+				flags: 64,
+			},
 		});
 	});
 

@@ -59,41 +59,51 @@ export const yacchoBotInteractionRoute = async (
 
 	// 3. interaction の種類と登録済み command・prefix から応答を解決する。
 	// ping・autocomplete は 3 秒制限内に確定応答を返し、その他は deferred 応答で ACK して後追いジョブへ委譲する。
+	// enqueue の失敗は deferred 応答を返せないため、その場で確定する ephemeral 応答へ落とす。
 	const { callback } = parsedRequest.data;
 	let result: OperationResult<DiscordInteractionResponsePayload>;
-	if (interaction.kind === "ping") {
-		result = pingOperation();
-	} else if (interaction.kind === "autocomplete") {
-		result = autocompleteOperation();
-	} else if (!callback) {
-		logger.failure(new Error("interaction callback を取得できませんでした。"));
+	try {
+		if (interaction.kind === "ping") {
+			result = pingOperation();
+		} else if (interaction.kind === "autocomplete") {
+			result = autocompleteOperation();
+		} else if (!callback) {
+			logger.failure(
+				new Error("interaction callback を取得できませんでした。"),
+			);
+			result = ephemeralOperation(
+				"応答の準備に失敗しました。もう一度お試しください。",
+			);
+		} else if (
+			interaction.kind === "application-command" &&
+			interaction.command.name === commands.hello.name
+		) {
+			result = await helloCommandOperation(callback);
+		} else if (
+			interaction.kind === "application-command" &&
+			interaction.command.name === commands.gambleCheckEnable.name
+		) {
+			result = await gambleCheckEnableOperation(interaction, callback);
+		} else if (
+			interaction.kind === "application-command" &&
+			interaction.command.name === commands.gambleCheckDisable.name
+		) {
+			result = await gambleCheckDisableOperation(interaction, callback);
+		} else if (
+			interaction.kind === "message-component" &&
+			interaction.customId?.prefix === prefixes.playCheckReminder
+		) {
+			result =
+				(await playCheckReminderOperation(interaction, callback)) ??
+				unsupported();
+		} else {
+			result = unsupported();
+		}
+	} catch (error) {
+		logger.failure(error);
 		result = ephemeralOperation(
-			"応答の準備に失敗しました。もう一度お試しください。",
+			"処理の受け付けに失敗しました。もう一度お試しください。",
 		);
-	} else if (
-		interaction.kind === "application-command" &&
-		interaction.command.name === commands.hello.name
-	) {
-		result = await helloCommandOperation(callback);
-	} else if (
-		interaction.kind === "application-command" &&
-		interaction.command.name === commands.gambleCheckEnable.name
-	) {
-		result = await gambleCheckEnableOperation(interaction, callback);
-	} else if (
-		interaction.kind === "application-command" &&
-		interaction.command.name === commands.gambleCheckDisable.name
-	) {
-		result = await gambleCheckDisableOperation(interaction, callback);
-	} else if (
-		interaction.kind === "message-component" &&
-		interaction.customId?.prefix === prefixes.playCheckReminder
-	) {
-		result =
-			(await playCheckReminderOperation(interaction, callback)) ??
-			unsupported();
-	} else {
-		result = unsupported();
 	}
 	logger.complete({ interactionKind: interaction.kind, outcome: result.kind });
 

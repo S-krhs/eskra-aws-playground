@@ -290,6 +290,23 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
+	it("enqueue に失敗したら deferred ではなく再試行を促す ephemeral を返す", async () => {
+		sqs.sendMessages.mockRejectedValue(
+			new Error("SQS message の送信に失敗しました: interaction-job"),
+		);
+		const rawBody = buildCommandInteractionBody("hello", {
+			user: { id: targetUserId },
+		});
+
+		const body = okBody(await yacchoBotInteractionRoute(buildEvent(rawBody)));
+
+		expect(body.type).toBe(4);
+		expect(body.data?.flags).toBe(64);
+		expect(body.data?.content).toBe(
+			"処理の受け付けに失敗しました。もう一度お試しください。",
+		);
+	});
+
 	it("未対応のコマンドは対応外の ephemeral メッセージを返す", async () => {
 		const rawBody = buildCommandInteractionBody("unknown", {
 			user: { id: targetUserId },

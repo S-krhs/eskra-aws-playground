@@ -50,18 +50,32 @@ export const kaguyaBotInteractionRoute = async (
 
 	// 3. interaction の種類と登録済み command から応答を解決する。
 	// ping は 3 秒制限内に確定応答を返し、command は deferred 応答で ACK して後追いジョブへ委譲する。
+	// enqueue の失敗は deferred 応答を返せないため、その場で確定する ephemeral 応答へ落とす。
 	const { callback } = parsedRequest.data;
 	let result: OperationResult<DiscordInteractionResponsePayload>;
-	if (interaction.kind === "ping") {
-		result = pingOperation();
-	} else if (
-		interaction.kind === "application-command" &&
-		interaction.command.name === commands.inuihiroshi.name &&
-		callback
-	) {
-		result = await inuihiroshiCommandOperation(callback);
-	} else {
-		result = ephemeralOperation("この操作には対応していません。");
+	try {
+		if (interaction.kind === "ping") {
+			result = pingOperation();
+		} else if (!callback) {
+			logger.failure(
+				new Error("interaction callback を取得できませんでした。"),
+			);
+			result = ephemeralOperation(
+				"応答の準備に失敗しました。もう一度お試しください。",
+			);
+		} else if (
+			interaction.kind === "application-command" &&
+			interaction.command.name === commands.inuihiroshi.name
+		) {
+			result = await inuihiroshiCommandOperation(callback);
+		} else {
+			result = ephemeralOperation("この操作には対応していません。");
+		}
+	} catch (error) {
+		logger.failure(error);
+		result = ephemeralOperation(
+			"処理の受け付けに失敗しました。もう一度お試しください。",
+		);
 	}
 	logger.complete({ interactionKind: interaction.kind, outcome: result.kind });
 
