@@ -1,6 +1,7 @@
 // In scope: request の parse、認証・認可、interaction 種別ごとの応答解決、response の形成
 // Out of scope: 署名検証アルゴリズム、機能ごとの応答内容の生成
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
 import { Resource } from "sst/resource";
 import type { DiscordInteractionResponsePayload } from "@/external-protocols/discord-message/interaction-response.js";
 import { verifyInteractionSignature } from "@/external-protocols/discord-signature/verify-interaction-signature.js";
@@ -10,7 +11,6 @@ import type {
 	FunctionUrlResponse,
 } from "@/handlers/function-url/schema.js";
 import { commands } from "./contracts/commands.js";
-import { prefixes } from "./contracts/prefixes.js";
 import { autocompleteOperation } from "./operations/autocomplete-operation.js";
 import { ephemeralOperation } from "./operations/ephemeral-operation.js";
 import { gambleCheckDisableOperation } from "./operations/gamble-check-disable-operation.js";

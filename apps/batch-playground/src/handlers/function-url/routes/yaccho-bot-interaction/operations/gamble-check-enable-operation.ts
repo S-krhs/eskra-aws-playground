@@ -1,6 +1,8 @@
 // In scope: gamble-check-enable の実行場所を確認し、deferred 応答で ACK して登録ジョブを enqueue する
 // Out of scope: command routing、DB query、HTTP response の形成、確定メッセージの生成
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
 import { Resource } from "sst/resource";
 import {
 	type DiscordDeferredMessageResponsePayload,
@@ -13,8 +15,6 @@ import type {
 	DiscordInteractionCallback,
 } from "@/external-protocols/discord-message/parse.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
-import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
-import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 import { ephemeralOperation } from "./ephemeral-operation.js";
 
 /** gamble-check-enable の実行場所を確認し、ephemeral な deferred 応答で ACK して登録ジョブを enqueue する。 */

@@ -9,7 +9,8 @@
 		"infra",
 		"packages/integrations/*",
 		"packages/libs/*",
-		"repositories"
+		"repositories",
+		"shared-domains"
 	],
 	"scripts": {
 		"postinstall": "prisma generate",

@@ -1,6 +1,10 @@
 // In scope: 遊技リマインダーのボタン押下を検証し、deferred update で ACK して結果反映ジョブを enqueue する
 // Out of scope: interaction 種別・コマンドのルーティング、確定メッセージの生成、HTTP response の形成
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
 import { Resource } from "sst/resource";
 import {
 	type DiscordDeferredUpdateResponsePayload,
@@ -12,11 +16,7 @@ import type {
 	DiscordInteraction,
 	DiscordInteractionCallback,
 } from "@/external-protocols/discord-message/parse.js";
-import { REMINDER_CHOICES } from "@/features/play-check-reminder/reminder-settings.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
-import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
-import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
-import { prefixes } from "../contracts/prefixes.js";
 
 /**
  * 遊技リマインダーのボタン押下を検証し、押下本人には deferred update で ACK して結果反映ジョブを enqueue する。

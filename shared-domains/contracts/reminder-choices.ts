@@ -1,6 +1,6 @@
 // In scope: 遊技チェックリマインダーの質問文・選択肢・回答結果文を定義する
 // Out of scope: メッセージ生成、押下結果の判定、Discord payload 生成、外部送信を行う
-import type { DiscordButtonTone } from "@/external-protocols/discord-message/button.js";
+import type { ButtonTone } from "./button-tone.js";
 
 /** 遊技チェックリマインダーの質問文。 */
 export const REMINDER_QUESTION = "やおよろ～！今日は遊技した？";
@@ -9,7 +9,7 @@ export const REMINDER_QUESTION = "やおよろ～！今日は遊技した？";
 export interface ReminderChoice {
 	id: string;
 	label: string;
-	tone: DiscordButtonTone;
+	tone: ButtonTone;
 	responseMessage: string;
 }
 

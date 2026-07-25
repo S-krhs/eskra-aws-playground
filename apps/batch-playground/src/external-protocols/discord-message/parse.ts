@@ -1,7 +1,8 @@
 // In scope: Discord interaction body の JSON 構文解析と、用途ごとの intermediate model への変換
 // Out of scope: custom_id の機能固有な値検証、署名検証、業務ルール、HTTP 通信
+import type { DiscordCustomId } from "@eskra-aws-playground/shared-domains/contracts/discord-custom-id.js";
+import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
 import { z } from "zod";
-import { type DiscordCustomId, parseCustomId } from "./custom-id.js";
 
 const rawInteractionTypes = {
 	ping: 1,

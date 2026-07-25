@@ -1,14 +1,8 @@
 // In scope: prefix・任意の target・action と Discord custom_id の相互変換
 // Out of scope: prefix・target・action の機能固有な意味付けと登録値との照合
+import type { DiscordCustomId } from "../contracts/discord-custom-id.js";
 
 const CUSTOM_ID_SEPARATOR = ":";
-
-/** アプリ共通規約で解釈した Discord custom_id。 */
-export interface DiscordCustomId {
-	prefix: string;
-	target?: string;
-	action: string;
-}
 
 /**
  * prefix・target・action から Discord custom_id を生成する。

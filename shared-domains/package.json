@@ -1,8 +1,20 @@
 {
-	"name": "@eskra-aws-playground/batch-playground",
+	"name": "@eskra-aws-playground/shared-domains",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
+	"exports": {
+		"./contracts/*.test.js": null,
+		"./contracts/*.js": {
+			"types": "./dist/contracts/*.d.ts",
+			"default": "./dist/contracts/*.js"
+		},
+		"./protocols/*.test.js": null,
+		"./protocols/*.js": {
+			"types": "./dist/protocols/*.d.ts",
+			"default": "./dist/protocols/*.js"
+		}
+	},
 	"scripts": {
 		"clean": "rm -rf dist",
 		"build": "npm run clean && tsc -p tsconfig.json",
@@ -12,12 +24,6 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"@eskra-aws-playground/integration-discord": "0.1.0",
-		"@eskra-aws-playground/integration-scheduler": "0.1.0",
-		"@eskra-aws-playground/integration-sqs": "0.1.0",
-		"@eskra-aws-playground/libs": "0.1.0",
-		"@eskra-aws-playground/repositories": "0.1.0",
-		"@eskra-aws-playground/shared-domains": "0.1.0",
 		"zod": "^3.25.76"
 	}
 }

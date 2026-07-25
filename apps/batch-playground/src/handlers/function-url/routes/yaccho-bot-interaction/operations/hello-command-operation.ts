@@ -1,6 +1,8 @@
 // In scope: /hello を deferred 応答で ACK し、公開あいさつを送る後追いジョブを enqueue する
 // Out of scope: interaction 種別・コマンドのルーティング、あいさつ本文の生成、HTTP response の形成
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
 import { Resource } from "sst/resource";
 import {
 	type DiscordDeferredMessageResponsePayload,
@@ -8,8 +10,6 @@ import {
 } from "@/external-protocols/discord-message/interaction-response.js";
 import type { DiscordInteractionCallback } from "@/external-protocols/discord-message/parse.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
-import { interactionJobNames } from "@/shared/contracts/interaction-job-names.js";
-import type { InteractionJobMessage } from "@/shared/schemas/sqs/interaction-job/message.js";
 
 /** /hello を公開の deferred 応答で ACK し、あいさつ本文の送信を後追いジョブへ委譲する。 */
 export const helloCommandOperation = async (
