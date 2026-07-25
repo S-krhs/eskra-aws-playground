@@ -4,32 +4,22 @@
 import type { DiscordInteractionResponsePayload } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import { verifyInteractionSignature } from "@eskra-aws-playground/integration-discord/verify-interaction-signature.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
-import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,
-} from "@/handlers/function-url/schema.js";
+} from "@/handlers/schema.js";
 import { commands } from "./contracts/commands.js";
-import { autocompleteOperation } from "./operations/autocomplete-operation.js";
 import { ephemeralOperation } from "./operations/ephemeral-operation.js";
-import { gambleCheckDisableOperation } from "./operations/gamble-check-disable-operation.js";
-import { gambleCheckEnableOperation } from "./operations/gamble-check-enable-operation.js";
-import { helloCommandOperation } from "./operations/hello-command-operation.js";
+import { inuihiroshiCommandOperation } from "./operations/inuihiroshi-command-operation.js";
 import { pingOperation } from "./operations/ping-operation.js";
-import { playCheckReminderOperation } from "./operations/play-check-reminder-operation.js";
 import { discordInteractionRequestSchema } from "./schema.js";
 
-const logger = createBatchLogger("yaccho-bot-interaction");
+const logger = createBatchLogger("kaguya-bot-interaction");
 
-const unsupported = (): OperationResult<DiscordInteractionResponsePayload> => {
-	return ephemeralOperation("自分で調べろｶｽ");
-};
-
-/** Yaccho Bot の Discord interactions endpoint route。 */
-export const yacchoBotInteractionRoute = async (
+/** Kaguya Bot の Discord interactions endpoint route。 */
+export const kaguyaBotInteractionRoute = async (
 	event: FunctionUrlEvent,
 ): Promise<FunctionUrlResponse> => {
 	// 1. request を route 固有の入力へ parse する。
@@ -47,7 +37,7 @@ export const yacchoBotInteractionRoute = async (
 	const { signature, timestamp, rawBody, interaction } = parsedRequest.data;
 
 	// 2. parse 済み request を認証・認可する。
-	const publicKey = Resource.YacchoDiscordInteractionPublicKey.value;
+	const publicKey = Resource.KaguyaDiscordInteractionPublicKey.value;
 	if (
 		!verifyInteractionSignature({ publicKey, signature, timestamp, rawBody })
 	) {
@@ -59,16 +49,14 @@ export const yacchoBotInteractionRoute = async (
 		};
 	}
 
-	// 3. interaction の種類と登録済み command・prefix から応答を解決する。
-	// ping・autocomplete は 3 秒制限内に確定応答を返し、その他は deferred 応答で ACK して後追いジョブへ委譲する。
+	// 3. interaction の種類と登録済み command から応答を解決する。
+	// ping は 3 秒制限内に確定応答を返し、command は deferred 応答で ACK して後追いジョブへ委譲する。
 	// enqueue の失敗は deferred 応答を返せないため、その場で確定する ephemeral 応答へ落とす。
 	const { callback } = parsedRequest.data;
 	let result: OperationResult<DiscordInteractionResponsePayload>;
 	try {
 		if (interaction.kind === "ping") {
 			result = pingOperation();
-		} else if (interaction.kind === "autocomplete") {
-			result = autocompleteOperation();
 		} else if (!callback) {
 			logger.failure(
 				new Error("interaction callback を取得できませんでした。"),
@@ -78,28 +66,11 @@ export const yacchoBotInteractionRoute = async (
 			);
 		} else if (
 			interaction.kind === "application-command" &&
-			interaction.command.name === commands.hello.name
+			interaction.command.name === commands.inuihiroshi.name
 		) {
-			result = await helloCommandOperation(callback);
-		} else if (
-			interaction.kind === "application-command" &&
-			interaction.command.name === commands.gambleCheckEnable.name
-		) {
-			result = await gambleCheckEnableOperation(interaction, callback);
-		} else if (
-			interaction.kind === "application-command" &&
-			interaction.command.name === commands.gambleCheckDisable.name
-		) {
-			result = await gambleCheckDisableOperation(interaction, callback);
-		} else if (
-			interaction.kind === "message-component" &&
-			parseCustomId(interaction.customId)?.prefix === prefixes.playCheckReminder
-		) {
-			result =
-				(await playCheckReminderOperation(interaction, callback)) ??
-				unsupported();
+			result = await inuihiroshiCommandOperation(callback);
 		} else {
-			result = unsupported();
+			result = ephemeralOperation("この操作には対応していません。");
 		}
 	} catch (error) {
 		logger.failure(error);

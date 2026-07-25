@@ -18,7 +18,7 @@ import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contra
 import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
 import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
 /**
  * 遊技リマインダーのボタン押下を検証し、押下本人には deferred update で ACK して結果反映ジョブを enqueue する。

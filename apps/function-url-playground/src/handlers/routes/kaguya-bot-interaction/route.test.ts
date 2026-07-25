@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { FunctionUrlEvent } from "@/handlers/function-url/schema.js";
+import type { FunctionUrlEvent } from "@/handlers/schema.js";
 import { paths } from "../../contracts/paths.js";
 import { kaguyaBotInteractionRoute } from "./route.js";
 

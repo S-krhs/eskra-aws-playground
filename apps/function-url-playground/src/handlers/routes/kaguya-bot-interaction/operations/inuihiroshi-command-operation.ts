@@ -10,7 +10,7 @@ import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-mess
 import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
 import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
 /** /inuihiroshi を公開の deferred 応答で ACK し、宣言本文の送信を後追いジョブへ委譲する。 */
 export const inuihiroshiCommandOperation = async (

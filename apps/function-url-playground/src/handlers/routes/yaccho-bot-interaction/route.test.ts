@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,
-} from "@/handlers/function-url/schema.js";
+} from "@/handlers/schema.js";
 import { paths } from "../../contracts/paths.js";
 import { yacchoBotInteractionRoute } from "./route.js";
 

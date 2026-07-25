@@ -5,7 +5,7 @@ import {
 	messageFlags,
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
-import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
 /** 呼び出し元だけに表示する Discord interaction callback payload を生成する。 */
 export const ephemeralOperation = (

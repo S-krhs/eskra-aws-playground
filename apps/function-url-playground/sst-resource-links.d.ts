@@ -4,7 +4,12 @@ import "sst/resource";
 
 declare module "sst/resource" {
 	interface Resource {
-		UmaOneDrawTopicDiscordWebhook: { value: string };
+		YacchoDiscordInteractionPublicKey: { value: string };
+		KaguyaDiscordInteractionPublicKey: { value: string };
+		PlaygroundInteractionQueue: { url: string };
 		YacchoDiscordBotToken: { value: string };
+		YacchoDiscordApplicationId: { value: string };
+		KaguyaDiscordBotToken: { value: string };
+		KaguyaDiscordApplicationId: { value: string };
 	}
 }
