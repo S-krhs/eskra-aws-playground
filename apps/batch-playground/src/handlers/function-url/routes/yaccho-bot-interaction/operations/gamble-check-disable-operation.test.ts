@@ -1,9 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import type {
 	DiscordApplicationCommandInteraction,
 	DiscordInteractionCallback,
-} from "@/external-protocols/discord-message/parse.js";
+} from "@eskra-aws-playground/integration-discord/discord-interaction.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { gambleCheckDisableOperation } from "./gamble-check-disable-operation.js";
 
 const sqs = vi.hoisted(() => {

@@ -1,10 +1,12 @@
 // In scope: request の parse、認証・認可、interaction 種別ごとの応答解決、response の形成
 // Out of scope: 署名検証アルゴリズム、機能ごとの応答内容の生成
+
+import type { DiscordInteractionResponsePayload } from "@eskra-aws-playground/integration-discord/interaction-response.js";
+import { verifyInteractionSignature } from "@eskra-aws-playground/integration-discord/verify-interaction-signature.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
+import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
 import { Resource } from "sst/resource";
-import type { DiscordInteractionResponsePayload } from "@/external-protocols/discord-message/interaction-response.js";
-import { verifyInteractionSignature } from "@/external-protocols/discord-signature/verify-interaction-signature.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 import type {
 	FunctionUrlEvent,
@@ -91,7 +93,7 @@ export const yacchoBotInteractionRoute = async (
 			result = await gambleCheckDisableOperation(interaction, callback);
 		} else if (
 			interaction.kind === "message-component" &&
-			interaction.customId?.prefix === prefixes.playCheckReminder
+			parseCustomId(interaction.customId)?.prefix === prefixes.playCheckReminder
 		) {
 			result =
 				(await playCheckReminderOperation(interaction, callback)) ??

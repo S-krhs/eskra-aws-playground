@@ -1,8 +1,10 @@
-// In scope: Discord interaction body の JSON 構文解析と、用途ごとの intermediate model への変換
-// Out of scope: custom_id の機能固有な値検証、署名検証、業務ルール、HTTP 通信
-import type { DiscordCustomId } from "@eskra-aws-playground/shared-domains/contracts/discord-custom-id.js";
-import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
+// In scope: Discord interaction body の JSON 構文解析と、用途ごとの型付きモデルへの変換
+// Out of scope: custom_id の規約解釈、署名検証、業務ルール、HTTP 通信
 import { z } from "zod";
+import type {
+	DiscordCommandOption,
+	DiscordInteraction,
+} from "./discord-interaction.js";
 
 const rawInteractionTypes = {
 	ping: 1,
@@ -17,94 +19,6 @@ const rawCommandOptionTypes = {
 } as const;
 
 const discordSnowflakeSchema = z.string().regex(/^\d{1,20}$/);
-
-/** Discord application command の subcommand option。 */
-export interface DiscordSubcommandOption {
-	kind: "subcommand";
-	name: string;
-	options: readonly DiscordCommandOption[];
-}
-
-/** Discord application command の user option。 */
-export interface DiscordUserCommandOption {
-	kind: "user";
-	name: string;
-	userId: string;
-}
-
-/** アプリが意味を解釈しない Discord application command option。 */
-export interface DiscordUnsupportedCommandOption {
-	kind: "unsupported";
-	discordType: number;
-	name: string;
-}
-
-/** 用途ごとの意味へ変換した Discord application command option。 */
-export type DiscordCommandOption =
-	| DiscordSubcommandOption
-	| DiscordUserCommandOption
-	| DiscordUnsupportedCommandOption;
-
-/** Discord application command の実行コンテキスト。 */
-export type DiscordCommandContext =
-	| {
-			kind: "guild";
-			guildId: string;
-			channelId?: string;
-	  }
-	| { kind: "direct-message" };
-
-/** Discord の PING interaction。 */
-export interface DiscordPingInteraction {
-	kind: "ping";
-}
-
-/** Discord application command interaction。 */
-export interface DiscordApplicationCommandInteraction {
-	kind: "application-command";
-	/** コマンドを実行した Discord ユーザー ID。 */
-	userId: string;
-	command: {
-		name: string;
-		options: readonly DiscordCommandOption[];
-	};
-	context: DiscordCommandContext;
-}
-
-/** Discord message component interaction。 */
-export interface DiscordMessageComponentInteraction {
-	kind: "message-component";
-	/** 共通 custom_id 規約に合わない場合は null。 */
-	customId: DiscordCustomId | null;
-	userId: string;
-}
-
-/** Discord autocomplete interaction。 */
-export interface DiscordAutocompleteInteraction {
-	kind: "autocomplete";
-}
-
-/** deferred 応答後の元メッセージ編集・follow-up 送信に必要な interaction の callback 情報。 */
-export interface DiscordInteractionCallback {
-	/** 応答先 application の ID。編集先 webhook URL の組み立てに使う。 */
-	applicationId: string;
-	/** interaction ごとに発行される応答用 token。発行から 15 分有効。 */
-	token: string;
-}
-
-/** アプリが対応していない Discord interaction type。 */
-export interface DiscordUnsupportedInteraction {
-	kind: "unsupported";
-	discordType: number;
-}
-
-/** Discord の raw payload から変換した、アプリ内部の interaction model。 */
-export type DiscordInteraction =
-	| DiscordPingInteraction
-	| DiscordApplicationCommandInteraction
-	| DiscordMessageComponentInteraction
-	| DiscordAutocompleteInteraction
-	| DiscordUnsupportedInteraction;
 
 type RawDiscordCommandOption =
 	| {
@@ -173,11 +87,6 @@ const interactionBodySchema = z.object({
 
 const interactionTypeSchema = z.object({ type: z.number() });
 
-const interactionCallbackSchema = z.object({
-	application_id: discordSnowflakeSchema,
-	token: z.string().min(1),
-});
-
 const toCommandOption = (
 	option: RawDiscordCommandOption,
 ): DiscordCommandOption => {
@@ -201,31 +110,6 @@ const toCommandOption = (
 		kind: "unsupported",
 		discordType: option.type,
 		name: option.name,
-	};
-};
-
-/**
- * JSON body から deferred 応答用の callback 情報(application_id・token)を取り出す。
- * どちらかが欠けている場合は undefined を返す。
- */
-export const parseInteractionCallback = (
-	rawBody: string,
-): DiscordInteractionCallback | undefined => {
-	let json: unknown;
-	try {
-		json = JSON.parse(rawBody) as unknown;
-	} catch {
-		return undefined;
-	}
-
-	const parsed = interactionCallbackSchema.safeParse(json);
-	if (!parsed.success) {
-		return undefined;
-	}
-
-	return {
-		applicationId: parsed.data.application_id,
-		token: parsed.data.token,
 	};
 };
 
@@ -295,7 +179,7 @@ export const parseInteraction = (
 
 		return {
 			kind: "message-component",
-			customId: parseCustomId(rawCustomId) ?? null,
+			customId: rawCustomId,
 			userId,
 		};
 	}

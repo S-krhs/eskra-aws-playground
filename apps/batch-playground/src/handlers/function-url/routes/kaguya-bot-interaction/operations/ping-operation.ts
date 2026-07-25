@@ -3,7 +3,7 @@
 import {
 	type DiscordPongResponsePayload,
 	responseTypes,
-} from "@/external-protocols/discord-message/interaction-response.js";
+} from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 
 /** Discord PING interaction へ返す PONG callback payload を生成する。 */

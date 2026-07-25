@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseInteraction, parseInteractionCallback } from "./parse.js";
+import { parseInteraction } from "./parse-interaction.js";
 
 describe("parseInteraction", () => {
 	it("PING interaction を parse する", () => {
@@ -88,18 +88,14 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("message component を custom ID と操作ユーザーへ変換する", () => {
+	it("message component を生の custom_id と操作ユーザー(guild member)へ変換する", () => {
 		expect(
 			parseInteraction(
 				'{"type":3,"data":{"custom_id":"test-choice:123:yes"},"member":{"user":{"id":"456"}}}',
 			),
 		).toEqual({
 			kind: "message-component",
-			customId: {
-				prefix: "test-choice",
-				target: "123",
-				action: "yes",
-			},
+			customId: "test-choice:123:yes",
 			userId: "456",
 		});
 	});
@@ -111,35 +107,19 @@ describe("parseInteraction", () => {
 			),
 		).toEqual({
 			kind: "message-component",
-			customId: {
-				prefix: "test-choice",
-				target: "123",
-				action: "no",
-			},
+			customId: "test-choice:123:no",
 			userId: "123",
 		});
 	});
 
-	it("target のない custom_id も共通規約で parse する", () => {
-		expect(
-			parseInteraction(
-				'{"type":3,"data":{"custom_id":"refresh-panel::refresh"},"user":{"id":"123"}}',
-			),
-		).toEqual({
-			kind: "message-component",
-			customId: { prefix: "refresh-panel", action: "refresh" },
-			userId: "123",
-		});
-	});
-
-	it("共通規約に合わない custom_id は未解釈として保持する", () => {
+	it("custom_id は規約解釈せず生文字列のまま保持する", () => {
 		expect(
 			parseInteraction(
 				'{"type":3,"data":{"custom_id":"invalid-custom-id"},"user":{"id":"123"}}',
 			),
 		).toEqual({
 			kind: "message-component",
-			customId: null,
+			customId: "invalid-custom-id",
 			userId: "123",
 		});
 	});
@@ -151,24 +131,6 @@ describe("parseInteraction", () => {
 			kind: "unsupported",
 			discordType: 99,
 		});
-	});
-
-	it("callback として application_id と token を取り出す", () => {
-		expect(
-			parseInteractionCallback(
-				'{"type":2,"application_id":"999","token":"abc-token","data":{"name":"hello"}}',
-			),
-		).toEqual({ applicationId: "999", token: "abc-token" });
-	});
-
-	it("application_id か token を欠く body の callback は取り出さない", () => {
-		expect(
-			parseInteractionCallback('{"type":2,"token":"abc"}'),
-		).toBeUndefined();
-		expect(
-			parseInteractionCallback('{"type":2,"application_id":"999","token":""}'),
-		).toBeUndefined();
-		expect(parseInteractionCallback("not-a-json")).toBeUndefined();
 	});
 
 	it("不正な JSON・interaction 構造は parse しない", () => {

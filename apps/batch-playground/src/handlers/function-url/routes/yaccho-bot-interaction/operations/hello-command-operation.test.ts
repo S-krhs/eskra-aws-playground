@@ -1,6 +1,5 @@
+import type { DiscordInteractionCallback } from "@eskra-aws-playground/integration-discord/discord-interaction.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { DiscordInteractionCallback } from "@/external-protocols/discord-message/parse.js";
 import { helloCommandOperation } from "./hello-command-operation.js";
 
 const sqs = vi.hoisted(() => {

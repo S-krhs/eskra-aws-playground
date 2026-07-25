@@ -1,9 +1,6 @@
+import type { DiscordInteractionCallback } from "@eskra-aws-playground/integration-discord/discord-interaction.js";
+import { parseInteraction } from "@eskra-aws-playground/integration-discord/parse-interaction.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import {
-	type DiscordInteractionCallback,
-	parseInteraction,
-} from "@/external-protocols/discord-message/parse.js";
 import { playCheckReminderOperation } from "./play-check-reminder-operation.js";
 
 const sqs = vi.hoisted(() => {

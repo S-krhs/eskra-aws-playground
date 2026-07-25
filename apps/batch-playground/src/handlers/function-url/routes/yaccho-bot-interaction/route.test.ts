@@ -12,7 +12,7 @@ const verifier = vi.hoisted(() => {
 });
 
 vi.mock(
-	"@/external-protocols/discord-signature/verify-interaction-signature.js",
+	"@eskra-aws-playground/integration-discord/verify-interaction-signature.js",
 	() => {
 		return {
 			verifyInteractionSignature: verifier.verifyInteractionSignature,

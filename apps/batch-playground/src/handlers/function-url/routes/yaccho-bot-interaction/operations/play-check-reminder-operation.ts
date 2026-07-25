@@ -1,21 +1,23 @@
 // In scope: 遊技リマインダーのボタン押下を検証し、deferred update で ACK して結果反映ジョブを enqueue する
 // Out of scope: interaction 種別・コマンドのルーティング、確定メッセージの生成、HTTP response の形成
-import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
-import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
-import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
-import { Resource } from "sst/resource";
+
+import type {
+	DiscordInteraction,
+	DiscordInteractionCallback,
+} from "@eskra-aws-playground/integration-discord/discord-interaction.js";
 import {
 	type DiscordDeferredUpdateResponsePayload,
 	type DiscordEphemeralResponsePayload,
 	messageFlags,
 	responseTypes,
-} from "@/external-protocols/discord-message/interaction-response.js";
-import type {
-	DiscordInteraction,
-	DiscordInteractionCallback,
-} from "@/external-protocols/discord-message/parse.js";
+} from "@eskra-aws-playground/integration-discord/interaction-response.js";
+import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
+import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
+import { Resource } from "sst/resource";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 
 /**
@@ -35,17 +37,15 @@ export const playCheckReminderOperation = async (
 		return undefined;
 	}
 
-	if (!interaction.customId) {
-		return undefined;
-	}
-
+	const customId = parseCustomId(interaction.customId);
 	if (
-		interaction.customId.prefix !== prefixes.playCheckReminder ||
-		!interaction.customId.target
+		!customId ||
+		customId.prefix !== prefixes.playCheckReminder ||
+		!customId.target
 	) {
 		return undefined;
 	}
-	const { target: targetUserId, action } = interaction.customId;
+	const { target: targetUserId, action } = customId;
 
 	const choice = REMINDER_CHOICES.find((candidate) => {
 		return candidate.id === action;

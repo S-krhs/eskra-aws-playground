@@ -1,11 +1,10 @@
 // In scope: Function URL event から署名検証用の値と parse 済み interaction を取り出す
 // Out of scope: 署名検証、operation の選択、応答 body の生成
-import { z } from "zod";
 
-import {
-	parseInteraction,
-	parseInteractionCallback,
-} from "@/external-protocols/discord-message/parse.js";
+import { parseInteraction } from "@eskra-aws-playground/integration-discord/parse-interaction.js";
+
+import { parseInteractionCallback } from "@eskra-aws-playground/integration-discord/parse-interaction-callback.js";
+import { z } from "zod";
 
 /** Function URL event から Discord 署名検証に必要な request 値と interaction を取り出す schema。 */
 export const discordInteractionRequestSchema = z

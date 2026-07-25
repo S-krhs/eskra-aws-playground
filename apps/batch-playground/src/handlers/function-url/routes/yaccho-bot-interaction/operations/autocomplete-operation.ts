@@ -3,7 +3,7 @@
 import {
 	type DiscordEmptyAutocompleteResponsePayload,
 	responseTypes,
-} from "@/external-protocols/discord-message/interaction-response.js";
+} from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import type { OperationResult } from "@/handlers/function-url/routes/intermediate-models/operation-result.js";
 
 /** Discord autocomplete interaction へ返す空の候補一覧を生成する。 */
