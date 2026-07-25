@@ -8,11 +8,8 @@ Discord API への実通信境界を担当する integration package です。
   - `DiscordWebhookClient`: 検証済み Webhook URL へテキスト本文を POST するクライアント。
   - `DiscordWebhookError`: Webhook 連携で発生した失敗を表すエラー。
 - `src/discord-bot-client.ts`
-  - `DiscordBotClient`: 構築済み channel message payload を Bot API へ投稿するクライアント。
+  - `DiscordBotClient`: 構築済み channel message payload の投稿と、application の global／guild command の取得・bulk overwrite を行う Bot API クライアント。
   - `DiscordBotError`: Bot API 連携で発生した失敗を表すエラー。
-- `src/discord-command-client.ts`
-  - `DiscordCommandClient`: application の global／guild command を取得し、bulk overwrite するクライアント。
-  - `DiscordCommandError`: Command API 連携で発生した失敗を表すエラー。
 - `src/discord-interaction-client.ts`
   - `DiscordInteractionClient`: deferred 応答済み interaction の元メッセージ編集と follow-up 投稿を行うクライアント。
   - `DiscordInteractionError`: Interaction API 連携で発生した失敗を表すエラー。

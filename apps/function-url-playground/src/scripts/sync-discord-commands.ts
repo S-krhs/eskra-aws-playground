@@ -1,9 +1,9 @@
 // In scope: Bot ごとのスラッシュコマンドを Discord API の登録形式へ変換し、global scope へ bulk overwrite する
 // Out of scope: コマンドの宣言、応答内容、interaction の解釈
 import {
-	DiscordCommandClient,
+	DiscordBotClient,
 	type DiscordCommandDefinition,
-} from "@eskra-aws-playground/integration-discord/discord-command-client.js";
+} from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
 import { Resource } from "sst/resource";
 
 import { commands as kaguyaCommands } from "../handlers/routes/kaguya-bot-interaction/contracts/commands.js";
@@ -11,7 +11,7 @@ import { commands as yacchoCommands } from "../handlers/routes/yaccho-bot-intera
 
 interface DiscordCommandSyncTarget {
 	botName: string;
-	client: DiscordCommandClient;
+	client: DiscordBotClient;
 	applicationId: string;
 	definitions: readonly DiscordCommandDefinition[];
 }
@@ -25,13 +25,13 @@ const syncDiscordCommands = async (): Promise<void> => {
 	const targets: readonly DiscordCommandSyncTarget[] = [
 		{
 			botName: "yaccho-bot",
-			client: new DiscordCommandClient(Resource.YacchoDiscordBotToken.value),
+			client: new DiscordBotClient(Resource.YacchoDiscordBotToken.value),
 			applicationId: Resource.YacchoDiscordApplicationId.value,
 			definitions: Object.values(yacchoCommands),
 		},
 		{
 			botName: "kaguya-bot",
-			client: new DiscordCommandClient(Resource.KaguyaDiscordBotToken.value),
+			client: new DiscordBotClient(Resource.KaguyaDiscordBotToken.value),
 			applicationId: Resource.KaguyaDiscordApplicationId.value,
 			definitions: Object.values(kaguyaCommands),
 		},

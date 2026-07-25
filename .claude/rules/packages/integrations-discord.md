@@ -12,8 +12,7 @@ Discord API との通信境界です。outbound(こちらから Discord を呼�
 outbound クライアント(実通信):
 
 - `discord-webhook-client.ts`(Webhook 送信)
-- `discord-bot-client.ts`(Bot API への channel message 投稿)
-- `discord-command-client.ts`(global / guild command の取得と bulk overwrite)
+- `discord-bot-client.ts`(Bot API への channel message 投稿と global / guild command の取得・bulk overwrite)
 - `discord-interaction-client.ts`(deferred 応答済み interaction の元メッセージ編集と follow-up 投稿)
 
 inbound protocol(通信を伴わない wire 処理・型):
