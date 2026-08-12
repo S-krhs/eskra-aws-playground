@@ -12,17 +12,34 @@
 			"types": "./dist/discord-bot-client.d.ts",
 			"default": "./dist/discord-bot-client.js"
 		},
-		"./discord-command-client.js": {
-			"types": "./dist/discord-command-client.d.ts",
-			"default": "./dist/discord-command-client.js"
-		},
 		"./discord-interaction-client.js": {
 			"types": "./dist/discord-interaction-client.d.ts",
 			"default": "./dist/discord-interaction-client.js"
+		},
+		"./discord-interaction.js": {
+			"types": "./dist/discord-interaction.d.ts",
+			"default": "./dist/discord-interaction.js"
+		},
+		"./interaction-response.js": {
+			"types": "./dist/interaction-response.d.ts",
+			"default": "./dist/interaction-response.js"
+		},
+		"./parse-interaction.js": {
+			"types": "./dist/parse-interaction.d.ts",
+			"default": "./dist/parse-interaction.js"
+		},
+		"./parse-interaction-callback.js": {
+			"types": "./dist/parse-interaction-callback.d.ts",
+			"default": "./dist/parse-interaction-callback.js"
+		},
+		"./verify-interaction-signature.js": {
+			"types": "./dist/verify-interaction-signature.d.ts",
+			"default": "./dist/verify-interaction-signature.js"
 		}
 	},
 	"dependencies": {
-		"@eskra-aws-playground/libs": "0.1.0"
+		"@eskra-aws-playground/libs": "0.1.0",
+		"zod": "^3.25.76"
 	},
 	"scripts": {
 		"clean": "rm -rf dist",

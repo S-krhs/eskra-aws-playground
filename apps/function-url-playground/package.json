@@ -1,0 +1,21 @@
+{
+	"name": "@eskra-aws-playground/function-url-playground",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc -p tsconfig.json",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"dependencies": {
+		"@eskra-aws-playground/integration-discord": "0.1.0",
+		"@eskra-aws-playground/integration-sqs": "0.1.0",
+		"@eskra-aws-playground/libs": "0.1.0",
+		"@eskra-aws-playground/shared-domains": "0.1.0",
+		"zod": "^3.25.76"
+	}
+}

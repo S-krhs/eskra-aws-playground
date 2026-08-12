@@ -6,11 +6,5 @@ declare module "sst/resource" {
 	interface Resource {
 		UmaOneDrawTopicDiscordWebhook: { value: string };
 		YacchoDiscordBotToken: { value: string };
-		YacchoDiscordInteractionPublicKey: { value: string };
-		YacchoDiscordApplicationId: { value: string };
-		KaguyaDiscordBotToken: { value: string };
-		KaguyaDiscordInteractionPublicKey: { value: string };
-		KaguyaDiscordApplicationId: { value: string };
-		PlaygroundInteractionQueue: { url: string };
 	}
 }

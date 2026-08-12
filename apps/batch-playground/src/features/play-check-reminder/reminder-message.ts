@@ -1,11 +1,13 @@
 // In scope: 遊技チェックリマインダーとして Discord へ投稿するメッセージ payload の生成
 // Out of scope: Discord API 通信、interaction response、押下結果の判定
 import type { DiscordChannelMessagePayload } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
-import { buttonStyles } from "@/external-protocols/discord-message/button.js";
-import { buildCustomId } from "@/external-protocols/discord-message/custom-id.js";
-import { prefixes } from "@/handlers/function-url/routes/yaccho-bot-interaction/contracts/prefixes.js";
-
-import { REMINDER_CHOICES, REMINDER_QUESTION } from "./reminder-settings.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
+import {
+	REMINDER_CHOICES,
+	REMINDER_QUESTION,
+} from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
+import { buildCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
+import { buttonStyles } from "./button-styles.js";
 
 /** 対象ユーザーへ質問する遊技チェックリマインダーメッセージを生成する。 */
 export const buildReminderQuestionMessage = (

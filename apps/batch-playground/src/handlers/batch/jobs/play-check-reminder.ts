@@ -5,13 +5,12 @@ import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logge
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
 import { applicationKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/application-key.js";
 import { settingKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/setting-key.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
 import { Resource } from "sst/resource";
-
 import {
 	buildReminderChoicesMessage,
 	buildReminderQuestionMessage,
 } from "@/features/play-check-reminder/reminder-message.js";
-import { REMINDER_CHOICES } from "@/features/play-check-reminder/reminder-settings.js";
 import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger("play-check-reminder");

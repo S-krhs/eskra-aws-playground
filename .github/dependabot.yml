@@ -1,0 +1,17 @@
+version: 2
+
+updates:
+  # npm workspaces は root の package-lock.json で一括管理するため directory は "/" のみ
+  - package-ecosystem: npm
+    directory: "/"
+    # version update の PR を default branch(main)ではなく develop 向けに作る
+    target-branch: develop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # minor / patch はまとめて 1 PR にし、レビュー対象を major に絞る
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch

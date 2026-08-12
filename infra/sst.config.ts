@@ -168,8 +168,7 @@ export default $config({
 		// Discord の 3 秒制限内に deferred 応答を返し、実処理は Queue 経由で worker へ渡すため
 		// この Lambda 自身は DB へ接続しない
 		const functionUrlFunction = new sst.aws.Function("FunctionUrlFunction", {
-			handler:
-				"../apps/batch-playground/src/handlers/function-url/handler.handler",
+			handler: "../apps/function-url-playground/src/handlers/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "60 seconds",
 			memory: "512 MB",
