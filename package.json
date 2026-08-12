@@ -36,7 +36,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",
 		"@types/node": "^26.1.0",
-		"prisma": "^7.9.0",
+		"prisma": "^7.9.1",
 		"prisma-zod-generator": "^2.1.4",
 		"sst": "^4.17.0",
 		"turbo": "^2.6.1",
