@@ -5,7 +5,7 @@ paths:
 
 # Static Site Playground
 
-Astro で `sasahara.uk` の静的サイトを生成する app です。`astro build` が `dist/` へ HTML と asset を出力し、`infra/sst.config.ts` の `StaticSitePlayground`(S3)と `SiteRouter`(CloudFront)が配信します。既存サイトの移管が済むまで、トップと未知パスは工事中で塞いでいます。配信構成は `docs/sasahara-uk-site.md` を参照します。
+Astro で `sasahara.uk` の静的サイトを生成する app です。`astro build` が `dist/` へ HTML と asset を出力し、`infra/sst.config.ts` の `StaticSitePlayground`(S3)と `SiteRouter`(CloudFront)が配信します。未知パスは工事中ページへ書き換えて返します。配信構成は `docs/sasahara-uk-site.md` を参照します。
 
 ## 層と責務
 
@@ -14,6 +14,7 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 | `src/pages/` | ルーティングに対応するページ。ファイルパスがそのまま URL になる | 再利用する UI 断片、データ取得の実装 |
 | `src/components/` | 複数ページで使う UI 断片 | ページ固有のマークアップ、ルーティング |
 | `src/layouts/` | ページ全体を包む共通の骨組み（`<html>`・`<head>`・共通ナビ） | ページ固有の本文 |
+| `public/` | ビルドを通さずそのまま配信する静的ファイル（画像など） | ページ・コンポーネントの実装 |
 | `astro.config.mjs` | Astro のビルド設定 | ページ・コンポーネントの実装 |
 
 `src/components/` は必要になった時点で作ります。1 ページでしか使わない断片は切り出さず、ページに直接書きます。
@@ -26,7 +27,7 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 - npm 依存を追加する前に、Astro の組み込み機能（`Astro.glob`、content collections、`astro:assets`）で足りないか確認する。
 - 他の workspace（`packages/*`・`shared-domains`・`repositories`）には依存しない。Lambda app とは実行環境もビルドも別であり、共有が必要になった時点で置き場所から検討する。
 - 動作確認で `npm run dev` を起動したら、必ず `npm run dev:stop`（`astro dev stop`）で停止する。Astro 7 の開発サーバーはデーモンとして常駐するため、親プロセスを kill しても実体（`astro.mjs dev --json`）が残り、次の起動が `Another astro dev server is already running.` で失敗する。
-- `404.astro` を置いて `sst.aws.StaticSite` の `errorPage` を指定しない。Router に載せた StaticSite では `errorPage` の 404 応答が Router 側の distribution に適用されず、未指定時の `index.html` への書き換えまで無効になって未知パスが S3 の 403 XML を返す。未知パスの受け皿は `src/pages/index.astro` が担う。
+- `404.astro` を置いて `sst.aws.StaticSite` の `errorPage` を指定しない。Router に載せた StaticSite では `errorPage` の 404 応答が Router 側の distribution に適用されず、未知パスへの書き換えまで無効になって S3 の 403 XML を返す。未知パスの受け皿は `src/pages/under-construction/index.astro` が担い、`infra/sst.config.ts` の `indexPage` で指定する。
 
 ## lint
 

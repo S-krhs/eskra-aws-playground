@@ -369,14 +369,14 @@ export default $config({
 					: undefined,
 		});
 
-		// errorPage は Router 経由では効かず、未指定時の index.html への書き換えが
-		// 未知パスの受け皿になる。sst dev では起動しない(Astro の dev server が常駐するため)
+		// 未知パスは indexPage へ書き換えて返す。sst dev では起動しない
 		new sst.aws.StaticSite("StaticSitePlayground", {
 			path: "../apps/static-site-playground",
 			build: {
 				command: "npm run build",
 				output: "dist",
 			},
+			indexPage: "under-construction/index.html",
 			dev: false,
 			router: {
 				instance: siteRouter,

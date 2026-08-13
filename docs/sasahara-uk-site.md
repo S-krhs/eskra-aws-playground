@@ -13,8 +13,9 @@ sasahara.uk (Route53 A/AAAA alias)
   SiteRouter (CloudFront)
         ↓
   StaticSitePlayground (S3)
-        ├─ /helloworld/  → Hello World
-        └─ 上記以外       → index.html（工事中）
+        ├─ /                     → トップページ
+        ├─ /helloworld/          → Hello World
+        └─ 上記以外               → /under-construction/（工事中）
 ```
 
 ## ドメインと証明書
@@ -25,15 +26,13 @@ sasahara.uk (Route53 A/AAAA alias)
 
 ## 未知パスの扱い
 
-存在しないパスは CloudFront Function が `index.html`（工事中）へ書き換えて返します。ステータスコードは 200 です。
+存在しないパスは CloudFront Function が工事中ページ（`/under-construction/`）へ書き換えて返します。書き換え先は `sst.aws.StaticSite` の `indexPage` で指定します。ステータスコードは 200 です。
 
 `sst.aws.StaticSite` の `errorPage` は指定していません。Router に載せた StaticSite では `errorPage` を指定すると、404 応答を組み立てる `customErrorResponses` が Router 側の distribution には適用されず、未指定時の `index.html` への書き換えも無効化されるため、未知パスが S3 の 403 XML をそのまま返すようになります。専用の 404 ページと 404 ステータスが必要になったら、Router のルーティング側で対応します。
 
 ## ページの追加と移管
 
-ページは `apps/static-site-playground/src/pages/` に足します。既存サイトのコンテンツを移管する場合も、S3 レベルでコピーせず Astro のページとして持ち込みます。配信物のバケットは SST が管理しており、手で置いたファイルは次の deploy で失われます。
-
-移管が終わったら、トップページ（`src/pages/index.astro`）の工事中表示を差し替えます。
+ページは `apps/static-site-playground/src/pages/` に足します。既存サイトのコンテンツを移管する場合も、S3 レベルでコピーせず Astro のページとして持ち込みます。配信物のバケットは SST が管理しており、手で置いたファイルは次の deploy で失われます。画像などの静的ファイルは `apps/static-site-playground/public/` に置きます。
 
 ## 運用メモ
 
