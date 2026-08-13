@@ -40,7 +40,7 @@
 		"prisma-zod-generator": "^3.1.0",
 		"sst": "^4.17.0",
 		"turbo": "^2.6.1",
-		"typescript": "^5.5.4",
+		"typescript": "^7.0.2",
 		"vitest": "^4.1.9"
 	}
 }
