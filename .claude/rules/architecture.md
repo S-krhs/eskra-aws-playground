@@ -10,6 +10,7 @@ apps/
   batch-anime-analysis/
   batch-playground/
   function-url-playground/
+  static-site-playground/
 infra/
 migration/
 repositories/

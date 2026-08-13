@@ -14,6 +14,8 @@ function.zip
 /.tmp/
 **/.tmp/
 **/.vite/
+# astro sync が生成する型宣言
+**/.astro/
 
 # Environment files
 .env

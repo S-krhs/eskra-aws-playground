@@ -3,6 +3,8 @@
 // SST app と AWS リソース名の接頭辞として使うアプリ名
 const appName = "eskra-aws-playground";
 
+const siteDomain = "sasahara.uk";
+
 export default $config({
 	// SST app の基本設定。デプロイ先は develop stage 固定。
 	app(input) {
@@ -358,6 +360,17 @@ export default $config({
 			},
 		);
 
+		const staticSite = new sst.aws.StaticSite("StaticSitePlayground", {
+			path: "../apps/static-site-playground",
+			build: {
+				command: "npm run build",
+				output: "dist",
+			},
+			domain: $app.stage === "develop" ? { name: siteDomain } : undefined,
+			errorPage: "under-construction/index.html",
+			dev: false,
+		});
+
 		// バッチ失敗を通知するためのアラート用 Discord Webhook URL を Secret として扱う
 		const alertDiscordWebhookUrl = new sst.Secret("AlertDiscordWebhook");
 
@@ -487,9 +500,10 @@ export default $config({
 			functionName: functionUrlFunction.name,
 		});
 
-		// デプロイ後に Discord Developer Portal へ登録する Interactions Endpoint URL を出力する
+		// functionUrl は Discord Developer Portal の Interactions Endpoint URL に登録する
 		return {
 			functionUrl: functionUrlFunction.url,
+			siteUrl: staticSite.url,
 		};
 	},
 });

@@ -1,0 +1,20 @@
+{
+	"name": "@eskra-aws-playground/static-site-playground",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rm -rf dist .astro",
+		"dev": "astro dev",
+		"dev:stop": "astro dev stop",
+		"build": "npm run clean && astro build",
+		"preview": "astro preview",
+		"typecheck": "astro sync && tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint"
+	},
+	"dependencies": {
+		"astro": "^7.2.1",
+		"cookie": "^2.0.1"
+	}
+}
