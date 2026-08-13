@@ -5,30 +5,26 @@
 
 ## 構成
 
-`infra/sst.config.ts` の `SiteRouter`（`sst.aws.Router`）が `sasahara.uk` の CloudFront を持ち、`StaticSitePlayground`（`sst.aws.StaticSite`）が S3 バケットと配信物を持ちます。StaticSite は Router の root に載るため、独自の distribution は作りません。サイトを増やすときは Router に route を足し、この 1 つの distribution に集約します。
+`infra/sst.config.ts` の `StaticSitePlayground`（`sst.aws.StaticSite`）が CloudFront distribution と S3 バケット、配信物を持ちます。
 
 ```text
 sasahara.uk (Route53 A/AAAA alias)
         ↓
-  SiteRouter (CloudFront)
-        ↓
-  StaticSitePlayground (S3)
-        ├─ /                     → トップページ
-        ├─ /helloworld/          → Hello World
-        └─ 上記以外               → /under-construction/（工事中）
+  StaticSitePlayground (CloudFront + S3)
+        ├─ /            → トップページ
+        ├─ /helloworld/ → Hello World
+        └─ 上記以外      → /under-construction/（工事中・404）
 ```
 
 ## ドメインと証明書
 
 独自ドメインは `develop` stage にだけ付きます。同じ alias を持てる distribution は 1 つだけのため、開発者個人の stage が本番の alias を奪わないようにする措置です。`develop` 以外の stage では CloudFront の既定ドメイン（`dxxxx.cloudfront.net`）で配信されます。公開 URL は deploy 出力の `siteUrl` に出ます。
 
-証明書は SST が us-east-1 に ACM 証明書を作り、Route53 の hosted zone で DNS 検証します。Route53 の A/AAAA alias レコードは `override: true` で上書きするため、既存レコードがあっても deploy は通ります。手動での証明書作成・レコード削除は不要です。
+証明書は SST が us-east-1 に ACM 証明書を作り、Route53 の hosted zone で DNS 検証します。A/AAAA alias レコードも SST が作るため、手動での証明書作成・レコード追加は不要です。
 
 ## 未知パスの扱い
 
-存在しないパスは CloudFront Function が工事中ページ（`/under-construction/`）へ書き換えて返します。書き換え先は `sst.aws.StaticSite` の `indexPage` で指定します。ステータスコードは 200 です。
-
-`sst.aws.StaticSite` の `errorPage` は指定していません。Router に載せた StaticSite では `errorPage` を指定すると、404 応答を組み立てる `customErrorResponses` が Router 側の distribution には適用されず、未指定時の `index.html` への書き換えも無効化されるため、未知パスが S3 の 403 XML をそのまま返すようになります。専用の 404 ページと 404 ステータスが必要になったら、Router のルーティング側で対応します。
+存在しないパスは CloudFront の custom error response が工事中ページ（`/under-construction/`）を 404 で返します。受け皿は `sst.aws.StaticSite` の `errorPage` で指定します。
 
 ## ページの追加と移管
 
@@ -38,5 +34,7 @@ sasahara.uk (Route53 A/AAAA alias)
 
 - SST app は `removal: "remove"` です。`sst remove` を実行すると CloudFront・S3・Route53 レコードごと消えます。`develop` stage は `protect` によりローカルからの `sst remove` を拒否しますが、扱いには注意してください。
 - deploy のたびに CloudFront のキャッシュは SST が invalidate します。
+- distribution は CloudFront 定額プランの Free（月 100GB・100 万リクエスト、超過課金なし）で運用します。購読はコンソール（または PricingPlanManager API）の操作で SST の管理外です。プランが作る Web ACL の ARN は `transform.cdn.webAclArn` に設定します。設定しないと次の deploy で関連付けが外れます。
+- 定額プランは 1 distribution・apex ドメイン 1 つが単位です。サイトを増やして 1 distribution に集約したくなったら、Router 構成に戻すかプランの範囲を確認します。
 - 配信物のビルドは SST が `apps/static-site-playground` で `npm run build` を実行して作ります。root の `npm run build`（turbo）でも同じビルドが走るため、deploy 時は 2 回ビルドされます。
 - `sst dev` ではこのサイトは起動しません（`dev: false`）。Astro の dev server はデーモンとして常駐し `sst dev` 終了後も残るためです。ローカル確認は `npm run dev -w @eskra-aws-playground/static-site-playground` を使います。

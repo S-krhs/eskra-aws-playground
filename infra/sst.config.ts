@@ -360,27 +360,15 @@ export default $config({
 			},
 		);
 
-		// 同じ alias を持てる distribution は 1 つのため、独自ドメインは develop stage にだけ付ける。
-		// 既存サイトが apex の alias レコードを持つため override で引き取る
-		const siteRouter = new sst.aws.Router("SiteRouter", {
-			domain:
-				$app.stage === "develop"
-					? { name: siteDomain, dns: sst.aws.dns({ override: true }) }
-					: undefined,
-		});
-
-		// 未知パスは indexPage へ書き換えて返す。sst dev では起動しない
-		new sst.aws.StaticSite("StaticSitePlayground", {
+		const staticSite = new sst.aws.StaticSite("StaticSitePlayground", {
 			path: "../apps/static-site-playground",
 			build: {
 				command: "npm run build",
 				output: "dist",
 			},
-			indexPage: "under-construction/index.html",
+			domain: $app.stage === "develop" ? { name: siteDomain } : undefined,
+			errorPage: "under-construction/index.html",
 			dev: false,
-			router: {
-				instance: siteRouter,
-			},
 		});
 
 		// バッチ失敗を通知するためのアラート用 Discord Webhook URL を Secret として扱う
@@ -515,7 +503,7 @@ export default $config({
 		// functionUrl は Discord Developer Portal の Interactions Endpoint URL に登録する
 		return {
 			functionUrl: functionUrlFunction.url,
-			siteUrl: siteRouter.url,
+			siteUrl: staticSite.url,
 		};
 	},
 });
