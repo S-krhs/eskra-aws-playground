@@ -29,6 +29,7 @@ AWS Lambda と SST でバッチジョブを運用する TypeScript モノレポ�
 - CI/CD 運用マニュアル: [docs/ci-cd.md](docs/ci-cd.md)
 - Batch Playground app: [apps/batch-playground/README.md](apps/batch-playground/README.md)
 - Batch Anime Analysis app: [apps/batch-anime-analysis/README.md](apps/batch-anime-analysis/README.md)
+- Static Site Playground app: [apps/static-site-playground/README.md](apps/static-site-playground/README.md)
 - Integrations: [packages/integrations/README.md](packages/integrations/README.md)
 - Libs: [packages/libs/README.md](packages/libs/README.md)
 - Repositories: [repositories/README.md](repositories/README.md)
