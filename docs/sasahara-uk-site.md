@@ -13,7 +13,7 @@ sasahara.uk (Route53 A/AAAA alias)
   StaticSitePlayground (CloudFront + S3)
         ├─ /            → トップページ
         ├─ /helloworld/ → Hello World
-        └─ 上記以外      → /under-construction/（工事中・404）
+        └─ 上記以外      → S3 / CloudFront の標準エラー
 ```
 
 ## ドメインと証明書
@@ -24,7 +24,9 @@ sasahara.uk (Route53 A/AAAA alias)
 
 ## 未知パスの扱い
 
-存在しないパスは CloudFront の custom error response が工事中ページ（`/under-construction/`）を 404 で返します。受け皿は `sst.aws.StaticSite` の `errorPage` で指定します。
+存在しないパスは S3 オリジンの標準エラー応答をそのまま返します。専用の工事中ページや custom error response は持ちません。
+
+SST の `StaticSite` では `assets.routes` にルート (`/`) を指定し、未知パスも S3 へ転送することで、`indexPage` による暗黙のフォールバックを避けています。private S3 オリジンに存在しないキーを要求した場合、通常は `403 AccessDenied` になります。
 
 ## ページの追加と移管
 

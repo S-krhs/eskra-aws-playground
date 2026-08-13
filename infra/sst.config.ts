@@ -367,7 +367,10 @@ export default $config({
 				output: "dist",
 			},
 			domain: $app.stage === "develop" ? { name: siteDomain } : undefined,
-			errorPage: "under-construction/index.html",
+			assets: {
+				// 未知パスも S3 へ流し、存在しないキーはオリジンの標準エラーを返す
+				routes: ["/"],
+			},
 			dev: false,
 		});
 
