@@ -34,13 +34,13 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.2",
-		"@types/node": "^26.1.0",
+		"@biomejs/biome": "^2.5.7",
+		"@types/node": "^26.2.0",
 		"prisma": "^7.9.1",
 		"prisma-zod-generator": "^3.1.0",
-		"sst": "^4.17.0",
-		"turbo": "^2.6.1",
+		"sst": "^4.17.1",
+		"turbo": "^2.10.9",
 		"typescript": "^7.0.2",
-		"vitest": "^4.1.9"
+		"vitest": "^4.1.10"
 	}
 }

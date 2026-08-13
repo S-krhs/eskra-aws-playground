@@ -48,26 +48,25 @@ beforeEach(() => {
 });
 
 describe("playCheckReminderOperation", () => {
-	it.each([
-		["won"],
-		["lost"],
-		["not-played"],
-	])("対象ユーザーの %s 選択は結果反映ジョブを enqueue し deferred update で ACK する", async (action) => {
-		const result = await execute(`play-check-reminder:123:${action}`, "123");
+	it.each([["won"], ["lost"], ["not-played"]])(
+		"対象ユーザーの %s 選択は結果反映ジョブを enqueue し deferred update で ACK する",
+		async (action) => {
+			const result = await execute(`play-check-reminder:123:${action}`, "123");
 
-		expect(sqs.sendMessages).toHaveBeenCalledWith([
-			{
-				id: "interaction-job",
-				body: {
-					job: "play-check-reminder-choice",
-					applicationId: "999",
-					token: "tok",
-					action,
+			expect(sqs.sendMessages).toHaveBeenCalledWith([
+				{
+					id: "interaction-job",
+					body: {
+						job: "play-check-reminder-choice",
+						applicationId: "999",
+						token: "tok",
+						action,
+					},
 				},
-			},
-		]);
-		expect(result).toEqual({ kind: "OK", data: { type: 6 } });
-	});
+			]);
+			expect(result).toEqual({ kind: "OK", data: { type: 6 } });
+		},
+	);
 
 	it("対象外ユーザーには enqueue せず即時の専用メッセージ payload を返す", async () => {
 		const result = await execute("play-check-reminder:123:won", "999");
