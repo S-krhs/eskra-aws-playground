@@ -1,8 +1,13 @@
 # Static Site Playground
 
-Astro で静的サイトを生成する app です。現在はトップページ（`src/pages/index.astro`）だけの最小構成で、ビルド成果物は `dist/` に出力されます。
+Astro で `sasahara.uk` の静的サイトを生成する app です。ビルド成果物は `dist/` に出力され、`infra/sst.config.ts` の `StaticSitePlayground`（S3）と `SiteRouter`（CloudFront）が配信します。
 
-Lambda ではないため、`infra/sst.config.ts` にはまだ登録していません。デプロイ先（S3 + CloudFront など）を決めたら追加します。
+| パス | 内容 |
+| --- | --- |
+| `/helloworld/` | Hello World（`src/pages/helloworld/index.astro`） |
+| 上記以外 | 工事中（`src/pages/index.astro`。未知パスもここへ書き換えて返す） |
+
+既存サイトの移管が済むまでは、トップと未知パスを工事中で塞いでいます。配信構成と移管の進め方は [docs/sasahara-uk-site.md](../../docs/sasahara-uk-site.md) を参照します。
 
 ## コマンド
 

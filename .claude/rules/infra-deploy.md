@@ -18,6 +18,7 @@ SST(`infra/sst.config.ts`)と GitHub Actions workflow の実装ルールです�
 - 失敗検知用の SNS Topic と CloudWatch alarm(DLQ 滞留、Orchestrator エラー)
 - browser runtime Lambda Layer と、その archive を置く S3 asset bucket
 - Scheduler、SQS、SNS 連携に必要な IAM resource
+- 静的サイト配信の CloudFront(`SiteRouter`)と S3 bucket(`StaticSitePlayground`)、ACM 証明書、Route53 レコード
 
 各 app/job の Scheduler event payload と secret は、該当 app の README を参照します。
 
