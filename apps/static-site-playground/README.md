@@ -9,12 +9,15 @@ Lambda ではないため、`infra/sst.config.ts` にはまだ登録していま
 いずれも repo root から実行します。
 
 ```bash
-npm run dev -w @eskra-aws-playground/static-site-playground        # 開発サーバー
+npm run dev -w @eskra-aws-playground/static-site-playground        # 開発サーバー（http://localhost:4321）
+npm run dev:stop -w @eskra-aws-playground/static-site-playground   # 開発サーバーの停止
 npm run build -w @eskra-aws-playground/static-site-playground      # dist/ へ静的生成
 npm run preview -w @eskra-aws-playground/static-site-playground    # build 済み dist/ の確認
 ```
 
 `npm run typecheck` / `npm run lint`（root）は turbo 経由でこの app も対象になります。
+
+Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` を起動した端末を閉じても動き続けます。停止は `npm run dev:stop`（`astro dev stop`）で行います。Ctrl+C や `pkill` ではデーモン本体が残り、次の `npm run dev` が `Another astro dev server is already running.` で失敗します。稼働中のデーモンを置き換えたい場合は `astro dev --force` を使います。
 
 ## 型チェック
 

@@ -6,6 +6,7 @@
 	"scripts": {
 		"clean": "rm -rf dist .astro",
 		"dev": "astro dev",
+		"dev:stop": "astro dev stop",
 		"build": "npm run clean && astro build",
 		"preview": "astro preview",
 		"typecheck": "astro sync && tsc -p tsconfig.json --noEmit",
