@@ -5,7 +5,7 @@
 	"type": "module",
 	"dependencies": {
 		"@sparticuz/chromium": "149.0.0",
-		"chromium-bidi": "15.0.0",
-		"playwright-core": "1.61.1"
+		"chromium-bidi": "17.0.2",
+		"playwright-core": "1.62.1"
 	}
 }

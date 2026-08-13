@@ -10,7 +10,7 @@
 		}
 	},
 	"dependencies": {
-		"@aws-sdk/client-sqs": "^3.1079.0"
+		"@aws-sdk/client-sqs": "^3.1106.0"
 	},
 	"scripts": {
 		"clean": "rm -rf dist",
