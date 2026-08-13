@@ -5,7 +5,7 @@ paths:
 
 # Static Site Playground
 
-Astro で `sasahara.uk` の静的サイトを生成する app です。`astro build` が `dist/` へ HTML と asset を出力し、`infra/sst.config.ts` の `StaticSitePlayground`(CloudFront + S3)が配信します。未知パスは工事中ページを 404 で返します。配信構成は `docs/sasahara-uk-site.md` を参照します。
+Astro で `sasahara.uk` の静的サイトを生成する app です。`astro build` が `dist/` へ HTML と asset を出力し、`infra/sst.config.ts` の `StaticSitePlayground`(CloudFront + S3)が配信します。未知パスはオリジンの標準エラーを返します。配信構成は `docs/sasahara-uk-site.md` を参照します。
 
 ## 層と責務
 
@@ -27,7 +27,7 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 - npm 依存を追加する前に、Astro の組み込み機能（`Astro.glob`、content collections、`astro:assets`）で足りないか確認する。
 - 他の workspace（`packages/*`・`shared-domains`・`repositories`）には依存しない。Lambda app とは実行環境もビルドも別であり、共有が必要になった時点で置き場所から検討する。
 - 動作確認で `npm run dev` を起動したら、必ず `npm run dev:stop`（`astro dev stop`）で停止する。Astro 7 の開発サーバーはデーモンとして常駐するため、親プロセスを kill しても実体（`astro.mjs dev --json`）が残り、次の起動が `Another astro dev server is already running.` で失敗する。
-- 未知パスの受け皿は `src/pages/under-construction/index.astro` が担い、`infra/sst.config.ts` の `errorPage` で指定する。Astro の `404.astro` は使わない。
+- 未知パス用のページは持たない。`infra/sst.config.ts` の `assets.routes: ["/"]` で S3 へ転送し、オリジンの標準エラー応答を返す。`errorPage` / `indexPage` によるフォールバックを追加しない。
 
 ## lint
 
