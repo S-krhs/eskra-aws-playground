@@ -1,21 +1,24 @@
 # Playground Repositories
 
-playground 関連 app で共有する静的データと repository を置きます。
+playground 関連 app で共有するデータと repository を置きます。
 
-## data
+## ガチャ候補
 
-`data.ts` は、UMA ワンドロのお題候補の静的カタログです。
-どのお題がどのレアリティで出るかだけを表し、抽選の重みやメッセージ文面は含めません。
+`playground.gacha_entities` は、抽選対象の候補を pool 単位で持つ汎用テーブルです。
+どの候補がどのレアリティで出るかだけを表し、抽選の重みやメッセージ文面は含めません。
 
-```json
-{
-  "rarity": "RARE",
-  "name": "ダイワスカーレット"
-}
-```
+| column | 用途 |
+| --- | --- |
+| `pool_key` | 候補が属する pool(`shared/literals/gacha-pool-key.ts` の enum) |
+| `name` | 候補名。`pool_key` との複合主キー |
+| `rarity` | 候補のレアリティ |
 
-- `rarity` は `types.ts` の `TOPIC_RARITIES` に含まれる値だけを使います。
-- レアリティごとの抽選重みやメッセージテンプレートは、お題候補ではなく feature 側の設定として扱います。
+### GachaEntity repository
+
+`gachaEntityRepository` は `poolKey` を指定して候補一覧を返します。`rarity` は repository が所有する Zod schema で読み出し時に検証し、`GACHA_RARITIES` にない値の行は無視せず読み出しを失敗させます。
+
+- UMA ワンドロのお題は `pool_key = uma-one-draw-topic` を使います。
+- レアリティごとの抽選重みやメッセージテンプレートは、候補ではなく feature 側の設定として扱います。
 
 ## Discord 設定
 

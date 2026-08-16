@@ -30,6 +30,18 @@ model ScrapingMetric {
   @@schema("anime")
 }
 
+model GachaEntity {
+  poolKey   String   @map("pool_key") @db.VarChar(64)
+  name      String   @db.VarChar(128)
+  rarity    String   @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@id([poolKey, name])
+  @@map("gacha_entities")
+  @@schema("playground")
+}
+
 model DiscordGuildSetting {
   applicationKey String   @map("application_key") @db.VarChar(64)
   guildId        String   @map("guild_id") @db.VarChar(20)

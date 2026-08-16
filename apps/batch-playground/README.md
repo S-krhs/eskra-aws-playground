@@ -16,6 +16,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 
 - `job` は必須です。
 - Discord Webhook URL はイベントに含めず、SST linked secret から解決します。
+- お題候補は `playground.gacha_entities` の `pool_key = uma-one-draw-topic` から読み出します。
 
 ### `uma-one-draw-topic-scheduler`
 
@@ -64,7 +65,7 @@ UMA ワンドロのお題を生成し、Discord Webhook へ通知します。
 | --- | --- | --- |
 | `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL` | `SST_SECRET_UmaOneDrawTopicDiscordWebhook` | batch: お題通知 |
 | `YACCHO_DISCORD_BOT_TOKEN` | `SST_SECRET_YacchoDiscordBotToken` | batch: リマインダー投稿 |
-| `DATABASE_URL` | `SST_SECRET_DatabaseUrl` | sqs-worker: DB 接続 |
+| `DATABASE_URL` | `SST_SECRET_DatabaseUrl` | batch / sqs-worker: DB 接続 |
 
 Discord interaction / command 同期用の secret は `apps/function-url-playground/README.md` を参照してください。
 

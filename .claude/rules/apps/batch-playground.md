@@ -28,7 +28,7 @@ handler は `batch`(scheduler 起動の共通バッチ)と `sqs-worker`(deferred
 | `src/handlers/<handler>/schema.ts` | その handler の起動イベント・実行 context 検証 schema と応答型 | ジョブ判定、外部サービス固有の型 |
 | `sst-resource-links.d.ts`(package root) | SST link した secret を `Resource` proxy 経由で型付き参照するための declaration | 実行時の値解決 |
 | `src/features/<concern>/` | 機能単位の処理、抽選重み・テンプレート・button style などの feature 固有設定値。複数 handler から共有できる | Lambda イベント解釈、バッチレスポンス作成、別 feature の実装 |
-| `repositories/playground/` | 複数 app で共有する静的カタログと DB 設定、その取得・保存・JSONB 検証 | Lambda イベント解釈、メッセージ生成、外部送信、Discord 権限判定 |
+| `repositories/playground/` | 複数 app で共有するガチャ候補と DB 設定、その取得・保存・検証 | Lambda イベント解釈、メッセージ生成、外部送信、Discord 権限判定 |
 
 handler ツリーをまたぐ interaction ジョブの契約(job 名・message schema)や、producer と共有する custom_id 規約・prefix・choice カタログ・button tone は `@eskra-aws-playground/shared-domains` に置く。Discord の parse・署名検証・応答型・送信 client は `@eskra-aws-playground/integration-discord` を使う。
 
@@ -54,7 +54,7 @@ features -> repositories
 - 起動イベントは `unknown` として受け取り、`schema.ts` で検証・正規化してから使う。レスポンスは `BatchResponse` に合わせ、呼び出し元が機械的に扱える形にする。
 - linked secret は handler / job 内で `Resource.<name>.value` を直接読み、型は `sst-resource-links.d.ts` に宣言を追加する。環境変数は `process.env.<NAME>` を直接読む。
 - Discord へ送るメッセージ payload の生成は feature に置く。button の tone→style 変換(`button-styles.ts`)は `ButtonTone`(shared-domains)と `DiscordButtonComponent`(integration-discord)を、custom_id の生成は shared-domains の `buildCustomId` を使う。
-- お題候補の静的カタログは `repositories/playground/data.ts` に置き、feature からは repository 経由で読む。抽選重みやメッセージテンプレートは feature 側の設定として持つ。
+- お題候補は `playground.gacha_entities` に pool 単位で置き、feature からは `gachaEntityRepository` 経由で読む。抽選重みやメッセージテンプレートは feature 側の設定として持つ。
 - feature 間で共有したい処理が出た場合は、まず重複を許容できるか確認する。app をまたぐ契約・ドメインデータは `shared-domains` へ置き、app 内に業務ロジックを持つ `shared/domains` は作らない。
 - `features/` 直下に実装ファイルを置かず、関心ごとのディレクトリを切る。設定値と処理はファイルを分ける(例: `topic-settings.ts` と `topic-message.ts`)。
 - オーケストレーション手順は、処理セクションごとに 1 行コメントを残す。
