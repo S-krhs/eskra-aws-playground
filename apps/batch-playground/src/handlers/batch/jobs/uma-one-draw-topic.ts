@@ -19,7 +19,7 @@ export const umaOneDrawTopicJob = async (
 	logger.start();
 
 	// 2. feature で UMA ワンドロのお題メッセージを生成する。
-	const message = buildTopicMessage();
+	const message = await buildTopicMessage();
 
 	// 3. Discord Webhook integration へ送信を委譲する。失敗しても throw せず、
 	//    Lambda 非同期リトライによる重複通知を防ぐ。
