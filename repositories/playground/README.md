@@ -11,11 +11,11 @@ playground 関連 app で共有するデータと repository を置きます。
 | --- | --- |
 | `pool_key` | 候補が属する pool(`shared/literals/gacha-pool-key.ts` の enum) |
 | `name` | 候補名。`pool_key` との複合主キー |
-| `rarity` | 候補のレアリティ |
+| `rarity` | 候補のレアリティ(`shared/literals/gacha-rarity.ts` の enum) |
 
 ### GachaEntity repository
 
-`gachaEntityRepository` は `poolKey` を指定して候補一覧を返します。`rarity` は repository が所有する Zod schema で読み出し時に検証し、`GACHA_RARITIES` にない値の行は無視せず読み出しを失敗させます。
+`gachaEntityRepository` は `poolKey` を指定して候補一覧を返します。`rarity` は repository が所有する Zod schema で読み出し時に検証し、`gachaRarities` にない値の行は無視せず読み出しを失敗させます。
 
 - UMA ワンドロのお題は `pool_key = uma-one-draw-topic` を使います。
 - レアリティごとの抽選重みやメッセージテンプレートは、候補ではなく feature 側の設定として扱います。

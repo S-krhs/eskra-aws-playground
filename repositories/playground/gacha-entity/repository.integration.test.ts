@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { getPrismaClient } from "../../db/client.js";
 import { gachaPoolKeys } from "../shared/literals/gacha-pool-key.js";
+import { gachaRarities } from "../shared/literals/gacha-rarity.js";
 import { gachaEntityRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -49,14 +50,17 @@ describe.skipIf(!testDatabaseUrl)("gachaEntityRepository (integration)", () => {
 	it("pool の候補を検証済みで読み出す", async () => {
 		await getPrismaClient().gachaEntity.createMany({
 			data: [
-				{ poolKey, name, rarity: "COMMON" },
-				{ poolKey, name: anotherName, rarity: "RARE" },
+				{ poolKey, name, rarity: gachaRarities.common },
+				{ poolKey, name: anotherName, rarity: gachaRarities.rare },
 			],
 		});
 
 		const entities = await gachaEntityRepository.findMany({ poolKey });
-		expect(entities).toContainEqual({ rarity: "COMMON", name });
-		expect(entities).toContainEqual({ rarity: "RARE", name: anotherName });
+		expect(entities).toContainEqual({ rarity: gachaRarities.common, name });
+		expect(entities).toContainEqual({
+			rarity: gachaRarities.rare,
+			name: anotherName,
+		});
 	});
 
 	it("保存済み rarity が schema に違反していれば読み込みを失敗させる", async () => {

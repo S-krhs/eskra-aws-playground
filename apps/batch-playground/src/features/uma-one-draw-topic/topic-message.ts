@@ -2,11 +2,9 @@
 // Out of scope: Discord payload 生成、外部送信、Lambda レスポンス作成を行う
 import { GachaPool } from "@eskra-aws-playground/libs/gacha/gacha-pool.js";
 import { gachaEntityRepository } from "@eskra-aws-playground/repositories/playground/gacha-entity/repository.js";
-import {
-	GACHA_RARITIES,
-	type GachaEntity,
-} from "@eskra-aws-playground/repositories/playground/gacha-entity/types.js";
+import type { GachaEntity } from "@eskra-aws-playground/repositories/playground/gacha-entity/types.js";
 import { gachaPoolKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/gacha-pool-key.js";
+import { gachaRarities } from "@eskra-aws-playground/repositories/playground/shared/literals/gacha-rarity.js";
 import {
 	TOPIC_MESSAGE_TEMPLATE,
 	TOPIC_RARITY_WEIGHTS,
@@ -19,7 +17,7 @@ export interface TopicMessage {
 
 const selectTopicName = async (): Promise<string> => {
 	const gacha = new GachaPool<GachaEntity>({
-		rarities: GACHA_RARITIES,
+		rarities: Object.values(gachaRarities),
 		rarityWeights: TOPIC_RARITY_WEIGHTS,
 	});
 

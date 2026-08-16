@@ -1,12 +1,7 @@
-// In scope: GachaEntity repository の入出力型とレアリティ定義
+// In scope: GachaEntity repository の入出力型
 // Out of scope: validation schema、DB 操作、抽選、メッセージ生成
 import type { GachaPoolKey } from "../shared/literals/gacha-pool-key.js";
-
-/** ガチャ候補のレアリティ。 */
-export const GACHA_RARITIES = ["COMMON", "RARE"] as const;
-
-/** レアリティとして取り得る値。 */
-export type GachaRarity = (typeof GACHA_RARITIES)[number];
+import type { GachaRarity } from "../shared/literals/gacha-rarity.js";
 
 /** pool に属するガチャ候補。 */
 export interface GachaEntity {
