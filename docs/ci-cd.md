@@ -29,6 +29,7 @@ SST が管理するリソースの一覧は `.claude/rules/infra-deploy.md` と 
 - `ALERT_DISCORD_WEBHOOK_URL`
 - `DATABASE_URL`（develop 用 Neon branch の pooled 接続文字列。`SST_SECRET_DatabaseUrl` として DB を使う Lambda へ渡す）
 - `DIRECT_DATABASE_URL`（develop 用 Neon branch の direct 接続文字列。migration step だけが使う）
+- `GCP_SERVICE_ACCOUNT_KEY`（BigQuery へ書き込む GCP サービスアカウント鍵の JSON。`SST_SECRET_GcpServiceAccountKey` として BigQuery 連携 Lambda へ渡す）
 - `YACCHO_DISCORD_BOT_TOKEN`
 - `YACCHO_DISCORD_INTERACTION_PUBLIC_KEY`
 - `YACCHO_DISCORD_APPLICATION_ID`
@@ -45,6 +46,11 @@ app/job 固有の GitHub Actions Secrets は、該当 app の README を参照�
 
 CD は deploy の直前に `npm run db:migrate`（`prisma migrate deploy`）を常に実行します。適用されるのは commit 済みの `migration/migrations/` だけです。
 migration の作成・ルール・コマンドは [migration/README.md](../migration/README.md) を参照します。
+
+### BigQuery の手動セットアップ（記録）
+
+GCP は SST の管理外のため、初回のみ console / gcloud での手作業を許容し、内容を [batch-anime-analysis の README](../apps/batch-anime-analysis/README.md) に記録します。
+dataset だけを手で作り、テーブルは連携 Lambda が作成します。
 
 ### Neon の手動セットアップ（記録）
 

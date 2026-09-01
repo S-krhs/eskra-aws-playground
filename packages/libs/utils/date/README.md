@@ -5,3 +5,4 @@
 ## Public API
 
 - `current-jst-date.ts`: JST 基準の現在日付を YYYY-MM-DD 形式で返す。
+- `previous-jst-date.ts`: JST 基準の前日の日付を YYYY-MM-DD 形式で返す。

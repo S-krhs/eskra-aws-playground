@@ -1,0 +1,28 @@
+{
+	"name": "@eskra-aws-playground/integration-bigquery",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./service-account-credentials.js": {
+			"types": "./dist/service-account-credentials.d.ts",
+			"default": "./dist/service-account-credentials.js"
+		},
+		"./bigquery-partition-loader.js": {
+			"types": "./dist/bigquery-partition-loader.d.ts",
+			"default": "./dist/bigquery-partition-loader.js"
+		}
+	},
+	"dependencies": {
+		"@google-cloud/bigquery": "^9.0.3",
+		"zod": "^4.4.3"
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc -p tsconfig.json",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	}
+}

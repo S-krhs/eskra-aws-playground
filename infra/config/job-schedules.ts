@@ -43,6 +43,13 @@ export const jobSchedules = {
 		retries: 0,
 		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 9 },
 	},
+	/** アニメ指標の BigQuery 連携を毎日 JST 01:00 に起動する。前日分の取得日を対象にする。 */
+	animeMetricBigQueryExport: {
+		schedule: "cron(0 1 * * ? *)",
+		timezone: "Asia/Tokyo",
+		retries: 0,
+		event: { job: animeBatchNames.animeMetricBigQueryExport },
+	},
 	/** アニメ分析 orchestrator を毎日 JST 23:00 に起動する。 */
 	animeScrapingOrchestrator23: {
 		schedule: "cron(0 23 * * ? *)",
