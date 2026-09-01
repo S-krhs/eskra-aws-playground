@@ -37,12 +37,11 @@ const readScrapingMetricRows = async function* (
 			yield toScrapingMetricRow(record);
 		}
 
-		const lastId = records.at(-1)?.id;
-		if (records.length < readPageSize || !lastId) {
+		if (records.length < readPageSize) {
 			return;
 		}
 
-		afterId = lastId;
+		afterId = records[records.length - 1].id;
 	}
 };
 
@@ -68,14 +67,15 @@ export const bigQueryExportJob = async (
 		},
 	);
 
-	// 3. 範囲内で metric が存在する取得日だけを対象にする。
+	// 3. 連携先テーブルを用意する。dataset は事前に作成済みであることを前提にする。
+	// BigQuery client は遅延認証のため、鍵・dataset・権限の不備はこの呼び出しで初めて分かる。
+	await loader.ensureTable();
+
+	// 4. 範囲内で metric が存在する取得日だけを対象にする。
 	const scrapedDates = await scrapingMetricRepository.findScrapedDates({
 		startDate,
 		endDate,
 	});
-
-	// 4. 連携先テーブルを用意する。dataset は事前に作成済みであることを前提にする。
-	await loader.ensureTable();
 
 	// 5. 取得日ごとにパーティションを置き換える。途中で失敗しても、済んだ取得日はそのまま残る。
 	let exportedRowCount = 0;

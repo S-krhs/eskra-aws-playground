@@ -3,7 +3,7 @@ import { toScrapingMetricRow } from "./metric-row.js";
 import { scrapingMetricTableDefinition } from "./metric-table-definition.js";
 
 describe("toScrapingMetricRow", () => {
-	const record = {
+	const metric = {
 		id: "12345678901234",
 		dataSourceId: "bilibili-rank",
 		label: "作品A",
@@ -13,7 +13,7 @@ describe("toScrapingMetricRow", () => {
 	};
 
 	it("連携先テーブルの列名へ変換する", () => {
-		expect(toScrapingMetricRow(record)).toEqual({
+		expect(toScrapingMetricRow(metric)).toEqual({
 			id: "12345678901234",
 			data_source_id: "bilibili-rank",
 			label: "作品A",
@@ -28,7 +28,7 @@ describe("toScrapingMetricRow", () => {
 			return field.name;
 		});
 
-		expect(Object.keys(toScrapingMetricRow(record)).sort()).toEqual(
+		expect(Object.keys(toScrapingMetricRow(metric)).sort()).toEqual(
 			[...fieldNames].sort(),
 		);
 	});
