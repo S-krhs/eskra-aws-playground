@@ -12,6 +12,7 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
+		"@eskra-aws-playground/integration-bigquery": "0.1.0",
 		"@eskra-aws-playground/integration-discord": "0.1.0",
 		"@eskra-aws-playground/integration-sqs": "0.1.0",
 		"@eskra-aws-playground/libs": "0.1.0",

@@ -5,4 +5,5 @@
 export const batchNames = {
 	animeScrapingOrchestrator: "anime-scraping-orchestrator",
 	animeScrapingDataSource: "anime-scraping-data-source",
+	animeMetricBigQueryExport: "anime-metric-bigquery-export",
 } as const;

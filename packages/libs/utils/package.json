@@ -8,6 +8,10 @@
 			"types": "./dist/date/current-jst-date.d.ts",
 			"default": "./dist/date/current-jst-date.js"
 		},
+		"./date/previous-jst-date.js": {
+			"types": "./dist/date/previous-jst-date.d.ts",
+			"default": "./dist/date/previous-jst-date.js"
+		},
 		"./gacha/gacha-pool.js": {
 			"types": "./dist/gacha/gacha-pool.d.ts",
 			"default": "./dist/gacha/gacha-pool.js"
