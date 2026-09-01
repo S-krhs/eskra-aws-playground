@@ -1,14 +1,19 @@
-import { getPreviousJstDateString } from "@eskra-aws-playground/libs/date/previous-jst-date.js";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveExportRange } from "./export-range.js";
 
 describe("resolveExportRange", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it("日付指定がなければ JST の前日 1 日分にする", () => {
-		const previousDate = getPreviousJstDateString();
+		vi.useFakeTimers();
+		// JST では 2026-09-02 09:00。前日は 2026-09-01 になる
+		vi.setSystemTime(new Date("2026-09-02T00:00:00.000Z"));
 
 		expect(resolveExportRange({})).toEqual({
-			startDate: previousDate,
-			endDate: previousDate,
+			startDate: "2026-09-01",
+			endDate: "2026-09-01",
 		});
 	});
 

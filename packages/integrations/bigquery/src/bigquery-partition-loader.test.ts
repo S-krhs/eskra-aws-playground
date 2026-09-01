@@ -31,7 +31,10 @@ import {
 	type BigQueryTableTarget,
 } from "./bigquery-partition-loader.js";
 
-/** 実クライアントと同じ順序(complete → finish)でイベントを出す write stream。 */
+/**
+ * 実クライアントと同じ順序(complete → finish)でイベントを出す write stream。
+ * 実物は duplexify のため、cork/uncork と job 経由の destroy までは再現しない。
+ */
 class FakeWriteStream extends Writable {
 	public readonly chunks: string[] = [];
 
@@ -176,6 +179,41 @@ describe("BigQueryPartitionLoader", () => {
 					rows: toAsyncIterable([{ label: "作品A" }]),
 				}),
 			).rejects.toThrow("load job が失敗しました");
+		});
+
+		it("行の読み出しが途中で失敗したら throw する", async () => {
+			const writeStream = new FakeWriteStream({});
+			createWriteStream.mockReturnValue(writeStream);
+
+			const failingRows = async function* (): AsyncGenerator<
+				Record<string, unknown>
+			> {
+				yield { label: "作品A" };
+				throw new Error("DB の読み出しに失敗しました");
+			};
+
+			await expect(
+				createLoader().replacePartition({
+					partitionDate: "2026-09-01",
+					rows: failingRows(),
+				}),
+			).rejects.toThrow("DB の読み出しに失敗しました");
+		});
+
+		it("行が 0 件でもパーティションを置き換える", async () => {
+			const writeStream = new FakeWriteStream({
+				metadata: { statistics: { load: { outputRows: "0" } } },
+			});
+			createWriteStream.mockReturnValue(writeStream);
+
+			const result = await createLoader().replacePartition({
+				partitionDate: "2026-09-01",
+				rows: toAsyncIterable([]),
+			});
+
+			expect(createWriteStream).toHaveBeenCalledTimes(1);
+			expect(writeStream.chunks).toEqual([]);
+			expect(result).toEqual({ loadedRowCount: 0 });
 		});
 
 		it("行数を読み取れない場合は 0 として返す", async () => {

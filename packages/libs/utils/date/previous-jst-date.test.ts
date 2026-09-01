@@ -1,20 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getCurrentJstDateString } from "./current-jst-date.js";
 import { getPreviousJstDateString } from "./previous-jst-date.js";
 
 describe("getPreviousJstDateString", () => {
-	it("JST 基準の現在日付の 1 日前を返す", () => {
-		const expected = new Date(
-			Date.now() + 9 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000,
-		)
-			.toISOString()
-			.slice(0, 10);
-
-		expect(getPreviousJstDateString()).toBe(expected);
+	afterEach(() => {
+		vi.useRealTimers();
 	});
 
-	it("現在日付より前の日付を返す", () => {
-		expect(getPreviousJstDateString() < getCurrentJstDateString()).toBe(true);
+	it.each([
+		// JST は UTC+9。UTC 14:59 はまだ JST 同日中
+		["2026-09-01T14:59:59.000Z", "2026-08-31"],
+		// UTC 15:00 で JST は翌日に変わる
+		["2026-09-01T15:00:00.000Z", "2026-09-01"],
+		["2026-03-01T00:00:00.000Z", "2026-02-28"],
+		["2024-03-01T00:00:00.000Z", "2024-02-29"],
+		["2026-01-01T00:00:00.000Z", "2025-12-31"],
+	])("%s 時点の前日は %s", (now, expected) => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(now));
+
+		expect(getPreviousJstDateString()).toBe(expected);
 	});
 });
