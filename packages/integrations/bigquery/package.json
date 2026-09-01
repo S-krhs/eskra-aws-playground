@@ -15,7 +15,7 @@
 	},
 	"dependencies": {
 		"@google-cloud/bigquery": "^9.0.3",
-		"zod": "^4.4.3"
+		"zod": "^4.5.3"
 	},
 	"scripts": {
 		"clean": "rm -rf dist",

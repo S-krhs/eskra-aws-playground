@@ -16,6 +16,6 @@
 		"@eskra-aws-playground/integration-sqs": "0.1.0",
 		"@eskra-aws-playground/libs": "0.1.0",
 		"@eskra-aws-playground/shared-domains": "0.1.0",
-		"zod": "^4.4.3"
+		"zod": "^4.5.3"
 	}
 }
