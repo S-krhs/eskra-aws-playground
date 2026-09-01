@@ -55,15 +55,9 @@ export const bigQueryExportJob = async (
 		bigQueryExportEventSchema.parse(event),
 	);
 
-	// 2. 範囲内で metric が存在する取得日だけを対象にする。
-	const scrapedDates = await scrapingMetricRepository.findScrapedDates({
-		startDate,
-		endDate,
-	});
+	logger.start({ startDate, endDate });
 
-	logger.start({ startDate, endDate, scrapedDateCount: scrapedDates.length });
-
-	// 3. 連携先テーブルを用意する。dataset は事前に作成済みであることを前提にする。
+	// 2. 設定不足を DB へ問い合わせる前に検出するため、実行時設定を先に解決する。
 	const { serviceAccountKey, datasetId } = getBigQueryExportSettings();
 	const loader = new BigQueryPartitionLoader(
 		parseServiceAccountKey(serviceAccountKey),
@@ -73,9 +67,17 @@ export const bigQueryExportJob = async (
 			definition: scrapingMetricTableDefinition,
 		},
 	);
+
+	// 3. 範囲内で metric が存在する取得日だけを対象にする。
+	const scrapedDates = await scrapingMetricRepository.findScrapedDates({
+		startDate,
+		endDate,
+	});
+
+	// 4. 連携先テーブルを用意する。dataset は事前に作成済みであることを前提にする。
 	await loader.ensureTable();
 
-	// 4. 取得日ごとにパーティションを置き換える。途中で失敗しても、済んだ取得日はそのまま残る。
+	// 5. 取得日ごとにパーティションを置き換える。途中で失敗しても、済んだ取得日はそのまま残る。
 	let exportedRowCount = 0;
 	for (const scrapedDate of scrapedDates) {
 		const { loadedRowCount } = await loader.replacePartition({
@@ -95,7 +97,7 @@ export const bigQueryExportJob = async (
 		exportedRowCount,
 	});
 
-	// 5. Lambda ハンドラーへレスポンスを返す。
+	// 6. Lambda ハンドラーへレスポンスを返す。
 	return {
 		ok: true,
 		job: batchNames.animeMetricBigQueryExport,
