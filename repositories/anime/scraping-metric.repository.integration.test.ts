@@ -8,6 +8,7 @@ import { scrapingMetricRepository } from "./scraping-metric.repository.js";
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const testDataSourceId = `integration-test-${Date.now()}`;
 const testScrapedDate = "2026-07-06";
+const testNextScrapedDate = "2026-07-07";
 
 describe.skipIf(!testDatabaseUrl)(
 	"scrapingMetricRepository (integration)",
@@ -67,6 +68,59 @@ describe.skipIf(!testDatabaseUrl)(
 				where: { dataSourceId: testDataSourceId, label: "" },
 			});
 			expect(rows).toHaveLength(0);
+		});
+
+		it("metric がある取得日だけを古い順に返す", async () => {
+			await scrapingMetricRepository.saveScrapingResult({
+				dataSourceId: testDataSourceId,
+				scrapedDate: testNextScrapedDate,
+				metrics: [{ label: "作品C", value: 3 }],
+			});
+
+			const scrapedDates = await scrapingMetricRepository.findScrapedDates({
+				startDate: testScrapedDate,
+				endDate: testNextScrapedDate,
+			});
+
+			expect(scrapedDates).toEqual(
+				expect.arrayContaining([testScrapedDate, testNextScrapedDate]),
+			);
+			expect([...scrapedDates].sort()).toEqual(scrapedDates);
+		});
+
+		it("取得日の metric を id 昇順で 1 ページずつ読み出せる", async () => {
+			const firstPage = await scrapingMetricRepository.findManyByScrapedDate({
+				scrapedDate: testScrapedDate,
+				limit: 1,
+			});
+			expect(firstPage).toHaveLength(1);
+			expect(firstPage[0]).toMatchObject({
+				dataSourceId: testDataSourceId,
+				label: "作品A",
+				value: 1,
+				scrapedDate: testScrapedDate,
+			});
+			expect(firstPage[0]?.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/);
+
+			const secondPage = await scrapingMetricRepository.findManyByScrapedDate({
+				scrapedDate: testScrapedDate,
+				afterId: firstPage[0]?.id,
+				limit: 10,
+			});
+			expect(
+				secondPage.map((record) => {
+					return record.label;
+				}),
+			).toEqual(["作品B"]);
+		});
+
+		it("取得日が YYYY-MM-DD 形式でない場合はエラーにする", async () => {
+			await expect(
+				scrapingMetricRepository.findManyByScrapedDate({
+					scrapedDate: "2026-13-99",
+					limit: 1,
+				}),
+			).rejects.toThrow("YYYY-MM-DD");
 		});
 	},
 );

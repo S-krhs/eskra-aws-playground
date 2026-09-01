@@ -26,6 +26,8 @@ model ScrapingMetric {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([dataSourceId, scrapedDate])
+  // BigQuery 連携が取得日で絞り id 順に keyset pagination するため
+  @@index([scrapedDate, id])
   @@map("scraping_metrics")
   @@schema("anime")
 }
