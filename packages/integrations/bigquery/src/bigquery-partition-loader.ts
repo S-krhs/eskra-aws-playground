@@ -40,9 +40,40 @@ interface LoadJobMetadata {
 	};
 }
 
+interface TableMetadata {
+	timePartitioning?: {
+		expirationMs?: string | number | null;
+	};
+}
+
+const millisecondsPerDay = 86_400_000;
+
 /** BigQuery が既存リソースとして拒否したかを判定する。 */
 const isAlreadyExistsError = (error: unknown): boolean => {
 	return (error as { code?: unknown } | null)?.code === 409;
+};
+
+/**
+ * パーティションの有効期限が設定されていればエラーにする。
+ * 期限より古い取得日は load job が成功したあとに削除され、
+ * 「書き込みは成功したのに行が無い」状態になるため、書き込む前に止める。
+ */
+const requireNoPartitionExpiration = (
+	tableId: string,
+	metadata: TableMetadata | undefined,
+): void => {
+	const expirationMs = Number(metadata?.timePartitioning?.expirationMs ?? 0);
+
+	if (!Number.isFinite(expirationMs) || expirationMs <= 0) {
+		return;
+	}
+
+	throw new Error(
+		`${tableId} にパーティションの有効期限(${Math.floor(expirationMs / millisecondsPerDay)} 日)が設定されています。` +
+			"これより古い取得日は書き込んでも削除されるため、連携を中止します。" +
+			"dataset の default_partition_expiration_days とテーブルの partition_expiration_days を解除してください" +
+			"(BigQuery サンドボックスでは解除できないため、課金の有効化が必要です)。",
+	);
 };
 
 const toJsonLines = async function* (
@@ -81,33 +112,39 @@ export class BigQueryPartitionLoader {
 		});
 	}
 
-	/** 連携先テーブルが無ければ定義どおりに作る。dataset は事前に存在している必要がある。 */
+	/**
+	 * 連携先テーブルが無ければ定義どおりに作り、書き込める状態かを確かめる。
+	 * dataset は事前に存在している必要がある。
+	 */
 	public async ensureTable(): Promise<void> {
 		const dataset = this.bigQuery.dataset(this.target.datasetId);
-		const [exists] = await dataset.table(this.target.tableId).exists();
-		if (exists) {
-			return;
+		const table = dataset.table(this.target.tableId);
+		const [exists] = await table.exists();
+
+		if (!exists) {
+			const { definition } = this.target;
+			try {
+				await dataset.createTable(this.target.tableId, {
+					schema: { fields: definition.fields },
+					timePartitioning: {
+						type: "DAY",
+						field: definition.partitionField,
+					},
+					...(definition.clusteringFields
+						? { clustering: { fields: definition.clusteringFields } }
+						: {}),
+				});
+			} catch (error) {
+				// 並行実行で先に作られていた場合は、作成済みとして扱う
+				if (!isAlreadyExistsError(error)) {
+					throw error;
+				}
+			}
 		}
 
-		const { definition } = this.target;
-		try {
-			await dataset.createTable(this.target.tableId, {
-				schema: { fields: definition.fields },
-				timePartitioning: {
-					type: "DAY",
-					field: definition.partitionField,
-				},
-				...(definition.clusteringFields
-					? { clustering: { fields: definition.clusteringFields } }
-					: {}),
-			});
-		} catch (error) {
-			// 並行実行で先に作られていた場合は、作成済みとして扱う
-			if (isAlreadyExistsError(error)) {
-				return;
-			}
-			throw error;
-		}
+		// 作成時に dataset 既定の有効期限を継承することがあるため、作成直後も含めて確認する
+		const [metadata] = await table.getMetadata();
+		requireNoPartitionExpiration(this.target.tableId, metadata);
 	}
 
 	/**

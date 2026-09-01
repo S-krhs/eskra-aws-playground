@@ -1,5 +1,5 @@
 import { Writable } from "node:stream";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const exists = vi.hoisted(() => {
 	return vi.fn();
@@ -10,9 +10,12 @@ const createTable = vi.hoisted(() => {
 const createWriteStream = vi.hoisted(() => {
 	return vi.fn();
 });
+const getMetadata = vi.hoisted(() => {
+	return vi.fn();
+});
 const table = vi.hoisted(() => {
 	return vi.fn(() => {
-		return { exists, createWriteStream };
+		return { exists, createWriteStream, getMetadata };
 	});
 });
 
@@ -98,6 +101,11 @@ describe("BigQueryPartitionLoader", () => {
 		vi.clearAllMocks();
 	});
 
+	beforeEach(() => {
+		// 既定は有効期限なし。個別のテストで上書きする
+		getMetadata.mockResolvedValue([{ timePartitioning: { type: "DAY" } }]);
+	});
+
 	describe("ensureTable", () => {
 		it("テーブルが無ければ定義どおりに作る", async () => {
 			exists.mockResolvedValue([false]);
@@ -127,6 +135,29 @@ describe("BigQueryPartitionLoader", () => {
 			);
 
 			await expect(createLoader().ensureTable()).resolves.toBeUndefined();
+		});
+
+		it("パーティションの有効期限が設定されていたら連携を中止する", async () => {
+			exists.mockResolvedValue([true]);
+			getMetadata.mockResolvedValue([
+				{ timePartitioning: { type: "DAY", expirationMs: "5184000000" } },
+			]);
+
+			await expect(createLoader().ensureTable()).rejects.toThrow(
+				"パーティションの有効期限(60 日)",
+			);
+		});
+
+		it("作成直後に継承した有効期限も検出する", async () => {
+			exists.mockResolvedValue([false]);
+			createTable.mockResolvedValue([{}]);
+			getMetadata.mockResolvedValue([
+				{ timePartitioning: { type: "DAY", expirationMs: "5184000000" } },
+			]);
+
+			await expect(createLoader().ensureTable()).rejects.toThrow(
+				"パーティションの有効期限",
+			);
 		});
 
 		it("409 以外の作成失敗はそのまま throw する", async () => {

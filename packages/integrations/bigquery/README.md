@@ -29,3 +29,4 @@ Google BigQuery への書き込み境界を担当する integration package で�
 
 - dataset は事前に存在している必要があります（`ensureTable` はテーブルだけを作ります）。
 - サービスアカウントには対象 dataset への `roles/bigquery.dataEditor` と、load job 実行のための `roles/bigquery.jobUser` が必要です。
+- 連携先テーブルにパーティションの有効期限が設定されていると、`ensureTable` がエラーで止めます。期限より古い取得日は load job が成功したあとに削除され、「書き込みは成功したのに行が無い」状態になるためです。BigQuery サンドボックス（課金未有効）では 60 日未満の有効期限が強制され解除できないため、課金の有効化が必要です。
