@@ -6,6 +6,7 @@
 ## 対象 workflow
 
 `.github/workflows/deploy.yml` は `main` ブランチへの push で実行します。
+`.github/workflows/backfill-anime-bigquery.yml` は手動実行（`workflow_dispatch`）で、過去分のアニメ指標を BigQuery へ連携します。
 
 処理の流れ:
 
@@ -41,6 +42,12 @@ SST が管理するリソースの一覧は `.claude/rules/infra-deploy.md` と 
 app/job 固有の GitHub Actions Secrets は、該当 app の README を参照します。
 
 アニメ分析 worker が参照する browser runtime Lambda Layer は、deploy 前に `npm run build:browser-runtime-layer` で `.tmp/layers/browser-runtime` に作成します。
+
+## 過去分の BigQuery 連携
+
+`Backfill anime metrics to BigQuery` workflow に取得日の開始・終了を渡すと、`scripts/backfill-anime-bigquery.js` が暦月ごとに区切って連携 Lambda を順に invoke します。取得日ごとにパーティションを置き換えるため、同じ期間を何度実行しても結果は変わりません。
+
+deploy 用の OIDC role に、連携 Lambda への `lambda:GetFunction` と `lambda:InvokeFunction` が必要です。手順と注意点は [batch-anime-analysis の README](../apps/batch-anime-analysis/README.md) を参照します。
 
 ## DB migration
 

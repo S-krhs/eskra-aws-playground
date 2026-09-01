@@ -321,6 +321,8 @@ export default $config({
 		const animeMetricBigQueryExportFunction = new sst.aws.Function(
 			"AnimeMetricBigQueryExportFunction",
 			{
+				// 過去分の連携を GitHub Actions から invoke するため、名前を生成任せにしない
+				name: `${appName}-${$app.stage}-anime-bigquery-export`,
 				handler:
 					"../apps/batch-anime-analysis/src/handlers/bigquery-export.handler",
 				runtime: "nodejs22.x",

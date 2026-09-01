@@ -56,12 +56,13 @@ SQS message body:
 - 連携先テーブル（`scraping_metrics`）が無ければ、パーティションとクラスタリングを設定して作成します。dataset は事前に BigQuery 側で作成しておく必要があります。
 - 取得日ごとに完了ログを出します。範囲が広く Lambda の実行時間（15 分）に収まらない場合は、ログの最後の取得日から範囲を分けて再実行します。
 
-過去分の初回連携は、月単位など収まる範囲に区切って Lambda を直接 invoke します。
+過去分の連携は GitHub Actions の **Backfill anime metrics to BigQuery** workflow から実行します（`workflow_dispatch`）。開始日と終了日を入れると `scripts/backfill-anime-bigquery.js` が暦月ごとに区切って Lambda を順に invoke し、区間ごとの取得日数と行数を Job Summary に出します。
 
-```sh
-aws lambda invoke --function-name <AnimeMetricBigQueryExportFunction の名前> \
-  --payload '{"startDate":"2023-03-01","endDate":"2023-03-31"}' --cli-binary-format raw-in-base64-out /dev/stdout
-```
+- `dryRun` を有効にすると、invoke せず分割される区間だけを表示します。
+- 途中で失敗しても、済んだ区間は BigQuery 側に残ります。ログとサマリに出る失敗した区間の開始日から再実行してください。
+- Lambda 名は `infra/sst.config.ts` の `AnimeMetricBigQueryExportFunction` の `name` と workflow の `FUNCTION_NAME` で揃えます。ずれた場合はスクリプトが最初の `get-function` で止まります。
+- 全期間（2023-03 以降）を一度に流すと数時間かかります。年単位などに分けて複数回実行するほうが、途中経過を確認しやすくなります。
+- BigQuery の load job は 1 テーブルあたり 1 日 1,500 件までです。1 取得日につき 1 件使うため、同じ日に全期間を何度も流し直すと上限に当たります。
 
 ## アラート通知
 

@@ -1,0 +1,58 @@
+name: Backfill anime metrics to BigQuery
+
+# 過去分の連携は日次スケジュールでは追いつかないため、手動で期間を指定して実行する。
+# 取得日ごとにパーティションを置き換えるため、同じ期間を何度実行しても結果は変わらない。
+on:
+  workflow_dispatch:
+    inputs:
+      startDate:
+        description: "連携する取得日の開始（YYYY-MM-DD、両端を含む）"
+        required: true
+        type: string
+      endDate:
+        description: "連携する取得日の終了（YYYY-MM-DD、両端を含む）"
+        required: true
+        type: string
+      dryRun:
+        description: "invoke せず、分割される区間だけを表示する"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# 同じパーティションへの同時書き込みを避けるため、実行は 1 本に絞る
+concurrency:
+  group: backfill-anime-bigquery
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # 1 区間あたり最大 15 分。既定の 6 時間では足りない場合に備えて明示する
+    timeout-minutes: 350
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-backfill
+      # FUNCTION_NAME は infra/sst.config.ts の AnimeMetricBigQueryExportFunction の name と揃える。
+      # ずれた場合はスクリプトが get-function で先に失敗する
+      - name: Backfill
+        run: node scripts/backfill-anime-bigquery.js
+        env:
+          FUNCTION_NAME: eskra-aws-playground-develop-anime-bigquery-export
+          START_DATE: ${{ inputs.startDate }}
+          END_DATE: ${{ inputs.endDate }}
+          DRY_RUN: ${{ inputs.dryRun }}

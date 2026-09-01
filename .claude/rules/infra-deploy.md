@@ -2,11 +2,12 @@
 paths:
   - "infra/**"
   - ".github/workflows/**"
+  - "scripts/**"
 ---
 
 # インフラ・デプロイ
 
-SST(`infra/sst.config.ts`)と GitHub Actions workflow の実装ルールです。人間向けの運用手順・手動セットアップ記録は `docs/ci-cd.md` を参照します。
+SST(`infra/sst.config.ts`)と GitHub Actions workflow、CI 補助スクリプト(`scripts/`)の実装ルールです。人間向けの運用手順・手動セットアップ記録は `docs/ci-cd.md` を参照します。
 
 ## SST 管理リソース
 
@@ -29,16 +30,19 @@ SST(`infra/sst.config.ts`)と GitHub Actions workflow の実装ルールです�
 - schedule 起動の Scheduler(cron)は `$dev`(`sst dev`)では作成しない。sst dev はローカルコード検証用途であり、dev セッション終了後に cron だけが発火し続けるのを防ぐため。
 - secret は stage ごとの SST secret を唯一の供給元とする。CD は deploy step で `SST_SECRET_*` env として書き込み、実行側は `sst shell` 経由(script)または `Resource`(Lambda)で読む。secret を env で直接渡さない。
 - browser runtime Layer の archive は Lambda の direct upload 上限を避けるため、versioning を有効にした `sst-asset-*` S3 bucket に置いてから publish する。
+- 運用のために Actions から invoke する Lambda は、`sst.aws.Function` の `name` に `${appName}-${$app.stage}-<用途>` を明示する。生成名は参照できず、名前の変更は function の作り直しになるため。
+- 手動実行の運用 workflow は `workflow_dispatch` とし、実処理は `scripts/` の Node スクリプトへ置く。外部へ書き込む操作は再実行しても結果が変わらない単位に区切り、失敗時はどこから再実行すればよいかを出力する。
 - GCP 側のリソース(project・dataset・サービスアカウント)は SST の管理外とし、手動セットアップの記録を `docs/ci-cd.md` と該当 app の README に残す。stage ごとに分ける値(dataset 名)は `sst.config.ts` で決め、環境変数として Lambda へ渡す。
 
 ## 変更時チェックリスト
 
 - workflow の Node.js version と Lambda runtime が意図した範囲に収まっているか。
-- workflow の default permissions が read-only で、OIDC は deploy job だけに付与されているか。
+- workflow の default permissions が read-only で、OIDC(`id-token: write`)は AWS role を引き受ける job にだけ付与されているか。
 - workflow 内の `uses:` action が deprecated Node.js runtime を target していないか。
 - 新しい必須 env を追加した場合、GitHub Secrets(`docs/ci-cd.md` の一覧)と該当 app の README を更新したか。
 - 破壊的 migration(column の drop / rename / 型変更)を含む場合、PR 本文に明記したか。
 - `DIRECT_DATABASE_URL` が migration step 以外に渡っていないか。
 - Scheduler の event payload が該当 app の routing の job 名と一致し、secret 値を含んでいないか。
+- 運用 workflow が参照する Lambda 名が `sst.config.ts` の `name` と一致しているか。
 - `npm run validate` が通るか。
 - `npx sst diff --stage develop --config infra/sst.config.ts` で意図しない差分が出ていないか。
