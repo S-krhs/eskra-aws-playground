@@ -45,19 +45,34 @@ export interface FindScrapedDatesInput {
 	endDate: string;
 }
 
-const toDateValue = (scrapedDate: string): Date => {
-	const value = new Date(`${scrapedDate}T00:00:00.000Z`);
+const dateStringPattern = /^\d{4}-\d{2}-\d{2}$/;
+const idPattern = /^\d+$/;
 
-	if (Number.isNaN(value.getTime())) {
+// DATE 列は UTC 00:00 の Date として返るため、日付部分をそのまま取り出せる
+const toDateString = (value: Date): string => {
+	return value.toISOString().slice(0, 10);
+};
+
+const toDateValue = (scrapedDate: string): Date => {
+	if (!dateStringPattern.test(scrapedDate)) {
 		throw new Error(`取得日が YYYY-MM-DD 形式ではありません: ${scrapedDate}`);
+	}
+
+	// Date は 2026-02-30 のような存在しない日を翌月へ繰り上げるため、往復させて一致を確かめる
+	const value = new Date(`${scrapedDate}T00:00:00.000Z`);
+	if (Number.isNaN(value.getTime()) || toDateString(value) !== scrapedDate) {
+		throw new Error(`存在しない取得日です: ${scrapedDate}`);
 	}
 
 	return value;
 };
 
-// DATE 列は UTC 00:00 の Date として返るため、日付部分をそのまま取り出せる
-const toDateString = (value: Date): string => {
-	return value.toISOString().slice(0, 10);
+const toIdValue = (afterId: string): bigint => {
+	if (!idPattern.test(afterId)) {
+		throw new Error(`afterId が id の形式ではありません: ${afterId}`);
+	}
+
+	return BigInt(afterId);
 };
 
 export const scrapingMetricRepository = {
@@ -81,13 +96,16 @@ export const scrapingMetricRepository = {
 
 	/** 指定範囲のうち metric が 1 件以上ある取得日を、古い順に返す。 */
 	findScrapedDates: async (input: FindScrapedDatesInput): Promise<string[]> => {
+		const startDate = toDateValue(input.startDate);
+		const endDate = toDateValue(input.endDate);
+
 		const prisma = getPrismaClient();
 		const groups = await prisma.scrapingMetric.groupBy({
 			by: ["scrapedDate"],
 			where: {
 				scrapedDate: {
-					gte: toDateValue(input.startDate),
-					lte: toDateValue(input.endDate),
+					gte: startDate,
+					lte: endDate,
 				},
 			},
 			orderBy: { scrapedDate: "asc" },
@@ -105,11 +123,14 @@ export const scrapingMetricRepository = {
 	findManyByScrapedDate: async (
 		input: FindScrapingMetricsInput,
 	): Promise<ScrapingMetricRecord[]> => {
+		const scrapedDate = toDateValue(input.scrapedDate);
+		const afterId = input.afterId ? toIdValue(input.afterId) : undefined;
+
 		const prisma = getPrismaClient();
 		const rows = await prisma.scrapingMetric.findMany({
 			where: {
-				scrapedDate: toDateValue(input.scrapedDate),
-				...(input.afterId ? { id: { gt: BigInt(input.afterId) } } : {}),
+				scrapedDate,
+				...(afterId === undefined ? {} : { id: { gt: afterId } }),
 			},
 			orderBy: { id: "asc" },
 			take: input.limit,
