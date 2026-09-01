@@ -15,7 +15,7 @@ SST(`infra/sst.config.ts`)と GitHub Actions workflow の実装ルールです�
 - Lambda function
 - EventBridge Scheduler
 - SQS Queue / DLQ
-- 失敗検知用の SNS Topic と CloudWatch alarm(DLQ 滞留、Orchestrator エラー)
+- 失敗検知用の SNS Topic と CloudWatch alarm(DLQ 滞留、Orchestrator エラー、BigQuery 連携エラー)
 - browser runtime Lambda Layer と、その archive を置く S3 asset bucket
 - Scheduler、SQS、SNS 連携に必要な IAM resource
 - 静的サイト配信の CloudFront・S3 bucket(`StaticSitePlayground`)、ACM 証明書、Route53 レコード
@@ -29,6 +29,7 @@ SST(`infra/sst.config.ts`)と GitHub Actions workflow の実装ルールです�
 - schedule 起動の Scheduler(cron)は `$dev`(`sst dev`)では作成しない。sst dev はローカルコード検証用途であり、dev セッション終了後に cron だけが発火し続けるのを防ぐため。
 - secret は stage ごとの SST secret を唯一の供給元とする。CD は deploy step で `SST_SECRET_*` env として書き込み、実行側は `sst shell` 経由(script)または `Resource`(Lambda)で読む。secret を env で直接渡さない。
 - browser runtime Layer の archive は Lambda の direct upload 上限を避けるため、versioning を有効にした `sst-asset-*` S3 bucket に置いてから publish する。
+- GCP 側のリソース(project・dataset・サービスアカウント)は SST の管理外とし、手動セットアップの記録を `docs/ci-cd.md` と該当 app の README に残す。stage ごとに分ける値(dataset 名)は `sst.config.ts` で決め、環境変数として Lambda へ渡す。
 
 ## 変更時チェックリスト
 

@@ -46,6 +46,7 @@ jobs:
           SST_SECRET_AnimeAnalysisDiscordWebhook: ${{ secrets.ANIME_ANALYSIS_DISCORD_WEBHOOK_URL }}
           SST_SECRET_AlertDiscordWebhook: ${{ secrets.ALERT_DISCORD_WEBHOOK_URL }}
           SST_SECRET_DatabaseUrl: ${{ secrets.DATABASE_URL }}
+          SST_SECRET_GcpServiceAccountKey: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           SST_SECRET_YacchoDiscordBotToken: ${{ secrets.YACCHO_DISCORD_BOT_TOKEN }}
           SST_SECRET_YacchoDiscordInteractionPublicKey: ${{ secrets.YACCHO_DISCORD_INTERACTION_PUBLIC_KEY }}
           SST_SECRET_YacchoDiscordApplicationId: ${{ secrets.YACCHO_DISCORD_APPLICATION_ID }}

@@ -59,7 +59,7 @@ SQS message body:
 過去分の初回連携は、月単位など収まる範囲に区切って Lambda を直接 invoke します。
 
 ```sh
-aws lambda invoke --function-name <AnimeMetricBigqueryExportFunction の名前> \
+aws lambda invoke --function-name <AnimeMetricBigQueryExportFunction の名前> \
   --payload '{"startDate":"2023-03-01","endDate":"2023-03-31"}' --cli-binary-format raw-in-base64-out /dev/stdout
 ```
 

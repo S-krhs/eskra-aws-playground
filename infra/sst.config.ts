@@ -210,6 +210,15 @@ export default $config({
 			"AnimeAnalysisDiscordWebhook",
 		);
 
+		// BigQuery へ書き込む GCP サービスアカウント鍵(JSON)を Secret として扱う
+		const gcpServiceAccountKey = new sst.Secret("GcpServiceAccountKey");
+
+		// dataset は SST の管理外(GCP 側で手動作成)のため、stage ごとの名前だけをここで決める
+		const bigQueryDatasetId =
+			$app.stage === "develop"
+				? "anime_analysis"
+				: `anime_analysis_${$app.stage}`;
+
 		// アニメ分析の実行要求を dataSource 単位で保持する SQS Queue を作成
 		const animeAnalysisDeadLetterQueue = new sst.aws.Queue(
 			"AnimeAnalysisDeadLetterQueue",
@@ -306,6 +315,26 @@ export default $config({
 			},
 		);
 
+		// 蓄積したアニメ指標を取得日単位で BigQuery へ連携する Lambda を作成。
+		// 過去分をまとめて連携する運用があるため timeout は Lambda の上限に寄せる
+		const animeMetricBigQueryExportFunction = new sst.aws.Function(
+			"AnimeMetricBigQueryExportFunction",
+			{
+				handler:
+					"../apps/batch-anime-analysis/src/handlers/bigquery-export.handler",
+				runtime: "nodejs22.x",
+				timeout: "15 minutes",
+				memory: "1 GB",
+				link: [gcpServiceAccountKey],
+				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
+				// link ではなく environment で渡す
+				environment: {
+					DATABASE_URL: databaseUrl.value,
+					BIGQUERY_DATASET: bigQueryDatasetId,
+				},
+			},
+		);
+
 		// schedule 起動の Scheduler(cron)は 1 つの !$dev ガードに集約し、追加時の入れ忘れを防ぐ。
 		// sst dev はローカルコード検証用途のため、dev セッション終了後に cron が発火し続けるのを防ぐ目的で $dev では作成しない。
 		// 実行タイミングは config/job-schedules で一元管理する
@@ -325,6 +354,10 @@ export default $config({
 			new sst.aws.CronV2("AnimeAnalysisSchedule23", {
 				function: animeAnalysisOrchestratorFunction,
 				...jobSchedules.animeScrapingOrchestrator23,
+			});
+			new sst.aws.CronV2("AnimeMetricBigQueryExportSchedule", {
+				function: animeMetricBigQueryExportFunction,
+				...jobSchedules.animeMetricBigQueryExport,
 			});
 		}
 
@@ -486,6 +519,14 @@ export default $config({
 			name: `${appName}-${$app.stage}-anime-orchestrator-errors`,
 			description: alarmDescriptions.animeAnalysisOrchestratorError,
 			functionName: animeAnalysisOrchestratorFunction.name,
+		});
+
+		// DLQ を持たない schedule 起動の BigQuery 連携 Lambda のエラーを通知する。
+		// 失敗を放置すると分析側のデータが前日で止まるため検知が必要
+		createLambdaErrorAlarm("AnimeMetricBigQueryExportErrorAlarm", {
+			name: `${appName}-${$app.stage}-anime-bigquery-export-errors`,
+			description: alarmDescriptions.animeMetricBigQueryExportError,
+			functionName: animeMetricBigQueryExportFunction.name,
 		});
 
 		// DLQ を持たない schedule 起動の batch Lambda のエラーを通知する。
