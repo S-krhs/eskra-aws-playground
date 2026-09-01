@@ -125,7 +125,9 @@ GitHub Actions からのデプロイには次の Secret が必要です。
 GCP 側は SST の管理外のため、初回のみ手作業で用意し内容をここに記録します。
 
 - GCP project を作り、BigQuery API を有効にする。
+- **課金を有効にする**。サンドボックス（課金未有効）では dataset に 60 日未満のパーティション有効期限が強制され解除できず、それより古い取得日は書き込んでも削除される。ストレージ 10GB / クエリ 1TB の無料枠があり、この規模（全期間で物理 10MB 程度）なら無料枠に収まる。load job は課金対象外。
 - dataset を作る（develop は `anime_analysis`、personal stage は `anime_analysis_<stage>`。dataset ID は英数字とアンダースコアのみのため、stage 名の記号は `_` に置き換わる）。ロケーションは変更できないため作成時に決める。
 - サービスアカウントを作り、対象 dataset に `roles/bigquery.dataEditor`、project に `roles/bigquery.jobUser` を付与する。
 - JSON 鍵を発行し、GitHub Secret `GCP_SERVICE_ACCOUNT_KEY` に JSON そのままを登録する。
+- dataset とテーブルにパーティションの有効期限を設定しない。設定されていると連携 Lambda が起動時にエラーで止まる。
 - テーブル（`scraping_metrics`）は連携 Lambda が作るため、console では作らない。
