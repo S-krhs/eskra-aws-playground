@@ -124,7 +124,7 @@ GitHub Actions からのデプロイには次の Secret が必要です。
 GCP 側は SST の管理外のため、初回のみ手作業で用意し内容をここに記録します。
 
 - GCP project を作り、BigQuery API を有効にする。
-- dataset を作る（develop は `anime_analysis`、personal stage は `anime_analysis_<stage>`）。ロケーションは変更できないため作成時に決める。
+- dataset を作る（develop は `anime_analysis`、personal stage は `anime_analysis_<stage>`。dataset ID は英数字とアンダースコアのみのため、stage 名の記号は `_` に置き換わる）。ロケーションは変更できないため作成時に決める。
 - サービスアカウントを作り、対象 dataset に `roles/bigquery.dataEditor`、project に `roles/bigquery.jobUser` を付与する。
 - JSON 鍵を発行し、GitHub Secret `GCP_SERVICE_ACCOUNT_KEY` に JSON そのままを登録する。
 - テーブル（`scraping_metrics`）は連携 Lambda が作るため、console では作らない。

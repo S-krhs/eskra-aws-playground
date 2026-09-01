@@ -213,11 +213,12 @@ export default $config({
 		// BigQuery へ書き込む GCP サービスアカウント鍵(JSON)を Secret として扱う
 		const gcpServiceAccountKey = new sst.Secret("GcpServiceAccountKey");
 
-		// dataset は SST の管理外(GCP 側で手動作成)のため、stage ごとの名前だけをここで決める
+		// dataset は SST の管理外(GCP 側で手動作成)のため、stage ごとの名前だけをここで決める。
+		// BigQuery の dataset ID は英数字とアンダースコアのみのため、stage 名の記号を置き換える
 		const bigQueryDatasetId =
 			$app.stage === "develop"
 				? "anime_analysis"
-				: `anime_analysis_${$app.stage}`;
+				: `anime_analysis_${$app.stage.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
 		// アニメ分析の実行要求を dataSource 単位で保持する SQS Queue を作成
 		const animeAnalysisDeadLetterQueue = new sst.aws.Queue(
