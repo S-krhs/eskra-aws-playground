@@ -1,9 +1,10 @@
 // In scope: 通貨単位を画像ボタンで選ばせる
-// Out of scope: 単位の定義、選択中の単位の保持、換算
+// Out of scope: 単位の定義と見た目、選択中の単位の保持、換算
 
 import type { CurrencyUnit } from "@/entities/currency-unit/model/currency-unit.js";
 import { currencyUnits } from "@/entities/currency-unit/model/currency-unit.js";
-import "./unit-select.css";
+import { CurrencyUnitImage } from "@/entities/currency-unit/ui/currency-unit-image.js";
+import { ToggleButton } from "@/shared/ui/win-forms/toggle-button.js";
 
 interface Props {
 	selected: CurrencyUnit;
@@ -13,23 +14,18 @@ interface Props {
 /** 通貨単位の画像ボタン列。選択中のものは押し込まれた見た目になる */
 export const UnitSelect = ({ selected, onSelect }: Props) => {
 	return (
-		<div className="unit-select">
+		<div className="flex flex-wrap gap-2">
 			{currencyUnits.map((unit) => {
-				const isSelected = unit.id === selected.id;
 				return (
-					<button
+					<ToggleButton
 						key={unit.id}
-						type="button"
-						className={
-							isSelected ? "unit-select-item selected" : "unit-select-item"
-						}
-						aria-pressed={isSelected}
-						onClick={() => {
+						pressed={unit.id === selected.id}
+						onPress={() => {
 							return onSelect(unit);
 						}}
 					>
-						<img src={unit.image} alt={unit.imageAlt} />
-					</button>
+						<CurrencyUnitImage unit={unit} />
+					</ToggleButton>
 				);
 			})}
 		</div>

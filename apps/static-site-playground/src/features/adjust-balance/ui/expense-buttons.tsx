@@ -2,7 +2,7 @@
 // Out of scope: 収支の保持、増減後の表示
 
 import { expenseSteps } from "@/features/adjust-balance/model/expense-steps.js";
-import "./expense-buttons.css";
+import { Button } from "@/shared/ui/win-forms/button.js";
 
 interface Props {
 	onAdjust: (stepYen: number) => void;
@@ -11,19 +11,17 @@ interface Props {
 /** 投資・回収のボタン列。押された額を円で親へ渡す */
 export const ExpenseButtons = ({ onAdjust }: Props) => {
 	return (
-		<div className="expense-buttons">
+		<div className="flex flex-wrap gap-2">
 			{expenseSteps.map((step) => {
 				return (
-					<button
+					<Button
 						key={step}
-						type="button"
-						className="winforms-button"
-						onClick={() => {
+						onPress={() => {
 							return onAdjust(step);
 						}}
 					>
 						{`${step > 0 ? "+" : ""}${step}円`}
-					</button>
+					</Button>
 				);
 			})}
 		</div>

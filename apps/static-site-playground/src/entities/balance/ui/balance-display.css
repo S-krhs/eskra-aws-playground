@@ -1,26 +1,4 @@
-.balance-display {
-	display: block;
-	padding: 6px 10px;
-	border: 1px solid;
-	border-color: #696969 #ffffff #ffffff #696969;
-	box-shadow:
-		inset 1px 1px 0 #a0a0a0,
-		inset -1px -1px 0 #f0f0f0;
-	background-color: #ffffff;
-	font-family: "MS Gothic", "Osaka-Mono", monospace;
-	font-size: 24px;
-	font-weight: bold;
-	text-align: right;
-}
-
-.balance-display.deficit {
-	color: red;
-}
-
-.balance-display.rainbow {
-	animation: 2s gaming linear infinite;
-}
-
+/* 大勝ちしたときに収支を虹色で回す。@keyframes は class で書けないため CSS に置く */
 @keyframes gaming {
 	0% {
 		color: #009944;

@@ -10,7 +10,7 @@ export const shareUrl = (yen: number, unit: CurrencyUnit): string => {
 	const result =
 		yen === 0
 			? "プラマイゼロ即ち実質勝ち。"
-			: `大体${amount}${unit.label}分${yen < 0 ? "負けました" : "勝ちました"}。`;
+			: `大体${amount}分${yen < 0 ? "負けました" : "勝ちました"}。`;
 	const text = `${result} \nsasahara.uk/gamble-rumble`;
 	return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&hashtags=sasaharaUK`;
 };

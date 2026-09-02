@@ -1,29 +1,26 @@
-// In scope: 収支の値を選択中の単位で表示し、負けと大勝ちで見た目を変える
-// Out of scope: 収支の状態管理、単位の換算そのもの、注意文
+// In scope: 収支の値を表示し、負けと大勝ちで見た目を変える
+// Out of scope: 単位への換算と文字列の組み立て、収支の状態管理
 
 import { rainbowYen } from "@/entities/balance/model/balance-thresholds.js";
-import { formatBalance } from "@/entities/currency-unit/lib/format-balance.js";
-import type { CurrencyUnit } from "@/entities/currency-unit/model/currency-unit.js";
 import "./balance-display.css";
 
 interface Props {
 	balanceYen: number;
-	unit: CurrencyUnit;
+	/** 単位付きに整形済みの収支。組み立ては通貨単位側が担う */
+	text: string;
 }
 
-/** 収支を単位付きで表示する。負けは赤、大勝ちは虹色になる */
-export const BalanceDisplay = ({ balanceYen, unit }: Props) => {
-	const classes = [
-		"balance-display",
-		balanceYen < 0 ? "deficit" : "",
-		balanceYen >= rainbowYen ? "rainbow" : "",
-	]
-		.filter(Boolean)
-		.join(" ");
+/** 収支を表示する。負けは赤、大勝ちは虹色になる */
+export const BalanceDisplay = ({ balanceYen, text }: Props) => {
+	const toneClasses = balanceYen < 0 ? "text-red-600" : "";
+	const rainbowClasses =
+		balanceYen >= rainbowYen ? "animate-[gaming_2s_linear_infinite]" : "";
 
 	return (
-		<output className={classes}>
-			{`${formatBalance(balanceYen, unit)}${unit.label}`}
+		<output
+			className={`bevel-sunken block bg-white px-2.5 py-1.5 text-right font-[family-name:'MS_Gothic','Osaka-Mono',monospace] text-2xl font-bold ${toneClasses} ${rainbowClasses}`}
+		>
+			{text}
 		</output>
 	);
 };

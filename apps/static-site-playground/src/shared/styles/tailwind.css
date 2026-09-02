@@ -1,0 +1,3 @@
+/* Tailwind の入口。ページから読み込む。slice 固有の見た目はここに足さない */
+@import "tailwindcss";
+@import "../ui/win-forms/win-forms.css";

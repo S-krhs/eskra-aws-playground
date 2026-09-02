@@ -3,22 +3,14 @@
 
 import type { CurrencyUnit } from "@/entities/currency-unit/model/currency-unit.js";
 import { shareUrl } from "@/features/share-balance/lib/share-url.js";
+import { LinkButton } from "@/shared/ui/win-forms/link-button.js";
 
 interface Props {
 	balanceYen: number;
 	unit: CurrencyUnit;
 }
 
-/** 現在の収支のツイート画面を別タブで開くリンク。見た目はボタンに揃える */
+/** 現在の収支のツイート画面を別タブで開くリンク */
 export const ShareLink = ({ balanceYen, unit }: Props) => {
-	return (
-		<a
-			className="winforms-button"
-			href={shareUrl(balanceYen, unit)}
-			target="_blank"
-			rel="noopener noreferrer"
-		>
-			醜態を晒す
-		</a>
-	);
+	return <LinkButton href={shareUrl(balanceYen, unit)}>醜態を晒す</LinkButton>;
 };
