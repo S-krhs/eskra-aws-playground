@@ -75,7 +75,7 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 						<button
 							key={icon.id}
 							type="button"
-							className="flex cursor-pointer select-none flex-col items-center gap-1 border border-transparent p-1 text-white focus-visible:border-white focus-visible:border-dotted"
+							className="flex cursor-default select-none flex-col items-center gap-1 border border-transparent p-1 text-white focus-visible:border-white focus-visible:border-dotted"
 							onDoubleClick={() => {
 								return open(icon.id);
 							}}
