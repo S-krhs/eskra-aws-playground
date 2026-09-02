@@ -1,0 +1,51 @@
+.gamble-rumble {
+	padding: 16px;
+}
+
+.gamble-rumble .balance {
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+
+.gamble-rumble .balance.is-loss {
+	color: #cc0000;
+}
+
+.gamble-rumble .steps {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.gamble-rumble .steps button {
+	padding: 4px 10px;
+	border: 1px solid #999999;
+	border-radius: 4px;
+	background: #f5f5f5;
+	cursor: pointer;
+}
+
+.gamble-rumble .units {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0;
+}
+
+.gamble-rumble .units button {
+	padding: 0;
+	border: 2px solid transparent;
+	background: none;
+	line-height: 0;
+	cursor: pointer;
+}
+
+.gamble-rumble .units button.is-selected {
+	border-color: #cc0000;
+}
+
+.gamble-rumble .units img {
+	width: 160px;
+	height: 160px;
+	object-fit: cover;
+}

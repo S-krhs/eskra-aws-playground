@@ -17,7 +17,17 @@ npm run preview -w @eskra-aws-playground/static-site-playground    # build 済�
 
 `npm run typecheck` / `npm run lint`（root）は turbo 経由でこの app も対象になります。
 
-Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` を起動した端末を閉じても動き続けます。停止は `npm run dev:stop`（`astro dev stop`）で行います。Ctrl+C や `pkill` ではデーモン本体が残り、次の `npm run dev` が `Another astro dev server is already running.` で失敗します。稼働中のデーモンを置き換えたい場合は `astro dev --force` を使います。
+Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` を起動した端末を閉じても動き続けます。停止は `npm run dev:stop`（`astro dev stop`）で行います。`npm run preview` も同じくデーモンで、`npm run preview:stop` で停止します。Ctrl+C や `pkill` ではデーモン本体が残り、次の `npm run dev` が `Another astro dev server is already running.` で失敗します。稼働中のデーモンを置き換えたい場合は `astro dev --force` を使います。
+
+## ページ
+
+| パス | 内容 |
+| --- | --- |
+| `/` | トップページ |
+| `/helloworld/` | 動作確認用 |
+| `/gamble-rumble/` | 賭博の収支を単位付きで積み上げ、X へ投稿するツール |
+
+`/gamble-rumble/` は `@astrojs/react` の island（`src/components/gamble-rumble/`）で、収支は円で保持し、選んだ単位（円・ｳｪﾌｧｰ・どきゅーと）へ換算して表示します。単位ごとの換算レートとボタンの刻みは `currency-units.ts` にまとまっています。
 
 ## 型チェック
 
