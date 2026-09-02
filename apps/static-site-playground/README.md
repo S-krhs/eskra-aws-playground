@@ -17,7 +17,9 @@ npm run preview -w @eskra-aws-playground/static-site-playground    # build 済�
 
 `npm run typecheck` / `npm run lint`（root）は turbo 経由でこの app も対象になります。
 
-Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` を起動した端末を閉じても動き続けます。停止は `npm run dev:stop`（`astro dev stop`）で行います。`npm run preview` も同じくデーモンで、`npm run preview:stop` で停止します。Ctrl+C や `pkill` ではデーモン本体が残り、次の `npm run dev` が `Another astro dev server is already running.` で失敗します。稼働中のデーモンを置き換えたい場合は `astro dev --force` を使います。
+Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` を起動した端末を閉じても動き続けます。停止は `npm run dev:stop`（`astro dev stop`）で行います。`npm run preview` も同じくデーモンで、`npm run preview:stop` で停止します。
+
+稼働中のデーモンは `.astro/dev.json` に pid と port を記録しており、`dev:stop` と `dev status` はこのファイルを見ます。そのため `clean` は `dist` だけを消します。`.astro` ごと消すと記録を見失い、`dev:stop` が効かない・次の `npm run dev` が別 port（4322、4323…）で起動する・ブラウザで開いていた 4321 が古いサーバーのまま残る、という状態になります。Ctrl+C や `pkill` ではデーモン本体が残り、次の `npm run dev` が `Another astro dev server is already running.` で失敗します。稼働中のデーモンを置き換えたい場合は `astro dev --force` を使います。
 
 ## ページ
 

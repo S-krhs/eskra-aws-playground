@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"clean": "rm -rf dist .astro",
+		"clean": "rm -rf dist",
 		"dev": "astro dev",
 		"dev:stop": "astro dev stop",
 		"build": "npm run clean && astro build",
