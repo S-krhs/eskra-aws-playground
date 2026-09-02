@@ -31,7 +31,7 @@ src/shared/ui/win-forms/                  Windows Forms 風の UI キット
 src/shared/styles/index.css               Tailwind の入口
 ```
 
-- slice は `ui/`（描画）・`model/`（型・定数・データ）・`lib/`（純粋な変換処理）の segment に分ける。必要な segment だけ作る。
+- slice は `ui/`（描画）・`model/`（業務上の判断や語彙を含む型・データ・文面）・`lib/`（業務上の判断を含まない変換・整形）の segment に分ける。必要な segment だけ作る。「負けました／勝ちました」のような言い回しは `model`、数値の整形や URL の組み立ては `lib`。
 - import は下の層へだけ流す。`pages → widgets → features → entities → shared` の順で、逆流させない。同じ層の slice 同士も import しない。
 - **層は上から順に作らない。実際に再利用される段になってから足す。** 1 つの画面でしか使わない操作は feature に閉じ込め、widget・entity を先回りで作らない。widget は「複数のページに載る自己完結した塊」、entity は「複数の feature が扱う対象」になって初めて切り出す。
 - slice には public API として `index.ts` を置き、外からはそこだけを import する（`@/features/gamble-rumble`）。共通ルールのバレルファイル禁止に対する、この app 限定の例外。
@@ -52,7 +52,7 @@ src/shared/styles/index.css               Tailwind の入口
 
 操作に応じて画面が変わるページは `@astrojs/react` の island として実装します。ページ側は `.astro` のままで、`<Component client:load />` として島だけを hydrate します。
 
-- island の状態は widget が React の `useState` で持ち、feature へは値と callback を props で渡す。状態管理ライブラリは入れない。
+- island の状態は、その island の最上位 component が React の `useState` で持つ（現状は `features/gamble-rumble/ui/gamble-rumble.tsx`）。下位の component へは値と callback を props で渡す。状態管理ライブラリは入れない。
 - 静的な表示だけのページに island を使わない。素の `.astro` で書く。
 
 ## スタイル
@@ -62,13 +62,13 @@ Tailwind CSS で書きます。`style` 属性でのインライン指定と、�
 | 置き場所 | 置くもの |
 | --- | --- |
 | component の `className` | 原則すべての見た目。theme に無い値は arbitrary value（`bg-[#ffe0e0]`）で書く |
-| `src/shared/styles/tailwind.css` | Tailwind の入口。`@import "tailwindcss"` と kit の読み込みだけを書く |
+| `src/shared/styles/index.css` | Tailwind の入口。`@import "tailwindcss"` と kit の読み込みだけを書く |
 | `src/shared/ui/<kit>/<kit>.css` | UI キットの `@theme` トークンと `@utility`。kit の component が使う色・書体・枠 |
 | slice 内の `.css` | class で書けないもの（`@keyframes` など）だけ。component から import する |
 | ページの `<style is:global>` | body に当たるページ全体の背景・余白 |
 
 - slice 固有の色や書体を `shared` の `@theme` に足さない。使う component で arbitrary value を書く。
-- 表示するかどうかの判断は呼び出し側に置き、component は渡された前提で描画する。`props` を見て `null` を返す形にしない。
+- 表示するかどうか、どの見た目で出すかの判断は呼び出し側に置き、component は渡された前提で描画する。`props` を見て `null` を返したり、閾値と比較したりしない。閾値は判断する側の 1 か所にまとめる。
 - `@theme` と `@utility` は Tailwind の入口から辿れる CSS にしか書けない。入口が読むのは `shared` までとし、上の層の CSS を読ませない。
 
 ## lint

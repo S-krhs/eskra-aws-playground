@@ -10,10 +10,10 @@ import {
 } from "@/shared/ui/win-forms";
 import { formatBalance } from "../lib/format-balance.js";
 import { shareUrl } from "../lib/share-url.js";
-import { cautionYen } from "../model/balance-thresholds.js";
+import { cautionYen, rainbowYen } from "../model/balance-thresholds.js";
 import { currencyUnits } from "../model/currency-unit.js";
 import { shareText } from "../model/share-text.js";
-import { BalanceDisplay } from "./balance-display.js";
+import { BalanceDisplay, type BalanceTone } from "./balance-display.js";
 import { ExpenseButtons } from "./expense-buttons.js";
 import { OverLimitCaution } from "./over-limit-caution.js";
 
@@ -21,6 +21,9 @@ import { OverLimitCaution } from "./over-limit-caution.js";
 export const GambleRumble = () => {
 	const [balanceYen, setBalanceYen] = useState(-20000);
 	const [unit, setUnit] = useState(currencyUnits[0]);
+
+	const tone: BalanceTone =
+		balanceYen >= rainbowYen ? "jackpot" : balanceYen < 0 ? "loss" : "normal";
 
 	return (
 		<Window
@@ -33,10 +36,7 @@ export const GambleRumble = () => {
 			{balanceYen <= cautionYen && <OverLimitCaution />}
 
 			<GroupBox label="収支">
-				<BalanceDisplay
-					balanceYen={balanceYen}
-					text={formatBalance(balanceYen, unit)}
-				/>
+				<BalanceDisplay tone={tone} text={formatBalance(balanceYen, unit)} />
 			</GroupBox>
 
 			<GroupBox label="投資・回収">

@@ -9,10 +9,11 @@ export default defineConfig([
 	// index.astro を層の public API と誤検知し、ルートの単位を segment へ割れとも言う。
 	{ ignores: ["./src/pages/**"] },
 	{
-		files: ["./src/features/gamble-rumble/**"],
+		files: ["./src/features/**"],
 		rules: {
-			// この slice を参照するのは Astro のページだけで、それは上で対象外にしている。
-			// steiger からは参照ゼロに見えるため、この slice に限って無効化する。
+			// feature を参照するのは Astro のページだけで、それは上で対象外にしている。
+			// steiger からは参照ゼロに見えるため、features 層に限って無効化する。
+			// widgets・entities では有効なままにし、切り出しすぎを検出させる。
 			"fsd/insignificant-slice": "off",
 		},
 	},

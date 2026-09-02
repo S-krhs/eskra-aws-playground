@@ -41,7 +41,7 @@ slice の public API は `index.ts` です。repo 共通ルールはバレルフ
 
 ## スタイル
 
-Tailwind CSS v4 を `@tailwindcss/vite` 経由で使います。入口は `src/shared/styles/tailwind.css` で、ページから読み込みます。Windows Forms 風の配色・立体枠は `src/shared/ui/win-forms/win-forms.css` の `@theme` と `@utility` にまとめてあります。
+Tailwind CSS v4 を `@tailwindcss/vite` 経由で使います。入口は `src/shared/styles/index.css` で、ページから読み込みます。Windows Forms 風の配色・立体枠は `src/shared/ui/win-forms/win-forms.css` の `@theme` と `@utility` にまとめてあります。
 
 ## 型チェック
 
