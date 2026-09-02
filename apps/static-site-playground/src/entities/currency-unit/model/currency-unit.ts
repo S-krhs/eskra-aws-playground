@@ -1,5 +1,5 @@
-// In scope: gamble-rumble で収支を表す通貨単位の定義と、円建て収支の表示文字列への変換
-// Out of scope: 収支の状態管理、UI の組み立て、ツイート文面
+// In scope: 収支を表す通貨単位の型と一覧
+// Out of scope: 円との換算、表示文字列の組み立て、単位の選択 UI
 
 /** 収支を表す通貨単位。`yenPerUnit` は 1 単位あたりの円 */
 export interface CurrencyUnit {
@@ -34,14 +34,3 @@ export const currencyUnits: readonly CurrencyUnit[] = [
 		imageAlt: "どきゅーと",
 	},
 ];
-
-/**
- * 円建ての収支を選択中の単位へ換算し、有効数字 3 桁の表示文字列にする。
- * 先頭は必ず符号 1 文字になる（負は `-`、0 と正は `+`）。
- */
-export const formatBalance = (yen: number, unit: CurrencyUnit): string => {
-	const amount = (yen / unit.yenPerUnit).toLocaleString("ja-JP", {
-		maximumSignificantDigits: 3,
-	});
-	return yen < 0 ? amount : `+${amount}`;
-};

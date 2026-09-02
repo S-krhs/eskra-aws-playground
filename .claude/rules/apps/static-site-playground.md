@@ -11,13 +11,35 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 
 | 層 | 置くもの | 置かないもの |
 | --- | --- | --- |
-| `src/pages/` | ルーティングに対応するページ。ファイルパスがそのまま URL になる | 再利用する UI 断片、データ取得の実装 |
-| `src/components/` | 複数ページで使う UI 断片、React island（`.tsx`） | ページ固有のマークアップ、ルーティング |
+| `src/pages/` | Astro のルーティング。ファイルパスがそのまま URL になる。widget を貼るだけの薄いページにする | UI の実装、データ取得の実装 |
+| `src/widgets/` | ページに載せる自己完結した UI ブロック。状態を持ち、feature と entity を組み立てる | 個々の操作の実装、業務上の対象の定義 |
+| `src/features/` | ユーザー操作 1 つ分の UI と、その操作に固有の処理 | 複数の操作の組み立て、対象そのものの定義 |
+| `src/entities/` | 業務上の対象（収支・通貨単位）の型・データと、その表示・変換 | 操作のハンドリング、画面全体の構成 |
+| `src/shared/` | 業務に依存しない再利用部品（UI キットなど） | 特定の画面・操作・対象に固有のもの |
 | `src/layouts/` | ページ全体を包む共通の骨組み（`<html>`・`<head>`・共通ナビ） | ページ固有の本文 |
 | `public/` | ビルドを通さずそのまま配信する静的ファイル（画像など） | ページ・コンポーネントの実装 |
 | `astro.config.mjs` | Astro のビルド設定 | ページ・コンポーネントの実装 |
 
-`src/components/` は必要になった時点で作ります。1 ページでしか使わない断片は切り出さず、ページに直接書きます。ただし React island は `.astro` の中に書けないため、1 ページ専用でも `src/components/<ページ名>/` へ切り出します。
+## ディレクトリ構成（Feature-Sliced Design）
+
+`src/` は Feature-Sliced Design の層で分けます。Astro のルーティングが `src/pages/` を占有するため、FSD の `pages` 層は置かず、ルートのページは widget を 1 つ貼るだけにします。
+
+```text
+src/pages/gamble-rumble/index.astro                  ルート
+src/widgets/gamble-rumble/ui/                        窓の組み立てと状態
+src/features/adjust-balance/{model,ui}/              投資・回収
+src/features/select-currency-unit/ui/                単位の切り替え
+src/features/share-balance/{lib,ui}/                 ツイート
+src/entities/balance/{model,ui}/                     収支の境界値と表示
+src/entities/currency-unit/{model,lib}/              単位の定義と換算
+src/shared/ui/win-forms/                             Windows Forms 風の UI キット
+```
+
+- slice は `ui/`（描画）・`model/`（型・定数・データ）・`lib/`（純粋な変換処理）の segment に分ける。必要な segment だけ作る。
+- import は下の層へだけ流す。`pages → widgets → features → entities → shared` の順で、逆流させない。
+- 同じ層の slice 同士は import しない。組み合わせが必要なら 1 つ上の層で行う。
+- 公開 API 用の `index.ts` は置かない。共通ルールでバレルファイルを禁止しているため、`@/entities/currency-unit/model/currency-unit.js` のように segment のファイルを直接指す。
+- 1 ページでしか使わない UI でも、React island は `.astro` の中に書けないため widget として切り出す。
 
 ## 実装ルール
 
@@ -28,14 +50,16 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 - 他の workspace（`packages/*`・`shared-domains`・`repositories`）には依存しない。Lambda app とは実行環境もビルドも別であり、共有が必要になった時点で置き場所から検討する。
 - 動作確認で `npm run dev` を起動したら、必ず `npm run dev:stop`（`astro dev stop`）で停止する。Astro 7 の開発サーバーはデーモンとして常駐するため、親プロセスを kill しても実体（`astro.mjs dev --json`）が残り、次の起動が `Another astro dev server is already running.` で失敗する。
 - 未知パス用のページは持たない。`infra/sst.config.ts` の `assets.routes: ["/"]` で S3 へ転送し、オリジンの標準エラー応答を返す。`errorPage` / `indexPage` によるフォールバックを追加しない。
-- 相対 import には共通ルールどおり `.js` 拡張子を付ける（Vite が `.ts` / `.tsx` へ解決する）。`.astro` ファイルや alias 経由（`@/...`）の import は、`.astro` / `.tsx` と実ファイルの拡張子で書く。
+- `.ts` / `.tsx` の import には、相対でも alias（`@/...`）でも共通ルールどおり `.js` 拡張子を付ける。Vite が `.ts` / `.tsx` へ解決する。`.astro` ファイルの import だけ `.astro` と書く。
 
 ## React island
 
 操作に応じて画面が変わるページは `@astrojs/react` の island として実装します。ページ側は `.astro` のままで、`<Component client:load />` として島だけを hydrate します。
 
-- island の状態は React の `useState` で持つ。状態管理ライブラリは入れない。
+- island の状態は widget が React の `useState` で持ち、feature へは値と callback を props で渡す。状態管理ライブラリは入れない。
 - island のスタイルは同じディレクトリの `.css` を `.tsx` から import する。`.astro` の scoped style は island の DOM には当たらない。
+- 複数 slice で使う見た目は `shared/ui/` に置き、class 名にキット名を前置する（`winforms-button` など）。island の CSS は global に出るため、汎用的な class 名を裸で使わない。
+- ページ全体の背景など body に当たるスタイルは、island の CSS ではなくページの `<style is:global>` に書く。
 - 静的な表示だけのページに island を使わない。素の `.astro` で書く。
 
 ## lint

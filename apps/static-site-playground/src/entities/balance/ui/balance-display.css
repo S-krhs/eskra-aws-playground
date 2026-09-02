@@ -1,0 +1,49 @@
+.balance-display {
+	display: block;
+	padding: 6px 10px;
+	border: 1px solid;
+	border-color: #696969 #ffffff #ffffff #696969;
+	box-shadow:
+		inset 1px 1px 0 #a0a0a0,
+		inset -1px -1px 0 #f0f0f0;
+	background-color: #ffffff;
+	font-family: "MS Gothic", "Osaka-Mono", monospace;
+	font-size: 24px;
+	font-weight: bold;
+	text-align: right;
+}
+
+.balance-display.deficit {
+	color: red;
+}
+
+.balance-display.rainbow {
+	animation: 2s gaming linear infinite;
+}
+
+@keyframes gaming {
+	0% {
+		color: #009944;
+	}
+	14% {
+		color: #0068b7;
+	}
+	28% {
+		color: #1d2088;
+	}
+	42% {
+		color: #920783;
+	}
+	56% {
+		color: #e60000;
+	}
+	70% {
+		color: #f39800;
+	}
+	85% {
+		color: #fff100;
+	}
+	to {
+		color: #009944;
+	}
+}

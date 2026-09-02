@@ -1,0 +1,110 @@
+.winforms-window {
+	max-width: 720px;
+	margin-inline: auto;
+	padding: 3px;
+	border: 1px solid;
+	border-color: #ffffff #696969 #696969 #ffffff;
+	box-shadow:
+		inset 1px 1px 0 #f0f0f0,
+		inset -1px -1px 0 #a0a0a0,
+		3px 3px 8px rgb(0 0 0 / 40%);
+	background-color: #f0f0f0;
+	font-family: "MS UI Gothic", "Meiryo UI", "Segoe UI", sans-serif;
+	font-size: 12px;
+	color: #000000;
+}
+
+.winforms-title-bar {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 2px 2px 4px;
+	background-image: linear-gradient(90deg, #0a246a, #a6caf0);
+	color: #ffffff;
+}
+
+.winforms-title-bar > h1 {
+	flex: 1;
+	margin: 0;
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.winforms-title-bar-controls {
+	display: flex;
+	gap: 2px;
+}
+
+.winforms-title-bar-button {
+	display: grid;
+	place-items: center;
+	width: 17px;
+	height: 15px;
+	border: 1px solid;
+	border-color: #ffffff #696969 #696969 #ffffff;
+	background-color: #f0f0f0;
+	color: #000000;
+	font-size: 9px;
+	line-height: 1;
+}
+
+.winforms-window-body {
+	padding: 12px;
+}
+
+.winforms-group-box {
+	margin: 0 0 12px;
+	padding: 12px;
+	border: 1px solid;
+	border-color: #a0a0a0 #ffffff #ffffff #a0a0a0;
+}
+
+.winforms-group-box > legend {
+	padding: 0 4px;
+}
+
+.winforms-button {
+	display: inline-block;
+	min-width: 88px;
+	padding: 5px 12px;
+	border: 1px solid;
+	border-color: #ffffff #696969 #696969 #ffffff;
+	box-shadow:
+		inset 1px 1px 0 #f0f0f0,
+		inset -1px -1px 0 #a0a0a0;
+	background-color: #f0f0f0;
+	color: #000000;
+	font: inherit;
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.winforms-button:active {
+	border-color: #696969 #ffffff #ffffff #696969;
+	box-shadow:
+		inset 1px 1px 0 #a0a0a0,
+		inset -1px -1px 0 #f0f0f0;
+	padding: 6px 11px 4px 13px;
+}
+
+.winforms-button:focus-visible {
+	outline: 1px dotted #000000;
+	outline-offset: -4px;
+}
+
+.winforms-status-bar {
+	display: flex;
+	gap: 2px;
+	padding: 2px;
+}
+
+.winforms-status-bar-field {
+	padding: 3px 6px;
+	border: 1px solid;
+	border-color: #a0a0a0 #ffffff #ffffff #a0a0a0;
+}
+
+.winforms-status-bar-field:first-child {
+	flex: 1;
+}

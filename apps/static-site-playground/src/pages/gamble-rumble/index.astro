@@ -1,8 +1,16 @@
 ---
-import { GambleRumble } from "@/components/gamble-rumble/gamble-rumble.tsx";
 import BaseLayout from "@/layouts/base-layout.astro";
+import { GambleRumble } from "@/widgets/gamble-rumble/ui/gamble-rumble.js";
 ---
 
 <BaseLayout title="gamble-rumble | sasahara.uk">
 	<GambleRumble client:load />
 </BaseLayout>
+
+<style is:global>
+	body {
+		margin: 0;
+		padding: 24px 16px;
+		background-color: #008080;
+	}
+</style>
