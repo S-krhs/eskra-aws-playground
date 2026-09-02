@@ -1,7 +1,7 @@
 // In scope: 収支の値を表示し、負けと大勝ちで見た目を変える
 // Out of scope: 単位への換算と文字列の組み立て、収支の状態管理
 
-import { rainbowYen } from "@/entities/balance/model/balance-thresholds.js";
+import { rainbowYen } from "@/features/gamble-rumble/model/balance-thresholds.js";
 import "./balance-display.css";
 
 interface Props {

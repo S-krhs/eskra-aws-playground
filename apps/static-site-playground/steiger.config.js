@@ -6,16 +6,13 @@ import { defineConfig } from "steiger";
 export default defineConfig([
 	...fsd.configs.recommended,
 	// src/pages/ は Astro のルーティングであって FSD の pages 層ではない。
-	// index.astro を層の public API と誤検知するため対象から外す。
+	// index.astro を層の public API と誤検知し、ルートの単位を segment へ割れとも言う。
 	{ ignores: ["./src/pages/**"] },
 	{
+		files: ["./src/features/gamble-rumble/**"],
 		rules: {
-			// 共通ルールでバレルファイルを禁止しているため slice の index.ts は作らず、
-			// segment のファイルを直接 import する。
-			"fsd/public-api": "off",
-			"fsd/no-public-api-sidestep": "off",
-			// 小さいツールなので slice の参照元は widget 1 つに寄る。
-			// 層で分けること自体が目的なので統合の提案は受け取らない。
+			// この slice を参照するのは Astro のページだけで、それは上で対象外にしている。
+			// steiger からは参照ゼロに見えるため、この slice に限って無効化する。
 			"fsd/insignificant-slice": "off",
 		},
 	},

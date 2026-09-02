@@ -12,9 +12,9 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 | 層 | 置くもの | 置かないもの |
 | --- | --- | --- |
 | `src/pages/` | Astro のルーティング。ファイルパスがそのまま URL になる。widget を貼るだけの薄いページにする | UI の実装、データ取得の実装 |
-| `src/widgets/` | ページに載せる自己完結した UI ブロック。状態を持ち、feature と entity を組み立てる | 個々の操作の実装、業務上の対象の定義 |
-| `src/features/` | ユーザー操作 1 つ分の UI と、その操作に固有の処理 | 複数の操作の組み立て、対象そのものの定義 |
-| `src/entities/` | 業務上の対象（収支・通貨単位）の型・データと、その表示・変換 | 操作のハンドリング、画面全体の構成 |
+| `src/features/` | 1 つの機能として成り立つ塊。状態・データ・表示をまとめて持つ | 他の画面から使う前提のない切り出し |
+| `src/widgets/` | 複数のページに載る自己完結した UI ブロック。必要になったら作る | 1 ページでしか使わない塊 |
+| `src/entities/` | 複数の feature が扱う対象の型・データと表示。必要になったら作る | 1 つの feature でしか使わない型・データ |
 | `src/shared/` | 業務に依存しない再利用部品（UI キットなど） | 特定の画面・操作・対象に固有のもの |
 | `src/layouts/` | ページ全体を包む共通の骨組み（`<html>`・`<head>`・共通ナビ） | ページ固有の本文 |
 | `public/` | ビルドを通さずそのまま配信する静的ファイル（画像など） | ページ・コンポーネントの実装 |
@@ -22,24 +22,20 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 
 ## ディレクトリ構成（Feature-Sliced Design）
 
-`src/` は Feature-Sliced Design の層で分けます。Astro のルーティングが `src/pages/` を占有するため、FSD の `pages` 層は置かず、ルートのページは widget を 1 つ貼るだけにします。
+`src/` は Feature-Sliced Design の層で分けます。Astro のルーティングが `src/pages/` を占有するため、FSD の `pages` 層は置かず、ルートのページは feature を 1 つ貼るだけにします。
 
 ```text
-src/pages/gamble-rumble/index.astro                  ルート
-src/widgets/gamble-rumble/ui/                        窓の組み立てと状態
-src/features/adjust-balance/{model,ui}/              投資・回収
-src/features/select-currency-unit/ui/                単位の切り替え
-src/features/share-balance/{lib,ui}/                 ツイート
-src/entities/balance/{model,ui}/                     収支の境界値と表示
-src/entities/currency-unit/{model,lib}/              単位の定義と換算
-src/shared/ui/win-forms/                             Windows Forms 風の UI キット
+src/pages/gamble-rumble/index.astro       ルート
+src/features/gamble-rumble/               ツール一式（model・lib・ui）
+src/shared/ui/win-forms/                  Windows Forms 風の UI キット
+src/shared/styles/index.css               Tailwind の入口
 ```
 
 - slice は `ui/`（描画）・`model/`（型・定数・データ）・`lib/`（純粋な変換処理）の segment に分ける。必要な segment だけ作る。
-- import は下の層へだけ流す。`pages → widgets → features → entities → shared` の順で、逆流させない。
-- 同じ層の slice 同士は import しない。組み合わせが必要なら 1 つ上の層で行う。
-- 公開 API 用の `index.ts` は置かない。共通ルールでバレルファイルを禁止しているため、`@/entities/currency-unit/model/currency-unit.js` のように segment のファイルを直接指す。
-- 1 ページでしか使わない UI でも、React island は `.astro` の中に書けないため widget として切り出す。
+- import は下の層へだけ流す。`pages → widgets → features → entities → shared` の順で、逆流させない。同じ層の slice 同士も import しない。
+- **層は上から順に作らない。実際に再利用される段になってから足す。** 1 つの画面でしか使わない操作は feature に閉じ込め、widget・entity を先回りで作らない。widget は「複数のページに載る自己完結した塊」、entity は「複数の feature が扱う対象」になって初めて切り出す。
+- slice には public API として `index.ts` を置き、外からはそこだけを import する（`@/features/gamble-rumble`）。共通ルールのバレルファイル禁止に対する、この app 限定の例外。
+- slice の内側では segment のファイルを直接 import する（`@/features/gamble-rumble/model/currency-unit.js`）。
 
 ## 実装ルール
 
@@ -84,9 +80,9 @@ Tailwind CSS で書きます。`style` 属性でのインライン指定と、�
 
 - 設定は `.js` で書く。cosmiconfig の TypeScript loader が repo の TypeScript 7 に未対応で、`steiger.config.ts` を置くと `findConfigFile is not a function` で落ちる。
 - `src/pages/**` は対象外。Astro のルーティングであって FSD の `pages` 層ではなく、`index.astro` を層の public API と誤検知する。
-- `fsd/public-api` と `fsd/no-public-api-sidestep` は off。共通ルールでバレルファイルを禁止しているため slice に `index.ts` を置かない。
-- `fsd/insignificant-slice` は off。slice の参照元が widget 1 つに寄るのは規模の問題で、層で分けること自体が目的のため。
-- 上記以外は無効化しない。特に `fsd/forbidden-imports` は層をまたぐ誤りを実際に捕まえるため残す。
+- `fsd/insignificant-slice` は `src/features/gamble-rumble` に限って off。この slice を参照するのは Astro のページだけで、それは上で対象外にしているため steiger からは参照ゼロに見える。他の slice では有効なままにする。
+- 上記以外は無効化しない。`fsd/public-api` を守るため slice には `index.ts` を置く。層をまたぐ誤りを捕まえる `fsd/forbidden-imports` と、切り出しすぎを指摘する `fsd/insignificant-slice` は特に残す。
+- ルールを無効化して通すより、指摘に従って構成を直すことを優先する。`insignificant-slice` は「その層はまだ要らない」という指摘であることが多い。
 
 ### biome
 

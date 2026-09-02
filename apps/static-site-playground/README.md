@@ -29,11 +29,13 @@ Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` �
 | `/helloworld/` | 動作確認用 |
 | `/gamble-rumble/` | 賭博の収支を単位付きで積み上げ、X へ投稿するツール |
 
-`/gamble-rumble/` は `@astrojs/react` の island です。収支は円で保持し、選んだ単位（円・ｳｪﾌｧｰ・どきゅーと）へ換算して表示します。見た目は Windows Forms 風で、共通の枠・ボタン・ステータスバーは `src/shared/ui/win-forms/` にまとまっています。
+`/gamble-rumble/` は `@astrojs/react` の island（`src/features/gamble-rumble/`）です。収支は円で保持し、選んだ単位（円・ｳｪﾌｧｰ・どきゅーと）へ換算して表示します。見た目は Windows Forms 風で、共通の枠・ボタン・ステータスバーは `src/shared/ui/win-forms/` にまとまっています。
 
 ## ディレクトリ構成
 
-`src/` は Feature-Sliced Design の層（`widgets` → `features` → `entities` → `shared`）で分け、Astro の `src/pages/` はルーティングだけを持ちます。層の責務と import の向きは `.claude/rules/apps/static-site-playground.md` を参照します。
+`src/` は Feature-Sliced Design の層で分け、Astro の `src/pages/` はルーティングだけを持ちます。現在あるのは `features/gamble-rumble`（ツール一式）と `shared/ui/win-forms`（再利用する UI キット）だけで、`widgets` と `entities` は再利用が実際に必要になった時点で足します。層の責務と import の向きは `.claude/rules/apps/static-site-playground.md` を参照します。
+
+slice の public API は `index.ts` です。repo 共通ルールはバレルファイルを禁止していますが、この app は FSD の作法に合わせた例外として `index.ts` を置きます。
 
 構成の検査には FSD 公式の linter である [steiger](https://github.com/feature-sliced/steiger) を使います。`npm run lint` が `biome ci .` に続けて `steiger ./src` を実行するため、層をまたぐ import は CI で落ちます。設定と、無効化しているルールの理由は `steiger.config.js` に書いてあります。
 
