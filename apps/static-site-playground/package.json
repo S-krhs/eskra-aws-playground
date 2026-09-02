@@ -9,12 +9,20 @@
 		"dev:stop": "astro dev stop",
 		"build": "npm run clean && astro build",
 		"preview": "astro preview",
+		"preview:stop": "astro preview stop",
 		"typecheck": "astro sync && tsc -p tsconfig.json --noEmit",
 		"lint": "biome ci .",
 		"validate": "npm run typecheck && npm run lint"
 	},
 	"dependencies": {
+		"@astrojs/react": "^6.0.5",
 		"astro": "^7.2.9",
-		"cookie": "^2.0.1"
+		"cookie": "^2.0.1",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8"
+	},
+	"devDependencies": {
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.5"
 	}
 }

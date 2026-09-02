@@ -12,12 +12,12 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 | 層 | 置くもの | 置かないもの |
 | --- | --- | --- |
 | `src/pages/` | ルーティングに対応するページ。ファイルパスがそのまま URL になる | 再利用する UI 断片、データ取得の実装 |
-| `src/components/` | 複数ページで使う UI 断片 | ページ固有のマークアップ、ルーティング |
+| `src/components/` | 複数ページで使う UI 断片、React island（`.tsx`） | ページ固有のマークアップ、ルーティング |
 | `src/layouts/` | ページ全体を包む共通の骨組み（`<html>`・`<head>`・共通ナビ） | ページ固有の本文 |
 | `public/` | ビルドを通さずそのまま配信する静的ファイル（画像など） | ページ・コンポーネントの実装 |
 | `astro.config.mjs` | Astro のビルド設定 | ページ・コンポーネントの実装 |
 
-`src/components/` は必要になった時点で作ります。1 ページでしか使わない断片は切り出さず、ページに直接書きます。
+`src/components/` は必要になった時点で作ります。1 ページでしか使わない断片は切り出さず、ページに直接書きます。ただし React island は `.astro` の中に書けないため、1 ページ専用でも `src/components/<ページ名>/` へ切り出します。
 
 ## 実装ルール
 
@@ -28,6 +28,15 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 - 他の workspace（`packages/*`・`shared-domains`・`repositories`）には依存しない。Lambda app とは実行環境もビルドも別であり、共有が必要になった時点で置き場所から検討する。
 - 動作確認で `npm run dev` を起動したら、必ず `npm run dev:stop`（`astro dev stop`）で停止する。Astro 7 の開発サーバーはデーモンとして常駐するため、親プロセスを kill しても実体（`astro.mjs dev --json`）が残り、次の起動が `Another astro dev server is already running.` で失敗する。
 - 未知パス用のページは持たない。`infra/sst.config.ts` の `assets.routes: ["/"]` で S3 へ転送し、オリジンの標準エラー応答を返す。`errorPage` / `indexPage` によるフォールバックを追加しない。
+- 相対 import には共通ルールどおり `.js` 拡張子を付ける（Vite が `.ts` / `.tsx` へ解決する）。`.astro` ファイルや alias 経由（`@/...`）の import は、`.astro` / `.tsx` と実ファイルの拡張子で書く。
+
+## React island
+
+操作に応じて画面が変わるページは `@astrojs/react` の island として実装します。ページ側は `.astro` のままで、`<Component client:load />` として島だけを hydrate します。
+
+- island の状態は React の `useState` で持つ。状態管理ライブラリは入れない。
+- island のスタイルは同じディレクトリの `.css` を `.tsx` から import する。`.astro` の scoped style は island の DOM には当たらない。
+- 静的な表示だけのページに island を使わない。素の `.astro` で書く。
 
 ## lint
 
