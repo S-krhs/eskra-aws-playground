@@ -27,7 +27,7 @@ Astro で `sasahara.uk` の静的サイトを生成する app です。`astro bu
 ```text
 src/pages/gamble-rumble/index.astro       ルート
 src/features/gamble-rumble/               ツール一式（model・lib・ui）
-src/shared/ui/win-forms/                  Windows Forms 風の UI キット
+src/shared/ui/win-forms/                  Windows Forms 風の UI キット（窓・デスクトップ）
 src/shared/styles/index.css               Tailwind の入口
 ```
 
@@ -52,7 +52,9 @@ src/shared/styles/index.css               Tailwind の入口
 
 操作に応じて画面が変わるページは `@astrojs/react` の island として実装します。ページ側は `.astro` のままで、`<Component client:load />` として島だけを hydrate します。
 
-- island の状態は、その island の最上位 component が React の `useState` で持つ（現状は `features/gamble-rumble/ui/gamble-rumble.tsx`）。下位の component へは値と callback を props で渡す。状態管理ライブラリは入れない。
+- island の状態は、その island の最上位 component が React の `useState` で持つ（現状は `features/gamble-rumble/ui/gamble-rumble-desktop.tsx` と、窓ごとの `gamble-rumble.tsx`）。下位の component へは値と callback を props で渡す。状態管理ライブラリは入れない。
+- `.astro` から island へ渡す props は serialize される。関数は渡せないため、window の中身をアイコンに紐付けるような組み立ては React 側の component（`ui/gamble-rumble-desktop.tsx`）で行う。
+- 窓を並べる側と個々の窓のやり取りだけ context を使う（`shared/ui/win-forms/window-host.ts`）。props で貫くと feature が窓の重なり順まで持つことになるため。context を増やす場合は同じ基準で判断する。
 - 静的な表示だけのページに island を使わない。素の `.astro` で書く。
 
 ## スタイル

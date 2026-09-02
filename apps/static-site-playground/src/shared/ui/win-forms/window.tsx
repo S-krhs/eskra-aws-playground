@@ -4,9 +4,11 @@
 import {
 	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
+	useContext,
 	useRef,
 	useState,
 } from "react";
+import { WindowHostContext } from "./window-host.js";
 
 /** 窓の表示状態。閉じたら中身ごと描画しない */
 type WindowState = "normal" | "minimized" | "maximized" | "closed";
@@ -14,6 +16,9 @@ type WindowState = "normal" | "minimized" | "maximized" | "closed";
 /** 画面外へ出しきらないよう、掴める幅と高さをこれだけ残す */
 const grabMargin = 80;
 const titleBarHeight = 24;
+
+/** アイコン列を覆わないよう、2 枚目以降はこの右から重ねる */
+const iconColumnWidth = 140;
 
 const ControlButton = ({
 	label,
@@ -56,6 +61,7 @@ export const Window = ({
 	maximizable?: boolean;
 	children: ReactNode;
 }) => {
+	const host = useContext(WindowHostContext);
 	const [state, setState] = useState<WindowState>("normal");
 	const [position, setPosition] = useState<{ x: number; y: number } | null>(
 		null,
@@ -76,6 +82,7 @@ export const Window = ({
 	const isDraggable = !isMinimized && !isMaximized;
 
 	const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+		host?.onFocus();
 		const frame = frameRef.current;
 		if (event.button !== 0 || !frame) {
 			return;
@@ -146,7 +153,8 @@ export const Window = ({
 				label="閉じる"
 				glyph="✕"
 				onPress={() => {
-					return setState("closed");
+					// デスクトップに載っているときは、並べている側が窓ごと外す
+					return host ? host.onClose() : setState("closed");
 				}}
 			/>
 		</>
@@ -192,6 +200,21 @@ export const Window = ({
 	}
 
 	const isMoved = position !== null && !isMaximized;
+	// 位置と重なり順は実行時に決まるため class にできない
+	const placementStyle = isMoved
+		? { left: position.x, top: position.y, zIndex: host?.zIndex }
+		: host
+			? {
+					zIndex: host.zIndex,
+					...(host.cascadeIndex === 0
+						? {}
+						: {
+								left: iconColumnWidth + host.cascadeIndex * 28,
+								top: 24 + host.cascadeIndex * 28,
+							}),
+				}
+			: undefined;
+	const centeredByCss = host !== null && !isMoved && host.cascadeIndex === 0;
 
 	return (
 		<div
@@ -199,11 +222,14 @@ export const Window = ({
 			className={
 				isMaximized
 					? `${frameClasses} fixed inset-0 z-10 flex flex-col overflow-hidden`
-					: isMoved
-						? `${frameClasses} fixed z-10 w-[min(45rem,calc(100vw-2rem))]`
+					: isMoved || host
+						? `${frameClasses} fixed w-[min(45rem,calc(100vw-2rem))] ${centeredByCss ? "top-6 left-1/2 -translate-x-1/2" : ""}`
 						: `${frameClasses} mx-auto max-w-180`
 			}
-			style={isMoved ? { left: position.x, top: position.y } : undefined}
+			style={placementStyle}
+			onPointerDownCapture={() => {
+				return host?.onFocus();
+			}}
 		>
 			{titleBar}
 

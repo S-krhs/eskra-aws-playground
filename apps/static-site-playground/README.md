@@ -29,7 +29,7 @@ Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` �
 | `/helloworld/` | 動作確認用 |
 | `/gamble-rumble/` | 賭博の収支を単位付きで積み上げ、X へ投稿するツール |
 
-`/gamble-rumble/` は `@astrojs/react` の island（`src/features/gamble-rumble/`）です。収支は円で保持し、選んだ単位（円・ｳｪﾌｧｰ・どきゅーと）へ換算して表示します。見た目は Windows Forms 風で、共通の枠・ボタン・ステータスバーは `src/shared/ui/win-forms/` にまとまっています。
+`/gamble-rumble/` は `@astrojs/react` の island（`src/features/gamble-rumble/`）です。デスクトップ風の画面で、左上のアイコンをダブルクリックすると収支を独立して持つ窓が増えます。窓は移動・最小化・閉じるができ、すべて閉じてもアイコンから開き直せます。収支は円で保持し、選んだ単位（円・ｳｪﾌｧｰ・どきゅーと）へ換算して表示します。見た目は Windows Forms 風で、共通の枠・ボタン・ステータスバーは `src/shared/ui/win-forms/` にまとまっています。
 
 ## ディレクトリ構成
 
