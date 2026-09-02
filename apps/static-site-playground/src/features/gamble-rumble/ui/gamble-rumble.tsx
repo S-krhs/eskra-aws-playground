@@ -2,18 +2,18 @@
 // Out of scope: 収支の表示や換算の実装、投資・回収ボタンの中身
 
 import { useState } from "react";
-import { formatBalance } from "@/features/gamble-rumble/lib/format-balance.js";
-import { shareUrl } from "@/features/gamble-rumble/lib/share-url.js";
-import { currencyUnits } from "@/features/gamble-rumble/model/currency-unit.js";
-import { BalanceDisplay } from "@/features/gamble-rumble/ui/balance-display.js";
-import { ExpenseButtons } from "@/features/gamble-rumble/ui/expense-buttons.js";
-import { OverLimitCaution } from "@/features/gamble-rumble/ui/over-limit-caution.js";
 import {
 	GroupBox,
 	LinkButton,
 	ToggleButton,
 	Window,
 } from "@/shared/ui/win-forms";
+import { formatBalance } from "../lib/format-balance.js";
+import { shareUrl } from "../lib/share-url.js";
+import { currencyUnits } from "../model/currency-unit.js";
+import { BalanceDisplay } from "./balance-display.js";
+import { ExpenseButtons } from "./expense-buttons.js";
+import { OverLimitCaution } from "./over-limit-caution.js";
 
 /** 収支を賭けの単位で積み上げ、ツイートで晒すところまでを担う island */
 export const GambleRumble = () => {

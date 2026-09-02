@@ -1,8 +1,8 @@
 // In scope: 収支を増減させるボタン列
 // Out of scope: 収支の保持、増減後の表示
 
-import { expenseSteps } from "@/features/gamble-rumble/model/expense-steps.js";
 import { Button } from "@/shared/ui/win-forms";
+import { expenseSteps } from "../model/expense-steps.js";
 
 interface Props {
 	onAdjust: (stepYen: number) => void;

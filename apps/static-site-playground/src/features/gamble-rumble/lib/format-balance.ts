@@ -1,7 +1,7 @@
 // In scope: 円建ての収支を選択中の単位へ換算し、単位付きの表示文字列にする
 // Out of scope: 通貨単位の定義、表示の見た目、ツイート文面
 
-import type { CurrencyUnit } from "@/features/gamble-rumble/model/currency-unit.js";
+import type { CurrencyUnit } from "../model/currency-unit.js";
 
 /**
  * 円建ての収支を選択中の単位へ換算し、有効数字 3 桁の単位付き文字列にする。

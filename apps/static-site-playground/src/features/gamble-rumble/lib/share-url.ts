@@ -1,8 +1,8 @@
 // In scope: 収支からツイート文面を組み立て、投稿画面の URL にする
 // Out of scope: リンクの描画、収支の状態管理
 
-import { formatBalance } from "@/features/gamble-rumble/lib/format-balance.js";
-import type { CurrencyUnit } from "@/features/gamble-rumble/model/currency-unit.js";
+import type { CurrencyUnit } from "../model/currency-unit.js";
+import { formatBalance } from "./format-balance.js";
 
 /** 収支を「大体N単位分負けました」の文面にして、ツイート画面を開く URL を作る */
 export const shareUrl = (yen: number, unit: CurrencyUnit): string => {

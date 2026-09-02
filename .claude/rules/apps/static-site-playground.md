@@ -35,7 +35,7 @@ src/shared/styles/index.css               Tailwind の入口
 - import は下の層へだけ流す。`pages → widgets → features → entities → shared` の順で、逆流させない。同じ層の slice 同士も import しない。
 - **層は上から順に作らない。実際に再利用される段になってから足す。** 1 つの画面でしか使わない操作は feature に閉じ込め、widget・entity を先回りで作らない。widget は「複数のページに載る自己完結した塊」、entity は「複数の feature が扱う対象」になって初めて切り出す。
 - slice には public API として `index.ts` を置き、外からはそこだけを import する（`@/features/gamble-rumble`）。共通ルールのバレルファイル禁止に対する、この app 限定の例外。
-- slice の内側では segment のファイルを直接 import する（`@/features/gamble-rumble/model/currency-unit.js`）。
+- slice の内側は相対 import で書く（`../model/currency-unit.js`）。slice をまたぐときだけ alias で public API を指す（`@/shared/ui/win-forms`）。import を見ただけで slice の内か外かが分かるようにする。
 
 ## 実装ルール
 
@@ -46,7 +46,7 @@ src/shared/styles/index.css               Tailwind の入口
 - 他の workspace（`packages/*`・`shared-domains`・`repositories`）には依存しない。Lambda app とは実行環境もビルドも別であり、共有が必要になった時点で置き場所から検討する。
 - 動作確認で `npm run dev` を起動したら、必ず `npm run dev:stop`（`astro dev stop`）で停止する。Astro 7 の開発サーバーはデーモンとして常駐するため、親プロセスを kill しても実体（`astro.mjs dev --json`）が残り、次の起動が `Another astro dev server is already running.` で失敗する。
 - 未知パス用のページは持たない。`infra/sst.config.ts` の `assets.routes: ["/"]` で S3 へ転送し、オリジンの標準エラー応答を返す。`errorPage` / `indexPage` によるフォールバックを追加しない。
-- `.ts` / `.tsx` の import には、相対でも alias（`@/...`）でも共通ルールどおり `.js` 拡張子を付ける。Vite が `.ts` / `.tsx` へ解決する。`.astro` ファイルの import だけ `.astro` と書く。
+- `.ts` / `.tsx` をファイル名まで指して import するときは、相対でも alias でも共通ルールどおり `.js` 拡張子を付ける。Vite が `.ts` / `.tsx` へ解決する。slice の public API を指すときだけ拡張子なし（`@/shared/ui/win-forms`）で、ディレクトリの `index.ts` に解決される。`.astro` ファイルの import は `.astro` と書く。
 
 ## React island
 
