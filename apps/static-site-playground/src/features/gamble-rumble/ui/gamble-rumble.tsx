@@ -10,6 +10,7 @@ import {
 } from "@/shared/ui/win-forms";
 import { formatBalance } from "../lib/format-balance.js";
 import { shareUrl } from "../lib/share-url.js";
+import { cautionYen } from "../model/balance-thresholds.js";
 import { currencyUnits } from "../model/currency-unit.js";
 import { shareText } from "../model/share-text.js";
 import { BalanceDisplay } from "./balance-display.js";
@@ -29,7 +30,7 @@ export const GambleRumble = () => {
 				`${balanceYen.toLocaleString("ja-JP")}円`,
 			]}
 		>
-			<OverLimitCaution balanceYen={balanceYen} />
+			{balanceYen <= cautionYen && <OverLimitCaution />}
 
 			<GroupBox label="収支">
 				<BalanceDisplay
