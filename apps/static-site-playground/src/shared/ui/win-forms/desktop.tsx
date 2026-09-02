@@ -19,6 +19,12 @@ interface OpenWindow {
 	cascadeIndex: number;
 }
 
+/** 同じアイコンをこの間隔以内に 2 回押したら、ダブルクリックとみなす */
+const doubleClickMs = 500;
+
+/** アイコンから開くとき、窓が出るまで待たせる時間。起動中らしく見せる */
+const openingMs = 400;
+
 /**
  * アイコンを左上に並べ、ダブルクリック（キーボードなら Enter / Space）で
  * 窓を増やす。最初の 1 枚は最初のアイコンのものを開いた状態で始める。
@@ -31,10 +37,14 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 	// 手前に来た順。末尾ほど手前。描画順は開いた順のまま動かさない。
 	// 並べ替えると DOM が動き、押している最中のクリックが取りこぼされる。
 	const [zOrder, setZOrder] = useState<number[]>(firstIcon ? [0] : []);
-	// 最小化した順。下辺に並べる位置をここで決める
-	const [minimizedKeys, setMinimizedKeys] = useState<number[]>([]);
+	// 添字が下辺に並べる位置、値がそこに置く窓の key。1 枚を戻したときに
+	// 残りが左へ動かないよう、空いた位置は null のまま残す
+	const [minimizedSlots, setMinimizedSlots] = useState<(number | null)[]>([]);
+	// アイコンから開くのを待っている窓の数。0 でない間はカーソルを砂時計にする
+	const [openingCount, setOpeningCount] = useState(0);
 	const nextKey = useRef(1);
 	const nextCascade = useRef(1);
+	const lastIconClick = useRef<{ iconId: string; at: number } | null>(null);
 
 	const open = (iconId: string) => {
 		const key = nextKey.current;
@@ -49,17 +59,69 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 		});
 	};
 
+	const openFromIcon = (iconId: string) => {
+		setOpeningCount((current) => {
+			return current + 1;
+		});
+		window.setTimeout(() => {
+			open(iconId);
+			setOpeningCount((current) => {
+				return current - 1;
+			});
+		}, openingMs);
+	};
+
+	/**
+	 * ダブルクリックを自前で数える。ブラウザの dblclick は click 回数が
+	 * ちょうど 2 のときしか出ず、連打すると 2 回目以降が出ないため。
+	 */
+	const handleIconClick = (iconId: string) => {
+		const at = Date.now();
+		const previous = lastIconClick.current;
+		const isSecondClick =
+			previous !== null &&
+			previous.iconId === iconId &&
+			at - previous.at <= doubleClickMs;
+		// 3 回目を 2 回目の続きにしないよう、開いたら数え直す
+		lastIconClick.current = isSecondClick ? null : { iconId, at };
+		if (isSecondClick) {
+			openFromIcon(iconId);
+		}
+	};
+
+	const takeMinimizedSlot = (key: number) => {
+		return setMinimizedSlots((current) => {
+			if (current.includes(key)) {
+				return current;
+			}
+			const free = current.indexOf(null);
+			if (free === -1) {
+				return [...current, key];
+			}
+			return current.map((candidate, index) => {
+				return index === free ? key : candidate;
+			});
+		});
+	};
+
+	const releaseMinimizedSlot = (key: number) => {
+		return setMinimizedSlots((current) => {
+			if (!current.includes(key)) {
+				return current;
+			}
+			return current.map((candidate) => {
+				return candidate === key ? null : candidate;
+			});
+		});
+	};
+
 	const forget = (key: number) => {
 		setWindows((current) => {
 			return current.filter((candidate) => {
 				return candidate.key !== key;
 			});
 		});
-		setMinimizedKeys((current) => {
-			return current.filter((candidate) => {
-				return candidate !== key;
-			});
-		});
+		releaseMinimizedSlot(key);
 		setZOrder((current) => {
 			return current.filter((candidate) => {
 				return candidate !== key;
@@ -75,14 +137,14 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 						<button
 							key={icon.id}
 							type="button"
-							className="flex cursor-default select-none flex-col items-center gap-1 border border-transparent p-1 text-white focus-visible:border-white focus-visible:border-dotted"
-							onDoubleClick={() => {
-								return open(icon.id);
+							className={`flex ${openingCount > 0 ? "cursor-wait" : "cursor-default"} select-none flex-col items-center gap-1 border border-transparent p-1 text-white focus-visible:border-white focus-visible:border-dotted`}
+							onClick={() => {
+								return handleIconClick(icon.id);
 							}}
 							onKeyDown={(event) => {
 								if (event.key === "Enter" || event.key === " ") {
 									event.preventDefault();
-									open(icon.id);
+									openFromIcon(icon.id);
 								}
 							}}
 						>
@@ -112,7 +174,7 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 						value={{
 							zIndex: 10 + zOrder.indexOf(entry.key),
 							cascadeIndex: entry.cascadeIndex,
-							minimizedSlot: minimizedKeys.indexOf(entry.key),
+							minimizedSlot: minimizedSlots.indexOf(entry.key),
 							onClose: () => {
 								return forget(entry.key);
 							},
@@ -130,16 +192,9 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 								});
 							},
 							onMinimizedChange: (minimized: boolean) => {
-								return setMinimizedKeys((current) => {
-									if (!minimized) {
-										return current.filter((candidate) => {
-											return candidate !== entry.key;
-										});
-									}
-									return current.includes(entry.key)
-										? current
-										: [...current, entry.key];
-								});
+								return minimized
+									? takeMinimizedSlot(entry.key)
+									: releaseMinimizedSlot(entry.key);
 							},
 						}}
 					>
