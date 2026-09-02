@@ -11,9 +11,10 @@
 sasahara.uk (Route53 A/AAAA alias)
         ↓
   StaticSitePlayground (CloudFront + S3)
-        ├─ /            → トップページ
-        ├─ /helloworld/ → Hello World
-        └─ 上記以外      → S3 / CloudFront の標準エラー
+        ├─ /               → トップページ
+        ├─ /helloworld/    → Hello World
+        ├─ /gamble-rumble/ → 賭博の収支をツイートするツール
+        └─ 上記以外         → S3 / CloudFront の標準エラー
 ```
 
 ## ドメインと証明書

@@ -1,0 +1,38 @@
+/* Windows Forms 風 UI キットの配色・書体・立体枠。この kit の component が使う */
+@theme {
+	--color-face: #f0f0f0;
+	--color-face-pressed: #dcdcdc;
+	--color-bevel-light: #ffffff;
+	--color-bevel-shadow: #a0a0a0;
+	--color-bevel-dark: #696969;
+	--color-title-bar-start: #0a246a;
+	--color-title-bar-end: #a6caf0;
+	--font-ui: "MS UI Gothic", "Meiryo UI", "Segoe UI", sans-serif;
+}
+
+/* 手前に浮いた立体枠。ボタンと窓の外周に使う */
+@utility bevel-raised {
+	border: 1px solid;
+	border-color: var(--color-bevel-light) var(--color-bevel-dark)
+		var(--color-bevel-dark) var(--color-bevel-light);
+	box-shadow:
+		inset 1px 1px 0 var(--color-face),
+		inset -1px -1px 0 var(--color-bevel-shadow);
+}
+
+/* 奥へへこんだ立体枠。押されたボタンと入力欄に使う */
+@utility bevel-sunken {
+	border: 1px solid;
+	border-color: var(--color-bevel-dark) var(--color-bevel-light)
+		var(--color-bevel-light) var(--color-bevel-dark);
+	box-shadow:
+		inset 1px 1px 0 var(--color-bevel-shadow),
+		inset -1px -1px 0 var(--color-face);
+}
+
+/* 溝を彫ったような 1px 枠。GroupBox とステータスバーに使う */
+@utility bevel-etched {
+	border: 1px solid;
+	border-color: var(--color-bevel-shadow) var(--color-bevel-light)
+		var(--color-bevel-light) var(--color-bevel-shadow);
+}

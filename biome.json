@@ -7,6 +7,11 @@
 	"files": {
 		"includes": ["**/*", "!**/package-lock.json", "!repositories/generated"]
 	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
 	"linter": {
 		"rules": {
 			"style": {
@@ -27,6 +32,17 @@
 					"correctness": {
 						"noUnusedImports": "off",
 						"noUnusedVariables": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["apps/static-site-playground/**"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"useSortedClasses": "error",
+						"useTailwindShorthandClasses": "error"
 					}
 				}
 			}

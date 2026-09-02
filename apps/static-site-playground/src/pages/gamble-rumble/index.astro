@@ -1,0 +1,25 @@
+---
+import { GambleRumble } from "@/features/gamble-rumble";
+import BaseLayout from "@/layouts/base-layout.astro";
+import "@/shared/styles/index.css";
+---
+
+<BaseLayout title="gamble-rumble | sasahara.uk">
+	<Fragment slot="head">
+		<meta property="og:url" content="https://sasahara.uk/gamble-rumble" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="sasaharaUK - gamble-rumble" />
+		<meta property="og:site_name" content="sasaharaUK" />
+		<meta property="og:image" content="https://sasahara.uk/pic/uk0001.jpg" />
+		<meta name="twitter:card" content="summary" />
+	</Fragment>
+	<GambleRumble client:load />
+</BaseLayout>
+
+<style is:global>
+	body {
+		margin: 0;
+		padding: 24px 16px;
+		background-color: #008080;
+	}
+</style>

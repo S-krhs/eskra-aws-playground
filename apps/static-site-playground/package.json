@@ -4,17 +4,29 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"clean": "rm -rf dist .astro",
+		"clean": "rm -rf dist",
 		"dev": "astro dev",
 		"dev:stop": "astro dev stop",
 		"build": "npm run clean && astro build",
 		"preview": "astro preview",
+		"preview:stop": "astro preview stop",
 		"typecheck": "astro sync && tsc -p tsconfig.json --noEmit",
-		"lint": "biome ci .",
+		"lint": "biome ci . && steiger ./src",
 		"validate": "npm run typecheck && npm run lint"
 	},
 	"dependencies": {
+		"@astrojs/react": "^6.0.5",
+		"@tailwindcss/vite": "^4.3.3",
 		"astro": "^7.2.9",
-		"cookie": "^2.0.1"
+		"cookie": "^2.0.1",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"tailwindcss": "^4.3.3"
+	},
+	"devDependencies": {
+		"@feature-sliced/steiger-plugin": "^0.7.0",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.5",
+		"steiger": "^0.6.0"
 	}
 }

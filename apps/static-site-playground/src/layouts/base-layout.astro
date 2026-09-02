@@ -12,6 +12,8 @@ const { title } = Astro.props;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{title}</title>
+		<link rel="icon" href="/pic/uk0001.jpg" />
+		<slot name="head" />
 	</head>
 	<body>
 		<slot />
