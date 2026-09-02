@@ -57,7 +57,7 @@ src/shared/styles/index.css               Tailwind の入口
 
 ## スタイル
 
-Tailwind CSS で書きます。`style` 属性でのインライン指定と、素の CSS ファイルは使いません。`.astro` の scoped style は island の DOM に当たらないため、component 側に class で当てます。
+Tailwind CSS で書きます。素の CSS ファイルは使いません。`style` 属性は、ドラッグ位置のように実行時に決まる値だけに使います（Tailwind は class 名を静的に走査するため、実行時の値から class を作れない）。見た目の指定に使ってはいけません。`.astro` の scoped style は island の DOM に当たらないため、component 側に class で当てます。
 
 | 置き場所 | 置くもの |
 | --- | --- |
@@ -70,6 +70,8 @@ Tailwind CSS で書きます。`style` 属性でのインライン指定と、�
 - slice 固有の色や書体を `shared` の `@theme` に足さない。使う component で arbitrary value を書く。
 - 表示するかどうか、どの見た目で出すかの判断は呼び出し側に置き、component は渡された前提で描画する。`props` を見て `null` を返したり、閾値と比較したりしない。閾値は判断する側の 1 か所にまとめる。
 - `@theme` と `@utility` は Tailwind の入口から辿れる CSS にしか書けない。入口が読むのは `shared` までとし、上の層の CSS を読ませない。
+- data URI を背景の arbitrary value にしない。生成 CSS が PostCSS の `Unclosed string` で落ち、`astro build` は通るのに dev サーバーだけが動かなくなる。画像は `img` の `src` に置く。
+- Tailwind は class 名を生のテキストとして走査する。コメントや文字列に class の形をした語を書くと、それも拾って CSS を生成する。
 
 ## lint
 
