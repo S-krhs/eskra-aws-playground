@@ -35,6 +35,12 @@ Astro 7 の開発サーバーはデーモンとして常駐し、`npm run dev` �
 
 `src/` は Feature-Sliced Design の層（`widgets` → `features` → `entities` → `shared`）で分け、Astro の `src/pages/` はルーティングだけを持ちます。層の責務と import の向きは `.claude/rules/apps/static-site-playground.md` を参照します。
 
+構成の検査には FSD 公式の linter である [steiger](https://github.com/feature-sliced/steiger) を使います。`npm run lint` が `biome ci .` に続けて `steiger ./src` を実行するため、層をまたぐ import は CI で落ちます。設定と、無効化しているルールの理由は `steiger.config.js` に書いてあります。
+
+## スタイル
+
+Tailwind CSS v4 を `@tailwindcss/vite` 経由で使います。入口は `src/shared/styles/tailwind.css` で、ページから読み込みます。Windows Forms 風の配色・立体枠は `src/shared/ui/win-forms/win-forms.css` の `@theme` と `@utility` にまとめてあります。
+
 ## 型チェック
 
 `astro sync` で `.astro/types.d.ts` を生成してから `tsc --noEmit` を実行します。

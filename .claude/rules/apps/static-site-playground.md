@@ -57,12 +57,38 @@ src/shared/ui/win-forms/                             Windows Forms 風の UI キ
 操作に応じて画面が変わるページは `@astrojs/react` の island として実装します。ページ側は `.astro` のままで、`<Component client:load />` として島だけを hydrate します。
 
 - island の状態は widget が React の `useState` で持ち、feature へは値と callback を props で渡す。状態管理ライブラリは入れない。
-- island のスタイルは同じディレクトリの `.css` を `.tsx` から import する。`.astro` の scoped style は island の DOM には当たらない。
-- 複数 slice で使う見た目は `shared/ui/` に置き、class 名にキット名を前置する（`winforms-button` など）。island の CSS は global に出るため、汎用的な class 名を裸で使わない。
-- ページ全体の背景など body に当たるスタイルは、island の CSS ではなくページの `<style is:global>` に書く。
 - 静的な表示だけのページに island を使わない。素の `.astro` で書く。
 
+## スタイル
+
+Tailwind CSS で書きます。`style` 属性でのインライン指定と、素の CSS ファイルは使いません。`.astro` の scoped style は island の DOM に当たらないため、component 側に class で当てます。
+
+| 置き場所 | 置くもの |
+| --- | --- |
+| component の `className` | 原則すべての見た目。theme に無い値は arbitrary value（`bg-[#ffe0e0]`）で書く |
+| `src/shared/styles/tailwind.css` | Tailwind の入口。`@import "tailwindcss"` と kit の読み込みだけを書く |
+| `src/shared/ui/<kit>/<kit>.css` | UI キットの `@theme` トークンと `@utility`。kit の component が使う色・書体・枠 |
+| slice 内の `.css` | class で書けないもの（`@keyframes` など）だけ。component から import する |
+| ページの `<style is:global>` | body に当たるページ全体の背景・余白 |
+
+- slice 固有の色や書体を `shared` の `@theme` に足さない。使う component で arbitrary value を書く。
+- `@theme` と `@utility` は Tailwind の入口から辿れる CSS にしか書けない。入口が読むのは `shared` までとし、上の層の CSS を読ませない。
+
 ## lint
+
+`npm run lint` は `biome ci .` と `steiger ./src` を続けて実行します。CI の `npm run lint`（root）が turbo 経由でこれを呼ぶため、FSD 違反は CI で落ちます。
+
+### steiger（FSD 公式 linter）
+
+層と import の向きを検査します。設定は `steiger.config.js` です。
+
+- 設定は `.js` で書く。cosmiconfig の TypeScript loader が repo の TypeScript 7 に未対応で、`steiger.config.ts` を置くと `findConfigFile is not a function` で落ちる。
+- `src/pages/**` は対象外。Astro のルーティングであって FSD の `pages` 層ではなく、`index.astro` を層の public API と誤検知する。
+- `fsd/public-api` と `fsd/no-public-api-sidestep` は off。共通ルールでバレルファイルを禁止しているため slice に `index.ts` を置かない。
+- `fsd/insignificant-slice` は off。slice の参照元が widget 1 つに寄るのは規模の問題で、層で分けること自体が目的のため。
+- 上記以外は無効化しない。特に `fsd/forbidden-imports` は層をまたぐ誤りを実際に捕まえるため残す。
+
+### biome
 
 `.astro` の frontmatter は biome が単体の script として解釈し、テンプレートでしか使わない import と `Props` を未使用と判定する。`biome.json` の override で `**/*.astro` の `noUnusedImports` / `noUnusedVariables` を off にしている。CI は warning でも通るが、off にしないと `biome check --write --unsafe` が import を消してビルドを壊す。
 
