@@ -12,7 +12,7 @@ export const GambleRumbleDesktop = () => {
 				{
 					id: "gamble-rumble",
 					label: "gamble-rumble",
-					image: "/pic/gamble-rumble/yen.jpg",
+					image: "/pic/gamble-rumble/dcu.jpg",
 					imageAlt: "gamble-rumble",
 					render: () => {
 						return <GambleRumble />;

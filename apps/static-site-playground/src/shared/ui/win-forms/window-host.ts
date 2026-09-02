@@ -9,8 +9,12 @@ export interface WindowHost {
 	zIndex: number;
 	/** 何枚目に開いたか。ずらして重ねるために使う */
 	cascadeIndex: number;
+	/** 最小化した窓が下辺に並ぶときの位置。最小化していなければ -1 */
+	minimizedSlot: number;
 	onClose: () => void;
 	onFocus: () => void;
+	/** 最小化・復元を並べる側へ知らせる。並べる側が下辺の位置を決める */
+	onMinimizedChange: (minimized: boolean) => void;
 }
 
 export const WindowHostContext = createContext<WindowHost | null>(null);

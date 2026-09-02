@@ -20,6 +20,9 @@ const titleBarHeight = 24;
 /** アイコン列を覆わないよう、2 枚目以降はこの右から重ねる */
 const iconColumnWidth = 140;
 
+/** 最小化した窓を下辺へ並べる間隔。バーの幅どおりに詰めて置く */
+const minimizedPitch = 240;
+
 const ControlButton = ({
 	label,
 	glyph,
@@ -77,6 +80,16 @@ export const Window = ({
 		return null;
 	}
 
+	const minimize = () => {
+		host?.onMinimizedChange(true);
+		setState("minimized");
+	};
+
+	const restore = () => {
+		host?.onMinimizedChange(false);
+		setState("normal");
+	};
+
 	const isMinimized = state === "minimized";
 	const isMaximized = state === "maximized";
 	const isDraggable = !isMinimized && !isMaximized;
@@ -125,21 +138,9 @@ export const Window = ({
 	const controls = (
 		<>
 			{isMinimized ? (
-				<ControlButton
-					label="元のサイズに戻す"
-					glyph="❐"
-					onPress={() => {
-						return setState("normal");
-					}}
-				/>
+				<ControlButton label="元のサイズに戻す" glyph="❐" onPress={restore} />
 			) : (
-				<ControlButton
-					label="最小化"
-					glyph="─"
-					onPress={() => {
-						return setState("minimized");
-					}}
-				/>
+				<ControlButton label="最小化" glyph="─" onPress={minimize} />
 			)}
 			<ControlButton
 				label={isMaximized ? "元のサイズに戻す" : "最大化"}
@@ -180,10 +181,13 @@ export const Window = ({
 		"bevel-raised bg-face p-[3px] font-ui text-black text-xs shadow-[3px_3px_8px_rgb(0_0_0/40%)]";
 
 	if (isMinimized) {
+		// 下辺に横並びで置く。位置は実行時に決まるため class にできない
+		const slot = host ? Math.max(host.minimizedSlot, 0) : 0;
 		return (
 			// biome-ignore lint/a11y/noStaticElementInteractions: ダブルクリックは復元ボタンの補助で、同じ操作は「元のサイズに戻す」ボタンから行える
 			<div
-				className={`${frameClasses} fixed bottom-3 left-3 z-10 w-60`}
+				className={`${frameClasses} fixed bottom-3 z-10 w-60`}
+				style={{ left: 12 + slot * minimizedPitch, zIndex: host?.zIndex }}
 				onDoubleClick={(event) => {
 					if (
 						event.target instanceof Element &&
@@ -191,7 +195,7 @@ export const Window = ({
 					) {
 						return;
 					}
-					return setState("normal");
+					return restore();
 				}}
 			>
 				{titleBar}

@@ -55,6 +55,7 @@ src/shared/styles/index.css               Tailwind の入口
 - island の状態は、その island の最上位 component が React の `useState` で持つ（現状は `features/gamble-rumble/ui/gamble-rumble-desktop.tsx` と、窓ごとの `gamble-rumble.tsx`）。下位の component へは値と callback を props で渡す。状態管理ライブラリは入れない。
 - `.astro` から island へ渡す props は serialize される。関数は渡せないため、window の中身をアイコンに紐付けるような組み立ては React 側の component（`ui/gamble-rumble-desktop.tsx`）で行う。
 - 窓を並べる側と個々の窓のやり取りだけ context を使う（`shared/ui/win-forms/window-host.ts`）。props で貫くと feature が窓の重なり順まで持つことになるため。context を増やす場合は同じ基準で判断する。
+- 重なり順を配列の並べ替えで表さない。key 付きの兄弟を並べ替えると DOM ノードが移動し、押している最中のクリックが取りこぼされる（背面の窓のボタンが 1 回で効かなくなる）。描画順は固定し、`z-index` の値だけを変える。
 - 静的な表示だけのページに island を使わない。素の `.astro` で書く。
 
 ## スタイル

@@ -28,6 +28,11 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 	const [windows, setWindows] = useState<OpenWindow[]>(
 		firstIcon ? [{ key: 0, iconId: firstIcon.id, cascadeIndex: 0 }] : [],
 	);
+	// 手前に来た順。末尾ほど手前。描画順は開いた順のまま動かさない。
+	// 並べ替えると DOM が動き、押している最中のクリックが取りこぼされる。
+	const [zOrder, setZOrder] = useState<number[]>(firstIcon ? [0] : []);
+	// 最小化した順。下辺に並べる位置をここで決める
+	const [minimizedKeys, setMinimizedKeys] = useState<number[]>([]);
 	const nextKey = useRef(1);
 	const nextCascade = useRef(1);
 
@@ -38,6 +43,27 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 		nextCascade.current += 1;
 		setWindows((current) => {
 			return [...current, { key, iconId, cascadeIndex }];
+		});
+		setZOrder((current) => {
+			return [...current, key];
+		});
+	};
+
+	const forget = (key: number) => {
+		setWindows((current) => {
+			return current.filter((candidate) => {
+				return candidate.key !== key;
+			});
+		});
+		setMinimizedKeys((current) => {
+			return current.filter((candidate) => {
+				return candidate !== key;
+			});
+		});
+		setZOrder((current) => {
+			return current.filter((candidate) => {
+				return candidate !== key;
+			});
 		});
 	};
 
@@ -73,7 +99,7 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 				})}
 			</div>
 
-			{windows.map((entry, index) => {
+			{windows.map((entry) => {
 				const icon = icons.find((candidate) => {
 					return candidate.id === entry.iconId;
 				});
@@ -84,27 +110,35 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 					<WindowHostContext.Provider
 						key={entry.key}
 						value={{
-							zIndex: 10 + index,
+							zIndex: 10 + zOrder.indexOf(entry.key),
 							cascadeIndex: entry.cascadeIndex,
+							minimizedSlot: minimizedKeys.indexOf(entry.key),
 							onClose: () => {
-								return setWindows((current) => {
-									return current.filter((candidate) => {
-										return candidate.key !== entry.key;
-									});
-								});
+								return forget(entry.key);
 							},
 							onFocus: () => {
-								return setWindows((current) => {
-									// 末尾ほど手前。掴んだ窓を末尾へ回す
-									if (current[current.length - 1]?.key === entry.key) {
+								return setZOrder((current) => {
+									if (current[current.length - 1] === entry.key) {
 										return current;
 									}
 									return [
 										...current.filter((candidate) => {
-											return candidate.key !== entry.key;
+											return candidate !== entry.key;
 										}),
-										entry,
+										entry.key,
 									];
+								});
+							},
+							onMinimizedChange: (minimized: boolean) => {
+								return setMinimizedKeys((current) => {
+									if (!minimized) {
+										return current.filter((candidate) => {
+											return candidate !== entry.key;
+										});
+									}
+									return current.includes(entry.key)
+										? current
+										: [...current, entry.key];
 								});
 							},
 						}}
