@@ -4,6 +4,9 @@
 import { formatBalance } from "../lib/format-balance.js";
 import type { CurrencyUnit } from "./currency-unit.js";
 
+/** 文面に添えるツール自身の公開 URL。scheme は付けない */
+const toolUrl = "sasahara.uk/gamble-rumble";
+
 /** 収支を「大体N単位分負けました」の文面にする。プラマイゼロだけ言い回しが変わる */
 export const shareText = (yen: number, unit: CurrencyUnit): string => {
 	const amount = formatBalance(yen, unit).slice(1);
@@ -11,5 +14,5 @@ export const shareText = (yen: number, unit: CurrencyUnit): string => {
 		yen === 0
 			? "プラマイゼロ即ち実質勝ち。"
 			: `大体${amount}分${yen < 0 ? "負けました" : "勝ちました"}。`;
-	return `${result} \nsasahara.uk/gamble-rumble`;
+	return `${result} \n${toolUrl}`;
 };
