@@ -68,6 +68,7 @@ Tailwind CSS で書きます。`style` 属性でのインライン指定と、�
 | ページの `<style is:global>` | body に当たるページ全体の背景・余白 |
 
 - slice 固有の色や書体を `shared` の `@theme` に足さない。使う component で arbitrary value を書く。
+- 表示するかどうかの判断は呼び出し側に置き、component は渡された前提で描画する。`props` を見て `null` を返す形にしない。
 - `@theme` と `@utility` は Tailwind の入口から辿れる CSS にしか書けない。入口が読むのは `shared` までとし、上の層の CSS を読ませない。
 
 ## lint
@@ -84,7 +85,15 @@ Tailwind CSS で書きます。`style` 属性でのインライン指定と、�
 - 上記以外は無効化しない。`fsd/public-api` を守るため slice には `index.ts` を置く。層をまたぐ誤りを捕まえる `fsd/forbidden-imports` と、切り出しすぎを指摘する `fsd/insignificant-slice` は特に残す。
 - ルールを無効化して通すより、指摘に従って構成を直すことを優先する。`insignificant-slice` は「その層はまだ要らない」という指摘であることが多い。
 
-### biome
+### biome の Tailwind ルール
+
+`biome.json` の override で `apps/static-site-playground/**` にだけ `useSortedClasses` と `useTailwindShorthandClasses` を有効にしている。どちらも nursery なので、biome を上げたときに指摘内容が変わりうる。
+
+`useSortedClasses` の修正は unsafe fix 扱いのため `biome check --write` では当たらない。`biome check --write --unsafe` を `.tsx` に対して実行する。`.astro` を含めると未使用 import が消えてビルドが壊れるため、対象を絞ること。
+
+`noTailwindArbitraryValue` は入れていない。有効にすると 11 件出るが、いずれも意図した arbitrary value で、消すには slice 固有の値を `shared` の `@theme` へ移すしかない。上のスタイル方針と衝突する。`repeating-conic-gradient` のような値は `@theme` の namespace にも収まらない。
+
+### biome のその他の設定
 
 `.astro` の frontmatter は biome が単体の script として解釈し、テンプレートでしか使わない import と `Props` を未使用と判定する。`biome.json` の override で `**/*.astro` の `noUnusedImports` / `noUnusedVariables` を off にしている。CI は warning でも通るが、off にしないと `biome check --write --unsafe` が import を消してビルドを壊す。
 

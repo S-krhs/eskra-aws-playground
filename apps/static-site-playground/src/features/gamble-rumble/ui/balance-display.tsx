@@ -18,7 +18,7 @@ export const BalanceDisplay = ({ balanceYen, text }: Props) => {
 
 	return (
 		<output
-			className={`bevel-sunken block bg-white px-2.5 py-1.5 text-right font-[family-name:'MS_Gothic','Osaka-Mono',monospace] text-2xl font-bold ${toneClasses} ${rainbowClasses}`}
+			className={`bevel-sunken block bg-white px-2.5 py-1.5 text-right font-[family-name:'MS_Gothic','Osaka-Mono',monospace] font-bold text-2xl ${toneClasses} ${rainbowClasses}`}
 		>
 			{text}
 		</output>

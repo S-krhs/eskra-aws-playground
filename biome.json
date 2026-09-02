@@ -35,6 +35,17 @@
 					}
 				}
 			}
+		},
+		{
+			"includes": ["apps/static-site-playground/**"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"useSortedClasses": "error",
+						"useTailwindShorthandClasses": "error"
+					}
+				}
+			}
 		}
 	]
 }
