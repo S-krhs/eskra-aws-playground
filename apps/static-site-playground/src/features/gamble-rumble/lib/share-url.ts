@@ -1,16 +1,7 @@
-// In scope: 収支からツイート文面を組み立て、投稿画面の URL にする
-// Out of scope: リンクの描画、収支の状態管理
+// In scope: ツイート文面を投稿画面の URL にする
+// Out of scope: 文面の組み立て、リンクの描画
 
-import type { CurrencyUnit } from "../model/currency-unit.js";
-import { formatBalance } from "./format-balance.js";
-
-/** 収支を「大体N単位分負けました」の文面にして、ツイート画面を開く URL を作る */
-export const shareUrl = (yen: number, unit: CurrencyUnit): string => {
-	const amount = formatBalance(yen, unit).slice(1);
-	const result =
-		yen === 0
-			? "プラマイゼロ即ち実質勝ち。"
-			: `大体${amount}分${yen < 0 ? "負けました" : "勝ちました"}。`;
-	const text = `${result} \nsasahara.uk/gamble-rumble`;
+/** 渡された文面を載せて、ツイート画面を開く URL を作る */
+export const shareUrl = (text: string): string => {
 	return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&hashtags=sasaharaUK`;
 };

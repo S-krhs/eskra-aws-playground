@@ -11,6 +11,7 @@ import {
 import { formatBalance } from "../lib/format-balance.js";
 import { shareUrl } from "../lib/share-url.js";
 import { currencyUnits } from "../model/currency-unit.js";
+import { shareText } from "../model/share-text.js";
 import { BalanceDisplay } from "./balance-display.js";
 import { ExpenseButtons } from "./expense-buttons.js";
 import { OverLimitCaution } from "./over-limit-caution.js";
@@ -68,7 +69,9 @@ export const GambleRumble = () => {
 			</GroupBox>
 
 			<div className="flex justify-end">
-				<LinkButton href={shareUrl(balanceYen, unit)}>醜態を晒す</LinkButton>
+				<LinkButton href={shareUrl(shareText(balanceYen, unit))}>
+					醜態を晒す
+				</LinkButton>
 			</div>
 		</Window>
 	);
