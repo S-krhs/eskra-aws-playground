@@ -29,7 +29,11 @@ const ControlButton = ({
 	return (
 		<button
 			type="button"
-			className="bevel-raised active:bevel-sunken grid h-[15px] w-[17px] cursor-pointer place-items-center bg-face text-[9px] text-black leading-none disabled:cursor-default disabled:text-bevel-shadow"
+			className={`bevel-raised grid h-[15px] w-[17px] place-items-center bg-face text-[9px] leading-none ${
+				disabled
+					? "cursor-default text-bevel-shadow [text-shadow:1px_1px_0_#ffffff]"
+					: "active:bevel-sunken cursor-pointer text-black"
+			}`}
 			aria-label={label}
 			disabled={disabled}
 			onClick={onPress}
@@ -150,7 +154,7 @@ export const Window = ({
 
 	const titleBar = (
 		<div
-			className={`flex touch-none items-center gap-1 bg-linear-90 from-title-bar-start to-title-bar-end py-1 pr-0.5 pl-1 text-white ${isDraggable ? "cursor-move" : ""}`}
+			className={`flex touch-none select-none items-center gap-1 bg-linear-90 from-title-bar-start to-title-bar-end py-1 pr-0.5 pl-1 text-white ${isDraggable ? "cursor-move" : ""}`}
 			onPointerDown={isDraggable ? startDrag : undefined}
 			onPointerMove={isDraggable ? moveDrag : undefined}
 			onPointerUp={isDraggable ? endDrag : undefined}

@@ -72,6 +72,7 @@ Tailwind CSS で書きます。素の CSS ファイルは使いません。`styl
 - `@theme` と `@utility` は Tailwind の入口から辿れる CSS にしか書けない。入口が読むのは `shared` までとし、上の層の CSS を読ませない。
 - data URI を背景の arbitrary value にしない。生成 CSS が PostCSS の `Unclosed string` で落ち、`astro build` は通るのに dev サーバーだけが動かなくなる。画像は `img` の `src` に置く。
 - Tailwind は class 名を生のテキストとして走査する。コメントや文字列に class の形をした語を書くと、それも拾って CSS を生成する。
+- `:active` は `disabled` な要素にも当たる。押下時の見た目を `active:` variant で付けるときは、無効時に当たらないよう class ごと分岐させる。`disabled:` variant を足すだけでは押し込まれて見える。
 
 ## lint
 
