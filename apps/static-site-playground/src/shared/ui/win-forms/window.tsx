@@ -4,9 +4,11 @@
 import {
 	type ReactNode,
 	type PointerEvent as ReactPointerEvent,
+	useContext,
 	useRef,
 	useState,
 } from "react";
+import { WindowHostContext } from "./window-host.js";
 
 /** 窓の表示状態。閉じたら中身ごと描画しない */
 type WindowState = "normal" | "minimized" | "maximized" | "closed";
@@ -14,6 +16,12 @@ type WindowState = "normal" | "minimized" | "maximized" | "closed";
 /** 画面外へ出しきらないよう、掴める幅と高さをこれだけ残す */
 const grabMargin = 80;
 const titleBarHeight = 24;
+
+/** アイコン列を覆わないよう、2 枚目以降はこの右から重ねる */
+const iconColumnWidth = 140;
+
+/** 最小化した窓を下辺へ並べる間隔。バーの幅どおりに詰めて置く */
+const minimizedPitch = 240;
 
 const ControlButton = ({
 	label,
@@ -56,6 +64,7 @@ export const Window = ({
 	maximizable?: boolean;
 	children: ReactNode;
 }) => {
+	const host = useContext(WindowHostContext);
 	const [state, setState] = useState<WindowState>("normal");
 	const [position, setPosition] = useState<{ x: number; y: number } | null>(
 		null,
@@ -71,11 +80,22 @@ export const Window = ({
 		return null;
 	}
 
+	const minimize = () => {
+		host?.onMinimizedChange(true);
+		setState("minimized");
+	};
+
+	const restore = () => {
+		host?.onMinimizedChange(false);
+		setState("normal");
+	};
+
 	const isMinimized = state === "minimized";
 	const isMaximized = state === "maximized";
 	const isDraggable = !isMinimized && !isMaximized;
 
 	const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+		host?.onFocus();
 		const frame = frameRef.current;
 		if (event.button !== 0 || !frame) {
 			return;
@@ -118,21 +138,9 @@ export const Window = ({
 	const controls = (
 		<>
 			{isMinimized ? (
-				<ControlButton
-					label="元のサイズに戻す"
-					glyph="❐"
-					onPress={() => {
-						return setState("normal");
-					}}
-				/>
+				<ControlButton label="元のサイズに戻す" glyph="❐" onPress={restore} />
 			) : (
-				<ControlButton
-					label="最小化"
-					glyph="─"
-					onPress={() => {
-						return setState("minimized");
-					}}
-				/>
+				<ControlButton label="最小化" glyph="─" onPress={minimize} />
 			)}
 			<ControlButton
 				label={isMaximized ? "元のサイズに戻す" : "最大化"}
@@ -146,7 +154,8 @@ export const Window = ({
 				label="閉じる"
 				glyph="✕"
 				onPress={() => {
-					return setState("closed");
+					// デスクトップに載っているときは、並べている側が窓ごと外す
+					return host ? host.onClose() : setState("closed");
 				}}
 			/>
 		</>
@@ -172,10 +181,13 @@ export const Window = ({
 		"bevel-raised bg-face p-[3px] font-ui text-black text-xs shadow-[3px_3px_8px_rgb(0_0_0/40%)]";
 
 	if (isMinimized) {
+		// 下辺に横並びで置く。位置は実行時に決まるため class にできない
+		const slot = host ? Math.max(host.minimizedSlot, 0) : 0;
 		return (
 			// biome-ignore lint/a11y/noStaticElementInteractions: ダブルクリックは復元ボタンの補助で、同じ操作は「元のサイズに戻す」ボタンから行える
 			<div
-				className={`${frameClasses} fixed bottom-3 left-3 z-10 w-60`}
+				className={`${frameClasses} fixed bottom-3 z-10 w-60`}
+				style={{ left: 12 + slot * minimizedPitch, zIndex: host?.zIndex }}
 				onDoubleClick={(event) => {
 					if (
 						event.target instanceof Element &&
@@ -183,7 +195,7 @@ export const Window = ({
 					) {
 						return;
 					}
-					return setState("normal");
+					return restore();
 				}}
 			>
 				{titleBar}
@@ -192,6 +204,21 @@ export const Window = ({
 	}
 
 	const isMoved = position !== null && !isMaximized;
+	// 位置と重なり順は実行時に決まるため class にできない
+	const placementStyle = isMoved
+		? { left: position.x, top: position.y, zIndex: host?.zIndex }
+		: host
+			? {
+					zIndex: host.zIndex,
+					...(host.cascadeIndex === 0
+						? {}
+						: {
+								left: iconColumnWidth + host.cascadeIndex * 28,
+								top: 24 + host.cascadeIndex * 28,
+							}),
+				}
+			: undefined;
+	const centeredByCss = host !== null && !isMoved && host.cascadeIndex === 0;
 
 	return (
 		<div
@@ -199,11 +226,14 @@ export const Window = ({
 			className={
 				isMaximized
 					? `${frameClasses} fixed inset-0 z-10 flex flex-col overflow-hidden`
-					: isMoved
-						? `${frameClasses} fixed z-10 w-[min(45rem,calc(100vw-2rem))]`
+					: isMoved || host
+						? `${frameClasses} fixed w-[min(45rem,calc(100vw-2rem))] ${centeredByCss ? "top-6 left-1/2 -translate-x-1/2" : ""}`
 						: `${frameClasses} mx-auto max-w-180`
 			}
-			style={isMoved ? { left: position.x, top: position.y } : undefined}
+			style={placementStyle}
+			onPointerDownCapture={() => {
+				return host?.onFocus();
+			}}
 		>
 			{titleBar}
 
