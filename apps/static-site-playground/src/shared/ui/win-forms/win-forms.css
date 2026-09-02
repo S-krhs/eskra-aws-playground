@@ -1,4 +1,4 @@
-/* Windows Forms 風 UI キットの配色・書体・立体枠。この kit の component が使う */
+/* Windows Forms 風 UI キットの配色・書体・立体枠・カーソル。この kit の component が使う */
 @theme {
 	--color-face: #f0f0f0;
 	--color-face-pressed: #dcdcdc;
@@ -35,4 +35,14 @@
 	border: 1px solid;
 	border-color: var(--color-bevel-shadow) var(--color-bevel-light)
 		var(--color-bevel-light) var(--color-bevel-shadow);
+}
+
+/* 起動待ちの砂時計。OS 標準の待機カーソルは Windows 11 では丸い読み込み表示になるため、
+   画像で指定する。素材は Hackneyed X11 cursors（MIT）の wait-1 で、ホットスポットは
+   theme/windows-large.hotspots が 32px 用に指定する 15 15。表示義務のある著作権表示は
+   public/pic/win-forms/hourglass.LICENSE.txt に置く */
+@utility cursor-hourglass {
+	cursor:
+		url("/pic/win-forms/hourglass.png") 15 15,
+		progress;
 }
