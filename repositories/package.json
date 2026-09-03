@@ -37,6 +37,6 @@
 		"@eskra-aws-playground/libs": "0.1.0",
 		"@prisma/adapter-pg": "^7.10.0",
 		"@prisma/client": "^7.10.0",
-		"zod": "^4.5.3"
+		"zod": "^4.5.4"
 	}
 }
