@@ -1,5 +1,5 @@
-// In scope: Webpage を取得して HTML を返す
-// Out of scope: HTML 解析、metric 正規化、app 固有の定義変換を行う
+// In scope: fetching a webpage and returning its HTML
+// Out of scope: HTML parsing, metric normalization, app-specific definition conversion
 import type {
 	BrowserContextOptions,
 	LaunchOptions,
@@ -8,23 +8,20 @@ import type {
 
 import { launchChromium } from "./chromium-browser.js";
 
-/** page.goto に渡すナビゲーションオプション。 */
 type PageGotoOptions = NonNullable<Parameters<Page["goto"]>[1]>;
 
-/** ナビゲーションが無制限に待たないためのデフォルト設定。 */
+/** Caps navigation so it doesn't wait indefinitely. */
 const DEFAULT_GOTO_OPTIONS: PageGotoOptions = {
 	waitUntil: "load",
 	timeout: 30_000,
 };
 
-/** Webpage HTML 取得の実行オプション。 */
 export interface WebpageHtmlOptions {
 	launchOptions?: LaunchOptions;
 	pageOptions?: BrowserContextOptions;
 	gotoOptions?: PageGotoOptions;
 }
 
-/** Webpage を取得して HTML string を返す。 */
 export const fetchWebpageHtml = async (
 	url: string,
 	options: WebpageHtmlOptions = {},

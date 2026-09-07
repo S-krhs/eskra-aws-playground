@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildBatchLogRecord, toBatchLogError } from "./batch-logger.js";
 
 describe("buildBatchLogRecord", () => {
-	it("段階に対応するメッセージと context を持つレコードを作る", () => {
+	it("builds a record with the phase's message and the given context", () => {
 		expect(
 			buildBatchLogRecord("anime-scraping-orchestrator", "start", {
 				requestedCount: 3,
@@ -18,7 +18,7 @@ describe("buildBatchLogRecord", () => {
 		});
 	});
 
-	it("context を渡さない場合は context を持たない", () => {
+	it("omits context when none is passed", () => {
 		expect(buildBatchLogRecord("local-runner", "complete")).toEqual({
 			name: "local-runner",
 			phase: "complete",
@@ -28,7 +28,7 @@ describe("buildBatchLogRecord", () => {
 });
 
 describe("toBatchLogError", () => {
-	it("Error は name / message / stack に整える", () => {
+	it("shapes an Error into name/message/stack", () => {
 		const error = new Error("boom");
 
 		expect(toBatchLogError(error)).toMatchObject({
@@ -37,7 +37,7 @@ describe("toBatchLogError", () => {
 		});
 	});
 
-	it("Error 以外は UnknownError として文字列化する", () => {
+	it("stringifies a non-Error as UnknownError", () => {
 		expect(toBatchLogError("just-a-string")).toEqual({
 			name: "UnknownError",
 			message: "just-a-string",

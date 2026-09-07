@@ -18,7 +18,7 @@ const createSequentialRandom = (
 		const value = values[index];
 
 		if (value === undefined) {
-			throw new Error("テスト用 random の値が不足しています");
+			throw new Error("ran out of test random() values");
 		}
 
 		index += 1;
@@ -28,7 +28,7 @@ const createSequentialRandom = (
 };
 
 describe("GachaPool", () => {
-	it("rarity が空だと作成時にエラーになる", () => {
+	it("errors at construction when rarities is empty", () => {
 		expect(() => {
 			return new GachaPool<TestEntry>({
 				rarities: [],
@@ -41,7 +41,7 @@ describe("GachaPool", () => {
 		}).toThrow("ガチャの rarity を 1 つ以上設定してください");
 	});
 
-	it("不正な weight があると作成時にエラーになる", () => {
+	it("errors at construction on an invalid weight", () => {
 		expect(() => {
 			return new GachaPool<TestEntry>({
 				rarities: ["COMMON", "RARE", "LEGENDARY"],
@@ -54,7 +54,7 @@ describe("GachaPool", () => {
 		}).toThrow("ガチャのレアリティ RARE の weight が不正です");
 	});
 
-	it("候補が空のまま draw するとエラーになる", () => {
+	it("errors on draw() with no entries added", () => {
 		const gacha = new GachaPool<TestEntry>({
 			rarities: ["COMMON", "RARE", "LEGENDARY"],
 			rarityWeights: {
@@ -70,7 +70,7 @@ describe("GachaPool", () => {
 		}).toThrow("ガチャの抽選可能な候補を 1 つ以上設定してください");
 	});
 
-	it("候補が入っている rarity だけで weight を正規化して抽選する", () => {
+	it("normalizes weight over only the rarities that have entries", () => {
 		const gacha = new GachaPool<TestEntry>({
 			rarities: ["COMMON", "RARE", "LEGENDARY"],
 			rarityWeights: {
@@ -93,7 +93,7 @@ describe("GachaPool", () => {
 		});
 	});
 
-	it("rarity の境界値で抽選結果が切り替わる", () => {
+	it("flips the drawn rarity right at its weight boundary", () => {
 		const entries: readonly TestEntry[] = [
 			{ rarity: "COMMON", id: "common-1", name: "Common" },
 			{ rarity: "RARE", id: "rare-1", name: "Rare" },
@@ -149,7 +149,7 @@ describe("GachaPool", () => {
 		expect(lastGacha.draw()).toEqual(entries[1]);
 	});
 
-	it("同じ rarity 内では entry 単位で抽選する", () => {
+	it("draws per-entry within the same rarity", () => {
 		const gacha = new GachaPool<TestEntry>({
 			rarities: ["COMMON", "RARE", "LEGENDARY"],
 			rarityWeights: {
@@ -174,7 +174,7 @@ describe("GachaPool", () => {
 		});
 	});
 
-	it("entry の境界値で選ばれる index が切り替わる", () => {
+	it("flips the drawn entry right at its index boundary", () => {
 		const entries: readonly TestEntry[] = [
 			{ rarity: "COMMON", id: "common-1", name: "Common 1" },
 			{ rarity: "COMMON", id: "common-2", name: "Common 2" },
@@ -232,7 +232,7 @@ describe("GachaPool", () => {
 		expect(lastGacha.draw()).toEqual(entries[3]);
 	});
 
-	it("addEntries を複数回呼んでも候補を保持する", () => {
+	it("keeps entries across multiple addEntries calls", () => {
 		const gacha = new GachaPool<TestEntry>({
 			rarities: ["COMMON", "RARE", "LEGENDARY"],
 			rarityWeights: {
@@ -253,7 +253,7 @@ describe("GachaPool", () => {
 		});
 	});
 
-	it("random が 0 以上 1 未満を返さないとエラーになる", () => {
+	it("errors when random() doesn't return a value in [0, 1)", () => {
 		const gacha = new GachaPool<TestEntry>({
 			rarities: ["COMMON", "RARE", "LEGENDARY"],
 			rarityWeights: {

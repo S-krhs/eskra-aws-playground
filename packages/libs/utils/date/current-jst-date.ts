@@ -1,14 +1,14 @@
-// In scope: JST 基準の現在日付の取得を提供する(時差の吸収はこのファイルに閉じる)
-// Out of scope: 表示用フォーマット、日付演算、JST 以外のタイムゾーン
+// In scope: getting today's date in JST (the offset math is contained to this file)
+// Out of scope: display formatting, date arithmetic, timezones other than JST
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 
 dayjs.extend(utc);
 
-// JST は夏時間がなく UTC+9 固定
+// JST has no DST, so a fixed UTC+9 offset is always correct
 const JST_UTC_OFFSET_MINUTES = 9 * 60;
 
-/** JST 基準の現在日付を YYYY-MM-DD 形式で返す。 */
+/** `YYYY-MM-DD`. */
 export const getCurrentJstDateString = (): string => {
 	return dayjs().utcOffset(JST_UTC_OFFSET_MINUTES).format("YYYY-MM-DD");
 };
