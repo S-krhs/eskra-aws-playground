@@ -1,16 +1,14 @@
-// In scope: R2 の S3 互換 endpoint へ繋ぐ client の生成と、認証情報の wire 解釈
-// Out of scope: 認証情報の取得元の解決、bucket 名の決定、オブジェクト操作
+// In scope: creating a client for R2's S3-compatible endpoint, wire-parsing credentials
+// Out of scope: resolving where credentials come from, deciding the bucket name, object operations
 import { S3Client } from "@aws-sdk/client-s3";
 import { z } from "zod";
 
-/** R2 への接続に必要な認証情報。 */
 export interface R2Credentials {
 	accountId: string;
 	accessKeyId: string;
 	secretAccessKey: string;
 }
 
-/** オブジェクト操作へ引き回す R2 の client。 */
 export type R2Client = S3Client;
 
 const r2CredentialsSchema = z.object({
@@ -19,10 +17,7 @@ const r2CredentialsSchema = z.object({
 	secretAccessKey: z.string().min(1),
 });
 
-/**
- * 未検証の値を R2 の認証情報へ変換する。
- * 鍵が漏れないよう、検証失敗のエラーには不正だった項目名だけを載せる。
- */
+/** A validation failure names only the bad field(s), never the values, so a key can't leak through it. */
 export const parseR2Credentials = (value: unknown): R2Credentials => {
 	const result = r2CredentialsSchema.safeParse(value);
 
@@ -40,9 +35,10 @@ export const parseR2Credentials = (value: unknown): R2Credentials => {
 };
 
 /**
- * secret に入っている JSON 文字列を R2 の認証情報へ変換する。
- * JSON.parse の SyntaxError は入力の先頭を message に含めるため、そのまま投げると
- * secret が呼び出し側のログへ流れる。構文の失敗はここで自前のエラーへ差し替える。
+ * Converts the JSON string a secret actually holds into R2 credentials.
+ * `JSON.parse`'s `SyntaxError` embeds the start of the input in its message —
+ * left unhandled, that leaks the secret into the caller's logs — so a syntax
+ * failure gets swapped for our own error here.
  */
 export const parseR2CredentialsJson = (json: string): R2Credentials => {
 	let parsed: unknown;
@@ -56,7 +52,6 @@ export const parseR2CredentialsJson = (json: string): R2Credentials => {
 	return parseR2Credentials(parsed);
 };
 
-/** 認証情報からアカウント固有の R2 endpoint へ繋ぐ client を作る。 */
 export const createR2Client = (credentials: R2Credentials): R2Client => {
 	return new S3Client({
 		region: "auto",
@@ -65,7 +60,7 @@ export const createR2Client = (credentials: R2Credentials): R2Client => {
 			accessKeyId: credentials.accessKeyId,
 			secretAccessKey: credentials.secretAccessKey,
 		},
-		// 既定の WHEN_SUPPORTED は R2 が解釈しない checksum header を足すため、必要時だけに絞る
+		// Default WHEN_SUPPORTED adds a checksum header R2 doesn't understand — restrict to when required
 		requestChecksumCalculation: "WHEN_REQUIRED",
 		responseChecksumValidation: "WHEN_REQUIRED",
 	});

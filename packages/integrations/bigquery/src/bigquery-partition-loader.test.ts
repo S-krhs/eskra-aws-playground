@@ -35,8 +35,8 @@ import {
 } from "./bigquery-partition-loader.js";
 
 /**
- * 実クライアントと同じ順序(complete → finish)でイベントを出す write stream。
- * 実物は duplexify のため、cork/uncork と job 経由の destroy までは再現しない。
+ * Emits events in the same order as the real client (complete → finish).
+ * The real stream is duplexify — this doesn't reproduce its cork/uncork or job-driven destroy.
  */
 class FakeWriteStream extends Writable {
 	public readonly chunks: string[] = [];
@@ -102,12 +102,12 @@ describe("BigQueryPartitionLoader", () => {
 	});
 
 	beforeEach(() => {
-		// 既定は有効期限なし。個別のテストで上書きする
+		// Default: no expiration. Individual tests override this.
 		getMetadata.mockResolvedValue([{ timePartitioning: { type: "DAY" } }]);
 	});
 
 	describe("ensureTable", () => {
-		it("テーブルが無ければ定義どおりに作る", async () => {
+		it("creates the table from the definition when it doesn't exist", async () => {
 			exists.mockResolvedValue([false]);
 			createTable.mockResolvedValue([{}]);
 
@@ -120,7 +120,7 @@ describe("BigQueryPartitionLoader", () => {
 			});
 		});
 
-		it("テーブルがあれば作らない", async () => {
+		it("doesn't create the table when it already exists", async () => {
 			exists.mockResolvedValue([true]);
 
 			await createLoader().ensureTable();
@@ -128,7 +128,7 @@ describe("BigQueryPartitionLoader", () => {
 			expect(createTable).not.toHaveBeenCalled();
 		});
 
-		it("並行実行で先に作られていた場合(409)は作成済みとして扱う", async () => {
+		it("treats a 409 (created concurrently) as already created", async () => {
 			exists.mockResolvedValue([false]);
 			createTable.mockRejectedValue(
 				Object.assign(new Error("Already Exists"), { code: 409 }),
@@ -137,7 +137,7 @@ describe("BigQueryPartitionLoader", () => {
 			await expect(createLoader().ensureTable()).resolves.toBeUndefined();
 		});
 
-		it("パーティションの有効期限が設定されていたら連携を中止する", async () => {
+		it("aborts the export when a partition expiration is set", async () => {
 			exists.mockResolvedValue([true]);
 			getMetadata.mockResolvedValue([
 				{ timePartitioning: { type: "DAY", expirationMs: "5184000000" } },
@@ -148,7 +148,7 @@ describe("BigQueryPartitionLoader", () => {
 			);
 		});
 
-		it("作成直後に継承した有効期限も検出する", async () => {
+		it("also catches an expiration inherited right after creation", async () => {
 			exists.mockResolvedValue([false]);
 			createTable.mockResolvedValue([{}]);
 			getMetadata.mockResolvedValue([
@@ -160,7 +160,7 @@ describe("BigQueryPartitionLoader", () => {
 			);
 		});
 
-		it("409 以外の作成失敗はそのまま throw する", async () => {
+		it("rethrows a creation failure that isn't a 409", async () => {
 			exists.mockResolvedValue([false]);
 			createTable.mockRejectedValue(
 				Object.assign(new Error("Permission denied"), { code: 403 }),
@@ -173,7 +173,7 @@ describe("BigQueryPartitionLoader", () => {
 	});
 
 	describe("replacePartition", () => {
-		it("パーティション装飾子付きのテーブルへ NDJSON を WRITE_TRUNCATE で流す", async () => {
+		it("streams NDJSON with WRITE_TRUNCATE to the partition-decorated table", async () => {
 			const writeStream = new FakeWriteStream({
 				metadata: { statistics: { load: { outputRows: "2" } } },
 			});
@@ -199,7 +199,7 @@ describe("BigQueryPartitionLoader", () => {
 			expect(result).toEqual({ loadedRowCount: 2 });
 		});
 
-		it("load job が失敗したら throw する", async () => {
+		it("throws when the load job fails", async () => {
 			createWriteStream.mockReturnValue(
 				new FakeWriteStream({}, new Error("load job が失敗しました")),
 			);
@@ -212,7 +212,7 @@ describe("BigQueryPartitionLoader", () => {
 			).rejects.toThrow("load job が失敗しました");
 		});
 
-		it("行の読み出しが途中で失敗したら throw する", async () => {
+		it("throws when reading rows fails partway through", async () => {
 			const writeStream = new FakeWriteStream({});
 			createWriteStream.mockReturnValue(writeStream);
 
@@ -231,7 +231,7 @@ describe("BigQueryPartitionLoader", () => {
 			).rejects.toThrow("DB の読み出しに失敗しました");
 		});
 
-		it("行が 0 件でもパーティションを置き換える", async () => {
+		it("replaces the partition even with zero rows", async () => {
 			const writeStream = new FakeWriteStream({
 				metadata: { statistics: { load: { outputRows: "0" } } },
 			});
@@ -247,7 +247,7 @@ describe("BigQueryPartitionLoader", () => {
 			expect(result).toEqual({ loadedRowCount: 0 });
 		});
 
-		it("行数を読み取れない場合は 0 として返す", async () => {
+		it("returns 0 when the row count can't be read", async () => {
 			createWriteStream.mockReturnValue(new FakeWriteStream({ metadata: {} }));
 
 			const result = await createLoader().replacePartition({
