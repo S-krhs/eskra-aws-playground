@@ -8,7 +8,8 @@ import {
 	readCachedThumbnail,
 	writeCachedThumbnail,
 } from "../features/thumbnail-cache/thumbnail-cache.js";
-import type { LibraryContext } from "../shared/library-context.js";
+import { getLibrarySettings } from "../shared/library-settings.js";
+import { getR2Client } from "../shared/r2-client.js";
 import { toInvalidQueryMessage } from "./intermediate-models/invalid-query.js";
 import { toMediaView } from "./intermediate-models/media-view.js";
 
@@ -39,80 +40,76 @@ const listQuerySchema = z
 
 const mediaIdSchema = z.uuid();
 
-/** 一覧とサムネイルの route を組み立てる。 */
-export const createMediaRoutes = (context: LibraryContext) => {
-	return new Hono()
-		.get("/", async (c) => {
-			const query = listQuerySchema.safeParse(c.req.query());
+/** 一覧とサムネイルの route。 */
+export const mediaRoutes = new Hono()
+	.get("/", async (c) => {
+		const query = listQuerySchema.safeParse(c.req.query());
 
-			if (!query.success) {
-				return c.json({ message: toInvalidQueryMessage(query.error) }, 400);
-			}
+		if (!query.success) {
+			return c.json({ message: toInvalidQueryMessage(query.error) }, 400);
+		}
 
-			const page = await mediaObjectRepository.findPage({
-				logicalPath: query.data.logicalPath,
-				contentTypePrefix: query.data.contentTypePrefix,
-				limit: query.data.limit,
-				cursor:
-					query.data.cursorUploadedAt && query.data.cursorId
-						? {
-								uploadedAt: new Date(query.data.cursorUploadedAt),
-								id: query.data.cursorId,
-							}
-						: undefined,
-			});
-
-			return c.json({
-				objects: page.objects.map(toMediaView),
-				nextCursor: page.nextCursor
+		const page = await mediaObjectRepository.findPage({
+			logicalPath: query.data.logicalPath,
+			contentTypePrefix: query.data.contentTypePrefix,
+			limit: query.data.limit,
+			cursor:
+				query.data.cursorUploadedAt && query.data.cursorId
 					? {
-							uploadedAt: page.nextCursor.uploadedAt.toISOString(),
-							id: page.nextCursor.id,
+							uploadedAt: new Date(query.data.cursorUploadedAt),
+							id: query.data.cursorId,
 						}
-					: null,
-			});
-		})
-		.get("/:id/thumbnail", async (c) => {
-			// そのままファイル名に使うため、UUID であることを先に確かめる
-			const id = mediaIdSchema.safeParse(c.req.param("id"));
+					: undefined,
+		});
 
-			if (!id.success) {
-				return c.json({ message: "id が UUID ではありません" }, 400);
-			}
+		return c.json({
+			objects: page.objects.map(toMediaView),
+			nextCursor: page.nextCursor
+				? {
+						uploadedAt: page.nextCursor.uploadedAt.toISOString(),
+						id: page.nextCursor.id,
+					}
+				: null,
+		});
+	})
+	.get("/:id/thumbnail", async (c) => {
+		// そのままファイル名に使うため、UUID であることを先に確かめる
+		const id = mediaIdSchema.safeParse(c.req.param("id"));
 
-			const { settings, r2 } = context;
-			const cached = await readCachedThumbnail(
-				settings.thumbnailCacheDir,
-				id.data,
-			);
+		if (!id.success) {
+			return c.json({ message: "id が UUID ではありません" }, 400);
+		}
 
-			if (cached) {
-				return c.body(new Uint8Array(cached), 200, {
-					"content-type": "image/webp",
-					"cache-control": THUMBNAIL_CACHE_CONTROL,
-				});
-			}
+		const settings = getLibrarySettings();
+		const cached = await readCachedThumbnail(
+			settings.thumbnailCacheDir,
+			id.data,
+		);
 
-			const media = await mediaObjectRepository.findById(id.data);
-
-			if (!media?.thumbnailKey) {
-				// 同期が生成を終えるまでは存在しない。画面は代替の表示へ落とす
-				return c.json({ message: "サムネイルがまだありません" }, 404);
-			}
-
-			const object = await r2ObjectStore.get(r2, {
-				bucket: settings.bucket,
-				key: media.thumbnailKey,
-			});
-			const body = new Uint8Array(
-				await new Response(object.body).arrayBuffer(),
-			);
-
-			await writeCachedThumbnail(settings.thumbnailCacheDir, id.data, body);
-
-			return c.body(body, 200, {
-				"content-type": object.contentType,
+		if (cached) {
+			return c.body(new Uint8Array(cached), 200, {
+				"content-type": "image/webp",
 				"cache-control": THUMBNAIL_CACHE_CONTROL,
 			});
+		}
+
+		const media = await mediaObjectRepository.findById(id.data);
+
+		if (!media?.thumbnailKey) {
+			// 同期が生成を終えるまでは存在しない。画面は代替の表示へ落とす
+			return c.json({ message: "サムネイルがまだありません" }, 404);
+		}
+
+		const object = await r2ObjectStore.get(getR2Client(), {
+			bucket: settings.bucket,
+			key: media.thumbnailKey,
 		});
-};
+		const body = new Uint8Array(await new Response(object.body).arrayBuffer());
+
+		await writeCachedThumbnail(settings.thumbnailCacheDir, id.data, body);
+
+		return c.body(body, 200, {
+			"content-type": object.contentType,
+			"cache-control": THUMBNAIL_CACHE_CONTROL,
+		});
+	});

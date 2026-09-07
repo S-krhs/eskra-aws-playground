@@ -61,6 +61,7 @@ shared/styles/index.css               Tailwind の入口
 - 例外の詳細は `onError` で手元のログにだけ残し、応答は定型のメッセージにする。
 - 設定は `~/.config/eskra-media-library/config.json` から読む。場所の決め方は `shared-domains` の `media-library-config` にあり、アップローダと同じファイルを共有する。
 - `repositories` は `DATABASE_URL` から接続先を読む。route が動く前に `server.ts` で設定値を入れる。
+- **接続先と client は module スコープに持ち、getter で参照する。** route を factory にして context を引き回さない。`repositories/db/client.ts` の `getPrismaClient` と同じ形で、設定は `getLibrarySettings`、R2 client は `getR2Client` から取る。route は `new Hono()` の値として export し、`app.ts` が `route()` で繋ぐ。
 - 同期の起動は Lambda の非同期 invoke で行い、完了を待たない。二重起動は同期 job 側が実行中の記録を見て弾くため、この app では抑止しない。
 - サムネイルはローカルへキャッシュする。書き込み途中のファイルを次の要求が読まないよう、別名で書いてから rename する。
 - サムネイルの id はそのままファイル名になる。R2 や DB を引く前に UUID として検証する。
@@ -76,7 +77,7 @@ shared/styles/index.css               Tailwind の入口
 | `backend/src/routes/` | HTTP の入出力、入力検証、repository と integration の呼び出し | ファイル操作、外部サービスの wire 解釈 |
 | `backend/src/routes/intermediate-models/` | 応答用の型と、repository の型からの変換 | DB の query、HTTP status の決定 |
 | `backend/src/features/<concern>/` | キャッシュや Lambda 起動など、route から切り出した処理 | HTTP の解釈、応答の組み立て |
-| `backend/src/shared/` | 設定の読み込みと、route へ渡す接続先の型 | 業務ロジック、route の実装 |
+| `backend/src/shared/` | 設定の読み込みと、プロセス内で使い回す client の生成 | 業務ロジック、route の実装 |
 | `frontend/src/app/` | React の起動、全体に効く style の読み込み | 画面の実装、機能の実装 |
 | `frontend/src/pages/` | 画面の組み立てと、画面が持つ状態 | 機能の実装、API の呼び出し |
 | `frontend/src/features/<concern>/` | 機能単位の hook と表示 | 画面の組み立て、別 feature の実装 |

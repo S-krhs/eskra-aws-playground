@@ -4,7 +4,7 @@ import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media
 import type { MediaSyncRun } from "@eskra-aws-playground/repositories/media/media-sync-run/types.js";
 import { Hono } from "hono";
 import { startMediaSync } from "../features/media-sync-trigger/media-sync-trigger.js";
-import type { LibraryContext } from "../shared/library-context.js";
+import { getLibrarySettings } from "../shared/library-settings.js";
 
 const toRunView = (run: MediaSyncRun) => {
 	return {
@@ -19,27 +19,26 @@ const toRunView = (run: MediaSyncRun) => {
 	};
 };
 
-/** 同期の起動と進捗の route を組み立てる。 */
-export const createSyncRoutes = (context: LibraryContext) => {
-	return new Hono()
-		.post("/", async (c) => {
-			await startMediaSync({
-				functionName: context.settings.syncFunctionName,
-				region: context.settings.awsRegion,
-			});
-
-			// Lambda の完了は待たない。進捗は /status を読んで確かめる
-			return c.json({ started: true });
-		})
-		.get("/status", async (c) => {
-			const [latest, running] = await Promise.all([
-				mediaSyncRunRepository.findLatest(),
-				mediaSyncRunRepository.findRunning(),
-			]);
-
-			return c.json({
-				latest: latest ? toRunView(latest) : null,
-				running: running ? toRunView(running) : null,
-			});
+/** 同期の起動と進捗の route。 */
+export const syncRoutes = new Hono()
+	.post("/", async (c) => {
+		const settings = getLibrarySettings();
+		await startMediaSync({
+			functionName: settings.syncFunctionName,
+			region: settings.awsRegion,
 		});
-};
+
+		// Lambda の完了は待たない。進捗は /status を読んで確かめる
+		return c.json({ started: true });
+	})
+	.get("/status", async (c) => {
+		const [latest, running] = await Promise.all([
+			mediaSyncRunRepository.findLatest(),
+			mediaSyncRunRepository.findRunning(),
+		]);
+
+		return c.json({
+			latest: latest ? toRunView(latest) : null,
+			running: running ? toRunView(running) : null,
+		});
+	});

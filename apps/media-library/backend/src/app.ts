@@ -4,9 +4,8 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import { createMediaRoutes } from "./routes/media-routes.js";
-import { createSyncRoutes } from "./routes/sync-routes.js";
-import type { LibraryContext } from "./shared/library-context.js";
+import { mediaRoutes } from "./routes/media-routes.js";
+import { syncRoutes } from "./routes/sync-routes.js";
 
 // serveStatic の root は cwd からの相対でしか解決されないため、起動場所に依らない値へ直す
 const uiRoot = (): string => {
@@ -18,17 +17,16 @@ const uiRoot = (): string => {
 	return relative(process.cwd(), uiDir) || ".";
 };
 
-const createApiRoutes = (context: LibraryContext) => {
-	return new Hono()
-		.route("/media", createMediaRoutes(context))
-		.route("/sync", createSyncRoutes(context));
-};
+/** リクエストパスと担当 route の対応。route を追加したらここへ登録する。 */
+const apiRoutes = new Hono()
+	.route("/media", mediaRoutes)
+	.route("/sync", syncRoutes);
 
 /** frontend が hc() でレスポンス型を導出するための API の型。 */
-export type ApiType = ReturnType<typeof createApiRoutes>;
+export type ApiType = typeof apiRoutes;
 
 /** API と画面を配信する app を組み立てる。 */
-export const createApp = (context: LibraryContext): Hono => {
+export const createApp = (): Hono => {
 	const app = new Hono();
 
 	app.onError((error, c) => {
@@ -38,7 +36,7 @@ export const createApp = (context: LibraryContext): Hono => {
 		return c.json({ message: "リクエストの処理に失敗しました" }, 500);
 	});
 
-	app.route("/api", createApiRoutes(context));
+	app.route("/api", apiRoutes);
 
 	const root = uiRoot();
 

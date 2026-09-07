@@ -1,7 +1,6 @@
 // In scope: 設定を読んで 127.0.0.1 で待ち受けるプロセスの起動
 // Out of scope: route の実装、画面のビルド、常駐のしかた(systemd 側の担当)
 
-import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.js";
 import { loadLibrarySettings } from "./shared/library-settings.js";
@@ -14,10 +13,7 @@ const settings = await loadLibrarySettings().catch((error: unknown) => {
 // repositories は接続先を DATABASE_URL から読むため、route が動く前に入れる
 process.env.DATABASE_URL = settings.databaseUrl;
 
-const app = createApp({
-	settings,
-	r2: createR2Client(settings.credentials),
-});
+const app = createApp();
 
 const server = serve(
 	{ fetch: app.fetch, hostname: "127.0.0.1", port: settings.port },

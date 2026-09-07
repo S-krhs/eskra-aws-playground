@@ -41,8 +41,10 @@ export interface LibrarySettings {
 	port: number;
 }
 
+let settings: LibrarySettings | undefined;
+
 /**
- * 設定ファイルを読んで接続先を組み立てる。
+ * 設定ファイルを読んで接続先を組み立て、module スコープへ保持する。
  * 鍵や接続文字列が漏れないよう、失敗しても読み込んだ内容はエラーに載せない。
  */
 export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
@@ -75,7 +77,7 @@ export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
 		throw new Error(`設定ファイルの項目が不正です(${fields}): ${settingsPath}`);
 	}
 
-	return {
+	settings = {
 		credentials: parseR2Credentials(result.data.r2),
 		bucket: result.data.bucket,
 		databaseUrl: result.data.databaseUrl,
@@ -85,4 +87,15 @@ export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
 			result.data.thumbnailCacheDir ?? DEFAULT_THUMBNAIL_CACHE_DIR,
 		port: result.data.port ?? DEFAULT_PORT,
 	};
+
+	return settings;
+};
+
+/** 読み込み済みの接続先を返す。route から参照する。 */
+export const getLibrarySettings = (): LibrarySettings => {
+	if (!settings) {
+		throw new Error("設定ファイルを読み込む前に接続先を参照しました。");
+	}
+
+	return settings;
 };
