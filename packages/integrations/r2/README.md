@@ -10,7 +10,8 @@ R2 は S3 互換 API を提供するため `@aws-sdk/client-s3` を使います�
   - `parseR2Credentials`: 未検証の値を R2 の認証情報へ検証・変換する。
   - `R2Credentials` / `R2Client`: 認証情報と、オブジェクト操作へ引き回す client。
 - `src/r2-object-store.ts`
-  - `listObjects` / `headObject` / `getObject` / `uploadObject` / `copyObject` / `deleteObject`: オブジェクト操作。
+  - `listObjects` / `headObject` / `headObjectIfExists` / `getObject` / `uploadObject` / `copyObject` / `deleteObject`: オブジェクト操作。
+  - `headObjectIfExists` は存在しない key で undefined を返す。key の衝突判定に使う。
   - `buildCopySource`: CopyObject へ渡す複製元の組み立て。
   - `R2ObjectSummary` / `R2ObjectMetadata` / `R2ObjectBody`: 応答の公開型。
 

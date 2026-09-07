@@ -20,12 +20,13 @@ export interface R2ObjectSummary {
 	lastModified: Date;
 }
 
-/** 1 オブジェクトのメタデータ。 */
+/** 1 オブジェクトのメタデータ。metadata は x-amz-meta-* の custom metadata。 */
 export interface R2ObjectMetadata {
 	contentType: string;
 	byteSize: number;
 	etag: string;
 	lastModified: Date;
+	metadata: Record<string, string>;
 }
 
 /** オブジェクトの本文。Range を渡した場合は部分応答になる。 */
@@ -62,10 +63,11 @@ export interface GetObjectInput extends ObjectLocation {
 	range?: string;
 }
 
-/** オブジェクトの保存入力。 */
+/** オブジェクトの保存入力。metadata は custom metadata として保存される。 */
 export interface UploadObjectInput extends ObjectLocation {
 	body: Readable | Uint8Array | string;
 	contentType: string;
+	metadata?: Record<string, string>;
 }
 
 /** 同一 bucket 内での複製入力。 */
@@ -74,6 +76,14 @@ export interface CopyObjectInput {
 	sourceKey: string;
 	destinationKey: string;
 }
+
+// SDK は HeadObject の 404 を NotFound、GetObject の 404 を NoSuchKey として投げる
+const isNotFound = (error: unknown): boolean => {
+	return (
+		error instanceof Error &&
+		(error.name === "NotFound" || error.name === "NoSuchKey")
+	);
+};
 
 const unquoteEtag = (etag: string): string => {
 	return etag.replace(/^"|"$/g, "");
@@ -151,7 +161,27 @@ export const headObject = async (
 		byteSize: response.ContentLength ?? 0,
 		etag: unquoteEtag(response.ETag ?? ""),
 		lastModified: response.LastModified ?? new Date(0),
+		metadata: response.Metadata ?? {},
 	};
+};
+
+/**
+ * オブジェクトが無ければ undefined を返す HeadObject。
+ * key の衝突判定に使うため、存在しないことをエラーにしない。
+ */
+export const headObjectIfExists = async (
+	client: R2Client,
+	input: ObjectLocation,
+): Promise<R2ObjectMetadata | undefined> => {
+	try {
+		return await headObject(client, input);
+	} catch (error) {
+		if (isNotFound(error)) {
+			return undefined;
+		}
+
+		throw error;
+	}
 };
 
 /** オブジェクトの本文を取得する。range を渡すと部分応答になる。 */
@@ -192,6 +222,7 @@ export const uploadObject = async (
 			Key: input.key,
 			Body: input.body,
 			ContentType: input.contentType,
+			Metadata: input.metadata,
 		},
 	});
 
