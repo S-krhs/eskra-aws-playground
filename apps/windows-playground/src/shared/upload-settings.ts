@@ -13,7 +13,6 @@ const settingsSchema = z.object({
 	r2: z.unknown(),
 });
 
-/** Where the uploader connects. */
 export interface UploadSettings {
 	credentials: R2Credentials;
 	bucket: string;

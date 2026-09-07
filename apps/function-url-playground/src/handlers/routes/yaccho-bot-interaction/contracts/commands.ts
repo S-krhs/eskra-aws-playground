@@ -4,7 +4,6 @@
 const installationTypes = { guild: 0 } as const;
 const interactionContexts = { guild: 0 } as const;
 
-/** Yaccho Bot's Discord application commands. */
 export const commands = {
 	hello: {
 		name: "hello",

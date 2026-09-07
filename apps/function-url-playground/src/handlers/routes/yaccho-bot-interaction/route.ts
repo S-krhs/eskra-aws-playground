@@ -28,7 +28,6 @@ const unsupported = (): OperationResult<DiscordInteractionResponsePayload> => {
 	return ephemeralOperation("自分で調べろｶｽ");
 };
 
-/** Yaccho Bot's Discord interactions endpoint. */
 export const yacchoBotInteractionRoute = async (
 	event: FunctionUrlEvent,
 ): Promise<FunctionUrlResponse> => {

@@ -12,7 +12,6 @@ export const functionUrlEventSchema = z.object({
 
 export type FunctionUrlEvent = z.infer<typeof functionUrlEventSchema>;
 
-/** The HTTP response handed back to the Lambda Function URL. */
 export interface FunctionUrlResponse {
 	statusCode: number;
 	headers: Record<string, string>;

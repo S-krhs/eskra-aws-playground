@@ -13,7 +13,6 @@ import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/p
 // Files sharing a modified millisecond are rare; going past this points at a misconfiguration
 const MAX_KEY_SEQUENCE = 100;
 
-/** Where the stored media landed. */
 export interface UploadedMedia {
 	objectKey: string;
 	mediaId: string;

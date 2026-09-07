@@ -6,7 +6,6 @@ import {
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
-/** Builds the PONG callback payload for a Discord PING interaction. */
 export const pingOperation =
 	(): OperationResult<DiscordPongResponsePayload> => {
 		return {

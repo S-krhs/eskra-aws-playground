@@ -9,7 +9,6 @@ import {
 	functionUrlEventSchema,
 } from "./schema.js";
 
-/** Takes a Function URL request and returns an HTTP response. */
 type FunctionUrlRoute = (
 	event: FunctionUrlEvent,
 ) => Promise<FunctionUrlResponse>;

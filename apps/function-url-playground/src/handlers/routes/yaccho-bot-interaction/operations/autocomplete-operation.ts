@@ -6,7 +6,6 @@ import {
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
-/** Builds the empty candidate list answering a Discord autocomplete interaction. */
 export const autocompleteOperation =
 	(): OperationResult<DiscordEmptyAutocompleteResponsePayload> => {
 		return {

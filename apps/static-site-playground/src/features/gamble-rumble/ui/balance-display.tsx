@@ -18,7 +18,6 @@ interface Props {
 	text: string;
 }
 
-/** Color and rainbow follow the tone the caller decided */
 export const BalanceDisplay = ({ tone, text }: Props) => {
 	return (
 		<output

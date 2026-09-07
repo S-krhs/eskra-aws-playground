@@ -3,7 +3,6 @@
 
 const BYTE_UNITS = ["B", "KB", "MB", "GB"] as const;
 
-/** Rounds a byte count into a human-readable unit. */
 export const formatByteSize = (byteSize: number): string => {
 	let size = byteSize;
 	let unit = 0;

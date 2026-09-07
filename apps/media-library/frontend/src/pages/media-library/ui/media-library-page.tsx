@@ -6,7 +6,6 @@ import { MediaFilterBar } from "@/features/media-filter";
 import { MediaGrid, useMediaPage } from "@/features/media-grid";
 import { SyncControl, useSyncStatus } from "@/features/sync-control";
 
-/** The tool's whole screen. */
 export const MediaLibraryPage = () => {
 	const [filter, setFilter] = useState<MediaFilter>({});
 	const page = useMediaPage(filter);

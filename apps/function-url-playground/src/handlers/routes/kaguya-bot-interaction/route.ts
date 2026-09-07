@@ -18,7 +18,6 @@ import { discordInteractionRequestSchema } from "./schema.js";
 
 const logger = createBatchLogger("kaguya-bot-interaction");
 
-/** Kaguya Bot's Discord interactions endpoint. */
 export const kaguyaBotInteractionRoute = async (
 	event: FunctionUrlEvent,
 ): Promise<FunctionUrlResponse> => {
