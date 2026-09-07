@@ -5,8 +5,9 @@ paths:
 
 # R2 Integration
 
-Cloudflare R2 との通信境界です。公開 API は `src/r2-client.ts` と `src/r2-object-store.ts` に限定します。
+Cloudflare R2 との通信境界です。公開 API は `src/r2-client.ts`・`src/r2-object-types.ts`・`src/r2-object-store.ts` に限定します。
 
+- 公開型は `r2-object-types.ts`、操作は `r2-object-store.ts` の `r2ObjectStore` にまとめる。`repositories` の repository と同じ形にして、操作を loose な関数として並べない。
 - R2 は S3 互換のため `@aws-sdk/client-s3` を使う。endpoint はアカウント ID から組み立て、region は `auto` を渡す。
 - 認証情報と bucket 名は呼び出し側が解決して引数で渡す。env var や設定ファイルをこの package から読まない。
 - client は `requestChecksumCalculation` と `responseChecksumValidation` を `WHEN_REQUIRED` にする。AWS SDK の既定（`WHEN_SUPPORTED`）は R2 が解釈しない checksum header を送るため、既定のままにしない。

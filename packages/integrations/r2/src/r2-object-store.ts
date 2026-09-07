@@ -1,6 +1,5 @@
 // In scope: R2 のオブジェクト操作(一覧・メタデータ取得・取得・保存・複製・削除)
 // Out of scope: client の生成、key の組み立て、サムネイル生成、DB への反映
-import type { Readable } from "node:stream";
 import type { _Object } from "@aws-sdk/client-s3";
 import {
 	CopyObjectCommand,
@@ -11,71 +10,17 @@ import {
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import type { R2Client } from "./r2-client.js";
-
-/** 一覧で得られる 1 オブジェクトの要約。 */
-export interface R2ObjectSummary {
-	key: string;
-	byteSize: number;
-	etag: string;
-	lastModified: Date;
-}
-
-/** 1 オブジェクトのメタデータ。metadata は x-amz-meta-* の custom metadata。 */
-export interface R2ObjectMetadata {
-	contentType: string;
-	byteSize: number;
-	etag: string;
-	lastModified: Date;
-	metadata: Record<string, string>;
-}
-
-/** オブジェクトの本文。Range を渡した場合は部分応答になる。 */
-export interface R2ObjectBody {
-	body: ReadableStream<Uint8Array>;
-	contentType: string;
-	byteSize: number;
-	contentRange: string | undefined;
-	isPartial: boolean;
-}
-
-/** 一覧の取得入力。1 回の応答は最大 1000 件で、続きは continuationToken で辿る。 */
-export interface ListObjectsInput {
-	bucket: string;
-	prefix?: string;
-	continuationToken?: string;
-	maxKeys?: number;
-}
-
-/** 一覧の取得結果。nextContinuationToken が undefined なら最後のページ。 */
-export interface ListObjectsResult {
-	objects: R2ObjectSummary[];
-	nextContinuationToken: string | undefined;
-}
-
-/** key を指すオブジェクト操作の共通入力。 */
-export interface ObjectLocation {
-	bucket: string;
-	key: string;
-}
-
-/** オブジェクトの取得入力。range には HTTP の Range ヘッダをそのまま渡す。 */
-export interface GetObjectInput extends ObjectLocation {
-	range?: string;
-}
-
-/** オブジェクトの保存入力。metadata は custom metadata として保存される。 */
-export interface UploadObjectInput extends ObjectLocation {
-	body: Readable | Uint8Array | string;
-	contentType: string;
-	metadata?: Record<string, string>;
-}
-
-/** 同一 bucket 内での複製入力。 */
-export interface CopyObjectInput {
-	bucket: string;
-	sourceKey: string;
-	destinationKey: string;
-}
+import type {
+	CopyObjectInput,
+	GetObjectInput,
+	ListObjectsInput,
+	ListObjectsResult,
+	ObjectLocation,
+	R2ObjectBody,
+	R2ObjectMetadata,
+	R2ObjectSummary,
+	UploadObjectInput,
+} from "./r2-object-types.js";
 
 // SDK は HeadObject の 404 を NotFound、GetObject の 404 を NoSuchKey として投げる
 const isNotFound = (error: unknown): boolean => {
@@ -127,131 +72,125 @@ export const buildCopySource = (bucket: string, key: string): string => {
 	return `${bucket}/${encodedKey}`;
 };
 
-/** prefix 配下のオブジェクトを 1 ページ分返す。 */
-export const listObjects = async (
-	client: R2Client,
-	input: ListObjectsInput,
-): Promise<ListObjectsResult> => {
-	const response = await client.send(
-		new ListObjectsV2Command({
-			Bucket: input.bucket,
-			Prefix: input.prefix,
-			ContinuationToken: input.continuationToken,
-			MaxKeys: input.maxKeys,
-		}),
-	);
+/** R2 のオブジェクト操作。client は呼び出し側が生成して渡す。 */
+export const r2ObjectStore = {
+	/** prefix 配下のオブジェクトを 1 ページ分返す。 */
+	list: async (
+		client: R2Client,
+		input: ListObjectsInput,
+	): Promise<ListObjectsResult> => {
+		const response = await client.send(
+			new ListObjectsV2Command({
+				Bucket: input.bucket,
+				Prefix: input.prefix,
+				ContinuationToken: input.continuationToken,
+				MaxKeys: input.maxKeys,
+			}),
+		);
 
-	return {
-		objects: (response.Contents ?? []).map(toObjectSummary),
-		nextContinuationToken: response.NextContinuationToken,
-	};
-};
+		return {
+			objects: (response.Contents ?? []).map(toObjectSummary),
+			nextContinuationToken: response.NextContinuationToken,
+		};
+	},
 
-/** オブジェクトのメタデータだけを読む。 */
-export const headObject = async (
-	client: R2Client,
-	input: ObjectLocation,
-): Promise<R2ObjectMetadata> => {
-	const response = await client.send(
-		new HeadObjectCommand({ Bucket: input.bucket, Key: input.key }),
-	);
+	/** オブジェクトのメタデータだけを読む。 */
+	head: async (
+		client: R2Client,
+		input: ObjectLocation,
+	): Promise<R2ObjectMetadata> => {
+		const response = await client.send(
+			new HeadObjectCommand({ Bucket: input.bucket, Key: input.key }),
+		);
 
-	return {
-		contentType: response.ContentType ?? "application/octet-stream",
-		byteSize: response.ContentLength ?? 0,
-		etag: unquoteEtag(response.ETag ?? ""),
-		lastModified: response.LastModified ?? new Date(0),
-		metadata: response.Metadata ?? {},
-	};
-};
+		return {
+			contentType: response.ContentType ?? "application/octet-stream",
+			byteSize: response.ContentLength ?? 0,
+			etag: unquoteEtag(response.ETag ?? ""),
+			lastModified: response.LastModified ?? new Date(0),
+			metadata: response.Metadata ?? {},
+		};
+	},
 
-/**
- * オブジェクトが無ければ undefined を返す HeadObject。
- * key の衝突判定に使うため、存在しないことをエラーにしない。
- */
-export const headObjectIfExists = async (
-	client: R2Client,
-	input: ObjectLocation,
-): Promise<R2ObjectMetadata | undefined> => {
-	try {
-		return await headObject(client, input);
-	} catch (error) {
-		if (isNotFound(error)) {
-			return undefined;
+	/**
+	 * オブジェクトが無ければ undefined を返す HeadObject。
+	 * key の衝突判定に使うため、存在しないことをエラーにしない。
+	 */
+	headIfExists: async (
+		client: R2Client,
+		input: ObjectLocation,
+	): Promise<R2ObjectMetadata | undefined> => {
+		try {
+			return await r2ObjectStore.head(client, input);
+		} catch (error) {
+			if (isNotFound(error)) {
+				return undefined;
+			}
+
+			throw error;
+		}
+	},
+
+	/** オブジェクトの本文を取得する。range を渡すと部分応答になる。 */
+	get: async (
+		client: R2Client,
+		input: GetObjectInput,
+	): Promise<R2ObjectBody> => {
+		const response = await client.send(
+			new GetObjectCommand({
+				Bucket: input.bucket,
+				Key: input.key,
+				Range: input.range,
+			}),
+		);
+
+		if (!response.Body) {
+			throw new Error(`R2 のオブジェクトに本文がありません: ${input.key}`);
 		}
 
-		throw error;
-	}
-};
+		return {
+			body: response.Body.transformToWebStream(),
+			contentType: response.ContentType ?? "application/octet-stream",
+			byteSize: response.ContentLength ?? 0,
+			contentRange: response.ContentRange,
+			isPartial: response.ContentRange !== undefined,
+		};
+	},
 
-/** オブジェクトの本文を取得する。range を渡すと部分応答になる。 */
-export const getObject = async (
-	client: R2Client,
-	input: GetObjectInput,
-): Promise<R2ObjectBody> => {
-	const response = await client.send(
-		new GetObjectCommand({
-			Bucket: input.bucket,
-			Key: input.key,
-			Range: input.range,
-		}),
-	);
+	/** オブジェクトを保存する。大きい本文は multipart へ自動で切り替わる。 */
+	upload: async (client: R2Client, input: UploadObjectInput): Promise<void> => {
+		const upload = new Upload({
+			client,
+			params: {
+				Bucket: input.bucket,
+				Key: input.key,
+				Body: input.body,
+				ContentType: input.contentType,
+				Metadata: input.metadata,
+			},
+		});
 
-	if (!response.Body) {
-		throw new Error(`R2 のオブジェクトに本文がありません: ${input.key}`);
-	}
+		await upload.done();
+	},
 
-	return {
-		body: response.Body.transformToWebStream(),
-		contentType: response.ContentType ?? "application/octet-stream",
-		byteSize: response.ContentLength ?? 0,
-		contentRange: response.ContentRange,
-		isPartial: response.ContentRange !== undefined,
-	};
-};
+	/**
+	 * 同一 bucket 内でオブジェクトを複製する。metadata は既定で引き継がれる。
+	 * 単発の CopyObject は 5GB までで、それを超えるものは multipart copy が要る。
+	 */
+	copy: async (client: R2Client, input: CopyObjectInput): Promise<void> => {
+		await client.send(
+			new CopyObjectCommand({
+				Bucket: input.bucket,
+				Key: input.destinationKey,
+				CopySource: buildCopySource(input.bucket, input.sourceKey),
+			}),
+		);
+	},
 
-/** オブジェクトを保存する。大きい本文は multipart へ自動で切り替わる。 */
-export const uploadObject = async (
-	client: R2Client,
-	input: UploadObjectInput,
-): Promise<void> => {
-	const upload = new Upload({
-		client,
-		params: {
-			Bucket: input.bucket,
-			Key: input.key,
-			Body: input.body,
-			ContentType: input.contentType,
-			Metadata: input.metadata,
-		},
-	});
-
-	await upload.done();
-};
-
-/**
- * 同一 bucket 内でオブジェクトを複製する。
- * 単発の CopyObject は 5GB までで、それを超えるものは multipart copy が要る。
- */
-export const copyObject = async (
-	client: R2Client,
-	input: CopyObjectInput,
-): Promise<void> => {
-	await client.send(
-		new CopyObjectCommand({
-			Bucket: input.bucket,
-			Key: input.destinationKey,
-			CopySource: buildCopySource(input.bucket, input.sourceKey),
-		}),
-	);
-};
-
-/** オブジェクトを削除する。存在しない key でもエラーにならない。 */
-export const deleteObject = async (
-	client: R2Client,
-	input: ObjectLocation,
-): Promise<void> => {
-	await client.send(
-		new DeleteObjectCommand({ Bucket: input.bucket, Key: input.key }),
-	);
+	/** オブジェクトを削除する。存在しない key でもエラーにならない。 */
+	delete: async (client: R2Client, input: ObjectLocation): Promise<void> => {
+		await client.send(
+			new DeleteObjectCommand({ Bucket: input.bucket, Key: input.key }),
+		);
+	},
 };

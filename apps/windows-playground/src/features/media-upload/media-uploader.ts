@@ -5,10 +5,7 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import type { R2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
-import {
-	headObjectIfExists,
-	uploadObject,
-} from "@eskra-aws-playground/integration-r2/r2-object-store.js";
+import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { buildInboxKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
 import { resolveContentType } from "./media-content-type.js";
@@ -43,7 +40,9 @@ const resolveAvailableKey = async (
 			sequence: sequence === 0 ? undefined : sequence + 1,
 		});
 
-		if (!(await headObjectIfExists(client, { bucket, key: objectKey }))) {
+		if (
+			!(await r2ObjectStore.headIfExists(client, { bucket, key: objectKey }))
+		) {
 			return objectKey;
 		}
 	}
@@ -82,7 +81,7 @@ export const uploadMediaFile = async (
 	);
 	const mediaId = randomUUID();
 
-	await uploadObject(client, {
+	await r2ObjectStore.upload(client, {
 		bucket: input.bucket,
 		key: objectKey,
 		// 大きい動画をメモリに載せないため stream で渡す
