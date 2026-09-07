@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	buildInboxKey,
 	buildMediaObjectKey,
+	buildThumbnailKey,
 	extractLogicalPath,
 	formatKeyTimestamp,
 } from "./media-object-key.js";
@@ -65,6 +66,15 @@ describe("buildInboxKey", () => {
 	it("着地点の prefix を付ける", () => {
 		expect(buildInboxKey({ modifiedAt, extension: "mp4" })).toBe(
 			"_inbox/20260907-133045123.mp4",
+		);
+	});
+});
+
+describe("buildThumbnailKey", () => {
+	// 論理パスを含めないので、移動しても DB に控えが無くても同じ key になる
+	it("UUID から一意に導ける", () => {
+		expect(buildThumbnailKey("018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40")).toBe(
+			"_thumb/018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40.webp",
 		);
 	});
 });

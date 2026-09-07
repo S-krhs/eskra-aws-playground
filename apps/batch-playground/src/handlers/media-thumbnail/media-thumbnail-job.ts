@@ -10,7 +10,7 @@ import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.j
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { probeMedia } from "@/features/media-thumbnail/media-probe.js";
 import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generator.js";
 import { mediaThumbnailMessageSchema } from "@/shared/media-thumbnail-message.js";
@@ -66,7 +66,7 @@ const generateForMessage = async (
 			durationMs: probe.durationMs,
 		});
 
-		const thumbnailKey = `${THUMBNAIL_PREFIX}/${message.mediaId}.webp`;
+		const thumbnailKey = buildThumbnailKey(message.mediaId);
 		await r2ObjectStore.upload(client, {
 			bucket: settings.bucket,
 			key: thumbnailKey,

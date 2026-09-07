@@ -133,21 +133,6 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(found?.width).toBeUndefined();
 	});
 
-	it("消える前のサムネイルの key を拾える", async () => {
-		await mediaObjectRepository.insertMany([
-			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
-			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
-		]);
-		await mediaObjectRepository.setThumbnail({
-			id: olderId,
-			thumbnailKey: "_thumb/a.webp",
-		});
-
-		expect(
-			await mediaObjectRepository.findThumbnailKeys([olderId, newerId]),
-		).toEqual(["_thumb/a.webp"]);
-	});
-
 	// 生成中に行が消えていても worker を失敗させない
 	it("消えた行へのサムネイル記録を 0 件として返す", async () => {
 		expect(

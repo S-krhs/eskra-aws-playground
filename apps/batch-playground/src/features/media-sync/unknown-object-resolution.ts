@@ -29,28 +29,44 @@ const MAX_KEY_SEQUENCE = 100;
 export type UnknownObjectDecision =
 	| { kind: "relocate"; mediaId: string }
 	| { kind: "insert"; mediaId: string; originalName: string }
+	| { kind: "duplicate"; mediaId: string }
 	| { kind: "adopt" };
 
-/** 未知の key の解決結果。DB へ反映する入力だけを持つ。 */
+/** 登録済みの id の状態。missingIds は known の部分集合。 */
+export interface KnownMediaIds {
+	/** 登録済みの全 id。 */
+	knownIds: ReadonlySet<string>;
+	/** 登録済みだが R2 の一覧に見つからなかった id。 */
+	missingIds: ReadonlySet<string>;
+}
+
+/** 未知の key の解決結果。DB へ反映する入力と、扱えなかった件数を持つ。 */
 export interface ResolvedUnknownObjects {
 	inserts: InsertMediaObjectInput[];
 	relocations: RelocateMediaObjectInput[];
+	skippedCount: number;
 }
 
 /**
  * metadata と登録済み id から、未知の key に対してやることを決める。
- * media-id が無いものはアプリ外から置かれたものとして取り込む。
+ * 移動は「元の key が消えている」ことまで確かめる。metadata ごと複製されると
+ * 同じ media-id が 2 つの key に載り、確かめないと objectKey が毎回入れ替わる。
  */
 export const decideUnknownObject = (
 	metadata: MediaObjectMetadata | undefined,
-	knownIds: ReadonlySet<string>,
+	known: KnownMediaIds,
 ): UnknownObjectDecision => {
 	if (!metadata) {
 		return { kind: "adopt" };
 	}
 
-	if (knownIds.has(metadata.mediaId)) {
+	if (known.missingIds.has(metadata.mediaId)) {
 		return { kind: "relocate", mediaId: metadata.mediaId };
+	}
+
+	// 元の key が残ったまま同じ media-id が現れたら、複製されたものとみなす
+	if (known.knownIds.has(metadata.mediaId)) {
+		return { kind: "duplicate", mediaId: metadata.mediaId };
 	}
 
 	return {
@@ -85,8 +101,9 @@ const resolveAvailableInboxKey = async (
 
 /**
  * アプリ外から置かれたオブジェクトを、UUID を採番して着地点へ移す。
- * Copy で metadata を付け、Delete で元を消す。Delete が失敗しても
- * UUID は新しい key に載っているため、次の同期で古い方を消せる。
+ * Copy で metadata を付け、Delete で元を消す。Delete が失敗したときは
+ * 複製した方を戻す。元が残ったままだと次の同期でもう一度取り込まれ、
+ * 同じ中身に 2 つの UUID と行ができてしまう。
  */
 const adoptObject = async (
 	client: R2Client,
@@ -113,10 +130,20 @@ const adoptObject = async (
 		metadata: buildMediaObjectMetadata({ mediaId, originalName }),
 		contentType: input.contentType,
 	});
-	await r2ObjectStore.delete(client, {
-		bucket: input.bucket,
-		key: input.object.key,
-	});
+
+	try {
+		await r2ObjectStore.delete(client, {
+			bucket: input.bucket,
+			key: input.object.key,
+		});
+	} catch (error) {
+		await r2ObjectStore.delete(client, {
+			bucket: input.bucket,
+			key: destinationKey,
+		});
+
+		throw error;
+	}
 
 	return {
 		id: mediaId,
@@ -140,7 +167,7 @@ export const resolveUnknownObjects = async (
 	input: {
 		bucket: string;
 		objects: ScannedObject[];
-		knownIds: ReadonlySet<string>;
+		known: KnownMediaIds;
 		syncedAt: Date;
 		/** 途中経過を都度知らせる。初回の取り込みは分単位で掛かるため。 */
 		onProgress?: (resolved: ResolvedUnknownObjects) => Promise<void>;
@@ -148,6 +175,7 @@ export const resolveUnknownObjects = async (
 ): Promise<ResolvedUnknownObjects> => {
 	const inserts: InsertMediaObjectInput[] = [];
 	const relocations: RelocateMediaObjectInput[] = [];
+	let skippedCount = 0;
 
 	for (
 		let offset = 0;
@@ -174,7 +202,7 @@ export const resolveUnknownObjects = async (
 
 			const decision = decideUnknownObject(
 				parseMediaObjectMetadata(head.metadata),
-				input.knownIds,
+				input.known,
 			);
 
 			if (decision.kind === "relocate") {
@@ -184,6 +212,12 @@ export const resolveUnknownObjects = async (
 					logicalPath: extractLogicalPath(object.key),
 					syncedAt: input.syncedAt,
 				});
+				continue;
+			}
+
+			// 複製されたものは元が生きているため、どちらへ寄せるか決められない
+			if (decision.kind === "duplicate") {
+				skippedCount += 1;
 				continue;
 			}
 
@@ -202,19 +236,24 @@ export const resolveUnknownObjects = async (
 				continue;
 			}
 
-			// 取り込みは R2 を書き換えるため、並列にせず 1 件ずつ行う
-			inserts.push(
-				await adoptObject(client, {
-					bucket: input.bucket,
-					object,
-					contentType: head.contentType,
-					syncedAt: input.syncedAt,
-				}),
-			);
+			// 取り込みは R2 を書き換えるため、並列にせず 1 件ずつ行う。
+			// 1 件の失敗で同期全体を落とさず、次の実行に持ち越す
+			try {
+				inserts.push(
+					await adoptObject(client, {
+						bucket: input.bucket,
+						object,
+						contentType: head.contentType,
+						syncedAt: input.syncedAt,
+					}),
+				);
+			} catch {
+				skippedCount += 1;
+			}
 		}
 
-		await input.onProgress?.({ inserts, relocations });
+		await input.onProgress?.({ inserts, relocations, skippedCount });
 	}
 
-	return { inserts, relocations };
+	return { inserts, relocations, skippedCount };
 };

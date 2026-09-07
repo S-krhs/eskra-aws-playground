@@ -9,7 +9,7 @@ WSL 側に `~/.config/eskra-media-library/config.json` を作ります。
 
 ```json
 {
-  "bucket": "media",
+  "bucket": "eskra-media-library",
   "r2": {
     "accountId": "...",
     "accessKeyId": "...",
@@ -20,6 +20,8 @@ WSL 側に `~/.config/eskra-media-library/config.json` を作ります。
 
 R2 の API トークンは Cloudflare のダッシュボードで作り、**対象 bucket の Object Read & Write に絞ります**。
 このファイルは git 管理下に置かないでください。
+
+**`bucket` は同期 Lambda が読む bucket と同じ名前にしてください。** 同期側の名前は `infra/sst.config.ts` の `mediaBucketName` にあります。ここがずれると、アップロードは成功するのに管理ツールへいつまでも出てきません。
 
 ## 2. ビルドする
 

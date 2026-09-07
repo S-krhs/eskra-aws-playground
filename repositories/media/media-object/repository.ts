@@ -87,31 +87,6 @@ export const mediaObjectRepository = {
 		});
 	},
 
-	/** 指定した id が持つサムネイルの key を返す。行を消す前の後片付けに使う。 */
-	findThumbnailKeys: async (ids: string[]): Promise<string[]> => {
-		if (ids.length === 0) {
-			return [];
-		}
-
-		const prisma = getPrismaClient();
-		const thumbnailKeys: string[] = [];
-
-		for (const chunk of toChunks(ids)) {
-			const rows = await prisma.mediaObject.findMany({
-				where: { id: { in: chunk }, thumbnailKey: { not: null } },
-				select: { thumbnailKey: true },
-			});
-
-			for (const row of rows) {
-				if (row.thumbnailKey) {
-					thumbnailKeys.push(row.thumbnailKey);
-				}
-			}
-		}
-
-		return thumbnailKeys;
-	},
-
 	/** id で 1 件取得する。ゴミ箱に入れたものも返す。 */
 	findById: async (id: string): Promise<MediaObject | undefined> => {
 		const prisma = getPrismaClient();

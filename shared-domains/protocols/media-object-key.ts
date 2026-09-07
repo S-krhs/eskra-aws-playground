@@ -2,7 +2,10 @@
 // Out of scope: 更新日時の取得、衝突の検出、R2 への通信、metadata の符号化
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
-import { INBOX_PREFIX } from "../contracts/media-storage-layout.js";
+import {
+	INBOX_PREFIX,
+	THUMBNAIL_PREFIX,
+} from "../contracts/media-storage-layout.js";
 
 dayjs.extend(utc);
 
@@ -46,6 +49,14 @@ export const buildInboxKey = (
 	input: Omit<MediaObjectKeyInput, "logicalPath">,
 ): string => {
 	return buildMediaObjectKey({ ...input, logicalPath: INBOX_PREFIX });
+};
+
+/**
+ * メディアの UUID からサムネイルの key を組み立てる。
+ * 論理パスを含めないため移動で変わらず、DB に控えが無くても導ける。
+ */
+export const buildThumbnailKey = (mediaId: string): string => {
+	return `${THUMBNAIL_PREFIX}/${mediaId}.webp`;
 };
 
 /**

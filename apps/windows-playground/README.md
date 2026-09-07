@@ -29,7 +29,7 @@ Node は WSL 側にだけ置き、Windows には何もインストールしま�
 
 ```json
 {
-  "bucket": "media",
+  "bucket": "eskra-media-library",
   "r2": {
     "accountId": "...",
     "accessKeyId": "...",
@@ -39,4 +39,5 @@ Node は WSL 側にだけ置き、Windows には何もインストールしま�
 ```
 
 R2 の API トークンは対象 bucket の Object Read & Write に絞ったものを使います。
+`bucket` は同期 Lambda が読む bucket(`infra/sst.config.ts` の `mediaBucketName`)と同じ名前にします。ずれるとアップロードは成功するのに管理ツールへ出てきません。
 このファイルは git 管理せず、内容はログにもエラーメッセージにも出しません。

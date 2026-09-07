@@ -6,6 +6,8 @@ import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-st
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
+import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+import { z } from "zod";
 import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";
 import { scanMediaObjects } from "@/features/media-sync/media-object-scan.js";
 import { buildMediaSyncPlan } from "@/features/media-sync/sync-plan.js";
@@ -31,6 +33,25 @@ export interface MediaSyncResponse {
 	deletedCount: number;
 }
 
+/** 同期の起動イベント。手動起動で歯止めを越えるときだけ指定する。 */
+export const mediaSyncEventSchema = z.object({
+	/** 大量削除の歯止めを外す。中身を確かめたうえで手動起動するときに使う。 */
+	allowBulkDelete: z.boolean().default(false),
+});
+
+const guardDeletion = (
+	deletableCount: number,
+	knownCount: number,
+): string | undefined => {
+	try {
+		assertDeletableSize(deletableCount, knownCount);
+
+		return undefined;
+	} catch (error) {
+		return toMessage(error);
+	}
+};
+
 const toMessage = (error: unknown): string => {
 	return error instanceof Error ? error.message : String(error);
 };
@@ -40,7 +61,11 @@ const toMessage = (error: unknown): string => {
  * ListObjectsV2 は custom metadata を返さないため、既知の key は一覧だけで
  * 突き合わせ、未知の key にだけ HeadObject を打つ。
  */
-export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
+export const mediaSyncJob = async (
+	event: unknown = {},
+): Promise<MediaSyncResponse> => {
+	// cron は event を渡さず、Lambda が null を渡すこともある
+	const { allowBulkDelete } = mediaSyncEventSchema.parse(event ?? {});
 	const startedAt = new Date();
 	const running = await mediaSyncRunRepository.findRunning();
 
@@ -125,14 +150,17 @@ export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
 		await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
 
 		let notifiedAt = 0;
-		const { inserts, relocations } = await resolveUnknownObjects(client, {
+		const resolved = await resolveUnknownObjects(client, {
 			bucket: settings.bucket,
 			objects: plan.unknownObjects,
-			knownIds: new Set(
-				known.map((media) => {
-					return media.id;
-				}),
-			),
+			known: {
+				knownIds: new Set(
+					known.map((media) => {
+						return media.id;
+					}),
+				),
+				missingIds: new Set(plan.missingIds),
+			},
 			syncedAt: startedAt,
 			onProgress: async (resolved) => {
 				const resolvedCount =
@@ -155,18 +183,19 @@ export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
 
 		// 移動は「古い key の欠落」としても現れるため、削除の対象から外す
 		const relocatedIds = new Set(
-			relocations.map((relocation) => {
+			resolved.relocations.map((relocation) => {
 				return relocation.id;
 			}),
 		);
 		const deletableIds = plan.missingIds.filter((id) => {
 			return !relocatedIds.has(id);
 		});
-		assertDeletableSize(deletableIds.length, known.length);
 
-		progress.insertedCount = await mediaObjectRepository.insertMany(inserts);
+		progress.insertedCount = await mediaObjectRepository.insertMany(
+			resolved.inserts,
+		);
 		progress.updatedCount =
-			(await mediaObjectRepository.relocateMany(relocations)) +
+			(await mediaObjectRepository.relocateMany(resolved.relocations)) +
 			(await mediaObjectRepository.refreshMany(
 				plan.changedObjects.map((changed) => {
 					return {
@@ -179,25 +208,48 @@ export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
 				}),
 			));
 
-		// 行を消すとサムネイルは走査から外れて辿れなくなるため、先に R2 から消す
-		const orphanedThumbnailKeys =
-			await mediaObjectRepository.findThumbnailKeys(deletableIds);
-
-		for (const key of orphanedThumbnailKeys) {
-			await r2ObjectStore.delete(client, { bucket: settings.bucket, key });
-		}
-
-		progress.deletedCount =
-			await mediaObjectRepository.deleteByIds(deletableIds);
 		await mediaObjectRepository.touchMany(plan.unchangedIds, startedAt);
 		const enqueuedCount = await enqueueMissingThumbnails();
+
+		// 削除だけを歯止めの対象にする。ここより前の反映は毎回通し、
+		// 歯止めに掛かっても取り込みが止まったままにならないようにする
+		const deleteBlockedReason = allowBulkDelete
+			? undefined
+			: guardDeletion(deletableIds.length, known.length);
+
+		if (!deleteBlockedReason) {
+			// 行を消すとサムネイルは走査から外れて辿れなくなるため、先に R2 から消す。
+			// key は UUID から導けるので、DB の thumbnailKey が空でも取りこぼさない
+			for (const id of deletableIds) {
+				await r2ObjectStore.delete(client, {
+					bucket: settings.bucket,
+					key: buildThumbnailKey(id),
+				});
+			}
+
+			progress.deletedCount =
+				await mediaObjectRepository.deleteByIds(deletableIds);
+		}
 
 		await mediaSyncRunRepository.finish({
 			id: runId,
 			...progress,
 			finishedAt: new Date(),
+			error: deleteBlockedReason,
 		});
-		logger.complete({ runId, ...progress, enqueuedCount });
+
+		if (deleteBlockedReason) {
+			logger.failure(new Error(deleteBlockedReason), { runId, ...progress });
+
+			throw new Error(deleteBlockedReason);
+		}
+
+		logger.complete({
+			runId,
+			...progress,
+			enqueuedCount,
+			skippedCount: resolved.skippedCount,
+		});
 
 		return { runId, skipped: false, ...progress };
 	} catch (error) {
