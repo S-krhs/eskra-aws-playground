@@ -9,10 +9,15 @@
 			"types": "./dist/anime/*.d.ts",
 			"default": "./dist/anime/*.js"
 		},
+		"./media/*.test.js": null,
 		"./media/*/*.test.js": null,
 		"./media/*/*.js": {
 			"types": "./dist/media/*/*.d.ts",
 			"default": "./dist/media/*/*.js"
+		},
+		"./media/*.js": {
+			"types": "./dist/media/*.d.ts",
+			"default": "./dist/media/*.js"
 		},
 		"./playground/*.test.js": null,
 		"./playground/*/*.test.js": null,

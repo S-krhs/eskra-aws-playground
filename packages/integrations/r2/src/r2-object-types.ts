@@ -60,9 +60,14 @@ export interface UploadObjectInput extends ObjectLocation {
 	metadata?: Record<string, string>;
 }
 
-/** 同一 bucket 内での複製入力。 */
+/**
+ * 同一 bucket 内での複製入力。
+ * metadata を渡すと複製先の custom metadata を置き換える。省略すると複製元を引き継ぐ。
+ */
 export interface CopyObjectInput {
 	bucket: string;
 	sourceKey: string;
 	destinationKey: string;
+	metadata?: Record<string, string>;
+	contentType?: string;
 }

@@ -174,7 +174,8 @@ export const r2ObjectStore = {
 	},
 
 	/**
-	 * 同一 bucket 内でオブジェクトを複製する。metadata は既定で引き継がれる。
+	 * 同一 bucket 内でオブジェクトを複製する。
+	 * metadata を渡したときだけ REPLACE にし、省略時は複製元の metadata を引き継ぐ。
 	 * 単発の CopyObject は 5GB までで、それを超えるものは multipart copy が要る。
 	 */
 	copy: async (client: R2Client, input: CopyObjectInput): Promise<void> => {
@@ -183,6 +184,9 @@ export const r2ObjectStore = {
 				Bucket: input.bucket,
 				Key: input.destinationKey,
 				CopySource: buildCopySource(input.bucket, input.sourceKey),
+				MetadataDirective: input.metadata ? "REPLACE" : undefined,
+				Metadata: input.metadata,
+				ContentType: input.contentType,
 			}),
 		);
 	},

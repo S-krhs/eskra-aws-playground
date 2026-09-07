@@ -47,6 +47,19 @@ const toMediaObject = (row: MediaObjectRow): MediaObject => {
 	};
 };
 
+// 10 万件規模の同期で 1 文が巨大にならないよう、一括操作はこの単位へ割る
+const BULK_CHUNK_SIZE = 1_000;
+
+const toChunks = <T>(items: T[]): T[][] => {
+	const chunks: T[][] = [];
+
+	for (let offset = 0; offset < items.length; offset += BULK_CHUNK_SIZE) {
+		chunks.push(items.slice(offset, offset + BULK_CHUNK_SIZE));
+	}
+
+	return chunks;
+};
+
 // (uploadedAt, id) の組で位置を決める。Prisma は組での比較を書けないため OR に展開する
 const toCursorFilter = (cursor: MediaObjectCursor) => {
 	return {
@@ -117,14 +130,20 @@ export const mediaObjectRepository = {
 		}
 
 		const prisma = getPrismaClient();
-		const result = await prisma.mediaObject.createMany({
-			data: inputs.map((input) => {
-				return { ...input, byteSize: BigInt(input.byteSize) };
-			}),
-			skipDuplicates: true,
-		});
+		let inserted = 0;
 
-		return result.count;
+		for (const chunk of toChunks(inputs)) {
+			const result = await prisma.mediaObject.createMany({
+				data: chunk.map((input) => {
+					return { ...input, byteSize: BigInt(input.byteSize) };
+				}),
+				skipDuplicates: true,
+			});
+
+			inserted += result.count;
+		}
+
+		return inserted;
 	},
 
 	/** 外部で移動されたメディアの key を付け替える。 */
@@ -134,19 +153,24 @@ export const mediaObjectRepository = {
 		}
 
 		const prisma = getPrismaClient();
-		const updates = inputs.map((input) => {
-			return prisma.mediaObject.update({
-				where: { id: input.id },
-				data: {
-					objectKey: input.objectKey,
-					logicalPath: input.logicalPath,
-					syncedAt: input.syncedAt,
-				},
-			});
-		});
-		const updated = await prisma.$transaction(updates);
+		let updated = 0;
 
-		return updated.length;
+		for (const chunk of toChunks(inputs)) {
+			const updates = chunk.map((input) => {
+				return prisma.mediaObject.update({
+					where: { id: input.id },
+					data: {
+						objectKey: input.objectKey,
+						logicalPath: input.logicalPath,
+						syncedAt: input.syncedAt,
+					},
+				});
+			});
+
+			updated += (await prisma.$transaction(updates)).length;
+		}
+
+		return updated;
 	},
 
 	/** R2 に依然として存在していたメディアの確認時刻を更新する。 */
@@ -156,12 +180,18 @@ export const mediaObjectRepository = {
 		}
 
 		const prisma = getPrismaClient();
-		const result = await prisma.mediaObject.updateMany({
-			where: { id: { in: ids } },
-			data: { syncedAt },
-		});
+		let touched = 0;
 
-		return result.count;
+		for (const chunk of toChunks(ids)) {
+			const result = await prisma.mediaObject.updateMany({
+				where: { id: { in: chunk } },
+				data: { syncedAt },
+			});
+
+			touched += result.count;
+		}
+
+		return touched;
 	},
 
 	/** R2 から消えたメディアの行を削除する。タグの紐付けも併せて消える。 */
@@ -171,10 +201,16 @@ export const mediaObjectRepository = {
 		}
 
 		const prisma = getPrismaClient();
-		const result = await prisma.mediaObject.deleteMany({
-			where: { id: { in: ids } },
-		});
+		let deleted = 0;
 
-		return result.count;
+		for (const chunk of toChunks(ids)) {
+			const result = await prisma.mediaObject.deleteMany({
+				where: { id: { in: chunk } },
+			});
+
+			deleted += result.count;
+		}
+
+		return deleted;
 	},
 };

@@ -15,4 +15,5 @@ Cloudflare R2 との通信境界です。公開 API は `src/r2-client.ts`・`sr
 - key の組み立て、論理パスの解釈、サムネイル生成、DB への反映は置かない。オブジェクト操作の wire 解釈だけを担当する。
 - ETag は応答の引用符を外して返す。呼び出し側が同一性の比較で引用符を意識しないようにする。
 - `CopySource` は key の "/" を path 区切りとして残し、それ以外を encode する。日本語のフォルダ名がそのままでは通らない。
+- `copy` は metadata を渡したときだけ `MetadataDirective: REPLACE` にする。既定は複製元の metadata を引き継ぐ挙動で、移動で UUID を落とさないため。
 - 単発の `CopyObject` は 5GB までとする。それを超えるものが必要になったら multipart copy を別の関数として足す。
