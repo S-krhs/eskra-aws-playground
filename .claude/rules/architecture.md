@@ -80,5 +80,5 @@ apps/* -> shared-domains -> packages/libs/utils
 
 - `.claude/rules/coding.md` and `architecture.md`: always loaded.
 - `.claude/skills/`: per-workspace rules, invoked when relevant to the task at hand — not auto-loaded by path.
-- `docs/`: human-facing operational docs (CI/CD, one-time manual setup records). Japanese.
-- Each workspace's `README.md`: human-facing usage — public API, commands, secrets. Japanese.
+- `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.
+- Each workspace's `README.md`: human-facing usage — commands and secrets. Japanese, same rule as `docs/`. A package's own API is documented in the code's doc-comments, not the README.

@@ -1,13 +1,10 @@
 # メディアライブラリ 管理ツールの常駐と登録
 
-R2 に置いたメディアを見て整理する管理ツールを、WSL に常駐させて Windows のスタートメニューから開けるようにする手順です。
-**Windows 側にインストールするのはブラウザだけです。** サーバは WSL の Node で動かし、画面は Chrome / Edge に PWA として登録します。
-
-アップローダの登録は [media-library-uploader.md](./media-library-uploader.md) を参照してください。設定ファイルは同じものを共有します。
+アップローダの設定ファイルを共有する。先に [media-library-uploader.md](./media-library-uploader.md) を参照。
 
 ## 1. 設定ファイルへ項目を足す
 
-アップローダで作った `~/.config/eskra-media-library/config.json` に、管理ツールが使う項目を足します。
+`~/.config/eskra-media-library/config.json` に管理ツールが使う項目を足す。
 
 ```json
 {
@@ -23,9 +20,9 @@ R2 に置いたメディアを見て整理する管理ツールを、WSL に常�
 }
 ```
 
-- `databaseUrl` は Neon の **pooled** 接続文字列です。GitHub Secret の `DATABASE_URL` と同じ値になります。
-- `syncFunctionName` は deploy 後の Lambda 関数名です。`aws lambda list-functions` か AWS コンソールで確認できます。
-- 同期ボタンは Lambda を invoke するため、`~/.aws/credentials` か環境変数に、その関数への `lambda:InvokeFunction` を持つ資格情報が要ります。
+- `databaseUrl` は Neon の pooled 接続文字列（GitHub Secret `DATABASE_URL` と同じ値）。
+- `syncFunctionName` は deploy 後の Lambda 関数名。`aws lambda list-functions` か AWS コンソールで確認する。
+- 同期ボタンが Lambda を invoke するため、`~/.aws/credentials` か環境変数に、その関数への `lambda:InvokeFunction` を持つ資格情報を用意する。
 
 ## 2. 動作を確かめる
 
@@ -33,10 +30,9 @@ R2 に置いたメディアを見て整理する管理ツールを、WSL に常�
 npm run media:library
 ```
 
-`http://127.0.0.1:7420` を Windows のブラウザで開き、一覧と同期ボタンが出れば動いています。
-ポートが使用中の場合は「既に起動しているとみなして終了します」と出て終わります。二重に立ち上がることはありません。
+`http://127.0.0.1:7420` を Windows のブラウザで開く。ポートが使用中の場合はそのまま終了する。
 
-画面だけを直したいときは Vite の dev サーバを使います。`/api` は 7420 へ中継されるため、上のコマンドと並べて動かします。
+画面だけを直すときは Vite の dev サーバを並行して動かす（`/api` は 7420 へ中継される）。
 
 ```bash
 npm run dev:ui -w @eskra-aws-playground/media-library
@@ -44,16 +40,16 @@ npm run dev:ui -w @eskra-aws-playground/media-library
 
 ## 3. systemd user service にする
 
-WSL が上がったら一緒に立ち上がるようにします。`/etc/wsl.conf` に systemd が有効になっている必要があります。
+`/etc/wsl.conf` に systemd を有効化する。
 
 ```ini
 [boot]
 systemd=true
 ```
 
-書き換えたら Windows 側で `wsl --shutdown` してから WSL を開き直します。
+書き換えたら Windows 側で `wsl --shutdown` してから WSL を開き直す。
 
-`~/.config/systemd/user/eskra-media-library.service` を作ります。`WorkingDirectory` はこのリポジトリの場所に読み替えてください。
+`~/.config/systemd/user/eskra-media-library.service` を作る（`WorkingDirectory` はこのリポジトリの場所に読み替える）。
 
 ```ini
 [Unit]
@@ -71,7 +67,7 @@ RestartSec=5
 WantedBy=default.target
 ```
 
-`ExecStart` はビルド済みの成果物を直接指します。登録の前に一度ビルドしてください。
+登録前にビルドする。
 
 ```bash
 npm run build -w @eskra-aws-playground/media-library
@@ -81,30 +77,26 @@ systemctl --user enable --now eskra-media-library
 systemctl --user status eskra-media-library
 ```
 
-ログは `journalctl --user -u eskra-media-library -f` で追えます。
-コードを更新したときは、ビルドし直してから `systemctl --user restart eskra-media-library` します。
+ログ: `journalctl --user -u eskra-media-library -f`
 
-WSL を開いていない間はサービスも止まります。ログインセッションが無くても動かしたい場合は `loginctl enable-linger $USER` を実行します。
+コード更新後: ビルドし直してから `systemctl --user restart eskra-media-library`
+
+ログインセッションが無くても動かす場合: `loginctl enable-linger $USER`
 
 ## 4. PWA として登録する
 
-`http://127.0.0.1:7420` を Chrome か Edge で開き、アドレスバー右のインストールアイコンから追加します。
-
-`chrome --app=` ではなく PWA にする理由は、**すでに開いていれば新しい窓を増やさず既存の窓を前に出す**ためです。`--app=` は起動のたびに窓が増えます。
+`http://127.0.0.1:7420` を Chrome か Edge で開き、アドレスバー右のインストールアイコンから追加する。
 
 ## 5. ショートカットキーを割り当てる
-
-Web ページ側からグローバルショートカットは登録できないため、Windows のショートカット側にキーを設定します。
 
 1. スタートメニューでインストールした項目を右クリックし、「ファイルの場所を開く」を選ぶ。
 2. 出てきた .lnk のプロパティを開き、「ショートカットキー」に割り当てるキーを入力する。
 3. 「適用」で保存する。
 
-組み合わせは `Ctrl+Alt+<キー>` に固定され、任意の組み合わせは選べません。
+組み合わせは `Ctrl+Alt+<キー>` に固定される。
 
 ## 制約
 
-- `127.0.0.1` にバインドするため、スマホや別 PC からは見られません。
-- Windows のブラウザから WSL へ届くのは WSL2 の localhost forwarding に依っています。ネットワークモードを変えると経路が変わります。
-- タスクトレイには入りません。ウィンドウを閉じてもサーバは動いたままなので、スタートメニューから開き直します。
-- アップロードした直後は一覧に出ません。2 時間ごとの cron を待つか、画面の同期ボタンを押します。
+- `127.0.0.1` にバインドするため、スマホや別 PC からは見られない。
+- タスクトレイには入らない。ウィンドウを閉じてもサーバは動いたままなので、スタートメニューから開き直す。
+- アップロードした直後は一覧に出ない。2 時間ごとの cron を待つか、画面の同期ボタンを押す。

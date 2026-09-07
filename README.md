@@ -16,21 +16,6 @@ AWS Lambda と SST でバッチジョブを運用する TypeScript モノレポ�
 - `npm run build`
 - `npm run deploy`
 
-各コマンドは npm workspaces と Turbo 経由で実行します。
-
 ## デプロイ
 
-`.github/workflows/deploy.yml` が `main` ブランチへの push で SST app をデプロイします。
-必要な GitHub Actions シークレットと運用手順は [docs/ci-cd.md](docs/ci-cd.md) を参照してください。
-
-## ドキュメント
-
-- 実装ルール: [.claude/rules/](.claude/rules/)（Claude Code が自動読み込み。人間も参照する）
-- CI/CD 運用マニュアル: [docs/ci-cd.md](docs/ci-cd.md)
-- Batch Playground app: [apps/batch-playground/README.md](apps/batch-playground/README.md)
-- Batch Anime Analysis app: [apps/batch-anime-analysis/README.md](apps/batch-anime-analysis/README.md)
-- Static Site Playground app: [apps/static-site-playground/README.md](apps/static-site-playground/README.md)
-- Integrations: [packages/integrations/README.md](packages/integrations/README.md)
-- Libs: [packages/libs/README.md](packages/libs/README.md)
-- Repositories: [repositories/README.md](repositories/README.md)
-- Migration: [migration/README.md](migration/README.md)
+`.github/workflows/deploy.yml` が `main` ブランチへの push で SST app をデプロイします。手順は [docs/ci-cd.md](docs/ci-cd.md)。

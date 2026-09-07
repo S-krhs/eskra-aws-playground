@@ -1,7 +1,6 @@
 // In scope: the rarity identifying how likely a gacha candidate is to be drawn
 // Out of scope: interpreting draw weights, drawing, DB access
 
-/** rarity on GachaEntity. */
 export const gachaRarities = {
 	common: "COMMON",
 	rare: "RARE",

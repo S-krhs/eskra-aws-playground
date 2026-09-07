@@ -3,7 +3,6 @@
 import { getPrismaClient } from "../db/client.js";
 import { ScrapingMetricCreateManyInputObjectZodSchema } from "../generated/zod/schemas/objects/ScrapingMetricCreateManyInput.schema.js";
 
-/** One metric from a single scrape. */
 export interface ScrapingResultMetric {
 	label: string;
 	value: number;
@@ -32,7 +31,6 @@ export interface FindScrapingMetricsInput {
 	scrapedDate: string;
 	/** Last id of the previous page — only rows after it are returned. */
 	afterId?: string;
-	/** Maximum rows in one page. */
 	limit: number;
 }
 
