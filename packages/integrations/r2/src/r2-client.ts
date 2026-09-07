@@ -39,6 +39,23 @@ export const parseR2Credentials = (value: unknown): R2Credentials => {
 	return result.data;
 };
 
+/**
+ * secret に入っている JSON 文字列を R2 の認証情報へ変換する。
+ * JSON.parse の SyntaxError は入力の先頭を message に含めるため、そのまま投げると
+ * secret が呼び出し側のログへ流れる。構文の失敗はここで自前のエラーへ差し替える。
+ */
+export const parseR2CredentialsJson = (json: string): R2Credentials => {
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse(json);
+	} catch {
+		throw new Error("R2 の認証情報を JSON として解釈できません。");
+	}
+
+	return parseR2Credentials(parsed);
+};
+
 /** 認証情報からアカウント固有の R2 endpoint へ繋ぐ client を作る。 */
 export const createR2Client = (credentials: R2Credentials): R2Client => {
 	return new S3Client({

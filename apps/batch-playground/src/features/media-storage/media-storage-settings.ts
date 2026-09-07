@@ -1,7 +1,7 @@
 // In scope: R2 の接続先を表す設定の検証と組み立て
-// Out of scope: 設定値の取得元の解決(SST link と環境変数の読み出し)、R2 への通信
+// Out of scope: 設定値の取得元の解決(SST link と環境変数の読み出し)、認証情報の JSON 解釈、R2 への通信
 import {
-	parseR2Credentials,
+	parseR2CredentialsJson,
 	type R2Credentials,
 } from "@eskra-aws-playground/integration-r2/r2-client.js";
 
@@ -29,13 +29,5 @@ export const parseMediaStorageSettings = (input: {
 		throw new Error("R2Credentials secret が設定されていません。");
 	}
 
-	let parsed: unknown;
-
-	try {
-		parsed = JSON.parse(input.credentialsJson);
-	} catch {
-		throw new Error("R2Credentials secret が JSON として不正です。");
-	}
-
-	return { credentials: parseR2Credentials(parsed), bucket };
+	return { credentials: parseR2CredentialsJson(input.credentialsJson), bucket };
 };
