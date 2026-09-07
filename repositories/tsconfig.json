@@ -8,6 +8,7 @@
 		"anime/**/*.ts",
 		"db/**/*.ts",
 		"generated/**/*.ts",
+		"media/**/*.ts",
 		"playground/**/*.ts"
 	],
 	"exclude": ["dist", "node_modules"]
