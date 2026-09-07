@@ -3,6 +3,7 @@
 import { getPrismaClient } from "../../db/client.js";
 import type {
 	FindMediaObjectPageInput,
+	FindThumbnaillessInput,
 	InsertMediaObjectInput,
 	MediaObject,
 	MediaObjectCursor,
@@ -128,19 +129,54 @@ export const mediaObjectRepository = {
 
 	/**
 	 * サムネイルが未生成のメディアを返す。
-	 * 1 回の同期で積む量を抑えるため、上限を呼び出し側が決める。
+	 * 処理中のものと、回数を使い切ったものは対象から外す。
 	 */
 	findWithoutThumbnail: async (
-		limit: number,
+		input: FindThumbnaillessInput,
 	): Promise<ThumbnaillessMediaObject[]> => {
 		const prisma = getPrismaClient();
 
 		return await prisma.mediaObject.findMany({
-			where: { thumbnailKey: null, trashedAt: null },
+			where: {
+				thumbnailKey: null,
+				trashedAt: null,
+				thumbnailAttempts: { lt: input.maxAttempts },
+				OR: [
+					{ thumbnailEnqueuedAt: null },
+					{ thumbnailEnqueuedAt: { lt: input.retryBefore } },
+				],
+			},
 			orderBy: [{ uploadedAt: "desc" }],
-			take: limit,
+			take: input.limit,
 			select: { id: true, objectKey: true },
 		});
+	},
+
+	/** サムネイル生成を queue へ投入したことを記録し、試行回数を進める。 */
+	markThumbnailEnqueued: async (
+		ids: string[],
+		enqueuedAt: Date,
+	): Promise<number> => {
+		if (ids.length === 0) {
+			return 0;
+		}
+
+		const prisma = getPrismaClient();
+		let marked = 0;
+
+		for (const chunk of toChunks(ids)) {
+			const result = await prisma.mediaObject.updateMany({
+				where: { id: { in: chunk } },
+				data: {
+					thumbnailEnqueuedAt: enqueuedAt,
+					thumbnailAttempts: { increment: 1 },
+				},
+			});
+
+			marked += result.count;
+		}
+
+		return marked;
 	},
 
 	/**

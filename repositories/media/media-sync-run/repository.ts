@@ -74,14 +74,15 @@ export const mediaSyncRunRepository = {
 
 	/**
 	 * 終了していない実行のうち最も古いものを返す。
-	 * 二重起動の判定に使うため、後から始まった実行が自分だと分かるよう
-	 * 新しい方ではなく古い方を返す。打ち切り判定の起点にもなる。
+	 * startedAt は行を入れる前に採るため、同時に始まった 2 つの実行が
+	 * どちらも自分を最古と見なしうる。DB が採る createdAt で並べ、
+	 * 同時刻は id で決めて、どちらから見ても同じ 1 件になるようにする。
 	 */
 	findRunning: async (): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaSyncRun.findFirst({
 			where: { finishedAt: null },
-			orderBy: { startedAt: "asc" },
+			orderBy: [{ createdAt: "asc" }, { id: "asc" }],
 		});
 
 		return row ? toMediaSyncRun(row) : undefined;

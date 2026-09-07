@@ -84,6 +84,10 @@ model MediaObject {
   height       Int?
   durationMs   Int?      @map("duration_ms")
   thumbnailKey String?   @map("thumbnail_key") @db.VarChar(1024)
+  /// サムネイル生成を queue へ投入した時刻。処理中の再投入を避けるために持つ
+  thumbnailEnqueuedAt DateTime? @map("thumbnail_enqueued_at") @db.Timestamptz
+  /// サムネイル生成を試行した回数。生成できないメディアへの再試行を無制限に続けないために持つ
+  thumbnailAttempts   Int       @default(0) @map("thumbnail_attempts")
   uploadedAt   DateTime  @map("uploaded_at") @db.Timestamptz
   syncedAt     DateTime  @map("synced_at") @db.Timestamptz
   trashedAt    DateTime? @map("trashed_at") @db.Timestamptz
@@ -132,6 +136,8 @@ model MediaObjectTag {
 /// 同期の実行単位。進捗表示と、実行中の二重起動判定に使う
 model MediaSyncRun {
   id            String    @id @db.Uuid
+  /// 行が入った順。startedAt は挿入前に採るため、二重起動の判定はこちらで行う
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   startedAt     DateTime  @map("started_at") @db.Timestamptz
   finishedAt    DateTime? @map("finished_at") @db.Timestamptz
   scannedCount  Int       @default(0) @map("scanned_count")
@@ -141,6 +147,7 @@ model MediaSyncRun {
   error         String?
 
   @@index([startedAt])
+  @@index([finishedAt, createdAt])
   @@map("media_sync_runs")
   @@schema("media")
 }

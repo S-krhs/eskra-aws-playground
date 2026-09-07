@@ -68,6 +68,15 @@ export interface ThumbnaillessMediaObject {
 	objectKey: string;
 }
 
+/** サムネイル未生成のメディアを探す条件。 */
+export interface FindThumbnaillessInput {
+	limit: number;
+	/** 生成をこの回数まで試行し、それでも作れなければ対象から除外する。 */
+	maxAttempts: number;
+	/** この時刻より前に投入したものだけを再投入の対象にする。処理中のメッセージを重複して投入しないための境界。 */
+	retryBefore: Date;
+}
+
 /** サムネイル生成の結果。寸法と尺は読めた分だけ渡す。 */
 export interface SetMediaThumbnailInput {
 	id: string;

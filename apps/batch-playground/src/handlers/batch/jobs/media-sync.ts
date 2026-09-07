@@ -21,33 +21,21 @@ import type { BatchResponse } from "../schema.js";
 
 const logger = createBatchLogger(batchJobNames.mediaSync);
 
-// Lambda の timeout(15 分)より後ろに置き、終了を書けずに落ちた実行で詰まらないようにする
+// 実行中の記録を打ち切り扱いにするまでの経過時間の閾値。
+// Lambda の timeout(15 分)より長く取り、まだ実行中の正常なジョブを誤って打ち切り扱いにしないようにする。
 const STALE_RUN_THRESHOLD_MS = 20 * 60 * 1000;
 
-// 進捗の書き戻しが同期そのものより重くならない間隔
+// 進捗を DB へ書き戻す間隔(件数)。書き戻し自体が同期処理の負荷にならないよう、逐次ではなくまとめて書く。
 const PROGRESS_INTERVAL = 1_000;
 
-/** 同期 job が受け取るイベントの詳細。 */
+/** 同期ジョブの起動イベントを検証する schema。 */
 const mediaSyncEventSchema = z.object({
-	/** 大量削除の歯止めを外す。中身を確かめたうえで手動起動するときに使う。 */
+	/** 大量削除を防ぐガードを無効にする。内容を確認したうえで手動起動するときに true にする。 */
 	allowBulkDelete: z.boolean().default(false),
 });
 
 const toMessage = (error: unknown): string => {
 	return error instanceof Error ? error.message : String(error);
-};
-
-const guardDeletion = (
-	deletableCount: number,
-	knownCount: number,
-): string | undefined => {
-	try {
-		assertDeletableSize(deletableCount, knownCount);
-
-		return undefined;
-	} catch (error) {
-		return toMessage(error);
-	}
 };
 
 const toResponse = (details: Record<string, unknown>): BatchResponse => {
@@ -60,10 +48,11 @@ const toResponse = (details: Record<string, unknown>): BatchResponse => {
  * 突き合わせ、未知の key にだけ HeadObject を打つ。
  */
 export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
-	// 1. 起動イベントから歯止めの扱いを決める。
+	// 1. 起動イベントを検証し、大量削除ガードを外すかどうかを取り出す。
 	const { allowBulkDelete } = mediaSyncEventSchema.parse(event ?? {});
 
-	// 2. 実行中の同期があれば降りる。打ち切られた記録は先に閉じる。
+	// 2. 実行中の同期記録があるか確認する。閾値内であればここで終了し、
+	//    閾値を超えていれば打ち切り扱いで前回の記録を閉じてから先へ進む。
 	const startedAt = new Date();
 	const running = await mediaSyncRunRepository.findRunning();
 
@@ -83,11 +72,11 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			updatedCount: running.updatedCount,
 			deletedCount: running.deletedCount,
 			finishedAt: startedAt,
-			error: "終了が記録されないまま打ち切られました",
+			error: "終了を記録しないまま打ち切られました",
 		});
 	}
 
-	// 3. 接続先を解決してから実行記録を開始する。
+	// 3. R2 の接続設定を解決し、この実行の記録を開始する。
 	const settings = parseMediaStorageSettings({
 		credentialsJson: Resource.R2Credentials.value,
 		bucket: process.env.MEDIA_BUCKET,
@@ -103,7 +92,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 
 	await mediaSyncRunRepository.start(runId, startedAt);
 
-	// 4. findRunning と start の間に始まった実行がないか確かめ、後発が降りる。
+	// 4. 実行記録の登録直後にもう一度確認し、同時に始まった実行があれば後発のこちらを降ろす。
+	//    findRunning と start の間に別の実行が始まる可能性があるため、二重登録を防ぐ。
 	const earliestRunning = await mediaSyncRunRepository.findRunning();
 
 	if (earliestRunning && earliestRunning.id !== runId) {
@@ -121,11 +111,11 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 	logger.start({ runId });
 
 	try {
-		// 5. R2 の一覧と登録済みを突き合わせる。
+		// 5. R2 を走査し、DB の既知一覧と突き合わせて同期の plan を作る。
 		const scanned = await scanMediaObjects(client, settings.bucket);
 		const known = await mediaObjectRepository.findAllSummaries();
 
-		// 一覧が空なのに登録があるのは、権限か bucket 指定の誤りとみなす
+		// R2 の一覧が空なのに DB に登録が残っている場合は、token の権限不足か bucket 指定の誤りとみなしてエラーにする
 		if (scanned.length === 0 && known.length > 0) {
 			throw new Error(
 				"R2 の一覧が空でした。token の権限か MEDIA_BUCKET の指定を確認してください。",
@@ -160,7 +150,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 				}
 
 				notifiedAt = resolvedCount;
-				// DB へ書く前の途中経過。確定値は反映後に finish で上書きする
+				// ここで書く insertedCount と updatedCount は未確定の途中経過であり、確定値は反映後に finish で上書きする
 				await mediaSyncRunRepository.updateProgress({
 					id: runId,
 					...progress,
@@ -170,7 +160,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			},
 		});
 
-		// 7. 移動は「古い key の欠落」としても現れるため、削除の対象から外す。
+		// 7. 削除対象から移動済みのものを除外する。
+		//    移動は元の key が消えた形で検出されるため、削除ではなく移動として扱う。
 		const relocatedIds = new Set(
 			resolved.relocations.map((relocation) => {
 				return relocation.id;
@@ -180,7 +171,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			return !relocatedIds.has(id);
 		});
 
-		// 8. 取り込みと移動を反映する。ここは歯止めに関わらず毎回通す。
+		// 8. 追加と更新を先に DB へ反映する。
+		//    削除ガードで中断しても新規取り込みや更新は失わないよう、削除より先に確定させる。
 		progress.insertedCount = await mediaObjectRepository.insertMany(
 			resolved.inserts,
 		);
@@ -199,43 +191,38 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			));
 		await mediaObjectRepository.touchMany(plan.unchangedIds, startedAt);
 
-		// 9. サムネイル未生成を queue へ積む。
+		// 9. 大量削除を防ぐガードを通す。allowBulkDelete が true の場合はスキップする。
+		if (!allowBulkDelete) {
+			assertDeletableSize(deletableIds.length, known.length);
+		}
+
+		// 10. サムネイルを R2 から削除し、続けて DB の行を削除する。
+		//     行を削除すると R2 の走査からサムネイルを辿れなくなるため、必ず先に消す。
+		//     サムネイルの key は UUID から導けるため、DB の thumbnailKey が空の行でも削除できる。
+		for (const id of deletableIds) {
+			await r2ObjectStore.delete(client, {
+				bucket: settings.bucket,
+				key: buildThumbnailKey(id),
+			});
+		}
+
+		progress.deletedCount =
+			await mediaObjectRepository.deleteByIds(deletableIds);
+
+		// 11. サムネイル未生成のメディアを queue へ投入する。
+		//     削除より先に投入すると、消える予定のメディアにも生成を依頼してしまうため、削除の後に行う。
 		const enqueuedCount = await enqueueMissingThumbnails({
 			queueUrl: Resource.MediaThumbnailQueue.url,
 			job: mediaJobNames.mediaThumbnail,
+			enqueuedAt: new Date(),
 		});
 
-		// 10. 削除だけを歯止めの対象にする。掛かった場合は削除を飛ばして理由を残す。
-		const deleteBlockedReason = allowBulkDelete
-			? undefined
-			: guardDeletion(deletableIds.length, known.length);
-
-		if (!deleteBlockedReason) {
-			// 行を消すとサムネイルは走査から外れて辿れなくなるため、先に R2 から消す。
-			// key は UUID から導けるので、DB の thumbnailKey が空でも取りこぼさない
-			for (const id of deletableIds) {
-				await r2ObjectStore.delete(client, {
-					bucket: settings.bucket,
-					key: buildThumbnailKey(id),
-				});
-			}
-
-			progress.deletedCount =
-				await mediaObjectRepository.deleteByIds(deletableIds);
-		}
-
+		// 12. 実行記録を確定し、結果をログとレスポンスに残す。
 		await mediaSyncRunRepository.finish({
 			id: runId,
 			...progress,
 			finishedAt: new Date(),
-			error: deleteBlockedReason,
 		});
-
-		if (deleteBlockedReason) {
-			logger.failure(new Error(deleteBlockedReason), { runId, ...progress });
-
-			throw new Error(deleteBlockedReason);
-		}
 
 		logger.complete({
 			runId,

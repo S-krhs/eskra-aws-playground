@@ -49,8 +49,8 @@ export interface ResolvedUnknownObjects {
 
 /**
  * metadata と登録済み id から、未知の key に対してやることを決める。
- * 移動は「元の key が消えている」ことまで確かめる。metadata ごと複製されると
- * 同じ media-id が 2 つの key に載り、確かめないと objectKey が毎回入れ替わる。
+ * 元の key の metadata ごと複製されると同じ media-id が 2 つの key に残るため、
+ * relocate と判定する前に元の key が消えていることまで確かめる。確かめないと objectKey が実行のたびに入れ替わる。
  */
 export const decideUnknownObject = (
 	metadata: MediaObjectMetadata | undefined,
@@ -100,10 +100,10 @@ const resolveAvailableInboxKey = async (
 };
 
 /**
- * アプリ外から置かれたオブジェクトを、UUID を採番して着地点へ移す。
- * Copy で metadata を付け、Delete で元を消す。Delete が失敗したときは
- * 複製した方を戻す。元が残ったままだと次の同期でもう一度取り込まれ、
- * 同じ中身に 2 つの UUID と行ができてしまう。
+ * アプリ外から置かれたオブジェクトに UUID を採番し、_inbox の key へ移す。
+ * Copy で metadata を付けてから Delete で元の object を消し、Delete が失敗した場合は
+ * Copy した方を削除して元の状態に戻す。元を残したままにすると次の同期で再び取り込まれ、
+ * 同じ内容に対して 2 つの UUID と行ができてしまう。
  */
 const adoptObject = async (
 	client: R2Client,
@@ -131,6 +131,13 @@ const adoptObject = async (
 		contentType: input.contentType,
 	});
 
+	// 複製先の etag は元と一致しないことがある(元が multipart で上がっていた場合)。
+	// コピー元の etag を登録すると、次回の同期が差し替えと誤認してサムネイルを作り直してしまう
+	const copied = await r2ObjectStore.head(client, {
+		bucket: input.bucket,
+		key: destinationKey,
+	});
+
 	try {
 		await r2ObjectStore.delete(client, {
 			bucket: input.bucket,
@@ -151,8 +158,8 @@ const adoptObject = async (
 		logicalPath: extractLogicalPath(destinationKey),
 		fileName: originalName,
 		contentType: input.contentType,
-		byteSize: input.object.byteSize,
-		etag: input.object.etag,
+		byteSize: copied.byteSize,
+		etag: copied.etag,
 		uploadedAt: input.object.lastModified,
 		syncedAt: input.syncedAt,
 	};
@@ -169,7 +176,7 @@ export const resolveUnknownObjects = async (
 		objects: ScannedObject[];
 		known: KnownMediaIds;
 		syncedAt: Date;
-		/** 途中経過を都度知らせる。初回の取り込みは分単位で掛かるため。 */
+		/** 初回の取り込みは分単位で掛かるため、途中経過を都度知らせる。 */
 		onProgress?: (resolved: ResolvedUnknownObjects) => Promise<void>;
 	},
 ): Promise<ResolvedUnknownObjects> => {
