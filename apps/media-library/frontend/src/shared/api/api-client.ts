@@ -1,10 +1,7 @@
-// In scope: backend の route 定義からレスポンス型を導出した client の生成
-// Out of scope: 取得したデータの整形、画面の状態管理、エラーの見せ方
+// In scope: creating the client whose response types are derived from the backend's route definitions
+// Out of scope: shaping the fetched data, screen state, how an error is shown
 import type { ApiType } from "@backend/app.js";
 import { hc } from "hono/client";
 
-/**
- * backend の API client。
- * 型は backend の route 定義から導出するため、レスポンスの形を手で書き写さない。
- */
+/** Types are derived from the backend's route definitions, so no response shape is transcribed by hand. */
 export const apiClient = hc<ApiType>("/api");

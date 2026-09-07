@@ -1,17 +1,14 @@
-// In scope: R2 から取ったサムネイルをローカルへ保存し、2 回目以降はそこから返す
-// Out of scope: サムネイルの生成、R2 からの取得、HTTP 応答の組み立て
+// In scope: storing a thumbnail fetched from R2 locally and serving it from there afterwards
+// Out of scope: generating a thumbnail, fetching it from R2, assembling the HTTP response
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-/**
- * キャッシュファイルの場所を組み立てる。
- * mediaId は UUID として検証済みのものだけを渡す(そのままファイル名にするため)。
- */
+/** Only a mediaId already validated as a UUID may be passed — it becomes the file name verbatim. */
 const toCachePath = (cacheDir: string, mediaId: string): string => {
 	return join(cacheDir, `${mediaId}.webp`);
 };
 
-/** キャッシュ済みのサムネイルを返す。無ければ undefined。 */
+/** undefined when nothing is cached. */
 export const readCachedThumbnail = async (
 	cacheDir: string,
 	mediaId: string,
@@ -23,10 +20,7 @@ export const readCachedThumbnail = async (
 	}
 };
 
-/**
- * サムネイルをキャッシュへ保存する。
- * 書き込み途中のファイルを次の要求が読まないよう、別名で書いてから rename する。
- */
+/** Written under a temp name and renamed into place, so a request mid-write never reads a partial file. */
 export const writeCachedThumbnail = async (
 	cacheDir: string,
 	mediaId: string,

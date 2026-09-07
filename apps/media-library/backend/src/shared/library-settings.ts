@@ -1,5 +1,5 @@
-// In scope: 管理ツールが読む設定ファイルの検証と、接続先・実行時設定の組み立て
-// Out of scope: R2 や Lambda への通信、DB への接続、設定ファイルの作成
+// In scope: validating the config file this tool reads and assembling its connections and runtime settings
+// Out of scope: talking to R2 or Lambda, connecting to the DB, creating the config file
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -10,7 +10,7 @@ import {
 import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
 import { z } from "zod";
 
-/** 待ち受けポート。掴めなければ既に起動していると判断する。 */
+/** The listening port; failing to take it means an instance is already running. */
 export const DEFAULT_PORT = 7420;
 
 const DEFAULT_THUMBNAIL_CACHE_DIR = join(
@@ -30,7 +30,7 @@ const settingsSchema = z.object({
 	port: z.number().int().min(1).max(65535).optional(),
 });
 
-/** 管理ツールが必要とする接続先と実行時設定。 */
+/** The connections and runtime settings this tool needs. */
 export interface LibrarySettings {
 	credentials: R2Credentials;
 	bucket: string;
@@ -44,8 +44,8 @@ export interface LibrarySettings {
 let settings: LibrarySettings | undefined;
 
 /**
- * 設定ファイルを読んで接続先を組み立て、module スコープへ保持する。
- * 鍵や接続文字列が漏れないよう、失敗しても読み込んだ内容はエラーに載せない。
+ * Reads the config file, assembles the connections, and keeps them at module scope.
+ * A failure never puts the file's content on the error, so a key or connection string can't leak.
  */
 export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
 	const settingsPath = resolveMediaLibraryConfigPath();
@@ -91,7 +91,7 @@ export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
 	return settings;
 };
 
-/** 読み込み済みの接続先を返す。route から参照する。 */
+/** Returns the already-loaded connections; this is what a route reads. */
 export const getLibrarySettings = (): LibrarySettings => {
 	if (!settings) {
 		throw new Error("設定ファイルを読み込む前に接続先を参照しました。");

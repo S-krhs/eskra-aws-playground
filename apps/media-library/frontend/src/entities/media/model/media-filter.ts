@@ -1,9 +1,9 @@
-// In scope: 一覧を絞り込む条件の型
-// Out of scope: 絞り込みの操作、一覧の取得、表示
+// In scope: the type of the conditions narrowing the listing
+// Out of scope: operating the filter, fetching the listing, display
 
 /**
- * 一覧の絞り込み条件。項目を省くとその条件では絞らない。
- * 条件を出す feature と一覧を取る feature の両方が扱うため、entities に置く。
+ * The listing's filter conditions; an omitted field narrows nothing.
+ * Both the feature producing them and the feature fetching the listing use this, so it lives in entities.
  */
 export interface MediaFilter {
 	logicalPath?: string;

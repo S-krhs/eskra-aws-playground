@@ -1,9 +1,9 @@
-// In scope: 画面に出す数値と日時の表記
-// Out of scope: データの取得、状態管理、レイアウト
+// In scope: how numbers and timestamps read on screen
+// Out of scope: fetching data, state, layout
 
 const BYTE_UNITS = ["B", "KB", "MB", "GB"] as const;
 
-/** バイト数を人が読める単位へ丸める。 */
+/** Rounds a byte count into a human-readable unit. */
 export const formatByteSize = (byteSize: number): string => {
 	let size = byteSize;
 	let unit = 0;
@@ -16,7 +16,7 @@ export const formatByteSize = (byteSize: number): string => {
 	return `${unit === 0 ? size : size.toFixed(1)} ${BYTE_UNITS[unit]}`;
 };
 
-/** 動画の尺を m:ss で表す。 */
+/** Renders a video's duration as m:ss. */
 export const formatDuration = (durationMs: number): string => {
 	const totalSeconds = Math.round(durationMs / 1000);
 	const minutes = Math.floor(totalSeconds / 60);
@@ -25,7 +25,7 @@ export const formatDuration = (durationMs: number): string => {
 	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-/** アップロード日時を日本語表記の年月日と時刻にする。 */
+/** Renders the upload time as a Japanese-style date and time. */
 export const formatUploadedAt = (uploadedAt: string): string => {
 	return new Date(uploadedAt).toLocaleString("ja-JP", {
 		year: "numeric",

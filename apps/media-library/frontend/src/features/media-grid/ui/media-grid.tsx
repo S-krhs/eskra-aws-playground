@@ -1,16 +1,16 @@
-// In scope: 一覧の仮想スクロールと、末尾に近づいたときの継ぎ足し要求
-// Out of scope: 一覧の取得、タイルの見た目、絞り込み条件の決め方
+// In scope: the listing's virtual scroll and asking for more as the end comes into view
+// Out of scope: fetching the listing, how a tile looks, deciding the filter conditions
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { MediaPage } from "../model/use-media-page.js";
 import { MediaTile } from "./media-tile.js";
 
-// タイルの最小幅と高さ。列数は幅から決めるため、幅だけを下限として持つ
+// A tile's minimum width and its height; the column count comes from the width, so only the width is a floor
 const MIN_TILE_WIDTH = 180;
 const ROW_HEIGHT = 208;
 const GAP = 12;
 
-// 末尾からこの行数まで来たら次のページを取りに行く
+// Getting within this many rows of the end fetches the next page
 const PREFETCH_ROWS = 2;
 
 const useColumnCount = (
@@ -43,7 +43,7 @@ const useColumnCount = (
 	return columns;
 };
 
-/** 取得済みのメディアを格子に並べ、スクロールに合わせて継ぎ足す。 */
+/** Lays the fetched media out in a grid and appends more as the user scrolls. */
 export const MediaGrid = ({ page }: { page: MediaPage }) => {
 	const container = useRef<HTMLDivElement>(null);
 	const columns = useColumnCount(container);

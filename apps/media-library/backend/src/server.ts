@@ -1,5 +1,5 @@
-// In scope: 設定を読んで 127.0.0.1 で待ち受けるプロセスの起動
-// Out of scope: route の実装、画面のビルド、常駐のしかた(systemd 側の担当)
+// In scope: reading the config and starting the process listening on 127.0.0.1
+// Out of scope: route implementation, building the UI, how it stays resident (systemd's job)
 
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.js";
@@ -10,7 +10,7 @@ const settings = await loadLibrarySettings().catch((error: unknown) => {
 	process.exit(1);
 });
 
-// repositories は接続先を DATABASE_URL から読むため、route が動く前に入れる
+// repositories reads its connection from DATABASE_URL, so it's set before any route runs
 process.env.DATABASE_URL = settings.databaseUrl;
 
 const app = createApp();

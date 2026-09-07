@@ -1,10 +1,10 @@
-// In scope: 検証に失敗した query を、値を含まないエラーメッセージへ変換する
-// Out of scope: 検証そのもの、HTTP status の決定、route の実装
+// In scope: turning a failed query validation into an error message carrying no values
+// Out of scope: the validation itself, deciding the HTTP status, route implementation
 import type { ZodError } from "zod";
 
 /**
- * 検証に失敗した項目名だけを並べたメッセージを返す。
- * 渡された値はそのまま応答へ出さない(そのまま画面やログへ流れるため)。
+ * Lists only the names of the fields that failed. The value that was passed never reaches the
+ * response, since it would flow straight on into the screen and the logs.
  */
 export const toInvalidQueryMessage = (error: ZodError): string => {
 	const fields = error.issues

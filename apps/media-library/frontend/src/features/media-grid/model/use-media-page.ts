@@ -1,5 +1,5 @@
-// In scope: 一覧の取得と、スクロールに合わせた継ぎ足し
-// Out of scope: 表示、絞り込み条件の決め方、同期の起動
+// In scope: fetching the listing and appending to it as the user scrolls
+// Out of scope: display, deciding the filter conditions, starting a sync
 import type { InferResponseType } from "hono/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MediaFilter } from "@/entities/media";
@@ -8,10 +8,9 @@ import { apiClient } from "@/shared/api";
 type ListResponse = InferResponseType<typeof apiClient.media.$get, 200>;
 type Cursor = ListResponse["nextCursor"];
 
-/** 一覧に並べるメディア 1 件。backend の応答から型を導出する。 */
+/** One media object in the listing; the type is derived from the backend's response. */
 export type MediaItem = ListResponse["objects"][number];
 
-/** 一覧の状態と操作。 */
 export interface MediaPage {
 	items: MediaItem[];
 	hasMore: boolean;
@@ -37,9 +36,9 @@ const toQuery = (
 };
 
 /**
- * 絞り込み条件ごとに一覧を取得する。
- * 条件を変えると先頭から取り直し、loadMore で次のページを継ぎ足す。
- * 呼び出し側が filter を毎回作り直しても取り直しが起きないよう、依存は項目単位で見る。
+ * Fetches the listing per filter condition. Changing a condition refetches from the top, and
+ * loadMore appends the next page. Dependencies are tracked field by field, so a caller rebuilding
+ * `filter` on every render doesn't trigger a refetch.
  */
 export const useMediaPage = (filter: MediaFilter): MediaPage => {
 	const { logicalPath, contentTypePrefix } = filter;
@@ -49,7 +48,7 @@ export const useMediaPage = (filter: MediaFilter): MediaPage => {
 	const [error, setError] = useState<string | undefined>(undefined);
 	const [reloadKey, setReloadKey] = useState(0);
 
-	// 条件を変えた直後に前の条件の応答が届いても捨てるため、要求ごとに番号を振る
+	// Each request is numbered, so a response for the previous condition arriving late is discarded
 	const requestId = useRef(0);
 	const cursorRef = useRef<Cursor>(null);
 	const loadingRef = useRef(false);

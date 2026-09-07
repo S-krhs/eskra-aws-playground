@@ -1,5 +1,5 @@
-// In scope: 論理パスと種別の絞り込み操作
-// Out of scope: 一覧の取得、絞り込み結果の表示、同期の起動
+// In scope: the controls filtering by logical path and kind
+// Out of scope: fetching the listing, showing the filtered result, starting a sync
 import type { MediaFilter } from "@/entities/media";
 
 const KINDS = [
@@ -8,7 +8,7 @@ const KINDS = [
 	{ label: "動画", value: "video/" },
 ] as const;
 
-/** 絞り込みの操作。変更のたびに一覧は先頭から取り直しになる。 */
+/** Every change refetches the listing from the top. */
 export const MediaFilterBar = ({
 	filter,
 	onChange,
