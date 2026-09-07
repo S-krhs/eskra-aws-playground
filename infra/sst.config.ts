@@ -1,30 +1,30 @@
 /// <reference path=".sst/platform/config.d.ts" />
 
-// SST app と AWS リソース名の接頭辞として使うアプリ名
+// App name, used as the prefix for the SST app and every AWS resource name
 const appName = "eskra-aws-playground";
 
 const siteDomain = "sasahara.uk";
 
-// R2 の bucket は SST の管理外(Cloudflare 側で作成)のため、名前だけをここで持つ
+// The R2 bucket lives outside SST (created on the Cloudflare side), so only its name is held here
 const mediaBucketName = "eskra-media-library";
 
 export default $config({
-	// SST app の基本設定。デプロイ先は develop stage 固定。
+	// Base SST app settings; the deploy target is fixed to the develop stage.
 	app(input) {
 		return {
 			name: appName,
 			home: "aws",
 			removal: "remove",
-			// develop stage は CD 専用のため、ローカルからの誤った sst remove を CLI レベルで拒否する。
-			// run() のガードは run() を評価しない sst remove に効かないため、protect で別途塞ぐ
+			// The develop stage is CD-only, so an accidental local sst remove is refused at the CLI level.
+			// The run() guard can't cover sst remove, which never evaluates run(), so protect closes that path
 			protect: input.stage === "develop",
 		};
 	},
 	async run() {
-		// develop stage は CD(GitHub Actions)専用のため、ローカルからは read-only の diff だけを許可する。
-		// GITHUB_ACTIONS を先に判定し、内部 API の $cli.command 参照を CD 経路から外す(&& の短絡評価)。
-		// このガードは run() を評価するコマンド(deploy・dev・diff・refresh)にのみ効く。
-		// run() を評価しない sst remove は app() の protect で別途拒否する
+		// The develop stage is CD-only (GitHub Actions), so locally only the read-only diff is allowed.
+		// GITHUB_ACTIONS is checked first, keeping the internal $cli.command off the CD path (&& short-circuits).
+		// This guard only covers commands that evaluate run(): deploy, dev, diff, refresh.
+		// sst remove never evaluates run() and is refused by app()'s protect instead
 		if (
 			$app.stage === "develop" &&
 			process.env.GITHUB_ACTIONS !== "true" &&
@@ -40,12 +40,12 @@ export default $config({
 			"./config/alarm-descriptions.js"
 		);
 
-		// UMA ワンドロお題通知用の Discord Webhook URL を Secret として扱う
+		// Discord webhook URL for the UMA one-draw topic notification, held as a Secret
 		const umaOneDrawTopicWebhookUrl = new sst.Secret(
 			"UmaOneDrawTopicDiscordWebhook",
 		);
 
-		// scheduler job が登録するお題通知の one-time schedule を所属させる group
+		// The group the scheduler job's one-time topic-notification schedules belong to
 		const umaOneDrawTopicScheduleGroup = new aws.scheduler.ScheduleGroup(
 			"UmaOneDrawTopicScheduleGroup",
 			{
@@ -53,8 +53,8 @@ export default $config({
 			},
 		);
 
-		// one-time schedule が batch Lambda を起動するときに引き受ける role。
-		// confused deputy 対策として、自アカウントのこの schedule group からの引き受けに限定する
+		// The role a one-time schedule assumes to invoke the batch Lambda. Assumption is narrowed to this
+		// schedule group in this account, guarding against a confused deputy
 		const callerIdentity = aws.getCallerIdentityOutput({});
 		const umaOneDrawTopicScheduleRole = new aws.iam.Role(
 			"UmaOneDrawTopicScheduleRole",
@@ -87,10 +87,10 @@ export default $config({
 			},
 		);
 
-		// runtime が利用する Neon pooled 接続文字列を Secret として扱う
+		// The Neon pooled connection string the runtime uses, held as a Secret
 		const databaseUrl = new sst.Secret("DatabaseUrl");
 
-		// Discord application ごとの認証情報を Secret として分離する
+		// Credentials are kept in a separate Secret per Discord application
 		const yacchoDiscordBotToken = new sst.Secret("YacchoDiscordBotToken");
 		const yacchoDiscordInteractionPublicKey = new sst.Secret(
 			"YacchoDiscordInteractionPublicKey",
@@ -102,7 +102,7 @@ export default $config({
 		);
 		new sst.Secret("KaguyaDiscordApplicationId");
 
-		// Lambda バッチの共通エントリポイントを作成
+		// The shared entry point for the Lambda batch jobs
 		const batchFunction = new sst.aws.Function("BatchFunction", {
 			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
@@ -117,7 +117,7 @@ export default $config({
 			},
 			permissions: [
 				{
-					// DeleteSchedule は実行後自動削除(ActionAfterCompletion)の登録に必要
+					// DeleteSchedule is required to register delete-after-run (ActionAfterCompletion)
 					actions: ["scheduler:CreateSchedule", "scheduler:DeleteSchedule"],
 					resources: [
 						$interpolate`arn:aws:scheduler:*:*:schedule/${umaOneDrawTopicScheduleGroup.name}/*`,
@@ -130,14 +130,14 @@ export default $config({
 			],
 		});
 
-		// scheduler からの非同期起動に対する Lambda 自体の自動リトライ(既定 2 回)を止める。
-		// これにより job は失敗を throw して Errors アラームへ届けても Discord 投稿が重複しない
+		// Turns off Lambda's own retries (2 by default) on async invocation from the scheduler,
+		// so a job can throw and reach the Errors alarm without posting to Discord twice
 		new aws.lambda.FunctionEventInvokeConfig("BatchFunctionEventInvokeConfig", {
 			functionName: batchFunction.name,
 			maximumRetryAttempts: 0,
 		});
 
-		// batch Lambda が env で role ARN を参照するため、循環参照を避けて invoke 権限は別リソースで付与する
+		// The batch Lambda reads the role ARN from env, so invoke permission is granted on a separate resource to avoid a cycle
 		new aws.iam.RolePolicy("UmaOneDrawTopicScheduleRolePolicy", {
 			role: umaOneDrawTopicScheduleRole.id,
 			policy: aws.iam.getPolicyDocumentOutput({
@@ -153,8 +153,8 @@ export default $config({
 			}).json,
 		});
 
-		// deferred 応答で ACK した interaction の後追い処理を受け渡す Queue。
-		// visibilityTimeout は worker の timeout 以上にし、処理中の再配信を防ぐ
+		// Carries the follow-up work for an interaction already ACKed with a deferred response.
+		// visibilityTimeout is kept at or above the worker's timeout to stop redelivery mid-processing
 		const playgroundInteractionDeadLetterQueue = new sst.aws.Queue(
 			"PlaygroundInteractionDeadLetterQueue",
 		);
@@ -169,9 +169,9 @@ export default $config({
 			},
 		);
 
-		// 公開エンドポイントは job ごとに増やさずこの Lambda 1 つに集約する。
-		// Discord の 3 秒制限内に deferred 応答を返し、実処理は Queue 経由で worker へ渡すため
-		// この Lambda 自身は DB へ接続しない
+		// One Lambda holds the whole public endpoint rather than one per job. It returns a deferred
+		// response inside Discord's 3-second limit and hands the real work to a worker over the Queue,
+		// so it never connects to the DB itself
 		const functionUrlFunction = new sst.aws.Function("FunctionUrlFunction", {
 			handler: "../apps/function-url-playground/src/handlers/handler.handler",
 			runtime: "nodejs22.x",
@@ -185,8 +185,8 @@ export default $config({
 			url: true,
 		});
 
-		// deferred 応答済み interaction の実処理を行い、元メッセージを確定内容へ差し替える worker。
-		// Discord API は interaction token で呼ぶため Bot token の link は不要
+		// The worker that does the real work for a deferred interaction and replaces the original message
+		// with the final content. It calls the Discord API with the interaction token, so no bot token is linked
 		playgroundInteractionQueue.subscribe(
 			{
 				handler:
@@ -194,8 +194,8 @@ export default $config({
 				runtime: "nodejs22.x",
 				timeout: "30 seconds",
 				memory: "512 MB",
-				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
-				// link ではなく environment で渡す
+				// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
+				// through environment rather than a link
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 				},
@@ -208,22 +208,23 @@ export default $config({
 			},
 		);
 
-		// アニメ分析結果通知用の Discord Webhook URL を Secret として扱う
+		// Discord webhook URL for the anime-analysis result notification, held as a Secret
 		const animeAnalysisDiscordWebhookUrl = new sst.Secret(
 			"AnimeAnalysisDiscordWebhook",
 		);
 
-		// BigQuery へ書き込む GCP サービスアカウント鍵(JSON)を Secret として扱う
+		// The GCP service account key (JSON) that writes to BigQuery, held as a Secret
 		const gcpServiceAccountKey = new sst.Secret("GcpServiceAccountKey");
 
-		// dataset は SST の管理外(GCP 側で手動作成)のため、stage ごとの名前だけをここで決める。
-		// BigQuery の dataset ID は英数字とアンダースコアのみのため、stage 名の記号を置き換える
+		// The dataset lives outside SST (created by hand on the GCP side), so only its per-stage name is
+		// decided here. A BigQuery dataset ID takes only alphanumerics and underscores, so the stage name's
+		// punctuation is replaced
 		const bigQueryDatasetId =
 			$app.stage === "develop"
 				? "anime_analysis"
 				: `anime_analysis_${$app.stage.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
-		// アニメ分析の実行要求を dataSource 単位で保持する SQS Queue を作成
+		// SQS Queue holding one anime-analysis request per dataSource
 		const animeAnalysisDeadLetterQueue = new sst.aws.Queue(
 			"AnimeAnalysisDeadLetterQueue",
 		);
@@ -291,7 +292,7 @@ export default $config({
 			},
 		);
 
-		// Playwright / Chromium 実行に必要な runtime 依存を Lambda Layer として発行する
+		// Publishes the runtime dependencies Playwright / Chromium need as a Lambda Layer
 		const browserRuntimeLayer = new aws.lambda.LayerVersion(
 			"BrowserRuntimeLayer",
 			{
@@ -306,7 +307,7 @@ export default $config({
 			},
 		);
 
-		// アニメ分析の実行計画を作り、SQS に投入する Orchestrator Lambda を作成
+		// The orchestrator Lambda that builds the anime-analysis plan and enqueues it on SQS
 		const animeAnalysisOrchestratorFunction = new sst.aws.Function(
 			"AnimeAnalysisOrchestratorFunction",
 			{
@@ -319,12 +320,12 @@ export default $config({
 			},
 		);
 
-		// 蓄積したアニメ指標を取得日単位で BigQuery へ連携する Lambda を作成。
-		// 過去分をまとめて連携する運用があるため timeout は Lambda の上限に寄せる
+		// The Lambda that exports stored anime metrics to BigQuery one scraped date at a time.
+		// Backfilling past dates in one run is part of operations, so the timeout sits near Lambda's maximum
 		const animeMetricBigQueryExportFunction = new sst.aws.Function(
 			"AnimeMetricBigQueryExportFunction",
 			{
-				// 過去分の連携を GitHub Actions から invoke するため、名前を生成任せにしない
+				// A backfill is invoked from GitHub Actions, so the name can't be left to generation
 				name: `${appName}-${$app.stage}-anime-bigquery-export`,
 				handler:
 					"../apps/batch-anime-analysis/src/handlers/bigquery-export.handler",
@@ -332,8 +333,8 @@ export default $config({
 				timeout: "15 minutes",
 				memory: "1 GB",
 				link: [gcpServiceAccountKey],
-				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
-				// link ではなく environment で渡す
+				// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
+				// through environment rather than a link
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 					BIGQUERY_DATASET: bigQueryDatasetId,
@@ -341,11 +342,11 @@ export default $config({
 			},
 		);
 
-		// R2 の API トークン(JSON)を Secret として扱う
+		// The R2 API token (JSON), held as a Secret
 		const r2Credentials = new sst.Secret("R2Credentials");
 
-		// サムネイル生成の要求を 1 件ずつ処理する Queue。
-		// visibilityTimeout は worker の timeout 以上にし、処理中の再配信を防ぐ
+		// Carries thumbnail-generation requests, one at a time.
+		// visibilityTimeout is kept at or above the worker's timeout to stop redelivery mid-processing
 		const mediaThumbnailDeadLetterQueue = new sst.aws.Queue(
 			"MediaThumbnailDeadLetterQueue",
 		);
@@ -357,8 +358,8 @@ export default $config({
 			},
 		});
 
-		// ffmpeg / ffprobe を /opt/bin へ配置する layer。
-		// asset の置き場は browser-runtime layer と同じ bucket を使い回す
+		// The layer placing ffmpeg / ffprobe under /opt/bin.
+		// Its archive reuses the same bucket as the browser-runtime layer
 		const ffmpegLayerObject = new aws.s3.BucketObjectv2(
 			"FfmpegLayerObject",
 			{
@@ -382,26 +383,26 @@ export default $config({
 			s3ObjectVersion: ffmpegLayerObject.versionId,
 		});
 
-		// R2 と DB の差分を反映する同期 Lambda。batch handler の router を共有しつつ、
-		// 10 万件の upsert が共有 batch Lambda の 60 秒に収まらないため Function を分ける
+		// The sync Lambda reconciling R2 against the DB. It shares the batch handler's router, but gets its
+		// own Function because a 100k-row upsert doesn't fit the shared batch Lambda's 60 seconds
 		const mediaSyncFunction = new sst.aws.Function("MediaSyncFunction", {
-			// 管理ツールの同期ボタンが invoke するため、名前を生成任せにしない
+			// The management tool's sync button invokes it, so the name can't be left to generation
 			name: `${appName}-${$app.stage}-media-sync`,
 			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
 			memory: "1 GB",
 			link: [r2Credentials, mediaThumbnailQueue],
-			// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
-			// link ではなく environment で渡す
+			// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
+			// through environment rather than a link
 			environment: {
 				DATABASE_URL: databaseUrl.value,
 				MEDIA_BUCKET: mediaBucketName,
 			},
 		});
 
-		// サムネイル生成 worker。sqs-worker の router を共有し、ffmpeg layer と
-		// 原本を落とす /tmp が要るため interaction 用とは Function を分ける
+		// The thumbnail-generation worker. It shares the sqs-worker router but gets its own Function,
+		// because it needs the ffmpeg layer and a /tmp to download the original into
 		mediaThumbnailQueue.subscribe(
 			{
 				handler:
@@ -425,9 +426,9 @@ export default $config({
 			},
 		);
 
-		// schedule 起動の Scheduler(cron)は 1 つの !$dev ガードに集約し、追加時の入れ忘れを防ぐ。
-		// sst dev はローカルコード検証用途のため、dev セッション終了後に cron が発火し続けるのを防ぐ目的で $dev では作成しない。
-		// 実行タイミングは config/job-schedules で一元管理する
+		// Every cron Scheduler sits behind one !$dev guard, so adding another can't miss it.
+		// sst dev is for verifying code locally, and none are created under $dev to keep a cron from firing
+		// on after the dev session ends. The timings all live in config/job-schedules
 		if (!$dev) {
 			new sst.aws.CronV2("UmaOneDrawTopicSchedulerSchedule", {
 				function: batchFunction,
@@ -455,7 +456,7 @@ export default $config({
 			});
 		}
 
-		// SQS message ごとにアニメ分析スクレイピングを実行する Worker Lambda を作成
+		// The worker Lambda running one anime-analysis scrape per SQS message
 		animeAnalysisQueue.subscribe(
 			{
 				handler: "../apps/batch-anime-analysis/src/handlers/sqs-worker.handler",
@@ -463,8 +464,8 @@ export default $config({
 				timeout: "2 minutes",
 				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
-				// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
-				// link ではなく environment で渡す(SST 外のテストと同一経路にする)
+				// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
+				// through environment rather than a link (the same path the tests outside SST take)
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 				},
@@ -495,16 +496,16 @@ export default $config({
 			},
 			domain: $app.stage === "develop" ? { name: siteDomain } : undefined,
 			assets: {
-				// 未知パスも S3 へ流し、存在しないキーはオリジンの標準エラーを返す
+				// Unknown paths go to S3 too; a missing key returns the origin's own error
 				routes: ["/"],
 			},
 			dev: false,
 		});
 
-		// バッチ失敗を通知するためのアラート用 Discord Webhook URL を Secret として扱う
+		// Discord webhook URL for batch-failure alerts, held as a Secret
 		const alertDiscordWebhookUrl = new sst.Secret("AlertDiscordWebhook");
 
-		// CloudWatch alarm を受けて Discord へ通知する Notifier Lambda を作成
+		// The notifier Lambda that takes a CloudWatch alarm and posts it to Discord
 		const alertNotifierFunction = new sst.aws.Function(
 			"AlertNotifierFunction",
 			{
@@ -517,7 +518,7 @@ export default $config({
 			},
 		);
 
-		// CloudWatch alarm の通知先となる SNS Topic を作り Notifier Lambda を購読させる
+		// The SNS Topic every CloudWatch alarm notifies, with the notifier Lambda subscribed
 		const alertTopic = new aws.sns.Topic("AlertTopic", {
 			name: `${appName}-${$app.stage}-alerts`,
 		});
@@ -540,7 +541,7 @@ export default $config({
 			{ dependsOn: [alertNotifierInvokePermission] },
 		);
 
-		// Lambda の Errors メトリクスを共通設定で監視し、アラートを Discord へ通知する
+		// Watches a Lambda's Errors metric on shared settings and sends the alert to Discord
 		const createLambdaErrorAlarm = (
 			resourceName: string,
 			args: {
@@ -567,7 +568,7 @@ export default $config({
 			});
 		};
 
-		// worker が規定回数リトライしても失敗し DLQ にメッセージが滞留したら通知する
+		// Notifies when a worker exhausts its retries and messages pile up in the DLQ
 		new aws.cloudwatch.MetricAlarm("AnimeAnalysisDlqDepthAlarm", {
 			name: `${appName}-${$app.stage}-anime-dlq-depth`,
 			alarmDescription: alarmDescriptions.animeAnalysisDlqDepth,
@@ -587,8 +588,8 @@ export default $config({
 			alarmActions: [alertTopic.arn],
 		});
 
-		// サムネイル生成が規定回数リトライしても失敗し DLQ に滞留したら通知する。
-		// 放置するとメディアがサムネイルなしのまま一覧に並び続けるため検知が必要
+		// Notifies when thumbnail generation exhausts its retries and piles up in the DLQ.
+		// Left alone, that media sits in the listing without a thumbnail indefinitely
 		new aws.cloudwatch.MetricAlarm("MediaThumbnailDlqDepthAlarm", {
 			name: `${appName}-${$app.stage}-media-thumbnail-dlq-depth`,
 			alarmDescription: alarmDescriptions.mediaThumbnailDlqDepth,
@@ -608,8 +609,8 @@ export default $config({
 			alarmActions: [alertTopic.arn],
 		});
 
-		// interaction の後追いジョブが規定回数リトライしても失敗し DLQ に滞留したら通知する。
-		// deferred 応答のまま元メッセージが確定しない状態になるため検知が必要
+		// Notifies when an interaction follow-up job exhausts its retries and piles up in the DLQ.
+		// Otherwise the original message stays deferred and never settles
 		new aws.cloudwatch.MetricAlarm("PlaygroundInteractionDlqDepthAlarm", {
 			name: `${appName}-${$app.stage}-playground-interaction-dlq-depth`,
 			alarmDescription: alarmDescriptions.playgroundInteractionDlqDepth,
@@ -629,45 +630,45 @@ export default $config({
 			alarmActions: [alertTopic.arn],
 		});
 
-		// DLQ を持たない schedule 起動の orchestrator のエラーを通知する
+		// Notifies on errors from the schedule-triggered orchestrator, which has no DLQ
 		createLambdaErrorAlarm("AnimeAnalysisOrchestratorErrorAlarm", {
 			name: `${appName}-${$app.stage}-anime-orchestrator-errors`,
 			description: alarmDescriptions.animeAnalysisOrchestratorError,
 			functionName: animeAnalysisOrchestratorFunction.name,
 		});
 
-		// DLQ を持たない schedule 起動の BigQuery 連携 Lambda のエラーを通知する。
-		// 失敗を放置すると分析側のデータが前日で止まるため検知が必要
+		// Notifies on errors from the schedule-triggered BigQuery export Lambda, which has no DLQ.
+		// Left alone, the analysis side stops at the previous day
 		createLambdaErrorAlarm("AnimeMetricBigQueryExportErrorAlarm", {
 			name: `${appName}-${$app.stage}-anime-bigquery-export-errors`,
 			description: alarmDescriptions.animeMetricBigQueryExportError,
 			functionName: animeMetricBigQueryExportFunction.name,
 		});
 
-		// DLQ を持たない schedule 起動の batch Lambda のエラーを通知する。
-		// 深夜の scheduler job が失敗するとその日のお題通知が丸ごとスキップされるため検知が必要
+		// Notifies on errors from the schedule-triggered batch Lambda, which has no DLQ.
+		// If the midnight scheduler job fails, that day's topic notification is skipped entirely
 		createLambdaErrorAlarm("PlaygroundBatchErrorAlarm", {
 			name: `${appName}-${$app.stage}-playground-batch-errors`,
 			description: alarmDescriptions.playgroundBatchError,
 			functionName: batchFunction.name,
 		});
 
-		// DLQ を持たない schedule 起動の同期 Lambda のエラーを通知する。
-		// 失敗を放置すると R2 へ入れたメディアが管理ツールに出てこないため検知が必要
+		// Notifies on errors from the schedule-triggered sync Lambda, which has no DLQ.
+		// Left alone, media put into R2 never shows up in the management tool
 		createLambdaErrorAlarm("MediaSyncErrorAlarm", {
 			name: `${appName}-${$app.stage}-media-sync-errors`,
 			description: alarmDescriptions.mediaSyncError,
 			functionName: mediaSyncFunction.name,
 		});
 
-		// 公開エンドポイント Lambda が失敗すると HTTP リクエスト(ボタン押下など)に応答できないため検知する
+		// A failing public-endpoint Lambda can't answer an HTTP request (a button press, say), so it is watched
 		createLambdaErrorAlarm("FunctionUrlErrorAlarm", {
 			name: `${appName}-${$app.stage}-function-url-errors`,
 			description: alarmDescriptions.functionUrlError,
 			functionName: functionUrlFunction.name,
 		});
 
-		// functionUrl は Discord Developer Portal の Interactions Endpoint URL に登録する
+		// functionUrl is registered as the Interactions Endpoint URL in the Discord Developer Portal
 		return {
 			functionUrl: functionUrlFunction.url,
 			siteUrl: staticSite.url,

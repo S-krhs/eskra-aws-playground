@@ -21,10 +21,10 @@ const readDependencies = (packageJsonPath: string): Record<string, string> => {
 	return (packageJson as { dependencies: Record<string, string> }).dependencies;
 };
 
-describe("browser-runtime layer の依存", () => {
-	// layer は esbuild external で bundle されないため、バージョンがずれると
-	// 型検査は通るのに Lambda 実行時に初めて壊れる。両者の一致を検証する。
-	it("packages/libs/browser と同じ依存バージョンを固定する", () => {
+describe("browser-runtime layer dependencies", () => {
+	// The layer is esbuild-external and never bundled, so a version drift passes typecheck
+	// and only breaks at Lambda runtime. Check that the two stay in step.
+	it("pins the same dependency versions as packages/libs/browser", () => {
 		const layerDependencies = readDependencies(
 			resolve(currentDir, "nodejs/package.json"),
 		);
