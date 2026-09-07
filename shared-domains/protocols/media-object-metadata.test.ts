@@ -7,8 +7,8 @@ import {
 const mediaId = "018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40";
 
 describe("buildMediaObjectMetadata", () => {
-	// metadata は HTTP ヘッダなので ASCII しか通らない
-	it("日本語のファイル名を percent-encode する", () => {
+	// Metadata rides an HTTP header, where only ASCII survives
+	it("percent-encodes a Japanese file name", () => {
 		expect(
 			buildMediaObjectMetadata({ mediaId, originalName: "イラスト.png" }),
 		).toEqual({
@@ -19,7 +19,7 @@ describe("buildMediaObjectMetadata", () => {
 });
 
 describe("parseMediaObjectMetadata", () => {
-	it("組み立てた metadata を元へ戻す", () => {
+	it("reads built metadata back", () => {
 		const originalName = "イラスト 01.png";
 
 		expect(
@@ -29,28 +29,28 @@ describe("parseMediaObjectMetadata", () => {
 		).toEqual({ mediaId, originalName });
 	});
 
-	// アプリ外から置かれたオブジェクトは metadata を持たない
-	it("media-id が無ければ undefined を返す", () => {
+	// An object placed from outside this app carries no metadata
+	it("returns undefined without a media-id", () => {
 		expect(parseMediaObjectMetadata({})).toBeUndefined();
 		expect(parseMediaObjectMetadata(undefined)).toBeUndefined();
 	});
 
-	// metadata は誰でも書ける。主キーへ入る値なので UUID として読めなければ捨てる
-	it("UUID として読めない media-id を無いものとして扱う", () => {
+	// Anyone can write metadata, and this value enters the primary key, so drop what doesn't read as a UUID
+	it("treats a media-id that is not a UUID as absent", () => {
 		expect(
 			parseMediaObjectMetadata({ "media-id": "not-a-uuid" }),
 		).toBeUndefined();
 	});
 
-	it("ファイル名が無ければ空文字にする", () => {
+	it("falls back to an empty string when there is no file name", () => {
 		expect(parseMediaObjectMetadata({ "media-id": mediaId })).toEqual({
 			mediaId,
 			originalName: "",
 		});
 	});
 
-	// 手で置かれた metadata で復号に失敗しても取り込みを止めない
-	it("percent-encode されていない値をそのまま返す", () => {
+	// A hand-placed value that fails to decode must not stop the import
+	it("returns a value that was never percent-encoded as-is", () => {
 		expect(
 			parseMediaObjectMetadata({
 				"media-id": mediaId,
