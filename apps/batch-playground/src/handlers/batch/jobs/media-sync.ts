@@ -1,7 +1,10 @@
 // In scope: R2 の走査結果を DB へ反映し、同期の実行記録と進捗を残す
 // Out of scope: 未知 key の判定、R2 の wire 解釈、サムネイル生成、起動 envelope の検証
 import { randomUUID } from "node:crypto";
-import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
+import {
+	createR2Client,
+	parseR2CredentialsJson,
+} from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
@@ -10,14 +13,13 @@ import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/me
 import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { Resource } from "sst/resource";
 import { z } from "zod";
-import { parseMediaStorageSettings } from "@/features/media-storage/media-storage-settings.js";
 import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";
 import { scanMediaObjects } from "@/features/media-sync/media-object-scan.js";
 import { buildMediaSyncPlan } from "@/features/media-sync/sync-plan.js";
 import { enqueueMissingThumbnails } from "@/features/media-sync/thumbnail-enqueue.js";
 import { resolveUnknownObjects } from "@/features/media-sync/unknown-object-resolution.js";
-import { batchJobNames } from "../contracts/job-names.js";
-import type { BatchResponse } from "../schema.js";
+import { batchJobNames } from "@/handlers/batch/contracts/job-names.js";
+import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger(batchJobNames.mediaSync);
 
@@ -33,14 +35,6 @@ const mediaSyncEventSchema = z.object({
 	/** 大量削除を防ぐガードを無効にする。内容を確認したうえで手動起動するときに true にする。 */
 	allowBulkDelete: z.boolean().default(false),
 });
-
-const toMessage = (error: unknown): string => {
-	return error instanceof Error ? error.message : String(error);
-};
-
-const toResponse = (details: Record<string, unknown>): BatchResponse => {
-	return { ok: true, job: batchJobNames.mediaSync, details };
-};
 
 /**
  * R2 と DB の差分を反映する。
@@ -62,7 +56,11 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		if (elapsedMs < STALE_RUN_THRESHOLD_MS) {
 			logger.complete({ skipped: true, runningId: running.id });
 
-			return toResponse({ skipped: true, runningId: running.id });
+			return {
+				ok: true,
+				job: batchJobNames.mediaSync,
+				details: { skipped: true, runningId: running.id },
+			};
 		}
 
 		await mediaSyncRunRepository.finish({
@@ -77,11 +75,15 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 	}
 
 	// 3. R2 の接続設定を解決し、この実行の記録を開始する。
-	const settings = parseMediaStorageSettings({
-		credentialsJson: Resource.R2Credentials.value,
-		bucket: process.env.MEDIA_BUCKET,
-	});
-	const client = createR2Client(settings.credentials);
+	const bucket = process.env.MEDIA_BUCKET;
+
+	if (!bucket) {
+		throw new Error("MEDIA_BUCKET が設定されていません。");
+	}
+
+	const client = createR2Client(
+		parseR2CredentialsJson(Resource.R2Credentials.value),
+	);
 	const runId = randomUUID();
 	const progress = {
 		scannedCount: 0,
@@ -105,14 +107,18 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		});
 		logger.complete({ skipped: true, runningId: earliestRunning.id });
 
-		return toResponse({ skipped: true, runningId: earliestRunning.id });
+		return {
+			ok: true,
+			job: batchJobNames.mediaSync,
+			details: { skipped: true, runningId: earliestRunning.id },
+		};
 	}
 
 	logger.start({ runId });
 
 	try {
 		// 5. R2 を走査し、DB の既知一覧と突き合わせて同期の plan を作る。
-		const scanned = await scanMediaObjects(client, settings.bucket);
+		const scanned = await scanMediaObjects(client, bucket);
 		const known = await mediaObjectRepository.findAllSummaries();
 
 		// R2 の一覧が空なのに DB に登録が残っている場合は、token の権限不足か bucket 指定の誤りとみなしてエラーにする
@@ -130,7 +136,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		// 6. 未知の key だけ HeadObject を打ち、新規・移動・取り込みへ振り分ける。
 		let notifiedAt = 0;
 		const resolved = await resolveUnknownObjects(client, {
-			bucket: settings.bucket,
+			bucket: bucket,
 			objects: plan.unknownObjects,
 			known: {
 				knownIds: new Set(
@@ -201,7 +207,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		//     サムネイルの key は UUID から導けるため、DB の thumbnailKey が空の行でも削除できる。
 		for (const id of deletableIds) {
 			await r2ObjectStore.delete(client, {
-				bucket: settings.bucket,
+				bucket: bucket,
 				key: buildThumbnailKey(id),
 			});
 		}
@@ -231,18 +237,22 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			skippedCount: resolved.skippedCount,
 		});
 
-		return toResponse({
-			runId,
-			...progress,
-			enqueuedCount,
-			skippedCount: resolved.skippedCount,
-		});
+		return {
+			ok: true,
+			job: batchJobNames.mediaSync,
+			details: {
+				runId,
+				...progress,
+				enqueuedCount,
+				skippedCount: resolved.skippedCount,
+			},
+		};
 	} catch (error) {
 		await mediaSyncRunRepository.finish({
 			id: runId,
 			...progress,
 			finishedAt: new Date(),
-			error: toMessage(error),
+			error: error instanceof Error ? error.message : String(error),
 		});
 		logger.failure(error, { runId, ...progress });
 

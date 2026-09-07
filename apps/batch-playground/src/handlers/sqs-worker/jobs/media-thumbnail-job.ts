@@ -6,13 +6,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
+import {
+	createR2Client,
+	parseR2CredentialsJson,
+} from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-thumbnail-message.js";
 import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { Resource } from "sst/resource";
-import { parseMediaStorageSettings } from "@/features/media-storage/media-storage-settings.js";
 import { probeMedia } from "@/features/media-thumbnail/media-probe.js";
 import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generator.js";
 
@@ -25,11 +27,15 @@ const THUMBNAIL_CONTENT_TYPE = "image/webp";
 export const mediaThumbnailJob = async (
 	message: MediaThumbnailMessage,
 ): Promise<void> => {
-	const settings = parseMediaStorageSettings({
-		credentialsJson: Resource.R2Credentials.value,
-		bucket: process.env.MEDIA_BUCKET,
-	});
-	const client = createR2Client(settings.credentials);
+	const bucket = process.env.MEDIA_BUCKET;
+
+	if (!bucket) {
+		throw new Error("MEDIA_BUCKET が設定されていません。");
+	}
+
+	const client = createR2Client(
+		parseR2CredentialsJson(Resource.R2Credentials.value),
+	);
 	// 動画サイズが大きくても収まるよう、Lambda の ephemeral storage を増やしたうえで /tmp を作業領域に使う
 	const workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
 
@@ -37,7 +43,7 @@ export const mediaThumbnailJob = async (
 		const sourcePath = join(workDir, "source");
 		const thumbnailPath = join(workDir, "thumbnail.webp");
 		const object = await r2ObjectStore.get(client, {
-			bucket: settings.bucket,
+			bucket: bucket,
 			key: message.objectKey,
 		});
 
@@ -55,7 +61,7 @@ export const mediaThumbnailJob = async (
 
 		const thumbnailKey = buildThumbnailKey(message.mediaId);
 		await r2ObjectStore.upload(client, {
-			bucket: settings.bucket,
+			bucket: bucket,
 			key: thumbnailKey,
 			body: await readFile(thumbnailPath),
 			contentType: THUMBNAIL_CONTENT_TYPE,
@@ -72,7 +78,7 @@ export const mediaThumbnailJob = async (
 		// 生成中に行が消えていた場合、記録先が無いので置いたサムネイルも残さない
 		if (recorded === 0) {
 			await r2ObjectStore.delete(client, {
-				bucket: settings.bucket,
+				bucket: bucket,
 				key: thumbnailKey,
 			});
 		}

@@ -28,7 +28,7 @@ R2 に置かれたメディアをメタデータへ反映し、サムネイル�
 
 - 同期は共通バッチと同じ router で解決するが、10 万件の upsert が 60 秒に収まらないため Function を分ける。job 名は管理ツール(`media-library`)からの invoke でも使うため `shared-domains/contracts/media-job-names.ts` に置き、`contracts/job-names.ts` はそれを参照して登録する。
 - サムネイル生成の message 契約は `shared-domains/contracts`(`media-job-names` / `media-thumbnail-message`)に置き、`sqs-worker/schema.ts` の union で受ける。
-- R2 の接続先の解釈は `features/media-storage/` に置く。SST link と環境変数の読み出しは job に残し、両方の handler ツリーから同じ feature を使う。
+- R2 の接続先は job で解決する。`process.env.MEDIA_BUCKET` と `Resource.R2Credentials.value` を job で読み、認証情報は `parseR2CredentialsJson` へ渡して client を作る。他の job(`uma-one-draw-topic-scheduler` など)と同じ形にし、設定を組み立てるだけの feature を作らない。
 - `ListObjectsV2` は custom metadata を返さない。既知の key は一覧だけで突き合わせ、**未知の key にだけ `HeadObject` を打つ**。全件に打つ実装にしない。
 - 未知の key は metadata の `media-id` で新規・移動・取り込みへ振り分ける。`media-id` を持たないものだけ UUID を採番して `_inbox/` へ取り込む。
 - 移動は「古い key の欠落」としても現れる。削除の対象から必ず外す。
