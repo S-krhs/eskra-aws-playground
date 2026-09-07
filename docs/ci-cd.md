@@ -31,6 +31,7 @@ SST が管理するリソースの一覧は `.claude/rules/infra-deploy.md` と 
 - `DATABASE_URL`（develop 用 Neon branch の pooled 接続文字列。`SST_SECRET_DatabaseUrl` として DB を使う Lambda へ渡す）
 - `DIRECT_DATABASE_URL`（develop 用 Neon branch の direct 接続文字列。migration step だけが使う）
 - `GCP_SERVICE_ACCOUNT_KEY`（BigQuery へ書き込む GCP サービスアカウント鍵の JSON。`SST_SECRET_GcpServiceAccountKey` として BigQuery 連携 Lambda へ渡す）
+- `R2_CREDENTIALS`（Cloudflare R2 の API token。`{"accountId":"...","accessKeyId":"...","secretAccessKey":"..."}` 形式の JSON で、`SST_SECRET_R2Credentials` としてメディアライブラリの Lambda へ渡す）
 - `YACCHO_DISCORD_BOT_TOKEN`
 - `YACCHO_DISCORD_INTERACTION_PUBLIC_KEY`
 - `YACCHO_DISCORD_APPLICATION_ID`
@@ -158,6 +159,7 @@ develop stage は CD 専用です。ローカルからの変更を 2 段で拒�
    npx sst secret set KaguyaDiscordBotToken <値> --config infra/sst.config.ts
    npx sst secret set KaguyaDiscordInteractionPublicKey <値> --config infra/sst.config.ts
    npx sst secret set KaguyaDiscordApplicationId <値> --config infra/sst.config.ts
+   npx sst secret set R2Credentials '{"accountId":"...","accessKeyId":"...","secretAccessKey":"..."}' --config infra/sst.config.ts
    ```
 
    登録状況の確認:
