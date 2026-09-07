@@ -1,45 +1,42 @@
-// In scope: アニメ指標スクレイピング結果の永続化(insert 前の row validation を含む)と取得日単位の読み出し
-// Out of scope: スクレイピング実行、通知送信、data source 定義の管理、外部ストレージへの連携
+// In scope: persisting anime-metric scraping results (row validation before insert included) and reading them back by scraped date
+// Out of scope: running the scrape, sending notifications, owning data source definitions, external storage
 import { getPrismaClient } from "../db/client.js";
 import { ScrapingMetricCreateManyInputObjectZodSchema } from "../generated/zod/schemas/objects/ScrapingMetricCreateManyInput.schema.js";
 
-/** 1 回のスクレイピングで得た metric 1 件。 */
+/** One metric from a single scrape. */
 export interface ScrapingResultMetric {
 	label: string;
 	value: number;
 }
 
-/** スクレイピング結果の保存入力。 */
 export interface SaveScrapingResultInput {
 	dataSourceId: string;
-	/** JST 基準の取得日(YYYY-MM-DD)。 */
+	/** Scraped date in JST (YYYY-MM-DD). */
 	scrapedDate: string;
 	metrics: ScrapingResultMetric[];
 }
 
-/** 読み出した metric 1 行。 */
 export interface ScrapingMetricRecord {
 	id: string;
 	dataSourceId: string;
 	label: string;
 	value: number;
-	/** JST 基準の取得日(YYYY-MM-DD)。 */
+	/** Scraped date in JST (YYYY-MM-DD). */
 	scrapedDate: string;
-	/** 保存時刻(ISO 8601)。 */
+	/** Time the row was stored (ISO 8601). */
 	createdAt: string;
 }
 
-/** 取得日を指定した metric の読み出し入力。 */
 export interface FindScrapingMetricsInput {
-	/** JST 基準の取得日(YYYY-MM-DD)。 */
+	/** Scraped date in JST (YYYY-MM-DD). */
 	scrapedDate: string;
-	/** 前ページ末尾の id。指定した場合、この id より後の行だけを返す。 */
+	/** Last id of the previous page — only rows after it are returned. */
 	afterId?: string;
-	/** 1 ページで返す最大行数。 */
+	/** Maximum rows in one page. */
 	limit: number;
 }
 
-/** metric が存在する取得日の検索入力。範囲は両端を含む。 */
+/** The range is inclusive on both ends. */
 export interface FindScrapedDatesInput {
 	startDate: string;
 	endDate: string;
@@ -48,7 +45,7 @@ export interface FindScrapedDatesInput {
 const dateStringPattern = /^\d{4}-\d{2}-\d{2}$/;
 const idPattern = /^\d+$/;
 
-// DATE 列は UTC 00:00 の Date として返るため、日付部分をそのまま取り出せる
+// A DATE column comes back as a Date at UTC 00:00, so the date part can be sliced off directly
 const toDateString = (value: Date): string => {
 	return value.toISOString().slice(0, 10);
 };
@@ -58,7 +55,7 @@ const toDateValue = (scrapedDate: string): Date => {
 		throw new Error(`取得日が YYYY-MM-DD 形式ではありません: ${scrapedDate}`);
 	}
 
-	// Date は 2026-02-30 のような存在しない日を翌月へ繰り上げるため、往復させて一致を確かめる
+	// Date rolls a nonexistent day like 2026-02-30 into the next month, so round-trip it and compare
 	const value = new Date(`${scrapedDate}T00:00:00.000Z`);
 	if (Number.isNaN(value.getTime()) || toDateString(value) !== scrapedDate) {
 		throw new Error(`存在しない取得日です: ${scrapedDate}`);
@@ -76,10 +73,7 @@ const toIdValue = (afterId: string): bigint => {
 };
 
 export const scrapingMetricRepository = {
-	/**
-	 * 1 回のスクレイピング結果を 1 metric = 1 行で追記する。
-	 * validation に失敗した場合は insert せず throw する。
-	 */
+	/** Appends one scrape's results as one row per metric; a validation failure throws without inserting anything. */
 	saveScrapingResult: async (input: SaveScrapingResultInput): Promise<void> => {
 		const rows = input.metrics.map((metric) => {
 			return ScrapingMetricCreateManyInputObjectZodSchema.parse({
@@ -94,7 +88,7 @@ export const scrapingMetricRepository = {
 		await prisma.scrapingMetric.createMany({ data: rows });
 	},
 
-	/** 指定範囲のうち metric が 1 件以上ある取得日を、古い順に返す。 */
+	/** Returns the dates in range that hold at least one metric, oldest first. */
 	findScrapedDates: async (input: FindScrapedDatesInput): Promise<string[]> => {
 		const startDate = toDateValue(input.startDate);
 		const endDate = toDateValue(input.endDate);
@@ -117,8 +111,8 @@ export const scrapingMetricRepository = {
 	},
 
 	/**
-	 * 取得日の metric を id の昇順で 1 ページ分返す。
-	 * 全件をメモリに載せずに読み出せるよう、続きは戻り値末尾の id を `afterId` に渡して取得する。
+	 * Returns one page of a date's metrics, ordered by id. Pass the last returned id as `afterId`
+	 * for the next page, so the whole day never has to sit in memory at once.
 	 */
 	findManyByScrapedDate: async (
 		input: FindScrapingMetricsInput,

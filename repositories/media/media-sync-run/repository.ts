@@ -1,5 +1,5 @@
-// In scope: 同期の実行記録の開始・進捗更新・終了と、最新および実行中の取得
-// Out of scope: 同期そのものの実行、R2 の走査、Lambda の起動
+// In scope: starting, updating and finishing a sync run record, plus reading the latest and the running one
+// Out of scope: running the sync itself, walking R2, invoking Lambda
 import { getPrismaClient } from "../../db/client.js";
 import type {
 	FinishMediaSyncRunInput,
@@ -31,9 +31,7 @@ const toMediaSyncRun = (row: MediaSyncRunRow): MediaSyncRun => {
 	};
 };
 
-/** 同期の実行記録の永続化操作。 */
 export const mediaSyncRunRepository = {
-	/** 実行を開始した記録を作る。 */
 	start: async (id: string, startedAt: Date): Promise<MediaSyncRun> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaSyncRun.create({ data: { id, startedAt } });
@@ -41,7 +39,6 @@ export const mediaSyncRunRepository = {
 		return toMediaSyncRun(row);
 	},
 
-	/** 実行中の件数を書き戻す。 */
 	updateProgress: async (
 		input: UpdateMediaSyncProgressInput,
 	): Promise<void> => {
@@ -51,7 +48,7 @@ export const mediaSyncRunRepository = {
 		await prisma.mediaSyncRun.update({ where: { id }, data: progress });
 	},
 
-	/** 実行の終了を記録する。error を渡すと失敗として残る。 */
+	/** Passing an `error` records the run as failed. */
 	finish: async (input: FinishMediaSyncRunInput): Promise<void> => {
 		const prisma = getPrismaClient();
 		const { id, error, ...rest } = input;
@@ -62,7 +59,7 @@ export const mediaSyncRunRepository = {
 		});
 	},
 
-	/** 直近の実行を返す。一度も走っていなければ undefined。 */
+	/** undefined when the sync has never run. */
 	findLatest: async (): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaSyncRun.findFirst({
@@ -73,10 +70,9 @@ export const mediaSyncRunRepository = {
 	},
 
 	/**
-	 * 終了していない実行のうち最も古いものを返す。
-	 * startedAt は行を入れる前に採るため、同時に始まった 2 つの実行が
-	 * どちらも自分を最古と見なしうる。DB が採る createdAt で並べ、
-	 * 同時刻は id で決めて、どちらから見ても同じ 1 件になるようにする。
+	 * Returns the oldest unfinished run. startedAt is taken before the row is inserted, so two runs
+	 * starting at once could each see themselves as oldest. Ordering by the DB-assigned createdAt and
+	 * breaking ties on id makes both of them pick the same row.
 	 */
 	findRunning: async (): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();

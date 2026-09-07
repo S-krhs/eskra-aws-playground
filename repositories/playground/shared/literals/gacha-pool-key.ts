@@ -1,10 +1,9 @@
-// In scope: ガチャ候補が属する pool を識別する poolKey の定義
-// Out of scope: 候補の定義、抽選、DB 操作
+// In scope: the poolKey identifying which pool a gacha candidate belongs to
+// Out of scope: defining candidates, drawing, DB access
 
-/** GachaEntity の poolKey。 */
+/** poolKey on GachaEntity. */
 export const gachaPoolKeys = {
 	umaOneDrawTopic: "uma-one-draw-topic",
 } as const;
 
-/** poolKey として取り得る値。 */
 export type GachaPoolKey = (typeof gachaPoolKeys)[keyof typeof gachaPoolKeys];

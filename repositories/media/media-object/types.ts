@@ -1,7 +1,7 @@
-// In scope: MediaObject repository の入出力型
-// Out of scope: validation schema、DB 操作、key の組み立て、サムネイル生成
+// In scope: the input/output types of the MediaObject repository
+// Out of scope: validation schemas, DB access, key construction, thumbnail generation
 
-/** 管理対象の 1 メディア。 */
+/** One media object under management. */
 export interface MediaObject {
 	id: string;
 	objectKey: string;
@@ -20,8 +20,8 @@ export interface MediaObject {
 }
 
 /**
- * 同期が R2 の一覧と突き合わせるための軽量な射影。
- * etag は同じ key のまま中身が差し替わった場合を見つけるために持つ。
+ * The light projection a sync compares against an R2 listing.
+ * etag is carried to catch content replaced under an unchanged key.
  */
 export interface MediaObjectSummary {
 	id: string;
@@ -29,7 +29,7 @@ export interface MediaObjectSummary {
 	etag: string;
 }
 
-/** 同期が新規に登録する 1 件。 */
+/** One newly discovered object a sync registers. */
 export interface InsertMediaObjectInput {
 	id: string;
 	objectKey: string;
@@ -43,8 +43,8 @@ export interface InsertMediaObjectInput {
 }
 
 /**
- * 同じ key のまま差し替わった 1 件の作り直し。
- * サムネイルと寸法は作り直しになるため、この更新で消える。
+ * Re-registers one object replaced under an unchanged key.
+ * The thumbnail and dimensions have to be rebuilt, so this update clears them.
  */
 export interface RefreshMediaObjectInput {
 	id: string;
@@ -54,7 +54,7 @@ export interface RefreshMediaObjectInput {
 	syncedAt: Date;
 }
 
-/** 外部で移動された 1 件の key の付け替え。 */
+/** Re-points one object's key after it was moved outside this app. */
 export interface RelocateMediaObjectInput {
 	id: string;
 	objectKey: string;
@@ -62,22 +62,21 @@ export interface RelocateMediaObjectInput {
 	syncedAt: Date;
 }
 
-/** サムネイルが未生成のメディア。生成 job へ渡す最小の情報。 */
+/** A media object with no thumbnail yet — the minimum the generation job needs. */
 export interface ThumbnaillessMediaObject {
 	id: string;
 	objectKey: string;
 }
 
-/** サムネイル未生成のメディアを探す条件。 */
 export interface FindThumbnaillessInput {
 	limit: number;
-	/** 生成をこの回数まで試行し、それでも作れなければ対象から除外する。 */
+	/** Generation is retried up to this many times; past that the object drops out. */
 	maxAttempts: number;
-	/** この時刻より前に投入したものだけを再投入の対象にする。処理中のメッセージを重複して投入しないための境界。 */
+	/** Only objects enqueued before this time are re-enqueued — the boundary that keeps an in-flight message from being sent twice. */
 	retryBefore: Date;
 }
 
-/** サムネイル生成の結果。寸法と尺は読めた分だけ渡す。 */
+/** The result of generating a thumbnail; dimensions and duration are passed only where readable. */
 export interface SetMediaThumbnailInput {
 	id: string;
 	thumbnailKey: string;
@@ -86,13 +85,13 @@ export interface SetMediaThumbnailInput {
 	durationMs?: number;
 }
 
-/** 一覧の位置。前ページ最後の 1 件を指す。 */
+/** A position in the listing — the last item of the previous page. */
 export interface MediaObjectCursor {
 	uploadedAt: Date;
 	id: string;
 }
 
-/** 一覧の取得条件。ゴミ箱に入れたものは常に除外される。 */
+/** Listing conditions; trashed objects are always excluded. */
 export interface FindMediaObjectPageInput {
 	logicalPath?: string;
 	contentTypePrefix?: string;
@@ -100,7 +99,7 @@ export interface FindMediaObjectPageInput {
 	cursor?: MediaObjectCursor;
 }
 
-/** 一覧の 1 ページ。nextCursor が undefined なら最後のページ。 */
+/** One page of the listing; an undefined nextCursor means this is the last one. */
 export interface MediaObjectPage {
 	objects: MediaObject[];
 	nextCursor: MediaObjectCursor | undefined;

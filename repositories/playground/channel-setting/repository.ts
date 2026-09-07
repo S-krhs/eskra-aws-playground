@@ -1,5 +1,5 @@
-// In scope: applicationKey・settingKey・guildId・userId で識別する ChannelSetting の保存・削除・取得
-// Out of scope: Discord ID の発見、権限検証、settingKey の解釈、routing
+// In scope: saving, deleting and reading a ChannelSetting keyed by applicationKey, settingKey, guildId and userId
+// Out of scope: discovering Discord IDs, permission checks, interpreting a settingKey, routing
 import { getPrismaClient } from "../../db/client.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import {
@@ -36,9 +36,8 @@ const toChannelSetting = (row: ChannelSettingRow): ChannelSetting => {
 	};
 };
 
-/** Discord チャンネル設定の永続化操作。 */
 export const channelSettingRepository = {
-	/** Guild・対象利用者のチャンネル設定を保存し、保存後の設定を返す。 */
+	/** Saves the setting for one guild and target user, returning it as stored. */
 	save: async (input: SaveChannelSettingInput): Promise<ChannelSetting> => {
 		const configuration = channelSettingConfigurationSchema.parse({
 			version: 1,
@@ -70,7 +69,7 @@ export const channelSettingRepository = {
 		return toChannelSetting(row);
 	},
 
-	/** Guild・対象利用者のチャンネル設定を削除し、削除した設定を返す。対象がなければ null を返す。 */
+	/** Returns the deleted setting, or null when there was nothing to delete. */
 	deleteByGuildIdAndUserId: async (
 		input: DeleteChannelSettingInput,
 	): Promise<ChannelSetting | null> => {
@@ -102,7 +101,7 @@ export const channelSettingRepository = {
 		}
 	},
 
-	/** 登録済みのチャンネル設定を検証し、安定した順序で返す。 */
+	/** Validates the stored settings and returns them in a stable order. */
 	findMany: async (
 		input: FindChannelSettingsInput,
 	): Promise<ChannelSetting[]> => {
