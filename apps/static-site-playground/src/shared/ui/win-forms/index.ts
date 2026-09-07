@@ -1,5 +1,5 @@
-// In scope: Windows Forms 風 UI キットの public API
-// Out of scope: 各 component の実装
+// In scope: the public API of the Windows-Forms-style UI kit
+// Out of scope: each component's implementation
 
 export { Button } from "./button.js";
 export { Desktop, type DesktopIcon } from "./desktop.js";

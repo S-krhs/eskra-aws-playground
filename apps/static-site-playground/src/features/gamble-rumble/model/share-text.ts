@@ -1,13 +1,13 @@
-// In scope: 収支を晒すときのツイート文面
-// Out of scope: 投稿画面の URL の組み立て、収支の状態管理
+// In scope: the tweet text used to show off a balance
+// Out of scope: building the compose-screen URL, holding the balance state
 
 import { formatBalance } from "../lib/format-balance.js";
 import type { CurrencyUnit } from "./currency-unit.js";
 
-/** 文面に添えるツール自身の公開 URL。scheme は付けない */
+/** The tool's own public URL added to the text; no scheme */
 const toolUrl = "sasahara.uk/gamble-rumble";
 
-/** 収支を「大体N単位分負けました」の文面にする。プラマイゼロだけ言い回しが変わる */
+/** Turns the balance into the "lost about N units" line; only an exact zero gets different wording */
 export const shareText = (yen: number, unit: CurrencyUnit): string => {
 	const amount = formatBalance(yen, unit).slice(1);
 	const result =

@@ -1,5 +1,5 @@
-// In scope: 収支と選択中の単位を保持し、窓の中身を組み立てる
-// Out of scope: 収支の表示や換算の実装、投資・回収ボタンの中身
+// In scope: holding the balance and the selected unit, and assembling the window's contents
+// Out of scope: how the balance is displayed or converted, what the spend/recover buttons do
 
 import { useState } from "react";
 import {
@@ -17,7 +17,7 @@ import { BalanceDisplay, type BalanceTone } from "./balance-display.js";
 import { ExpenseButtons } from "./expense-buttons.js";
 import { OverLimitCaution } from "./over-limit-caution.js";
 
-/** 収支を賭けの単位で積み上げ、ツイートで晒すところまでを担う island */
+/** The island that stacks a balance up in betting units and gets it as far as a tweet */
 export const GambleRumble = () => {
 	const [balanceYen, setBalanceYen] = useState(-20000);
 	const [unit, setUnit] = useState(currencyUnits[0]);

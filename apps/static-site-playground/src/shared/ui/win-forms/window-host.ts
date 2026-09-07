@@ -1,19 +1,19 @@
-// In scope: 窓を並べる側から個々の窓へ渡す、重なり順と開閉の口
-// Out of scope: 窓の描画、デスクトップの実装
+// In scope: the stacking and open/close channel the window-arranging side hands each window
+// Out of scope: rendering a window, the desktop implementation
 
 import { createContext } from "react";
 
-/** 窓を並べる側が 1 枚ごとに渡す情報。単独で使う窓では null になる */
+/** What the arranging side passes per window; null for a window used on its own */
 export interface WindowHost {
-	/** 手前から数えた重なり順。大きいほど手前 */
+	/** Stacking order — higher sits in front */
 	zIndex: number;
-	/** 何枚目に開いたか。ずらして重ねるために使う */
+	/** How many windows were opened before this one, used to cascade them */
 	cascadeIndex: number;
-	/** 最小化した窓が下辺に並ぶときの位置。最小化していなければ -1 */
+	/** Slot along the bottom edge while minimized; -1 when not minimized */
 	minimizedSlot: number;
 	onClose: () => void;
 	onFocus: () => void;
-	/** 最小化・復元を並べる側へ知らせる。並べる側が下辺の位置を決める */
+	/** Tells the arranging side about a minimize/restore; it decides the bottom-edge slot */
 	onMinimizedChange: (minimized: boolean) => void;
 }
 

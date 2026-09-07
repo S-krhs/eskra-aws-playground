@@ -1,8 +1,8 @@
-// In scope: 収支の見せ方が変わる境界値
-// Out of scope: 収支の状態管理、表示の実装
+// In scope: the boundaries where the balance is shown differently
+// Out of scope: holding the balance state, the display implementation
 
-/** これ以下になると注意文を出す収支（円） */
+/** At or below this balance (yen) the caution text appears */
 export const cautionYen = -50000;
 
-/** これ以上勝つと収支を虹色にする収支（円） */
+/** At or above this balance (yen) the figure turns rainbow */
 export const rainbowYen = 100000;
