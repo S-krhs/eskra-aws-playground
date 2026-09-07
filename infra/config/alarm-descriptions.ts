@@ -8,6 +8,9 @@ export const alarmDescriptions = {
 	animeAnalysisOrchestratorError:
 		"アニメ分析 orchestrator の実行が失敗しました",
 	animeMetricBigQueryExportError: "アニメ指標の BigQuery 連携が失敗しました",
+	mediaSyncError: "メディアライブラリの同期が失敗しました",
+	mediaThumbnailDlqDepth:
+		"サムネイル生成が失敗し DLQ にメッセージが滞留しています",
 	playgroundBatchError: "batch playground の実行が失敗しました",
 	functionUrlError: "公開エンドポイント(Function URL)の実行が失敗しました",
 	playgroundInteractionDlqDepth:

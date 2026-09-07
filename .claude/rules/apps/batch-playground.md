@@ -7,7 +7,7 @@ paths:
 # Batch Playground
 
 Lambda イベントの `job` に応じてバッチジョブを実行する app です。`infra/sst.config.ts` が Lambda と EventBridge Scheduler、interaction ジョブ用の SQS Queue を定義し、定期実行イベントから `job` を渡します。
-handler は `batch`(scheduler 起動の共通バッチ)と `sqs-worker`(deferred 応答済み interaction の後追い処理)の 2 つで、job ごとに Lambda は増やしません。Discord interaction を受ける公開エンドポイントは別 app の `function-url-playground` が担い、その後追いジョブをこの app の `sqs-worker` が処理します。
+handler は `batch`(scheduler 起動の共通バッチ)、`sqs-worker`(deferred 応答済み interaction の後追い処理)、`media-sync`(R2 とメタデータの同期)、`media-thumbnail`(サムネイル生成)の 4 つです。`batch` は job ごとに Lambda を増やしませんが、共通バッチの timeout(60 秒)や layer に収まらないものは専用 Function にします。Discord interaction を受ける公開エンドポイントは別 app の `function-url-playground` が担い、その後追いジョブをこの app の `sqs-worker` が処理します。
 
 ## Interaction 後追いジョブ(sqs-worker)
 
@@ -16,6 +16,19 @@ handler は `batch`(scheduler 起動の共通バッチ)と `sqs-worker`(deferred
 - 確定メッセージの生成と送信は `sqs-worker` の job が担当する。Bot token は使わず、応答先は message が持つ `application_id` と `token` から解決する。
 - interaction token は 15 分で失効する。後追いジョブのリトライはこの範囲に収める。
 - job 名と message schema は producer(function-url-playground)と共有するため `@eskra-aws-playground/shared-domains/contracts`(`interaction-job-names` / `interaction-job-message`)に置く。
+
+## メディアライブラリの同期(media-sync / media-thumbnail)
+
+R2 に置かれたメディアをメタデータへ反映し、サムネイルを生成します。設計の背景は `repositories/media/README.md` を参照します。
+
+- `ListObjectsV2` は custom metadata を返さない。既知の key は一覧だけで突き合わせ、**未知の key にだけ `HeadObject` を打つ**。全件に打つ実装にしない。
+- 未知の key は metadata の `media-id` で新規・移動・取り込みへ振り分ける。`media-id` を持たないものだけ UUID を採番して `_inbox/` へ取り込む。
+- 移動は「古い key の欠落」としても現れる。削除の対象から必ず外す。
+- 走査から `_thumb/` を除く。サムネイルを取り込むとメディア 1 件につき 2 行が登録される。
+- 同期は共通バッチの job にせず専用 Function にする。10 万件の upsert が 60 秒に収まらない。
+- 終了を書けずに落ちた実行で詰まらないよう、Lambda の timeout より後ろの閾値を超えた実行中の記録は打ち切り扱いにする。
+- ffmpeg / ffprobe は layer が `/opt/bin` へ置く。パスは実行時に解決し、ローカル検証で差し替えられるようにする。
+- サムネイルは画像も動画も ffmpeg で作る。sharp を持ち込まない。
 
 ## 層と責務
 

@@ -1,6 +1,23 @@
 # Batch Playground
 
 Lambda イベントの `job` に応じてバッチジョブを実行する app です。
+共通バッチのほかに、専用 Function として動く handler を持ちます。
+
+| handler | 起動 | 用途 |
+| --- | --- | --- |
+| `batch` | EventBridge Scheduler | 下記の `job` に応じた共通バッチ |
+| `sqs-worker` | SQS | deferred 応答済み interaction の後追い処理 |
+| `media-sync` | cron(2 時間ごと)/ 管理ツールからの invoke | R2 とメタデータの同期 |
+| `media-thumbnail` | SQS | ffmpeg によるサムネイル生成 |
+
+## メディアライブラリの同期
+
+`media-sync` は R2 の一覧と `media` schema の差分を反映します。`ListObjectsV2` が custom metadata を返さないため、既知の key は一覧だけで突き合わせ、未知の key にだけ `HeadObject` を打ちます。
+
+- 新規・移動・取り込みの振り分けは object metadata の `media-id` で行います。
+- サムネイル未生成のメディアを queue へ積み、`media-thumbnail` が ffmpeg で webp を作ります。
+- 接続先は SST secret の `R2Credentials`(JSON)と、環境変数 `MEDIA_BUCKET` から解決します。
+- 実行記録は `media.media_sync_runs` に残り、管理ツールの進捗表示と二重起動の判定に使います。
 
 ## 実行できるジョブ
 

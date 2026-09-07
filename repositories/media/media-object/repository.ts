@@ -9,6 +9,8 @@ import type {
 	MediaObjectKey,
 	MediaObjectPage,
 	RelocateMediaObjectInput,
+	SetMediaThumbnailInput,
+	ThumbnaillessMediaObject,
 } from "./types.js";
 
 interface MediaObjectRow {
@@ -121,6 +123,31 @@ export const mediaObjectRepository = {
 					? { uploadedAt: last.uploadedAt, id: last.id }
 					: undefined,
 		};
+	},
+
+	/**
+	 * サムネイルが未生成のメディアを返す。
+	 * 1 回の同期で積む量を抑えるため、上限を呼び出し側が決める。
+	 */
+	findWithoutThumbnail: async (
+		limit: number,
+	): Promise<ThumbnaillessMediaObject[]> => {
+		const prisma = getPrismaClient();
+
+		return await prisma.mediaObject.findMany({
+			where: { thumbnailKey: null, trashedAt: null },
+			orderBy: [{ uploadedAt: "desc" }],
+			take: limit,
+			select: { id: true, objectKey: true },
+		});
+	},
+
+	/** 生成したサムネイルの所在と、併せて読めた寸法・尺を記録する。 */
+	setThumbnail: async (input: SetMediaThumbnailInput): Promise<void> => {
+		const prisma = getPrismaClient();
+		const { id, ...values } = input;
+
+		await prisma.mediaObject.update({ where: { id }, data: values });
 	},
 
 	/** 新規に見つかったメディアをまとめて登録する。既に登録済みの id は無視する。 */

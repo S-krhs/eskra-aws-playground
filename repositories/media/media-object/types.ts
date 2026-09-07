@@ -46,6 +46,21 @@ export interface RelocateMediaObjectInput {
 	syncedAt: Date;
 }
 
+/** サムネイルが未生成のメディア。生成 job へ渡す最小の情報。 */
+export interface ThumbnaillessMediaObject {
+	id: string;
+	objectKey: string;
+}
+
+/** サムネイル生成の結果。寸法と尺は読めた分だけ渡す。 */
+export interface SetMediaThumbnailInput {
+	id: string;
+	thumbnailKey: string;
+	width?: number;
+	height?: number;
+	durationMs?: number;
+}
+
 /** 一覧の位置。前ページ最後の 1 件を指す。 */
 export interface MediaObjectCursor {
 	uploadedAt: Date;

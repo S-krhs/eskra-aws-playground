@@ -4,6 +4,7 @@ import "sst/resource";
 
 declare module "sst/resource" {
 	interface Resource {
+		MediaThumbnailQueue: { url: string };
 		R2Credentials: { value: string };
 		UmaOneDrawTopicDiscordWebhook: { value: string };
 		YacchoDiscordBotToken: { value: string };

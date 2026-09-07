@@ -5,6 +5,9 @@ const appName = "eskra-aws-playground";
 
 const siteDomain = "sasahara.uk";
 
+// R2 の bucket は SST の管理外(Cloudflare 側で作成)のため、名前だけをここで持つ
+const mediaBucketName = "eskra-media-library";
+
 export default $config({
 	// SST app の基本設定。デプロイ先は develop stage 固定。
 	app(input) {
@@ -338,6 +341,90 @@ export default $config({
 			},
 		);
 
+		// R2 の API トークン(JSON)を Secret として扱う
+		const r2Credentials = new sst.Secret("R2Credentials");
+
+		// サムネイル生成の要求を 1 件ずつ処理する Queue。
+		// visibilityTimeout は worker の timeout 以上にし、処理中の再配信を防ぐ
+		const mediaThumbnailDeadLetterQueue = new sst.aws.Queue(
+			"MediaThumbnailDeadLetterQueue",
+		);
+		const mediaThumbnailQueue = new sst.aws.Queue("MediaThumbnailQueue", {
+			visibilityTimeout: "6 minutes",
+			dlq: {
+				queue: mediaThumbnailDeadLetterQueue.arn,
+				retry: 3,
+			},
+		});
+
+		// ffmpeg / ffprobe を /opt/bin へ配置する layer。
+		// asset の置き場は browser-runtime layer と同じ bucket を使い回す
+		const ffmpegLayerObject = new aws.s3.BucketObjectv2(
+			"FfmpegLayerObject",
+			{
+				bucket: browserRuntimeLayerAssetBucket.id,
+				contentType: "application/zip",
+				key: "layers/ffmpeg.zip",
+				serverSideEncryption: "AES256",
+				source: $asset("../.tmp/layers/ffmpeg"),
+			},
+			{
+				dependsOn: [browserRuntimeLayerAssetBucketVersioning],
+			},
+		);
+		const ffmpegLayer = new aws.lambda.LayerVersion("FfmpegLayer", {
+			compatibleArchitectures: ["x86_64"],
+			compatibleRuntimes: ["nodejs22.x"],
+			description: "ffmpeg and ffprobe for media thumbnail generation.",
+			layerName: `${appName}-${$app.stage}-ffmpeg`,
+			s3Bucket: browserRuntimeLayerAssetBucket.id,
+			s3Key: ffmpegLayerObject.key,
+			s3ObjectVersion: ffmpegLayerObject.versionId,
+		});
+
+		// R2 と DB の差分を反映する同期 Lambda。
+		// 10 万件の upsert が共有 batch Lambda の 60 秒に収まらないため専用 Function にする
+		const mediaSyncFunction = new sst.aws.Function("MediaSyncFunction", {
+			// 管理ツールの同期ボタンが invoke するため、名前を生成任せにしない
+			name: `${appName}-${$app.stage}-media-sync`,
+			handler:
+				"../apps/batch-playground/src/handlers/media-sync/handler.handler",
+			runtime: "nodejs22.x",
+			timeout: "15 minutes",
+			memory: "1 GB",
+			link: [r2Credentials, mediaThumbnailQueue],
+			// DB 接続は repositories(Prisma)側の契約が DATABASE_URL env var のため、
+			// link ではなく environment で渡す
+			environment: {
+				DATABASE_URL: databaseUrl.value,
+				MEDIA_BUCKET: mediaBucketName,
+			},
+		});
+
+		// サムネイル生成 worker。原本を /tmp へ落とすため ephemeral storage を上げる
+		mediaThumbnailQueue.subscribe(
+			{
+				handler:
+					"../apps/batch-playground/src/handlers/media-thumbnail/handler.handler",
+				runtime: "nodejs22.x",
+				timeout: "5 minutes",
+				memory: "2 GB",
+				storage: "10 GB",
+				link: [r2Credentials],
+				environment: {
+					DATABASE_URL: databaseUrl.value,
+					MEDIA_BUCKET: mediaBucketName,
+				},
+				layers: [ffmpegLayer.arn],
+			},
+			{
+				batch: {
+					size: 1,
+					partialResponses: true,
+				},
+			},
+		);
+
 		// schedule 起動の Scheduler(cron)は 1 つの !$dev ガードに集約し、追加時の入れ忘れを防ぐ。
 		// sst dev はローカルコード検証用途のため、dev セッション終了後に cron が発火し続けるのを防ぐ目的で $dev では作成しない。
 		// 実行タイミングは config/job-schedules で一元管理する
@@ -357,6 +444,10 @@ export default $config({
 			new sst.aws.CronV2("AnimeAnalysisSchedule23", {
 				function: animeAnalysisOrchestratorFunction,
 				...jobSchedules.animeScrapingOrchestrator23,
+			});
+			new sst.aws.CronV2("MediaSyncSchedule", {
+				function: mediaSyncFunction,
+				...jobSchedules.mediaSync,
 			});
 			new sst.aws.CronV2("AnimeMetricBigQueryExportSchedule", {
 				function: animeMetricBigQueryExportFunction,
@@ -496,6 +587,27 @@ export default $config({
 			alarmActions: [alertTopic.arn],
 		});
 
+		// サムネイル生成が規定回数リトライしても失敗し DLQ に滞留したら通知する。
+		// 放置するとメディアがサムネイルなしのまま一覧に並び続けるため検知が必要
+		new aws.cloudwatch.MetricAlarm("MediaThumbnailDlqDepthAlarm", {
+			name: `${appName}-${$app.stage}-media-thumbnail-dlq-depth`,
+			alarmDescription: alarmDescriptions.mediaThumbnailDlqDepth,
+			namespace: "AWS/SQS",
+			metricName: "ApproximateNumberOfMessagesVisible",
+			dimensions: {
+				QueueName: mediaThumbnailDeadLetterQueue.arn.apply((arn) => {
+					return arn.split(":").pop() ?? "";
+				}),
+			},
+			statistic: "Maximum",
+			period: 300,
+			evaluationPeriods: 1,
+			threshold: 1,
+			comparisonOperator: "GreaterThanOrEqualToThreshold",
+			treatMissingData: "notBreaching",
+			alarmActions: [alertTopic.arn],
+		});
+
 		// interaction の後追いジョブが規定回数リトライしても失敗し DLQ に滞留したら通知する。
 		// deferred 応答のまま元メッセージが確定しない状態になるため検知が必要
 		new aws.cloudwatch.MetricAlarm("PlaygroundInteractionDlqDepthAlarm", {
@@ -538,6 +650,14 @@ export default $config({
 			name: `${appName}-${$app.stage}-playground-batch-errors`,
 			description: alarmDescriptions.playgroundBatchError,
 			functionName: batchFunction.name,
+		});
+
+		// DLQ を持たない schedule 起動の同期 Lambda のエラーを通知する。
+		// 失敗を放置すると R2 へ入れたメディアが管理ツールに出てこないため検知が必要
+		createLambdaErrorAlarm("MediaSyncErrorAlarm", {
+			name: `${appName}-${$app.stage}-media-sync-errors`,
+			description: alarmDescriptions.mediaSyncError,
+			functionName: mediaSyncFunction.name,
 		});
 
 		// 公開エンドポイント Lambda が失敗すると HTTP リクエスト(ボタン押下など)に応答できないため検知する

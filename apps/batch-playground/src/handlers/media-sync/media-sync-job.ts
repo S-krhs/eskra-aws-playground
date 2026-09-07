@@ -9,6 +9,7 @@ import { scanMediaObjects } from "@/features/media-sync/media-object-scan.js";
 import { buildMediaSyncPlan } from "@/features/media-sync/sync-plan.js";
 import { resolveUnknownObjects } from "@/features/media-sync/unknown-object-resolution.js";
 import { getMediaSyncSettings } from "./runtime-settings.js";
+import { enqueueMissingThumbnails } from "./thumbnail-enqueue.js";
 
 const logger = createBatchLogger("media-sync");
 
@@ -134,13 +135,14 @@ export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
 		progress.deletedCount =
 			await mediaObjectRepository.deleteByIds(deletableIds);
 		await mediaObjectRepository.touchMany(plan.unchangedIds, startedAt);
+		const enqueuedCount = await enqueueMissingThumbnails();
 
 		await mediaSyncRunRepository.finish({
 			id: runId,
 			...progress,
 			finishedAt: new Date(),
 		});
-		logger.complete({ runId, ...progress });
+		logger.complete({ runId, ...progress, enqueuedCount });
 
 		return { runId, skipped: false, ...progress };
 	} catch (error) {

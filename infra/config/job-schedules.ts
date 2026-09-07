@@ -12,8 +12,8 @@ export type JobSchedule = {
 	readonly timezone: string;
 	/** 起動失敗時のリトライ回数。 */
 	readonly retries: number;
-	/** Lambda に渡すイベント。batch-router がこの job 名でジョブを解決する。 */
-	readonly event: {
+	/** Lambda に渡すイベント。batch-router がこの job 名でジョブを解決する。専用 Function には渡さない。 */
+	readonly event?: {
 		readonly job: string;
 		/** 起動スケジュールごとに対象を切り替える job（アニメ orchestrator）へ渡す時刻。 */
 		readonly scheduleHour?: number;
@@ -35,6 +35,12 @@ export const jobSchedules = {
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: playgroundBatchJobNames.playCheckReminder },
+	},
+	/** メディアライブラリの同期を 2 時間ごとに起動する。専用 Function のため event は渡さない。 */
+	mediaSync: {
+		schedule: "cron(0 0/2 * * ? *)",
+		timezone: "Asia/Tokyo",
+		retries: 0,
 	},
 	/** アニメ分析 orchestrator を毎日 JST 09:00 に起動する。 */
 	animeScrapingOrchestrator9: {
