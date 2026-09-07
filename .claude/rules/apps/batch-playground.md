@@ -7,7 +7,11 @@ paths:
 # Batch Playground
 
 Lambda イベントの `job` に応じてバッチジョブを実行する app です。`infra/sst.config.ts` が Lambda と EventBridge Scheduler、interaction ジョブ用の SQS Queue を定義し、定期実行イベントから `job` を渡します。
-handler は `batch`(scheduler 起動の共通バッチ)、`sqs-worker`(deferred 応答済み interaction の後追い処理)、`media-sync`(R2 とメタデータの同期)、`media-thumbnail`(サムネイル生成)の 4 つです。`batch` は job ごとに Lambda を増やしませんが、共通バッチの timeout(60 秒)や layer に収まらないものは専用 Function にします。Discord interaction を受ける公開エンドポイントは別 app の `function-url-playground` が担い、その後追いジョブをこの app の `sqs-worker` が処理します。
+handler は起動のしかたで分け、`batch`(scheduler 起動)と `sqs-worker`(SQS 起動)の 2 つだけです。job ごとに handler を増やしません。
+
+**timeout や layer が共通設定に収まらない job は、handler ではなく Lambda Function を分けます。** 同じ handler を指す Function を `infra/sst.config.ts` に足し、cron の event か queue で job を届けます(例: メディア同期は `batch` handler を指す 15 分の Function、サムネイル生成は `sqs-worker` handler を指す ffmpeg layer 付きの Function)。
+
+Discord interaction を受ける公開エンドポイントは別 app の `function-url-playground` が担い、その後追いジョブをこの app の `sqs-worker` が処理します。
 
 ## Interaction 後追いジョブ(sqs-worker)
 
@@ -17,10 +21,14 @@ handler は `batch`(scheduler 起動の共通バッチ)、`sqs-worker`(deferred 
 - interaction token は 15 分で失効する。後追いジョブのリトライはこの範囲に収める。
 - job 名と message schema は producer(function-url-playground)と共有するため `@eskra-aws-playground/shared-domains/contracts`(`interaction-job-names` / `interaction-job-message`)に置く。
 
-## メディアライブラリの同期(media-sync / media-thumbnail)
+## メディアライブラリ(media-sync job / media-thumbnail job)
 
 R2 に置かれたメディアをメタデータへ反映し、サムネイルを生成します。設計の背景は `repositories/media/README.md` を参照します。
+同期は scheduler 起動なので `batch` の job、サムネイル生成は SQS 起動なので `sqs-worker` の job です。
 
+- 同期は共通バッチと同じ router で解決するが、10 万件の upsert が 60 秒に収まらないため Function を分ける。job 名は `contracts/job-names.ts` に登録する。
+- サムネイル生成の message 契約は `shared-domains/contracts`(`media-job-names` / `media-thumbnail-message`)に置き、`sqs-worker/schema.ts` の union で受ける。
+- R2 の接続先の解釈は `features/media-storage/` に置く。SST link と環境変数の読み出しは job に残し、両方の handler ツリーから同じ feature を使う。
 - `ListObjectsV2` は custom metadata を返さない。既知の key は一覧だけで突き合わせ、**未知の key にだけ `HeadObject` を打つ**。全件に打つ実装にしない。
 - 未知の key は metadata の `media-id` で新規・移動・取り込みへ振り分ける。`media-id` を持たないものだけ UUID を採番して `_inbox/` へ取り込む。
 - 移動は「古い key の欠落」としても現れる。削除の対象から必ず外す。
@@ -45,13 +53,13 @@ R2 に置かれたメディアをメタデータへ反映し、サムネイル�
 | `src/handlers/<handler>/handler.ts` | Lambda エントリポイント、起動イベントの envelope 検証、ルーティングキーから担当 job への解決と委譲 | job 固有の詳細 parse、業務ロジック、外部連携詳細 |
 | `src/handlers/batch/contracts/job-names.ts` | batch handler が受け付ける job 名の一元管理 | job の実装、実行スケジュール |
 | `src/handlers/batch/jobs/` | batch job 固有のイベント詳細 parse、feature・repository・integration 呼び出し、共通レスポンス作成 | envelope 検証、job の振り分け、外部 API 詳細 |
-| `src/handlers/sqs-worker/jobs/` | interaction ジョブ固有の実処理、確定メッセージの生成、feature・repository・integration 呼び出し | SQS event の検証、ジョブの振り分け、producer 側で済んだ入力検証 |
+| `src/handlers/sqs-worker/jobs/` | SQS ジョブ固有の実処理、確定メッセージの生成、feature・repository・integration 呼び出し | SQS event の検証、ジョブの振り分け、producer 側で済んだ入力検証 |
 | `src/handlers/<handler>/schema.ts` | その handler の起動イベント・実行 context 検証 schema と応答型 | ジョブ判定、外部サービス固有の型 |
 | `sst-resource-links.d.ts`(package root) | SST link した secret を `Resource` proxy 経由で型付き参照するための declaration | 実行時の値解決 |
 | `src/features/<concern>/` | 機能単位の処理、抽選重み・テンプレート・button style などの feature 固有設定値。複数 handler から共有できる | Lambda イベント解釈、バッチレスポンス作成、別 feature の実装 |
 | `repositories/playground/` | 複数 app で共有するガチャ候補と DB 設定、その取得・保存・検証 | Lambda イベント解釈、メッセージ生成、外部送信、Discord 権限判定 |
 
-handler ツリーをまたぐ interaction ジョブの契約(job 名・message schema)や、producer と共有する custom_id 規約・prefix・choice カタログ・button tone は `@eskra-aws-playground/shared-domains` に置く。Discord の parse・署名検証・応答型・送信 client は `@eskra-aws-playground/integration-discord` を使う。
+handler ツリーをまたぐジョブの契約(job 名・message schema)や、producer と共有する custom_id 規約・prefix・choice カタログ・button tone は `@eskra-aws-playground/shared-domains` に置く。Discord の parse・署名検証・応答型・送信 client は `@eskra-aws-playground/integration-discord` を使う。
 
 ## 依存方向
 
@@ -70,6 +78,7 @@ features -> repositories
 ## 実装ルール
 
 - job 名は実行内容が分かるバッチ名(例: `uma-one-draw-topic`)にし、`contracts/job-names.ts` へ追加して `handler.ts` の `batchJobs` 対応表に登録する。
+- SQS 起動の job を追加するときは、message schema を `shared-domains/contracts` へ置き、`sqs-worker/schema.ts` の `sqsJobMessageSchema` の union と `handler.ts` の振り分けへ登録する。interaction 以外の job も同じ handler が受ける。
 - interaction ジョブを追加するときは `shared-domains/contracts/interaction-job-names.ts` に job 名、`shared-domains/contracts/interaction-job-message.ts` にその job が必要とする値だけの message を追加し、`handlers/sqs-worker/handler.ts` の振り分けへ登録する。message には interaction token を載せるため、ログや `details` へ出さない。
 - sqs-worker は record 単位で失敗を分離し、失敗した message だけを `batchItemFailures` で再試行対象にする。
 - 起動イベントは `unknown` として受け取り、`schema.ts` で検証・正規化してから使う。レスポンスは `BatchResponse` に合わせ、呼び出し元が機械的に扱える形にする。

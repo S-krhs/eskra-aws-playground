@@ -1,5 +1,5 @@
-// In scope: SQS message ごとにサムネイルを生成し、R2 と DB へ反映する
-// Out of scope: ffmpeg の呼び出し方、message の送信、同期の差分判定
+// In scope: message 1 件分のサムネイルを生成し、R2 と DB へ反映する
+// Out of scope: ffmpeg の呼び出し方、SQS event の検証、message の送信、ジョブの振り分け
 import { createWriteStream } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -8,40 +8,27 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
-import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-thumbnail-message.js";
 import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+import { Resource } from "sst/resource";
+import { parseMediaStorageSettings } from "@/features/media-storage/media-storage-settings.js";
 import { probeMedia } from "@/features/media-thumbnail/media-probe.js";
 import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generator.js";
-import { mediaThumbnailMessageSchema } from "@/shared/media-thumbnail-message.js";
-import { getMediaSyncSettings } from "../media-sync/runtime-settings.js";
-
-const logger = createBatchLogger("media-thumbnail");
 
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 
-/** SQS の部分応答。失敗した message だけを再配信させる。 */
-export interface MediaThumbnailResponse {
-	batchItemFailures: { itemIdentifier: string }[];
-}
-
-const sqsEventShape = (
-	event: unknown,
-): { messageId: string; body: string }[] => {
-	const records = (event as { Records?: unknown }).Records;
-
-	if (!Array.isArray(records)) {
-		throw new Error("SQS event の形式が不正です");
-	}
-
-	return records as { messageId: string; body: string }[];
-};
-
-const generateForMessage = async (
-	body: string,
-	settings: ReturnType<typeof getMediaSyncSettings>,
+/**
+ * 原本から webp のサムネイルを作り、R2 へ置いて DB へ記録する。
+ * 生成中に行が消えていた場合は、置いたサムネイルも残さない。
+ */
+export const mediaThumbnailJob = async (
+	message: MediaThumbnailMessage,
 ): Promise<void> => {
-	const message = mediaThumbnailMessageSchema.parse(JSON.parse(body));
+	const settings = parseMediaStorageSettings({
+		credentialsJson: Resource.R2Credentials.value,
+		bucket: process.env.MEDIA_BUCKET,
+	});
 	const client = createR2Client(settings.credentials);
 	// 大きい動画は /tmp を使う。Lambda の ephemeral storage を上げて対応する
 	const workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
@@ -82,7 +69,7 @@ const generateForMessage = async (
 			durationMs: probe.durationMs,
 		});
 
-		// 生成中に行が消えていた場合、記録先が無いので上げた webp も残さない
+		// 生成中に行が消えていた場合、記録先が無いので置いたサムネイルも残さない
 		if (recorded === 0) {
 			await r2ObjectStore.delete(client, {
 				bucket: settings.bucket,
@@ -92,23 +79,4 @@ const generateForMessage = async (
 	} finally {
 		await rm(workDir, { recursive: true, force: true });
 	}
-};
-
-/** SQS event を受け取り、message ごとにサムネイルを生成する。 */
-export const mediaThumbnailJob = async (
-	event: unknown,
-): Promise<MediaThumbnailResponse> => {
-	const settings = getMediaSyncSettings();
-	const batchItemFailures: { itemIdentifier: string }[] = [];
-
-	for (const record of sqsEventShape(event)) {
-		try {
-			await generateForMessage(record.body, settings);
-		} catch (error) {
-			logger.failure(error, { messageId: record.messageId });
-			batchItemFailures.push({ itemIdentifier: record.messageId });
-		}
-	}
-
-	return { batchItemFailures };
 };

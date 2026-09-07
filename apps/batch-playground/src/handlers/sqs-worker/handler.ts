@@ -1,22 +1,25 @@
-// In scope: SQS event を検証し、message ごとに deferred 応答済み interaction の後追い処理へ委譲する
+// In scope: SQS event を検証し、message ごとに担当ジョブへ委譲する
 // Out of scope: 個別ジョブの処理内容、Discord API 通信、deferred ack の生成を持つ
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import {
-	type InteractionJobMessage,
-	interactionJobMessageSchema,
-} from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
 import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
 import { gambleCheckDisableJob } from "./jobs/gamble-check-disable-job.js";
 import { gambleCheckEnableJob } from "./jobs/gamble-check-enable-job.js";
 import { kaguyaInuihiroshiReplyJob } from "./jobs/kaguya-inuihiroshi-reply-job.js";
+import { mediaThumbnailJob } from "./jobs/media-thumbnail-job.js";
 import { playCheckReminderChoiceJob } from "./jobs/play-check-reminder-choice-job.js";
 import { yacchoHelloReplyJob } from "./jobs/yaccho-hello-reply-job.js";
-import { type SqsWorkerResponse, sqsWorkerEventSchema } from "./schema.js";
+import {
+	type SqsJobMessage,
+	type SqsWorkerResponse,
+	sqsJobMessageSchema,
+	sqsWorkerEventSchema,
+} from "./schema.js";
 
-const logger = createBatchLogger("interaction-job-worker");
+const logger = createBatchLogger("sqs-job-worker");
 
-/** interaction ジョブ message を対応するジョブへ委譲する。 */
-const runJob = (message: InteractionJobMessage): Promise<void> => {
+/** message を対応するジョブへ委譲する。 */
+const runJob = (message: SqsJobMessage): Promise<void> => {
 	switch (message.job) {
 		case interactionJobNames.yacchoHelloReply:
 			return yacchoHelloReplyJob(message);
@@ -28,11 +31,14 @@ const runJob = (message: InteractionJobMessage): Promise<void> => {
 			return gambleCheckDisableJob(message);
 		case interactionJobNames.playCheckReminderChoice:
 			return playCheckReminderChoiceJob(message);
+		case mediaJobNames.mediaThumbnail:
+			return mediaThumbnailJob(message);
 	}
 };
 
 /**
- * deferred 応答済み interaction の後追い処理を担う SQS worker のエントリポイント。
+ * SQS 起動のジョブを担う worker のエントリポイント。
+ * queue ごとに別の Lambda として動き、message の job 名で担当ジョブを解決する。
  * message 単位で失敗を分離し、失敗した record だけを SQS の再試行対象にする。
  */
 export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
@@ -43,9 +49,7 @@ export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
 	for (const record of Records) {
 		const { messageId } = record;
 		try {
-			const message = interactionJobMessageSchema.parse(
-				JSON.parse(record.body),
-			);
+			const message = sqsJobMessageSchema.parse(JSON.parse(record.body));
 			logger.start({ messageId, job: message.job });
 
 			await runJob(message);

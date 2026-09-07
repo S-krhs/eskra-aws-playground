@@ -5,5 +5,6 @@
 export const batchJobNames = {
 	umaOneDrawTopic: "uma-one-draw-topic",
 	umaOneDrawTopicScheduler: "uma-one-draw-topic-scheduler",
+	mediaSync: "media-sync",
 	playCheckReminder: "play-check-reminder",
 } as const;

@@ -5,17 +5,21 @@ Lambda イベントの `job` に応じてバッチジョブを実行する app �
 
 | handler | 起動 | 用途 |
 | --- | --- | --- |
-| `batch` | EventBridge Scheduler | 下記の `job` に応じた共通バッチ |
-| `sqs-worker` | SQS | deferred 応答済み interaction の後追い処理 |
-| `media-sync` | cron(2 時間ごと)/ 管理ツールからの invoke | R2 とメタデータの同期 |
-| `media-thumbnail` | SQS | ffmpeg によるサムネイル生成 |
+| `batch` | EventBridge Scheduler / 手動 invoke | `job` に応じた共通バッチ |
+| `sqs-worker` | SQS | message の `job` に応じた後処理 |
+
+handler は起動のしかたで 2 つに分かれ、job ごとには増やしません。
+timeout や layer が共通設定に収まらない job だけ、同じ handler を指す別の Lambda Function を立てます。
 
 ## メディアライブラリの同期
+
+同期は `batch` の `media-sync` job、サムネイル生成は `sqs-worker` の `media-thumbnail` job です。
+どちらも共通設定に収まらないため、同じ handler を指す専用の Lambda Function から動きます(同期は 15 分、サムネイル生成は ffmpeg layer 付き)。
 
 `media-sync` は R2 の一覧と `media` schema の差分を反映します。`ListObjectsV2` が custom metadata を返さないため、既知の key は一覧だけで突き合わせ、未知の key にだけ `HeadObject` を打ちます。
 
 - 新規・移動・取り込みの振り分けは object metadata の `media-id` で行います。
-- サムネイル未生成のメディアを queue へ積み、`media-thumbnail` が ffmpeg で webp を作ります。
+- サムネイル未生成のメディアを queue へ積み、`media-thumbnail` job が ffmpeg で webp を作ります。
 - 接続先は SST secret の `R2Credentials`(JSON)と、環境変数 `MEDIA_BUCKET` から解決します。
 - 実行記録は `media.media_sync_runs` に残り、管理ツールの進捗表示と二重起動の判定に使います。
 - **削除には歯止めがあります。** R2 の一覧が空、または一度に消える割合が大きすぎる場合は、token の権限か `MEDIA_BUCKET` の誤りとみなして削除せずエラーにします。行を消すとタグの紐付けも道連れになるためです。

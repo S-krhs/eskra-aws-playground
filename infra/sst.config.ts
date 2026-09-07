@@ -382,13 +382,12 @@ export default $config({
 			s3ObjectVersion: ffmpegLayerObject.versionId,
 		});
 
-		// R2 と DB の差分を反映する同期 Lambda。
-		// 10 万件の upsert が共有 batch Lambda の 60 秒に収まらないため専用 Function にする
+		// R2 と DB の差分を反映する同期 Lambda。batch handler の router を共有しつつ、
+		// 10 万件の upsert が共有 batch Lambda の 60 秒に収まらないため Function を分ける
 		const mediaSyncFunction = new sst.aws.Function("MediaSyncFunction", {
 			// 管理ツールの同期ボタンが invoke するため、名前を生成任せにしない
 			name: `${appName}-${$app.stage}-media-sync`,
-			handler:
-				"../apps/batch-playground/src/handlers/media-sync/handler.handler",
+			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
 			memory: "1 GB",
@@ -401,11 +400,12 @@ export default $config({
 			},
 		});
 
-		// サムネイル生成 worker。原本を /tmp へ落とすため ephemeral storage を上げる
+		// サムネイル生成 worker。sqs-worker の router を共有し、ffmpeg layer と
+		// 原本を落とす /tmp が要るため interaction 用とは Function を分ける
 		mediaThumbnailQueue.subscribe(
 			{
 				handler:
-					"../apps/batch-playground/src/handlers/media-thumbnail/handler.handler",
+					"../apps/batch-playground/src/handlers/sqs-worker/handler.handler",
 				runtime: "nodejs22.x",
 				timeout: "5 minutes",
 				memory: "2 GB",

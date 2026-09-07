@@ -2,6 +2,7 @@
 // Out of scope: 個別ジョブの処理内容、業務ロジック、外部連携の詳細を持つ
 
 import { batchJobNames } from "./contracts/job-names.js";
+import { mediaSyncJob } from "./jobs/media-sync.js";
 import { playCheckReminderJob } from "./jobs/play-check-reminder.js";
 import { umaOneDrawTopicJob } from "./jobs/uma-one-draw-topic.js";
 import { umaOneDrawTopicSchedulerJob } from "./jobs/uma-one-draw-topic-scheduler.js";
@@ -15,6 +16,7 @@ const batchJobs = new Map<string, BatchJob>([
 	[batchJobNames.umaOneDrawTopic, umaOneDrawTopicJob],
 	[batchJobNames.umaOneDrawTopicScheduler, umaOneDrawTopicSchedulerJob],
 	[batchJobNames.playCheckReminder, playCheckReminderJob],
+	[batchJobNames.mediaSync, mediaSyncJob],
 ]);
 
 /** Lambda の共通エントリポイント。イベントに対応するバッチジョブを実行する。 */
