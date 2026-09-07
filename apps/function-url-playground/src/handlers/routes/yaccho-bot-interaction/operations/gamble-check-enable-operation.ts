@@ -1,5 +1,5 @@
-// In scope: gamble-check-enable の実行場所を確認し、deferred 応答で ACK して登録ジョブを enqueue する
-// Out of scope: command routing、DB query、HTTP response の形成、確定メッセージの生成
+// In scope: checking where gamble-check-enable was run, deferred-ACKing it, and enqueuing the registration job
+// Out of scope: command routing, DB queries, shaping the HTTP response, writing the final message
 
 import type {
 	DiscordApplicationCommandInteraction,
@@ -18,7 +18,7 @@ import { Resource } from "sst/resource";
 import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 import { ephemeralOperation } from "./ephemeral-operation.js";
 
-/** gamble-check-enable の実行場所を確認し、ephemeral な deferred 応答で ACK して登録ジョブを enqueue する。 */
+/** Checks where it was run, ACKs with an ephemeral deferred response, and enqueues the registration job. */
 export const gambleCheckEnableOperation = async (
 	interaction: DiscordApplicationCommandInteraction,
 	callback: DiscordInteractionCallback,

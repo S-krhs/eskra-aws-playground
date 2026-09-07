@@ -1,10 +1,10 @@
-// In scope: Yaccho Bot として Discord へ登録し、routing する application command を一元管理する
-// Out of scope: Discord API 登録形式への変換、routing、operation の実装を行う
+// In scope: the one place listing the application commands registered with Discord and routed as Yaccho Bot
+// Out of scope: converting to the Discord API's registration form, routing, operation implementations
 
 const installationTypes = { guild: 0 } as const;
 const interactionContexts = { guild: 0 } as const;
 
-/** Yaccho Bot の Discord application command 定義。 */
+/** Yaccho Bot's Discord application commands. */
 export const commands = {
 	hello: {
 		name: "hello",

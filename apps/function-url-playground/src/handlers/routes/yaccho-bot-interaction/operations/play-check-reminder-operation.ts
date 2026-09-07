@@ -1,5 +1,5 @@
-// In scope: 遊技リマインダーのボタン押下を検証し、deferred update で ACK して結果反映ジョブを enqueue する
-// Out of scope: interaction 種別・コマンドのルーティング、確定メッセージの生成、HTTP response の形成
+// In scope: validating a play-reminder button press, ACKing it with a deferred update, and enqueuing the job that records the answer
+// Out of scope: routing by interaction type or command, writing the final message, shaping the HTTP response
 
 import type {
 	DiscordInteraction,
@@ -21,8 +21,8 @@ import { Resource } from "sst/resource";
 import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
 /**
- * 遊技リマインダーのボタン押下を検証し、押下本人には deferred update で ACK して結果反映ジョブを enqueue する。
- * リマインダーの選択と解釈できない interaction には undefined を返す。
+ * Validates a play-reminder button press, ACKs the person who pressed it with a deferred update, and
+ * enqueues the job recording the answer. An interaction that doesn't read as a reminder choice returns undefined.
  */
 export const playCheckReminderOperation = async (
 	interaction: DiscordInteraction,

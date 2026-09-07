@@ -1,12 +1,12 @@
-// In scope: Discord PING interaction へ返す callback payload の生成
-// Out of scope: interaction 種別のルーティング、HTTP response の形成
+// In scope: building the callback payload answering a Discord PING interaction
+// Out of scope: routing by interaction type, shaping the HTTP response
 import {
 	type DiscordPongResponsePayload,
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 
-/** Discord PING interaction へ返す PONG callback payload を生成する。 */
+/** Builds the PONG callback payload for a Discord PING interaction. */
 export const pingOperation =
 	(): OperationResult<DiscordPongResponsePayload> => {
 		return {

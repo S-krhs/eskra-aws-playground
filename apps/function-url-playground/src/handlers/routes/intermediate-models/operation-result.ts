@@ -1,7 +1,7 @@
-// In scope: route 内で operation が返す中間結果型
-// Out of scope: Discord protocol payload、HTTP response、業務ルール
+// In scope: the intermediate result type an operation returns inside a route
+// Out of scope: Discord protocol payloads, the HTTP response, business rules
 
-/** operation の結果。非 OK の結果は route で明示的に処理する。 */
+/** An operation's result; anything other than OK is handled explicitly by the route. */
 export type OperationResult<T, E extends { kind: string } = never> =
 	| { kind: "OK"; data: T }
 	| E;

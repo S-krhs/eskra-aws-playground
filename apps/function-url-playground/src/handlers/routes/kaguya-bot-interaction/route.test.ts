@@ -57,7 +57,7 @@ beforeEach(() => {
 });
 
 describe("kaguyaBotInteractionRoute", () => {
-	it("PINGにはKaguyaのpublic keyで検証してPONGを返す", async () => {
+	it("verifies with Kaguya's public key and answers a PING with a PONG", async () => {
 		const response = await kaguyaBotInteractionRoute(buildEvent('{"type":1}'));
 
 		expect(verifier.verifyInteractionSignature).toHaveBeenCalledWith({
@@ -70,7 +70,7 @@ describe("kaguyaBotInteractionRoute", () => {
 		expect(JSON.parse(response.body)).toEqual({ type: 1 });
 	});
 
-	it("/inuihiroshiは宣言ジョブをenqueueし公開deferredでACKする", async () => {
+	it("enqueues the declaration job for /inuihiroshi and ACKs with a public deferred response", async () => {
 		const response = await kaguyaBotInteractionRoute(
 			buildEvent(
 				JSON.stringify({
@@ -96,7 +96,7 @@ describe("kaguyaBotInteractionRoute", () => {
 		expect(JSON.parse(response.body)).toEqual({ type: 5 });
 	});
 
-	it("未対応commandにはephemeralメッセージを返しenqueueしない", async () => {
+	it("answers an unsupported command with an ephemeral message and enqueues nothing", async () => {
 		const response = await kaguyaBotInteractionRoute(
 			buildEvent(
 				JSON.stringify({
@@ -116,7 +116,7 @@ describe("kaguyaBotInteractionRoute", () => {
 		});
 	});
 
-	it("callbackを取り出せないinteractionは即時ephemeralで返す", async () => {
+	it("answers immediately with an ephemeral response when the callback can't be pulled out", async () => {
 		const response = await kaguyaBotInteractionRoute(
 			buildEvent(
 				'{"type":2,"data":{"name":"inuihiroshi"},"user":{"id":"123"}}',
@@ -133,7 +133,7 @@ describe("kaguyaBotInteractionRoute", () => {
 		});
 	});
 
-	it("enqueueに失敗したらdeferredではなく再試行を促すephemeralを返す", async () => {
+	it("answers with an ephemeral retry prompt instead of a deferred response when the enqueue fails", async () => {
 		sqs.sendMessages.mockRejectedValue(
 			new Error("SQS message の送信に失敗しました: interaction-job"),
 		);
@@ -160,7 +160,7 @@ describe("kaguyaBotInteractionRoute", () => {
 		});
 	});
 
-	it("署名検証失敗は401、interaction不正は400を返す", async () => {
+	it("returns 401 on a failed signature and 400 on a malformed interaction", async () => {
 		verifier.verifyInteractionSignature.mockReturnValue(false);
 		await expect(
 			kaguyaBotInteractionRoute(buildEvent('{"type":1}')),

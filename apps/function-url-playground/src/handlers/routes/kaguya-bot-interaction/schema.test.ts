@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { discordInteractionRequestSchema } from "./schema.js";
 
 describe("discordInteractionRequestSchema", () => {
-	it("署名headers・raw body・interactionを取り出す", () => {
+	it("pulls out the signature headers, the raw body and the interaction", () => {
 		expect(
 			discordInteractionRequestSchema.parse({
 				headers: {
@@ -20,7 +20,7 @@ describe("discordInteractionRequestSchema", () => {
 		});
 	});
 
-	it("interactionとしてparseできないbodyは失敗する", () => {
+	it("fails on a body that does not parse as an interaction", () => {
 		expect(
 			discordInteractionRequestSchema.safeParse({
 				headers: {},
