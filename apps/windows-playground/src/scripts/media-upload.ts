@@ -1,5 +1,5 @@
-// In scope: SendTo から渡されたファイルを順に R2 へ保存する CLI のエントリポイント
-// Out of scope: 保存の実装、key の組み立て、設定ファイルの書式、DB への反映
+// In scope: the CLI entry point storing the files SendTo hands over into R2, one after another
+// Out of scope: the storing itself, key construction, the config file format, writing to the DB
 import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { uploadMediaFile } from "../features/media-upload/media-uploader.js";
 import { toWslPath } from "../features/media-upload/windows-path.js";
@@ -18,7 +18,7 @@ if (paths.length === 0) {
 	process.exit(1);
 }
 
-// 起動時の失敗はコンソールに stack を出さず、直せる文言だけを見せる
+// A startup failure prints no stack, only text the user can act on
 const settings = await loadUploadSettings().catch((error: unknown) => {
 	console.error(toMessage(error));
 	process.exit(1);
@@ -28,7 +28,7 @@ const client = createR2Client(settings.credentials);
 let uploaded = 0;
 const failures: string[] = [];
 
-// 大きい動画が並ぶと帯域とメモリを食うため、並列化せず 1 件ずつ送る
+// Sent one at a time rather than in parallel, since a run of large videos would eat bandwidth and memory
 for (const [index, path] of paths.entries()) {
 	const progress = `[${index + 1}/${paths.length}]`;
 

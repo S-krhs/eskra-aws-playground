@@ -2,37 +2,37 @@ import { describe, expect, it } from "vitest";
 import { toWslPath } from "./windows-path.js";
 
 describe("toWslPath", () => {
-	it("ドライブレターを /mnt の小文字へ移す", () => {
+	it("moves the drive letter under /mnt in lowercase", () => {
 		expect(toWslPath("C:\\Users\\foo\\a.png")).toBe("/mnt/c/Users/foo/a.png");
 	});
 
-	it("区切りが / の Windows パスも受ける", () => {
+	it("accepts a Windows path separated by /", () => {
 		expect(toWslPath("D:/Media/a.mp4")).toBe("/mnt/d/Media/a.mp4");
 	});
 
-	it("日本語を含むパスをそのまま通す", () => {
+	it("passes a path containing Japanese straight through", () => {
 		expect(toWslPath("C:\\Users\\foo\\イラスト\\a.png")).toBe(
 			"/mnt/c/Users/foo/イラスト/a.png",
 		);
 	});
 
-	// WSL から直接叩いたときに変換を挟まない
-	it("POSIX のパスはそのまま返す", () => {
+	// No conversion when invoked straight from WSL
+	it("returns a POSIX path unchanged", () => {
 		expect(toWslPath("/mnt/c/Users/foo/a.png")).toBe("/mnt/c/Users/foo/a.png");
 	});
 
-	it("ドライブの直下も扱う", () => {
+	it("handles a file at the drive root", () => {
 		expect(toWslPath("C:\\a.png")).toBe("/mnt/c/a.png");
 	});
 
-	it("ドライブパスでなければ失敗させる", () => {
+	it("fails on anything that is not a drive path", () => {
 		expect(() => {
 			return toWslPath("a.png");
 		}).toThrow(/解釈できませんでした/);
 	});
 
-	// UNC パスは SendTo からは渡らず、変換規則も違うため受け付けない
-	it("UNC パスを受け付けない", () => {
+	// SendTo never hands over a UNC path, and its conversion rules differ, so it is refused
+	it("refuses a UNC path", () => {
 		expect(() => {
 			return toWslPath("\\\\server\\share\\a.png");
 		}).toThrow(/解釈できませんでした/);
