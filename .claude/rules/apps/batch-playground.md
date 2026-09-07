@@ -26,7 +26,7 @@ Discord interaction を受ける公開エンドポイントは別 app の `funct
 R2 に置かれたメディアをメタデータへ反映し、サムネイルを生成します。設計の背景は `repositories/media/README.md` を参照します。
 同期は scheduler 起動なので `batch` の job、サムネイル生成は SQS 起動なので `sqs-worker` の job です。
 
-- 同期は共通バッチと同じ router で解決するが、10 万件の upsert が 60 秒に収まらないため Function を分ける。job 名は `contracts/job-names.ts` に登録する。
+- 同期は共通バッチと同じ router で解決するが、10 万件の upsert が 60 秒に収まらないため Function を分ける。job 名は管理ツール(`media-library`)からの invoke でも使うため `shared-domains/contracts/media-job-names.ts` に置き、`contracts/job-names.ts` はそれを参照して登録する。
 - サムネイル生成の message 契約は `shared-domains/contracts`(`media-job-names` / `media-thumbnail-message`)に置き、`sqs-worker/schema.ts` の union で受ける。
 - R2 の接続先の解釈は `features/media-storage/` に置く。SST link と環境変数の読み出しは job に残し、両方の handler ツリーから同じ feature を使う。
 - `ListObjectsV2` は custom metadata を返さない。既知の key は一覧だけで突き合わせ、**未知の key にだけ `HeadObject` を打つ**。全件に打つ実装にしない。

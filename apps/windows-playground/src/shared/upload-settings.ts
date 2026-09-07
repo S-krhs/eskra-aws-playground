@@ -1,20 +1,12 @@
 // In scope: アップローダが読む設定ファイルの場所の解決と検証
 // Out of scope: R2 への通信、key の組み立て、設定ファイルの作成
 import { readFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import {
 	parseR2Credentials,
 	type R2Credentials,
 } from "@eskra-aws-playground/integration-r2/r2-client.js";
+import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
 import { z } from "zod";
-
-const DEFAULT_SETTINGS_PATH = join(
-	homedir(),
-	".config",
-	"eskra-media-library",
-	"config.json",
-);
 
 const settingsSchema = z.object({
 	bucket: z.string().min(1),
@@ -27,17 +19,12 @@ export interface UploadSettings {
 	bucket: string;
 }
 
-/** 設定ファイルの場所。MEDIA_LIBRARY_CONFIG で上書きできる。 */
-export const resolveSettingsPath = (): string => {
-	return process.env.MEDIA_LIBRARY_CONFIG ?? DEFAULT_SETTINGS_PATH;
-};
-
 /**
  * 設定ファイルを読んで接続先を組み立てる。
  * 鍵が漏れないよう、失敗しても読み込んだ内容はエラーへ載せない。
  */
 export const loadUploadSettings = async (): Promise<UploadSettings> => {
-	const settingsPath = resolveSettingsPath();
+	const settingsPath = resolveMediaLibraryConfigPath();
 	let raw: string;
 
 	try {
