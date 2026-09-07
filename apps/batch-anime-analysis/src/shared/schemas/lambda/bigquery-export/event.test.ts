@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { bigQueryExportEventSchema } from "./event.js";
 
 describe("bigQueryExportEventSchema", () => {
-	it("日付指定のない起動イベントを受け付ける", () => {
+	it("accepts a launch event with no dates", () => {
 		expect(bigQueryExportEventSchema.parse({})).toEqual({});
 	});
 
-	it("日付指定を検証して正規化する", () => {
+	it("validates and normalizes the given dates", () => {
 		expect(
 			bigQueryExportEventSchema.parse({
 				startDate: "2026-08-01",
@@ -16,7 +16,7 @@ describe("bigQueryExportEventSchema", () => {
 		).toEqual({ startDate: "2026-08-01", endDate: "2026-08-31" });
 	});
 
-	it("YYYY-MM-DD 形式でない日付はエラーにする", () => {
+	it("errors on a date not in YYYY-MM-DD form", () => {
 		expect(() => {
 			return bigQueryExportEventSchema.parse({ startDate: "2026/08/01" });
 		}).toThrow("startDate");

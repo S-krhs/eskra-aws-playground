@@ -1,8 +1,8 @@
-// In scope: Worker Lambda (sqs-worker) が受け取る起動イベントの外部入力 schema と型を提供する
-// Out of scope: SQS 送信、message body の業務的解釈、record ごとの実行制御を行う
+// In scope: the external-input schema and type for the worker Lambda's (sqs-worker) launch event
+// Out of scope: sending to SQS, interpreting a message body's meaning, per-record execution control
 import { z } from "zod";
 
-/** Worker Lambda が受け取る起動イベント schema。SQS が record をまとめて届ける。 */
+/** The launch event the worker Lambda receives; SQS delivers records in a batch. */
 export const sqsWorkerEventSchema = z.object({
 	Records: z.array(
 		z.object({
@@ -12,5 +12,4 @@ export const sqsWorkerEventSchema = z.object({
 	),
 });
 
-/** Worker Lambda が受け取る起動イベント。 */
 export type SqsWorkerEvent = z.infer<typeof sqsWorkerEventSchema>;

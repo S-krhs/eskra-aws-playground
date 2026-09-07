@@ -1,5 +1,5 @@
-// In scope: 指定の webpage URL から HTML を取得し、metric 一覧へ変換する
-// Out of scope: ブラウザ起動やレンダリングの制御、アプリ固有の変換ルール定義
+// In scope: fetching HTML from a webpage URL and turning it into a metric list
+// Out of scope: launching a browser and controlling rendering, this app's own conversion rules
 import { fetchWebpageHtml } from "@eskra-aws-playground/libs-browser/html-scraper/webpage-html.js";
 import type { MetricBuildResult } from "@/shared/intermediate-models/metric/metric.js";
 import {
@@ -8,13 +8,13 @@ import {
 	parseHtmlMetrics,
 } from "./html-parser.js";
 
-/** Webpage 上の要素を選ぶ指定。 */
+/** Picks one element out of a webpage. */
 export type WebpageElementSource = {
 	selector: string;
 	index?: number;
 };
 
-/** Webpage から metric を取り出すための source 定義。 */
+/** The source definition pulling metrics out of a webpage. */
 export type WebpageSource = {
 	type: "webpage";
 	url: string;
@@ -24,7 +24,7 @@ export type WebpageSource = {
 	value: HtmlValueTarget;
 };
 
-/** Webpage source 定義を parser 用の HTML 解析オプションへ変換する。 */
+/** Turns a webpage source definition into the parser's HTML options. */
 export const buildHtmlParseOptions = (
 	source: WebpageSource,
 ): HtmlParseOptions => {
@@ -54,9 +54,9 @@ export const buildHtmlParseOptions = (
 };
 
 /**
- * Webpage source 定義を受け取り、HTML を取得して metric 一覧を返す
- * @param source Webpage から metric を取り出す定義
- * @returns 解析済み metric 一覧と変換できず除外した件数
+ * Takes a webpage source definition, fetches the HTML, and returns the metric list
+ * @param source how to pull metrics out of the webpage
+ * @returns the parsed metrics and how many were excluded as unconvertible
  */
 export const getWebpageMetrics = async (
 	source: WebpageSource,

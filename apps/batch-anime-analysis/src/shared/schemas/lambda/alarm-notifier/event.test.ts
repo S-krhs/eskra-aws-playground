@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { alarmNotifierEventSchema } from "./event.js";
 
 describe("alarmNotifierEventSchema", () => {
-	it("起動イベントを検証し、使う項目だけに正規化する", () => {
+	it("validates the launch event and normalizes it down to the fields used", () => {
 		const parsed = alarmNotifierEventSchema.parse({
 			Records: [
 				{
@@ -10,7 +10,7 @@ describe("alarmNotifierEventSchema", () => {
 						Message: "ALARM: batch failed",
 						Subject: "ALARM",
 						Timestamp: "2026-07-05T00:00:00.000Z",
-						// AWS が付与する未使用フィールドは落とす。
+						// The unused fields AWS attaches are dropped.
 						SignatureVersion: "1",
 					},
 					EventSource: "aws:sns",
@@ -31,13 +31,13 @@ describe("alarmNotifierEventSchema", () => {
 		});
 	});
 
-	it("Records が欠けたイベントはエラーにする", () => {
+	it("errors on an event missing Records", () => {
 		expect(() => {
 			return alarmNotifierEventSchema.parse({});
 		}).toThrow("Records");
 	});
 
-	it("Sns.Message が欠けた record はエラーにする", () => {
+	it("errors on a record missing Sns.Message", () => {
 		expect(() => {
 			return alarmNotifierEventSchema.parse({
 				Records: [{ Sns: { Subject: "ALARM" } }],

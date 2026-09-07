@@ -1,11 +1,11 @@
-// In scope: アニメ指標の連携先 BigQuery テーブルの識別子と構造定義を持つ
-// Out of scope: 行の変換、dataset の解決、BigQuery API の呼び出しを行う
+// In scope: the identifier and structure of the BigQuery table anime metrics are exported to
+// Out of scope: converting rows, resolving the dataset, calling the BigQuery API
 import type { BigQueryTableDefinition } from "@eskra-aws-playground/integration-bigquery/bigquery-partition-loader.js";
 
-/** アニメ指標の連携先テーブル名。dataset は stage ごとに環境変数で切り替える。 */
+/** The destination table's name; the dataset is switched per stage through an env var. */
 export const scrapingMetricTableId = "scraping_metrics";
 
-/** アニメ指標の連携先テーブル構造。取得日の DAY パーティション単位で置き換える。 */
+/** The destination table's structure; it is replaced one scraped-date DAY partition at a time. */
 export const scrapingMetricTableDefinition: BigQueryTableDefinition = {
 	fields: [
 		{ name: "id", type: "INTEGER", mode: "REQUIRED" },

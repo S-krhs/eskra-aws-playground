@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseJsonMetrics } from "./json-parser.js";
 
 describe("parseJsonMetrics", () => {
-	it("JSON と path 指定から metric 一覧を作る", () => {
+	it("builds a metric list from JSON and its paths", () => {
 		expect(
 			parseJsonMetrics(
 				{
@@ -44,7 +44,7 @@ describe("parseJsonMetrics", () => {
 		});
 	});
 
-	it("metric に変換できない item は除外して件数に数える", () => {
+	it("excludes an item that can't be converted and counts it", () => {
 		expect(
 			parseJsonMetrics(
 				{
@@ -79,7 +79,7 @@ describe("parseJsonMetrics", () => {
 		});
 	});
 
-	it("item-index を metric value にできる", () => {
+	it("can use the item index as the metric value", () => {
 		expect(
 			parseJsonMetrics(
 				{

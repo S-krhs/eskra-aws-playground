@@ -7,7 +7,7 @@ import {
 } from "./metric.js";
 
 describe("buildMetrics", () => {
-	it("変換できない入力は除外して件数に数える", () => {
+	it("excludes an unconvertible input and counts it", () => {
 		expect(
 			buildMetrics([
 				{ label: "Title A", value: "1,234" },
@@ -27,7 +27,7 @@ describe("buildMetrics", () => {
 });
 
 describe("normalizeMetricLabel", () => {
-	it("空の label はエラーにする", () => {
+	it("errors on an empty label", () => {
 		expect(() => {
 			return normalizeMetricLabel(" ");
 		}).toThrow("metric label が空です");
@@ -35,19 +35,19 @@ describe("normalizeMetricLabel", () => {
 });
 
 describe("normalizeMetricValue", () => {
-	it("数値に変換できない value はエラーにする", () => {
+	it("errors on a value that is not a number", () => {
 		expect(() => {
 			return normalizeMetricValue("not-number");
 		}).toThrow("metric value を number に変換できません");
 	});
 
-	it("空文字の value は 0 とみなさずエラーにする", () => {
+	it("errors on an empty value rather than counting it as 0", () => {
 		expect(() => {
 			return normalizeMetricValue(" ");
 		}).toThrow("metric value が空です");
 	});
 
-	it("欠損値の value はエラーにする", () => {
+	it("errors on a missing value", () => {
 		expect(() => {
 			return normalizeMetricValue(undefined);
 		}).toThrow("metric value が空です");

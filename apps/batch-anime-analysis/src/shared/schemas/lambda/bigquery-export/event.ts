@@ -1,12 +1,11 @@
-// In scope: BigQuery 連携 Lambda 起動イベントの外部入力 schema と型を提供する
-// Out of scope: 連携対象日の既定値の解決、metric の読み出し、BigQuery への書き込みを行う
+// In scope: the external-input schema and type for the BigQuery export Lambda's launch event
+// Out of scope: resolving the default export dates, reading metrics, writing to BigQuery
 import { z } from "zod";
 
-/** BigQuery 連携 Lambda が受け取る起動イベント schema。日付は両端を含み、省略時は job 側で前日分に解決する。 */
+/** The launch event this Lambda receives; the dates are inclusive, and omitting them lets the job resolve the previous day. */
 export const bigQueryExportEventSchema = z.object({
 	startDate: z.iso.date().optional(),
 	endDate: z.iso.date().optional(),
 });
 
-/** BigQuery 連携 Lambda が受け取る起動イベント。 */
 export type BigQueryExportEvent = z.infer<typeof bigQueryExportEventSchema>;

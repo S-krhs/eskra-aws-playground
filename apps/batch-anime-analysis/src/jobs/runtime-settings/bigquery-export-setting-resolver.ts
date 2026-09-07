@@ -1,14 +1,14 @@
-// In scope: BigQuery 連携 job が使う実行時設定の型と、SST link・環境変数からの解決を提供する
-// Out of scope: Lambda イベント解釈、外部サービス送信、連携対象日の決定を行う
+// In scope: the runtime settings the BigQuery export job uses, and resolving them from the SST links and env vars
+// Out of scope: interpreting the Lambda event, calling an external service, deciding the export dates
 import { requireSecret } from "./require-linked-resource.js";
 
-/** BigQuery 連携 job が使う実行時設定。 */
+/** The runtime settings the BigQuery export job uses. */
 export interface BigQueryExportSettings {
 	serviceAccountKey: string;
 	datasetId: string;
 }
 
-/** BigQuery 連携 job が使う実行時設定を解決する。 */
+/** Resolves the runtime settings the BigQuery export job uses. */
 export const getBigQueryExportSettings = (): BigQueryExportSettings => {
 	const datasetId = process.env.BIGQUERY_DATASET?.trim();
 

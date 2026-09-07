@@ -1,7 +1,7 @@
-// In scope: Worker Lambda (sqs-worker) が Lambda へ返す partial batch response の型を提供する
-// Out of scope: SQS event の検証、message body の解釈、record ごとの実行制御を行う
+// In scope: the partial batch response type the worker Lambda (sqs-worker) returns
+// Out of scope: validating the SQS event, interpreting a message body, per-record execution control
 
-/** Worker Lambda が返す SQS partial batch response。失敗した record だけを再試行対象にする。 */
+/** The SQS partial batch response; only the failed records go back for retry. */
 export interface SqsWorkerResponse {
 	batchItemFailures: {
 		itemIdentifier: string;

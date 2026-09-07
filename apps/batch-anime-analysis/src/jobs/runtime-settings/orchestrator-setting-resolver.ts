@@ -1,13 +1,13 @@
-// In scope: Orchestrator job が使う実行時設定の型と、SST link からの解決を提供する
-// Out of scope: Lambda イベント解釈、外部サービス送信、ジョブ判定を行う
+// In scope: the runtime settings the orchestrator job uses, and resolving them from the SST links
+// Out of scope: interpreting the Lambda event, calling an external service, deciding which job runs
 import { requireLinkedUrl } from "./require-linked-resource.js";
 
-/** Orchestrator job が使う実行時設定。 */
+/** The runtime settings the orchestrator job uses. */
 export interface OrchestratorSettings {
 	queueUrl: string;
 }
 
-/** Orchestrator job が使う実行時設定を解決する。 */
+/** Resolves the runtime settings the orchestrator job uses. */
 export const getOrchestratorSettings = (): OrchestratorSettings => {
 	return {
 		queueUrl: requireLinkedUrl("AnimeAnalysisQueue"),

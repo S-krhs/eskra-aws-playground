@@ -1,13 +1,13 @@
-// In scope: CloudWatch alarm の SNS event を受け取り、通知 job へ委譲する
-// Out of scope: 通知文生成、Webhook URL 解決、送信処理の詳細を持つ
+// In scope: taking a CloudWatch alarm's SNS event and delegating to the notification job
+// Out of scope: writing the notification, resolving the webhook URL, send detail
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { alarmNotificationJob } from "@/jobs/alarm-notification.js";
 
 const logger = createBatchLogger("alarm-notifier");
 
-/** CloudWatch alarm を Discord へ通知する Lambda のエントリポイント。 */
+/** The entry point of the Lambda notifying Discord of a CloudWatch alarm. */
 export const handler = async (event: unknown): Promise<void> => {
-	// 通知自体の失敗で SNS 再試行を誘発しないよう、ログに留めて握り潰す。
+	// A failure to notify is logged and swallowed, so it never triggers an SNS retry.
 	try {
 		await alarmNotificationJob(event);
 	} catch (error) {

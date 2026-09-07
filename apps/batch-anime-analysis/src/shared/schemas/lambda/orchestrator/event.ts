@@ -1,11 +1,11 @@
-// In scope: Orchestrator Lambda 起動イベントの外部入力 schema と型を提供する
-// Out of scope: 起動イベントを使った実行対象の決定、SQS 投入を行う
+// In scope: the external-input schema and type for the orchestrator Lambda's launch event
+// Out of scope: deciding what to run from it, enqueuing on SQS
 import { z } from "zod";
 
-/** Orchestrator Lambda が受け取る起動イベント schema。 */
+/** The launch event the orchestrator Lambda receives. */
 export const orchestratorEventSchema = z.object({
 	scheduleHour: z.number().int().min(0).max(23),
 });
 
-/** orchestrator が処理する起動スケジュール単位の実行要求。 */
+/** One per-schedule request the orchestrator processes. */
 export type OrchestratorEvent = z.infer<typeof orchestratorEventSchema>;

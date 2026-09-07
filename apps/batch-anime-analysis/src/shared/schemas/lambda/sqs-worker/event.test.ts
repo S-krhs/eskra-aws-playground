@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { sqsWorkerEventSchema } from "./event.js";
 
 describe("sqsWorkerEventSchema", () => {
-	it("起動イベントを検証し、使う項目だけに正規化する", () => {
+	it("validates the launch event and normalizes it down to the fields used", () => {
 		const parsed = sqsWorkerEventSchema.parse({
 			Records: [
 				{
 					messageId: "message-1",
 					body: '{"dataSourceId":"source-a"}',
-					// AWS が付与する未使用フィールドは落とす。
+					// The unused fields AWS attaches are dropped.
 					receiptHandle: "receipt-1",
 					eventSource: "aws:sqs",
 				},
@@ -25,13 +25,13 @@ describe("sqsWorkerEventSchema", () => {
 		});
 	});
 
-	it("Records が欠けたイベントはエラーにする", () => {
+	it("errors on an event missing Records", () => {
 		expect(() => {
 			return sqsWorkerEventSchema.parse({});
 		}).toThrow("Records");
 	});
 
-	it("messageId が空、または body が string でない record はエラーにする", () => {
+	it("errors on a record whose messageId is empty or whose body is not a string", () => {
 		expect(() => {
 			return sqsWorkerEventSchema.parse({
 				Records: [{ messageId: "", body: "{}" }],

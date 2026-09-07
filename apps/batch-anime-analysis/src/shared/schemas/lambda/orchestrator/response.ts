@@ -1,7 +1,6 @@
-// In scope: Orchestrator Lambda が返すレスポンスの型を提供する
-// Out of scope: 起動イベントの検証、SQS 送信、ジョブ本体の処理を行う
+// In scope: the response type the orchestrator Lambda returns
+// Out of scope: validating the launch event, sending to SQS, the job itself
 
-/** Orchestrator Lambda が返すレスポンス。 */
 export interface OrchestratorResponse {
 	ok: true;
 	job: string;
