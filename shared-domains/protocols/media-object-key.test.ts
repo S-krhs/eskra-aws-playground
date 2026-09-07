@@ -49,7 +49,7 @@ describe("buildMediaObjectKey", () => {
 		).toBe("illust/20260907-133045123");
 	});
 
-	// 同じミリ秒のファイルは key が衝突するため連番で逃がす
+	// 同じミリ秒のファイルは key が衝突するため、連番を付けて回避する
 	it("連番を時刻の後ろに付ける", () => {
 		expect(
 			buildMediaObjectKey({
@@ -63,7 +63,7 @@ describe("buildMediaObjectKey", () => {
 });
 
 describe("buildInboxKey", () => {
-	it("着地点の prefix を付ける", () => {
+	it("_inbox の prefix を付ける", () => {
 		expect(buildInboxKey({ modifiedAt, extension: "mp4" })).toBe(
 			"_inbox/20260907-133045123.mp4",
 		);

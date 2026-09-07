@@ -14,21 +14,21 @@ describe("assertDeletableSize", () => {
 		}).not.toThrow();
 	});
 
-	// token の権限縮小や bucket 名の誤りで一覧がほぼ空になる場合を想定する。
-	// 行を消すとタグの紐付けも道連れになり、手で付けたタグは戻せない
+	// token の権限縮小や bucket 名の誤りで一覧がほぼ空になる場合を想定したテスト。
+	// 行を削除するとタグの紐付けも一緒に削除され、手で付けたタグは戻せない。
 	it("割合が大きすぎる削除を止める", () => {
 		expect(() => {
 			return assertDeletableSize(5_000, 10_000);
 		}).toThrow(/MEDIA_BUCKET/);
 	});
 
-	it("登録が全て消える場合を止める", () => {
+	it("登録が全件消える削除を止める", () => {
 		expect(() => {
 			return assertDeletableSize(10_000, 10_000);
 		}).toThrow();
 	});
 
-	// 少数しか登録が無いうちは割合で判断できないため、下限までは通す
+	// 登録件数が少ないうちは割合で判断できないため、下限までは通す
 	it("下限までは割合に関わらず通す", () => {
 		expect(() => {
 			return assertDeletableSize(50, 50);

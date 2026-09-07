@@ -1,4 +1,4 @@
-// In scope: 1 ファイルを R2 の着地点へ保存する(key の衝突回避と metadata の付与を含む)
+// In scope: 1 ファイルを R2 の _inbox へ保存する(key の衝突回避と metadata の付与を含む)
 // Out of scope: 引数の解釈、設定の読み込み、DB への反映、サムネイル生成
 import { randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -53,8 +53,8 @@ const resolveAvailableKey = async (
 };
 
 /**
- * ファイルを着地点へ保存する。
- * UUID と元のファイル名は metadata に載せ、DB へは書かない(同期が拾う)。
+ * ファイルを R2 の _inbox へ保存する。
+ * UUID と元のファイル名は metadata に載せるだけで DB へは書かず、DB への反映は同期ジョブに任せる。
  */
 export const uploadMediaFile = async (
 	client: R2Client,

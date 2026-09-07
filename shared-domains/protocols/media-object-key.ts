@@ -44,7 +44,7 @@ export const buildMediaObjectKey = (input: MediaObjectKeyInput): string => {
 	return `${input.logicalPath}/${fileName}${extension ? `.${extension}` : ""}`;
 };
 
-/** 着地点の key を組み立てる。 */
+/** _inbox の key を組み立てる。 */
 export const buildInboxKey = (
 	input: Omit<MediaObjectKeyInput, "logicalPath">,
 ): string => {

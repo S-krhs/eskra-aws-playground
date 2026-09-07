@@ -30,7 +30,7 @@ export const mediaThumbnailJob = async (
 		bucket: process.env.MEDIA_BUCKET,
 	});
 	const client = createR2Client(settings.credentials);
-	// 大きい動画は /tmp を使う。Lambda の ephemeral storage を上げて対応する
+	// 動画サイズが大きくても収まるよう、Lambda の ephemeral storage を増やしたうえで /tmp を作業領域に使う
 	const workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
 
 	try {

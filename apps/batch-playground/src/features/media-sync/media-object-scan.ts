@@ -13,7 +13,7 @@ const THUMBNAIL_KEY_PREFIX = `${THUMBNAIL_PREFIX}/`;
 /**
  * 取り込む対象の key かどうかを判定する。
  * サムネイルはメディアそのものではないため外し、対象外の拡張子も外す。
- * ここで落としておかないと、テキストやフォルダの placeholder まで取り込まれ、
+ * ここで除外しておかないと、テキストやフォルダの placeholder まで取り込まれ、
  * サムネイル生成が毎回失敗して DLQ が埋まり続ける。
  */
 export const isMediaKey = (key: string): boolean => {

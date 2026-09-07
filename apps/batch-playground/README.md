@@ -19,10 +19,10 @@ timeout や layer が共通設定に収まらない job だけ、同じ handler 
 `media-sync` は R2 の一覧と `media` schema の差分を反映します。`ListObjectsV2` が custom metadata を返さないため、既知の key は一覧だけで突き合わせ、未知の key にだけ `HeadObject` を打ちます。
 
 - 新規・移動・取り込みの振り分けは object metadata の `media-id` で行います。
-- サムネイル未生成のメディアを queue へ積み、`media-thumbnail` job が ffmpeg で webp を作ります。
+- サムネイル未生成のメディアを queue へ投入し、`media-thumbnail` job が ffmpeg で webp を作ります。
 - 接続先は SST secret の `R2Credentials`(JSON)と、環境変数 `MEDIA_BUCKET` から解決します。
 - 実行記録は `media.media_sync_runs` に残り、管理ツールの進捗表示と二重起動の判定に使います。
-- **削除には歯止めがあります。** R2 の一覧が空、または一度に消える割合が大きすぎる場合は、token の権限か `MEDIA_BUCKET` の誤りとみなして削除せずエラーにします。行を消すとタグの紐付けも道連れになるためです。
+- **大量削除を防ぐガードがあります。** R2 の一覧が空、または一度に削除される割合が大きすぎる場合は、token の権限か `MEDIA_BUCKET` の誤りとみなして削除せずエラーにします。行を削除するとタグの紐付けも一緒に削除されてしまうためです。
 
 ## 実行できるジョブ
 

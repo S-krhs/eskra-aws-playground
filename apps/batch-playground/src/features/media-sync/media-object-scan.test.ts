@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isMediaKey } from "./media-object-scan.js";
 
 describe("isMediaKey", () => {
-	it("着地点と整理済みのメディアを通す", () => {
+	it("未整理(_inbox)と整理済みのどちらのメディアも通す", () => {
 		expect(isMediaKey("_inbox/20260907-133045123.png")).toBe(true);
 		expect(isMediaKey("illust/original/20260907-133045123.png")).toBe(true);
 	});
@@ -23,7 +23,7 @@ describe("isMediaKey", () => {
 		expect(isMediaKey("_inbox/archive.zip")).toBe(false);
 	});
 
-	// R2 のダッシュボードが作るフォルダの placeholder
+	// R2 のダッシュボードでフォルダを作成すると、末尾がスラッシュの placeholder object ができる
 	it("拡張子を持たない key を除く", () => {
 		expect(isMediaKey("illust/")).toBe(false);
 		expect(isMediaKey("_inbox/no-extension")).toBe(false);
