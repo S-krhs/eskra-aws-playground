@@ -11,7 +11,7 @@ generator zod {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["anime", "playground"]
+  schemas  = ["anime", "media", "playground"]
 }
 
 model ScrapingMetric {
@@ -70,4 +70,77 @@ model DiscordUserSetting {
   @@index([applicationKey, settingKey])
   @@map("discord_user_settings")
   @@schema("playground")
+}
+
+model MediaObject {
+  id           String    @id @db.Uuid
+  objectKey    String    @unique @map("object_key") @db.VarChar(1024)
+  logicalPath  String    @map("logical_path") @db.VarChar(512)
+  fileName     String    @map("file_name") @db.VarChar(512)
+  contentType  String    @map("content_type") @db.VarChar(128)
+  byteSize     BigInt    @map("byte_size")
+  etag         String    @db.VarChar(128)
+  width        Int?
+  height       Int?
+  durationMs   Int?      @map("duration_ms")
+  thumbnailKey String?   @map("thumbnail_key") @db.VarChar(1024)
+  uploadedAt   DateTime  @map("uploaded_at") @db.Timestamptz
+  syncedAt     DateTime  @map("synced_at") @db.Timestamptz
+  trashedAt    DateTime? @map("trashed_at") @db.Timestamptz
+
+  tags MediaObjectTag[]
+
+  @@index([logicalPath])
+  // 一覧の既定順(ゴミ箱を除いた新着順)を index だけで引く
+  @@index([trashedAt, uploadedAt])
+  @@map("media_objects")
+  @@schema("media")
+}
+
+/// 実体を持たない論理フォルダ。空のフォルダを先に作れるようにするため table で保持する
+model MediaFolder {
+  path      String   @id @db.VarChar(512)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("media_folders")
+  @@schema("media")
+}
+
+model MediaTag {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(64)
+
+  mediaObjects MediaObjectTag[]
+
+  @@map("media_tags")
+  @@schema("media")
+}
+
+model MediaObjectTag {
+  mediaObjectId String @map("media_object_id") @db.Uuid
+  tagId         Int    @map("tag_id")
+
+  mediaObject MediaObject @relation(fields: [mediaObjectId], references: [id], onDelete: Cascade)
+  tag         MediaTag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([mediaObjectId, tagId])
+  @@index([tagId])
+  @@map("media_object_tags")
+  @@schema("media")
+}
+
+/// 同期の実行単位。進捗表示と、実行中の二重起動判定に使う
+model MediaSyncRun {
+  id            String    @id @db.Uuid
+  startedAt     DateTime  @map("started_at") @db.Timestamptz
+  finishedAt    DateTime? @map("finished_at") @db.Timestamptz
+  scannedCount  Int       @default(0) @map("scanned_count")
+  insertedCount Int       @default(0) @map("inserted_count")
+  updatedCount  Int       @default(0) @map("updated_count")
+  deletedCount  Int       @default(0) @map("deleted_count")
+  error         String?
+
+  @@index([startedAt])
+  @@map("media_sync_runs")
+  @@schema("media")
 }
