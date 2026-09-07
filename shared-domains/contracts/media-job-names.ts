@@ -1,11 +1,7 @@
-// In scope: メディアライブラリのジョブ名を一元管理する
-// Out of scope: ジョブの実装、SQS message の構築、ルーティングを持つ
+// In scope: the one place listing media library job names
+// Out of scope: job implementation, building an SQS message, routing
 
-/**
- * メディアライブラリのジョブ名。
- * 起動する側(scheduler / 管理ツール)と受ける側(batch / sqs-worker)が別 app に分かれるため、
- * 名前はここだけで決める。
- */
+/** The trigger side (scheduler / media-library) and the receiving side (batch / sqs-worker) are separate apps, so the name is decided only here. */
 export const mediaJobNames = {
 	mediaSync: "media-sync",
 	mediaThumbnail: "media-thumbnail",

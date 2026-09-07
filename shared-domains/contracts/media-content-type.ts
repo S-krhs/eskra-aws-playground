@@ -1,7 +1,7 @@
-// In scope: 取り込む対象の拡張子と、そこから決まる content-type の語彙
-// Out of scope: ファイルの中身の判定、key の組み立て、R2 への通信
+// In scope: the extension allowlist and the content-type each one maps to
+// Out of scope: inspecting a file's actual content, key construction, talking to R2
 
-// 取り込む対象を明示的に絞る。ここに無い拡張子はメディアとして扱わない
+// Explicit allowlist — an extension not listed here is never treated as media
 const CONTENT_TYPES: Record<string, string> = {
 	avi: "video/x-msvideo",
 	avif: "image/avif",
@@ -17,10 +17,7 @@ const CONTENT_TYPES: Record<string, string> = {
 	webp: "image/webp",
 };
 
-/**
- * 拡張子から content-type を返す。
- * 対象外の拡張子は undefined を返し、呼び出し側でそのファイルを飛ばす。
- */
+/** Returns undefined for an unlisted extension — the caller skips that file. */
 export const resolveContentType = (extension: string): string | undefined => {
 	return CONTENT_TYPES[extension.replace(/^\./, "").toLowerCase()];
 };

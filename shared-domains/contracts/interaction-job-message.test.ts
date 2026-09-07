@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { interactionJobMessageSchema } from "./interaction-job-message.js";
 
 describe("interactionJobMessageSchema", () => {
-	it("gamble-check-enable の必須項目を検証する", () => {
+	it("validates gamble-check-enable's required fields", () => {
 		const parsed = interactionJobMessageSchema.parse({
 			job: "gamble-check-enable",
 			applicationId: "999",
@@ -16,7 +16,7 @@ describe("interactionJobMessageSchema", () => {
 		expect(parsed.job).toBe("gamble-check-enable");
 	});
 
-	it("callback(applicationId・token)を欠く message は拒否する", () => {
+	it("rejects a message missing the callback (applicationId/token)", () => {
 		expect(() => {
 			return interactionJobMessageSchema.parse({
 				job: "yaccho-hello-reply",
@@ -25,7 +25,7 @@ describe("interactionJobMessageSchema", () => {
 		}).toThrow();
 	});
 
-	it("未知の job は拒否する", () => {
+	it("rejects an unknown job", () => {
 		expect(() => {
 			return interactionJobMessageSchema.parse({
 				job: "unknown-job",

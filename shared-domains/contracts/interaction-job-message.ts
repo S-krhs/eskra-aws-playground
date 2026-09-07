@@ -1,20 +1,17 @@
-// In scope: sqs-worker が受け取る interaction ジョブ message の外部入力 schema と型を提供する
-// Out of scope: SQS 送受信、ジョブの実行、Discord API 通信、deferred ack の生成
+// In scope: the external-input schema and type for an interaction job message received by sqs-worker
+// Out of scope: SQS send/receive, running the job, Discord API calls, building a deferred ack
 import { z } from "zod";
 import { interactionJobNames } from "./interaction-job-names.js";
 
 const snowflakeSchema = z.string().regex(/^\d{1,20}$/);
 
-/** deferred 応答済み interaction へ後追い送信するための callback 情報。 */
+/** For sending a follow-up on an already-deferred interaction. */
 const callbackShape = {
 	applicationId: snowflakeSchema,
 	token: z.string().min(1),
 } as const;
 
-/**
- * interaction ジョブ message の schema。job で識別する discriminated union で、
- * ジョブごとに worker が処理に必要とする値だけを持つ。
- */
+/** Discriminated union on `job` — each variant carries only what that job's worker needs. */
 export const interactionJobMessageSchema = z.discriminatedUnion("job", [
 	z.object({
 		job: z.literal(interactionJobNames.yacchoHelloReply),
@@ -44,5 +41,4 @@ export const interactionJobMessageSchema = z.discriminatedUnion("job", [
 	}),
 ]);
 
-/** interaction ジョブ message。 */
 export type InteractionJobMessage = z.infer<typeof interactionJobMessageSchema>;
