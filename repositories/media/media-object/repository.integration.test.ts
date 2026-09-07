@@ -13,14 +13,17 @@ import {
 
 import { getPrismaClient } from "../../db/client.js";
 import { mediaObjectRepository } from "./repository.js";
-import type { InsertMediaObjectInput } from "./types.js";
+import type {
+	FindThumbnaillessInput,
+	InsertMediaObjectInput,
+} from "./types.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const testId = Date.now().toString();
 const keyPrefix = `_test-${testId}/`;
 
 // 並行実行や共有 branch で行を取り合わないよう、実行ごとに一意な id を使う
-const ids = [randomUUID(), randomUUID(), randomUUID()];
+const ids: string[] = [randomUUID(), randomUUID(), randomUUID()];
 const [olderId, newerId, trashedId] = ids as [string, string, string];
 
 const syncedAt = new Date("2026-09-07T00:00:00.000Z");
@@ -43,6 +46,30 @@ const buildInput = (
 		syncedAt,
 		...overrides,
 	};
+};
+
+const thumbnailQuery: FindThumbnaillessInput = {
+	limit: 1_000,
+	maxAttempts: 3,
+	retryBefore: new Date("2026-09-07T00:00:00.000Z"),
+};
+
+// findWithoutThumbnail は条件に合う行を全件から探すため、この実行で入れた id だけに絞る
+const findThumbnaillessIds = async (
+	overrides: Partial<FindThumbnaillessInput> = {},
+): Promise<string[]> => {
+	const found = await mediaObjectRepository.findWithoutThumbnail({
+		...thumbnailQuery,
+		...overrides,
+	});
+
+	return found
+		.map((media) => {
+			return media.id;
+		})
+		.filter((id) => {
+			return ids.includes(id);
+		});
 };
 
 const deleteTestRows = async (): Promise<void> => {
@@ -259,10 +286,75 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await mediaObjectRepository.findById(olderId)).toBeUndefined();
 	});
 
+	it("サムネイルが付いた行を生成の対象から外す", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
+		]);
+		await mediaObjectRepository.setThumbnail({
+			id: newerId,
+			thumbnailKey: "_thumb/b.webp",
+		});
+
+		expect(await findThumbnaillessIds()).toEqual([olderId]);
+	});
+
+	it("ゴミ箱に入れた行を生成の対象から外す", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+			buildInput(trashedId, "c.png", "2026-09-03T00:00:00.000Z"),
+		]);
+		await getPrismaClient().mediaObject.update({
+			where: { id: trashedId },
+			data: { trashedAt: syncedAt },
+		});
+
+		expect(await findThumbnaillessIds()).toEqual([olderId]);
+	});
+
+	// 処理中のものを重複して投入しないための境界
+	it("投入した直後は対象から外し、間隔が空けば再び返す", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+		]);
+		const enqueuedAt = new Date("2026-09-07T12:00:00.000Z");
+
+		const marked = await mediaObjectRepository.markThumbnailEnqueued(
+			[olderId],
+			enqueuedAt,
+		);
+		expect(marked).toBe(1);
+		expect(await findThumbnaillessIds()).toEqual([]);
+
+		expect(
+			await findThumbnaillessIds({
+				retryBefore: new Date("2026-09-08T00:00:00.000Z"),
+			}),
+		).toEqual([olderId]);
+	});
+
+	// 生成できないメディアを積み直し続けないための上限
+	it("試行回数を使い切った行を対象から外す", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+		]);
+		const enqueuedAt = new Date("2026-09-01T00:00:00.000Z");
+
+		for (let attempt = 0; attempt < 3; attempt += 1) {
+			await mediaObjectRepository.markThumbnailEnqueued([olderId], enqueuedAt);
+		}
+
+		expect(await findThumbnaillessIds()).toEqual([]);
+		expect(await findThumbnaillessIds({ maxAttempts: 4 })).toEqual([olderId]);
+	});
+
 	it("空の入力で DB を呼ばない", async () => {
 		expect(await mediaObjectRepository.insertMany([])).toBe(0);
 		expect(await mediaObjectRepository.relocateMany([])).toBe(0);
 		expect(await mediaObjectRepository.touchMany([], syncedAt)).toBe(0);
 		expect(await mediaObjectRepository.deleteByIds([])).toBe(0);
+		expect(
+			await mediaObjectRepository.markThumbnailEnqueued([], syncedAt),
+		).toBe(0);
 	});
 });

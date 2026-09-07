@@ -110,6 +110,18 @@ describe.skipIf(!testDatabaseUrl)(
 			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
 		});
 
+		// startedAt は行を入れる前に採るため、2 つの実行で前後が入れ替わることがある。
+		// 先に入った方を返さないと、どちらの実行も自分が最古だと判断して二重に走る
+		it("startedAt が前後しても先に入った実行を返す", async () => {
+			await mediaSyncRunRepository.start(
+				runId,
+				new Date("2099-09-07T02:00:00.000Z"),
+			);
+			await mediaSyncRunRepository.start(laterRunId, startedAt);
+
+			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
+		});
+
 		it("開始が新しい実行を最新として返す", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			await mediaSyncRunRepository.start(
