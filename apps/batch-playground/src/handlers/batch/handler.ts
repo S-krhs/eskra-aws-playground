@@ -1,5 +1,5 @@
-// In scope: Lambda イベントを検証し、対応する登録済みバッチジョブへ実行を委譲する
-// Out of scope: 個別ジョブの処理内容、業務ロジック、外部連携の詳細を持つ
+// In scope: validating the Lambda event and delegating to the registered batch job that matches
+// Out of scope: what each job does, business logic, external-integration detail
 
 import { batchJobNames } from "./contracts/job-names.js";
 import { mediaSyncJob } from "./jobs/media-sync.js";
@@ -8,10 +8,10 @@ import { umaOneDrawTopicJob } from "./jobs/uma-one-draw-topic.js";
 import { umaOneDrawTopicSchedulerJob } from "./jobs/uma-one-draw-topic-scheduler.js";
 import { type BatchResponse, batchEventSchema } from "./schema.js";
 
-/** ジョブ名に対応して実行されるバッチジョブ関数。context には Lambda context を渡す。 */
+/** The batch job run for a job name; `context` is the Lambda context. */
 type BatchJob = (event: unknown, context?: unknown) => Promise<BatchResponse>;
 
-/** job 名と実行するジョブの対応。ジョブを追加したらここへ登録する。 */
+/** Job name to the job that runs it; a new job gets registered here. */
 const batchJobs = new Map<string, BatchJob>([
 	[batchJobNames.umaOneDrawTopic, umaOneDrawTopicJob],
 	[batchJobNames.umaOneDrawTopicScheduler, umaOneDrawTopicSchedulerJob],
@@ -19,7 +19,7 @@ const batchJobs = new Map<string, BatchJob>([
 	[batchJobNames.mediaSync, mediaSyncJob],
 ]);
 
-/** Lambda の共通エントリポイント。イベントに対応するバッチジョブを実行する。 */
+/** The shared Lambda entry point; runs the batch job matching the event. */
 export const handler = async (
 	event: unknown = {},
 	context?: unknown,

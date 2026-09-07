@@ -1,11 +1,11 @@
-// In scope: ffmpeg で画像・動画からサムネイルの webp を作る
-// Out of scope: 寸法の読み取り、R2 への読み書き、DB への反映
+// In scope: making a webp thumbnail out of an image or video with ffmpeg
+// Out of scope: reading dimensions, reading/writing R2, writing to the DB
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-// Lambda layer が /opt/bin へ配置する。ローカル検証で差し替えられるよう実行時に解決する
+// The Lambda layer puts these under /opt/bin; the path resolves at call time so a local test can swap it
 const resolveFfmpegPath = (): string => {
 	return process.env.FFMPEG_PATH ?? "/opt/bin/ffmpeg";
 };
@@ -13,18 +13,18 @@ const resolveFfmpegPath = (): string => {
 const THUMBNAIL_WIDTH = 320;
 const THUMBNAIL_QUALITY = 80;
 
-// 動画の先頭は黒いことが多いため少し進めた位置から取る。短い動画は先頭から取る
+// A video usually opens on black, so the frame comes from slightly in; a short one comes from the start
 const POSTER_SECONDS = 1;
 const POSTER_MIN_DURATION_MS = 2_000;
 
-/** サムネイル生成の入力。durationMs があれば動画として扱う。 */
+/** A durationMs means it is treated as a video. */
 export interface GenerateThumbnailInput {
 	sourcePath: string;
 	destinationPath: string;
 	durationMs: number | undefined;
 }
 
-/** 動画から 1 フレーム抜く位置を決める。 */
+/** Picks where in a video the single frame comes from. */
 export const resolvePosterSeconds = (
 	durationMs: number | undefined,
 ): number => {
@@ -36,8 +36,7 @@ export const resolvePosterSeconds = (
 };
 
 /**
- * サムネイルの webp を作る。
- * 高さは -2 で合わせ、codec が扱えない奇数の寸法にならないようにする。
+ * Height is matched with -2, keeping the dimensions off the odd numbers a codec can't handle.
  */
 export const generateThumbnail = async (
 	input: GenerateThumbnailInput,

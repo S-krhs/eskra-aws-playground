@@ -11,7 +11,7 @@ const scanned = (key: string): ScannedObject => {
 };
 
 describe("buildMediaSyncPlan", () => {
-	it("key が一致したものを登録済みとして分ける", () => {
+	it("splits out matching keys as already registered", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("_inbox/a.png")],
 			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" }],
@@ -25,8 +25,8 @@ describe("buildMediaSyncPlan", () => {
 		});
 	});
 
-	// metadata を読まないと新規か移動かは決まらないため、ここでは未知として残す
-	it("DB に無い key を未知として残す", () => {
+	// New versus moved needs metadata, so it stays unknown here
+	it("leaves a key absent from the DB as unknown", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("_inbox/new.png")],
 			known: [],
@@ -40,8 +40,8 @@ describe("buildMediaSyncPlan", () => {
 		expect(plan.unchangedIds).toEqual([]);
 	});
 
-	// 同じ key へ上書きされると etag だけが変わる。放っておくと寸法とサムネイルが古いまま残る
-	it("key が同じで etag が違うものを差し替えとして分ける", () => {
+	// An overwrite under the same key changes only the etag; left alone, the dimensions and thumbnail stay stale
+	it("splits out same-key different-etag entries as replacements", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [{ ...scanned("_inbox/a.png"), etag: "new-etag" }],
 			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "old-etag" }],
@@ -56,7 +56,7 @@ describe("buildMediaSyncPlan", () => {
 		expect(plan.missingIds).toEqual([]);
 	});
 
-	it("R2 に無い id を欠落として挙げる", () => {
+	it("lists an id absent from R2 as missing", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [],
 			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" }],
@@ -65,8 +65,8 @@ describe("buildMediaSyncPlan", () => {
 		expect(plan.missingIds).toEqual(["id-a"]);
 	});
 
-	// 移動は「古い key の欠落」と「新しい key の出現」の両方に現れる
-	it("移動されたものを欠落と未知の両方へ入れる", () => {
+	// A move shows up as both a missing old key and an appearing new one
+	it("puts a moved object into both the missing and the unknown sets", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("illust/a.png")],
 			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" }],
@@ -81,7 +81,7 @@ describe("buildMediaSyncPlan", () => {
 		expect(plan.unchangedIds).toEqual([]);
 	});
 
-	it("混在した入力をそれぞれの分類へ振り分ける", () => {
+	it("sorts a mixed input into each classification", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("_inbox/a.png"), scanned("_inbox/new.png")],
 			known: [
@@ -99,7 +99,7 @@ describe("buildMediaSyncPlan", () => {
 		expect(plan.missingIds).toEqual(["id-gone"]);
 	});
 
-	it("空の入力で空の計画を返す", () => {
+	it("returns an empty plan for empty input", () => {
 		expect(buildMediaSyncPlan({ scanned: [], known: [] })).toEqual({
 			unchangedIds: [],
 			changedObjects: [],

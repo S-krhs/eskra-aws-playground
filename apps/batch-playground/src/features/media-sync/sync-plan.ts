@@ -1,8 +1,8 @@
-// In scope: R2 の走査結果と登録済みの key を突き合わせ、同期でやることを分類する
-// Out of scope: R2 への通信、metadata の読み出し、DB への反映、サムネイル生成
+// In scope: matching an R2 scan against the registered keys and classifying what the sync has to do
+// Out of scope: talking to R2, reading metadata, writing to the DB, thumbnail generation
 import type { MediaObjectSummary } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 
-/** R2 の一覧で見つかった 1 オブジェクト。 */
+/** One object found in the R2 listing. */
 export interface ScannedObject {
 	key: string;
 	byteSize: number;
@@ -10,28 +10,27 @@ export interface ScannedObject {
 	lastModified: Date;
 }
 
-/** key は同じまま中身が差し替わったメディア。 */
+/** Media whose content was replaced under an unchanged key. */
 export interface ChangedMediaObject {
 	id: string;
 	object: ScannedObject;
 }
 
-/** 同期でやることの分類。 */
 export interface MediaSyncPlan {
-	/** key も etag も一致した登録済みの id。確認時刻だけ更新する。 */
+	/** Registered ids matching on both key and etag; only their last-seen time is updated. */
 	unchangedIds: string[];
-	/** key は同じで etag が違うもの。大きさとサムネイルを作り直す。 */
+	/** Same key, different etag; dimensions and thumbnail get rebuilt. */
 	changedObjects: ChangedMediaObject[];
-	/** DB に無い key。metadata を読んで新規か移動かを判定する。 */
+	/** Keys absent from the DB; reading their metadata decides new versus moved. */
 	unknownObjects: ScannedObject[];
-	/** DB にあって R2 に無い id。移動でなければ削除する。 */
+	/** Ids in the DB but not in R2; deleted unless they turn out to be a move. */
 	missingIds: string[];
 }
 
 /**
- * 走査結果と登録済みの key を突き合わせる。
- * key が一致するかどうかだけで分け、metadata を要する判定は呼び出し側に残す。
- * ListObjectsV2 が metadata を返さないため、この段階では HeadObject を打たない。
+ * Matches the scan against the registered keys. It splits on key equality alone and leaves any
+ * decision needing metadata to the caller. ListObjectsV2 returns no metadata, so nothing calls
+ * HeadObject at this stage.
  */
 export const buildMediaSyncPlan = (input: {
 	scanned: ScannedObject[];
@@ -55,7 +54,7 @@ export const buildMediaSyncPlan = (input: {
 			continue;
 		}
 
-		// 同じ key へ上書きされた場合は etag だけが変わる
+		// An overwrite under the same key changes only the etag
 		if (known.etag === object.etag) {
 			unchangedIds.push(known.id);
 			continue;

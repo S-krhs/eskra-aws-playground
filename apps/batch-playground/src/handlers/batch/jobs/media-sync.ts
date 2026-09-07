@@ -1,5 +1,5 @@
-// In scope: R2 の走査結果を DB へ反映し、同期の実行記録と進捗を残す
-// Out of scope: 未知 key の判定、R2 の wire 解釈、サムネイル生成、起動 envelope の検証
+// In scope: writing an R2 scan into the DB and keeping the sync's run record and progress
+// Out of scope: classifying an unknown key, R2 wire detail, thumbnail generation, validating the launch envelope
 import { randomUUID } from "node:crypto";
 import {
 	createR2Client,
@@ -23,30 +23,28 @@ import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger(batchJobNames.mediaSync);
 
-// 実行中の記録を打ち切り扱いにするまでの経過時間の閾値。
-// Lambda の timeout(15 分)より長く取り、まだ実行中の正常なジョブを誤って打ち切り扱いにしないようにする。
+// How long a running record may sit before it counts as abandoned.
+// It is set longer than Lambda's 15-minute timeout, so a job that is genuinely still running never gets flagged.
 const STALE_RUN_THRESHOLD_MS = 20 * 60 * 1000;
 
-// 進捗を DB へ書き戻す間隔(件数)。書き戻し自体が同期処理の負荷にならないよう、逐次ではなくまとめて書く。
+// How many objects between progress write-backs; batched rather than per-object, so the write-back itself doesn't weigh the sync down.
 const PROGRESS_INTERVAL = 1_000;
 
-/** 同期ジョブの起動イベントを検証する schema。 */
 const mediaSyncEventSchema = z.object({
-	/** 大量削除を防ぐガードを無効にする。内容を確認したうえで手動起動するときに true にする。 */
+	/** Turns off the bulk-delete guard; set true on a manual invoke once the deletion has been reviewed. */
 	allowBulkDelete: z.boolean().default(false),
 });
 
 /**
- * R2 と DB の差分を反映する。
- * ListObjectsV2 は custom metadata を返さないため、既知の key は一覧だけで
- * 突き合わせ、未知の key にだけ HeadObject を打つ。
+ * Reconciles R2 against the DB. ListObjectsV2 returns no custom metadata, so a known key is matched
+ * from the listing alone and only an unknown key gets a HeadObject.
  */
 export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
-	// 1. 起動イベントを検証し、大量削除ガードを外すかどうかを取り出す。
+	// 1. Validate the launch event and read whether the bulk-delete guard is waived.
 	const { allowBulkDelete } = mediaSyncEventSchema.parse(event ?? {});
 
-	// 2. 実行中の同期記録があるか確認する。閾値内であればここで終了し、
-	//    閾値を超えていれば打ち切り扱いで前回の記録を閉じてから先へ進む。
+	// 2. Check for a running sync record. Inside the threshold, stop here; past it, close the previous
+	//    record as abandoned and carry on.
 	const startedAt = new Date();
 	const running = await mediaSyncRunRepository.findRunning();
 
@@ -74,7 +72,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		});
 	}
 
-	// 3. R2 の接続設定を解決し、この実行の記録を開始する。
+	// 3. Resolve the R2 connection settings and open this run's record.
 	const bucket = process.env.MEDIA_BUCKET;
 
 	if (!bucket) {
@@ -94,8 +92,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 
 	await mediaSyncRunRepository.start(runId, startedAt);
 
-	// 4. 実行記録の登録直後にもう一度確認し、同時に始まった実行があれば後発のこちらを降ろす。
-	//    findRunning と start の間に別の実行が始まる可能性があるため、二重登録を防ぐ。
+	// 4. Check again right after inserting the record and stand down if another run started at the same
+	//    time. A run can begin between findRunning and start, so this is what stops a double registration.
 	const earliestRunning = await mediaSyncRunRepository.findRunning();
 
 	if (earliestRunning && earliestRunning.id !== runId) {
@@ -117,11 +115,11 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 	logger.start({ runId });
 
 	try {
-		// 5. R2 を走査し、DB の既知一覧と突き合わせて同期の plan を作る。
+		// 5. Walk R2 and match it against the DB's known list to build the sync plan.
 		const scanned = await scanMediaObjects(client, bucket);
 		const known = await mediaObjectRepository.findAllSummaries();
 
-		// R2 の一覧が空なのに DB に登録が残っている場合は、token の権限不足か bucket 指定の誤りとみなしてエラーにする
+		// An empty R2 listing while the DB still holds rows means a token without permission or a wrong bucket, and errors
 		if (scanned.length === 0 && known.length > 0) {
 			throw new Error(
 				"R2 の一覧が空でした。token の権限か MEDIA_BUCKET の指定を確認してください。",
@@ -133,7 +131,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		progress.scannedCount = scanned.length;
 		await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
 
-		// 6. 未知の key だけ HeadObject を打ち、新規・移動・取り込みへ振り分ける。
+		// 6. HeadObject only the unknown keys and sort them into new / moved / adopted.
 		let notifiedAt = 0;
 		const resolved = await resolveUnknownObjects(client, {
 			bucket: bucket,
@@ -156,7 +154,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 				}
 
 				notifiedAt = resolvedCount;
-				// ここで書く insertedCount と updatedCount は未確定の途中経過であり、確定値は反映後に finish で上書きする
+				// insertedCount and updatedCount written here are unsettled progress; finish overwrites them with the final values
 				await mediaSyncRunRepository.updateProgress({
 					id: runId,
 					...progress,
@@ -166,8 +164,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			},
 		});
 
-		// 7. 削除対象から移動済みのものを除外する。
-		//    移動は元の key が消えた形で検出されるため、削除ではなく移動として扱う。
+		// 7. Take anything already moved out of the delete set.
+		//    A move shows up as its old key going missing, so it is treated as a move, not a delete.
 		const relocatedIds = new Set(
 			resolved.relocations.map((relocation) => {
 				return relocation.id;
@@ -177,8 +175,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			return !relocatedIds.has(id);
 		});
 
-		// 8. 追加と更新を先に DB へ反映する。
-		//    削除ガードで中断しても新規取り込みや更新は失わないよう、削除より先に確定させる。
+		// 8. Write the inserts and updates to the DB first, so a stop at the delete guard doesn't lose
+		//    what was newly taken in or updated.
 		progress.insertedCount = await mediaObjectRepository.insertMany(
 			resolved.inserts,
 		);
@@ -197,14 +195,14 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			));
 		await mediaObjectRepository.touchMany(plan.unchangedIds, startedAt);
 
-		// 9. 大量削除を防ぐガードを通す。allowBulkDelete が true の場合はスキップする。
+		// 9. Run the bulk-delete guard, skipped when allowBulkDelete is true.
 		if (!allowBulkDelete) {
 			assertDeletableSize(deletableIds.length, known.length);
 		}
 
-		// 10. サムネイルを R2 から削除し、続けて DB の行を削除する。
-		//     行を削除すると R2 の走査からサムネイルを辿れなくなるため、必ず先に消す。
-		//     サムネイルの key は UUID から導けるため、DB の thumbnailKey が空の行でも削除できる。
+		// 10. Delete the thumbnails from R2, then the DB rows. Once a row is gone its thumbnail can't be
+		//     found from a scan, so the thumbnail always goes first. A thumbnail key derives from the UUID,
+		//     so even a row with an empty thumbnailKey gets cleaned up.
 		for (const id of deletableIds) {
 			await r2ObjectStore.delete(client, {
 				bucket: bucket,
@@ -215,15 +213,15 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		progress.deletedCount =
 			await mediaObjectRepository.deleteByIds(deletableIds);
 
-		// 11. サムネイル未生成のメディアを queue へ投入する。
-		//     削除より先に投入すると、消える予定のメディアにも生成を依頼してしまうため、削除の後に行う。
+		// 11. Enqueue the media with no thumbnail yet. This comes after the delete — enqueuing first would
+		//     ask for thumbnails on media that is about to disappear.
 		const enqueuedCount = await enqueueMissingThumbnails({
 			queueUrl: Resource.MediaThumbnailQueue.url,
 			job: mediaJobNames.mediaThumbnail,
 			enqueuedAt: new Date(),
 		});
 
-		// 12. 実行記録を確定し、結果をログとレスポンスに残す。
+		// 12. Close the run record and put the result in the log and the response.
 		await mediaSyncRunRepository.finish({
 			id: runId,
 			...progress,

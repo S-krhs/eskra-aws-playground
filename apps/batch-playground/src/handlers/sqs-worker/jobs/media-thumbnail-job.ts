@@ -1,5 +1,5 @@
-// In scope: message 1 件分のサムネイルを生成し、R2 と DB へ反映する
-// Out of scope: ffmpeg の呼び出し方、SQS event の検証、message の送信、ジョブの振り分け
+// In scope: generating one message's thumbnail and writing it to R2 and the DB
+// Out of scope: how ffmpeg is called, validating the SQS event, sending messages, job dispatch
 import { createWriteStream } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -21,8 +21,8 @@ import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generato
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 
 /**
- * 原本から webp のサムネイルを作り、R2 へ置いて DB へ記録する。
- * 生成中に行が消えていた場合は、置いたサムネイルも残さない。
+ * Makes a webp thumbnail from the original, puts it in R2, and records it in the DB.
+ * If the row disappeared mid-generation, the thumbnail that was put there is removed too.
  */
 export const mediaThumbnailJob = async (
 	message: MediaThumbnailMessage,
@@ -36,7 +36,7 @@ export const mediaThumbnailJob = async (
 	const client = createR2Client(
 		parseR2CredentialsJson(Resource.R2Credentials.value),
 	);
-	// 動画サイズが大きくても収まるよう、Lambda の ephemeral storage を増やしたうえで /tmp を作業領域に使う
+	// Lambda's ephemeral storage is raised and /tmp is the work area, so even a large video fits
 	const workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
 
 	try {
@@ -75,7 +75,7 @@ export const mediaThumbnailJob = async (
 			durationMs: probe.durationMs,
 		});
 
-		// 生成中に行が消えていた場合、記録先が無いので置いたサムネイルも残さない
+		// With the row gone mid-generation there is nowhere to record it, so the thumbnail is removed too
 		if (recorded === 0) {
 			await r2ObjectStore.delete(client, {
 				bucket: bucket,

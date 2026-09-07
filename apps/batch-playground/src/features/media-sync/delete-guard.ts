@@ -1,18 +1,18 @@
-// In scope: 同期で消してよい件数かを判定する
-// Out of scope: 削除そのもの、R2 の走査、DB への反映
+// In scope: judging whether a sync is allowed to delete this many rows
+// Out of scope: the deletion itself, walking R2, writing to the DB
 
-// 一度に削除できる件数の割合の上限。
-// token の権限縮小や bucket 名の誤りで一覧がほぼ空になった場合に、行を大量に削除してタグの紐付けまで失うことを防ぐ。
+// The largest fraction that may be deleted at once.
+// It stops a listing gone nearly empty — a narrowed token or a wrong bucket name — from wiping out rows and their tag links with them.
 const MAX_DELETE_RATIO = 0.1;
 
-// 削除件数がこの値以下なら、割合に関わらず許可する下限。
-// 少数の削除まで止めてしまうと通常運用が回らなくなるため設ける。
+// Up to this many deletions pass regardless of the fraction.
+// Without it, ordinary operation would stall on every handful of deletions.
 const DELETE_GUARD_FLOOR = 50;
 
 /**
- * 削除件数が異常に多い場合はエラーを投げ、呼び出し元に削除を中止させる。
- * 行を削除すると R2 のオブジェクトは残るがタグの紐付けは一緒に削除され、
- * 手で付けたタグは復元できなくなるため、削除の前に必ずこの関数を通す。
+ * Throws on an abnormal number of deletions, so the caller abandons the delete.
+ * Deleting a row leaves the R2 object but takes its tag links with it, and tags added by hand can't
+ * be restored — so every delete goes through this first.
  */
 export const assertDeletableSize = (
 	deletableCount: number,

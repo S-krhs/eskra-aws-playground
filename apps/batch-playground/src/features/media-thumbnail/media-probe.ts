@@ -1,12 +1,12 @@
-// In scope: ffprobe でメディアの寸法と尺を読む
-// Out of scope: サムネイルの生成、R2 への読み書き、DB への反映
+// In scope: reading a media file's dimensions and duration with ffprobe
+// Out of scope: generating a thumbnail, reading/writing R2, writing to the DB
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { z } from "zod";
 
 const execFileAsync = promisify(execFile);
 
-// Lambda layer が /opt/bin へ配置する。ローカル検証で差し替えられるよう実行時に解決する
+// The Lambda layer puts this under /opt/bin; the path resolves at call time so a local test can swap it
 const resolveFfprobePath = (): string => {
 	return process.env.FFPROBE_PATH ?? "/opt/bin/ffprobe";
 };
@@ -17,18 +17,17 @@ const probeOutputSchema = z.object({
 			z.object({ width: z.number().optional(), height: z.number().optional() }),
 		)
 		.default([]),
-	// 画像には format.duration が無い
+	// An image has no format.duration
 	format: z.object({ duration: z.string().optional() }).default({}),
 });
 
-/** メディアの寸法と尺。読めなかった項目は undefined になる。 */
+/** A media file's dimensions and duration; anything unreadable comes back undefined. */
 export interface MediaProbe {
 	width: number | undefined;
 	height: number | undefined;
 	durationMs: number | undefined;
 }
 
-/** ffprobe でメディアの寸法と尺を読む。 */
 export const probeMedia = async (filePath: string): Promise<MediaProbe> => {
 	const { stdout } = await execFileAsync(resolveFfprobePath(), [
 		"-v",

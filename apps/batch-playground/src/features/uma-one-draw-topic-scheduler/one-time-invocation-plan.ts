@@ -1,5 +1,5 @@
-// In scope: UMA ワンドロお題通知を起動する one-time schedule の実行計画(名前・時刻)を決める
-// Out of scope: Lambda イベント解釈、schedule の登録、起動対象 ARN の解決を行う
+// In scope: deciding the name and time of the one-time schedule that fires the UMA one-draw topic notification
+// Out of scope: interpreting the Lambda event, registering the schedule, resolving the target ARN
 import { getCurrentJstDateString } from "@eskra-aws-playground/libs/date/current-jst-date.js";
 
 import {
@@ -9,13 +9,13 @@ import {
 	INVOCATION_WINDOW_START_HOUR,
 } from "./invocation-window-settings.js";
 
-/** one-time schedule の実行計画。 */
 export interface OneTimeInvocationPlan {
-	/** 日付で一意にした schedule 名。発火前の同日二重登録は同名検知で防ぐ(発火後は自動削除で名前が解放され、防げない)。 */
+	/** Schedule name made unique by the date. A same-day double registration before firing is caught by
+	 * the name clash; after firing the schedule auto-deletes and frees the name, so it isn't. */
 	scheduleName: string;
-	/** at() 式へ渡す timezone ローカルの起動時刻(YYYY-MM-DDTHH:mm:ss)。 */
+	/** Firing time in the timezone's local clock, handed to the at() expression (YYYY-MM-DDTHH:mm:ss). */
 	scheduleAt: string;
-	/** scheduleAt を解釈する IANA タイムゾーン。 */
+	/** IANA timezone scheduleAt is read in. */
 	timezone: string;
 }
 
@@ -26,15 +26,15 @@ const padTwoDigits = (value: number): string => {
 const MINUTE_IN_MS = 60_000;
 
 /**
- * 当日 JST の起動 window からランダムに起動時刻を選び、実行計画を作る。
- * window 開始後の実行では過去時刻を選ばないよう「今+1分」以降から選び、
- * window 終了後はエラーにする。random は [0, 1) を返す関数。
+ * Picks a random firing time inside that day's JST window and builds the plan. Run after the window
+ * opens, it picks from now+1 minute onward so it never lands in the past; run after the window closes,
+ * it errors. `random` returns a value in [0, 1).
  */
 export const planOneTimeInvocation = (
 	random: () => number = Math.random,
 ): OneTimeInvocationPlan => {
 	const date = getCurrentJstDateString();
-	// JST は夏時間がなく UTC+9 固定のため、固定オフセットで window 開始を epoch に変換する
+	// JST has no DST and is a fixed UTC+9, so the window's opening converts to epoch on a fixed offset
 	const windowStartEpochMs = Date.parse(
 		`${date}T${padTwoDigits(INVOCATION_WINDOW_START_HOUR)}:00:00+09:00`,
 	);

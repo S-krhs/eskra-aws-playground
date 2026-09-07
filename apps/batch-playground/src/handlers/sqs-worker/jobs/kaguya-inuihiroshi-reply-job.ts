@@ -1,5 +1,5 @@
-// In scope: /inuihiroshi の deferred 応答の元メッセージを、公開の宣言文へ差し替える
-// Out of scope: ジョブの振り分け、SQS event の解釈、interaction の検証(route で実施済み)
+// In scope: swapping /inuihiroshi's deferred response for the public declaration
+// Out of scope: job dispatch, interpreting the SQS event, validating the interaction (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
 import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
 import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
@@ -9,7 +9,7 @@ type KaguyaInuihiroshiReplyMessage = Extract<
 	{ job: typeof interactionJobNames.kaguyaInuihiroshiReply }
 >;
 
-/** /inuihiroshi の deferred 応答を公開の宣言文へ差し替える。 */
+/** Swaps /inuihiroshi's deferred response for the public declaration. */
 export const kaguyaInuihiroshiReplyJob = async (
 	message: KaguyaInuihiroshiReplyMessage,
 ): Promise<void> => {

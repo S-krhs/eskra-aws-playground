@@ -3,25 +3,25 @@ import { describe, expect, it } from "vitest";
 import { batchEventSchema } from "./schema.js";
 
 describe("batchEventSchema", () => {
-	it("起動イベントの job を trim と小文字化で正規化する", () => {
+	it("normalizes the event's job by trimming and lowercasing", () => {
 		expect(batchEventSchema.parse({ job: " UMA-ONE-DRAW-TOPIC " })).toEqual({
 			job: "uma-one-draw-topic",
 		});
 	});
 
-	it("job が欠けたイベントはエラーにする", () => {
+	it("errors on an event missing job", () => {
 		expect(() => {
 			return batchEventSchema.parse({});
 		}).toThrow();
 	});
 
-	it("job が string でないイベントはエラーにする", () => {
+	it("errors on an event whose job is not a string", () => {
 		expect(() => {
 			return batchEventSchema.parse({ job: 1 });
 		}).toThrow();
 	});
 
-	it("job が空白のみのイベントはエラーにする", () => {
+	it("errors on an event whose job is only whitespace", () => {
 		expect(() => {
 			return batchEventSchema.parse({ job: "   " });
 		}).toThrow();

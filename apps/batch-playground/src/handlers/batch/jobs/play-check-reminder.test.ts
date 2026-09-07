@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 
 describe("playCheckReminderJob", () => {
-	it("DBに登録された全利用者へ質問と選択肢を投稿する", async () => {
+	it("posts the question and choices to every user registered in the DB", async () => {
 		channelSettingRepository.findMany.mockResolvedValue([
 			{
 				guildId: "1",
@@ -77,7 +77,7 @@ describe("playCheckReminderJob", () => {
 		);
 	});
 
-	it("一部が失敗しても全利用者への投稿を試してから失敗する", async () => {
+	it("tries every user before failing, even when some posts fail", async () => {
 		channelSettingRepository.findMany.mockResolvedValue([
 			{
 				guildId: "1",
