@@ -16,7 +16,6 @@ export const batchContextSchema = z.object({
 
 export type BatchContext = z.infer<typeof batchContextSchema>;
 
-/** The shared response a batch job returns to the handler. */
 export interface BatchResponse {
 	ok: true;
 	job: string;

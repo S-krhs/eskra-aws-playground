@@ -25,7 +25,6 @@ const HEAD_CONCURRENCY = 20;
 // Files sharing a modified time are rare; going past this points at a skew in what is being taken in
 const MAX_KEY_SEQUENCE = 100;
 
-/** What to do with an unknown key. */
 export type UnknownObjectDecision =
 	| { kind: "relocate"; mediaId: string }
 	| { kind: "insert"; mediaId: string; originalName: string }
@@ -34,7 +33,6 @@ export type UnknownObjectDecision =
 
 /** The state of the registered ids; missingIds is a subset of known. */
 export interface KnownMediaIds {
-	/** Every registered id. */
 	knownIds: ReadonlySet<string>;
 	/** Registered ids that the R2 listing didn't turn up. */
 	missingIds: ReadonlySet<string>;

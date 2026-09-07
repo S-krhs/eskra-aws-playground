@@ -2,7 +2,6 @@
 // Out of scope: job implementations, interpreting the Lambda event, schedules
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
 
-/** The job names this app supports. */
 export const batchJobNames = {
 	umaOneDrawTopic: "uma-one-draw-topic",
 	umaOneDrawTopicScheduler: "uma-one-draw-topic-scheduler",

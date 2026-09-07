@@ -9,7 +9,6 @@ import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger("uma-one-draw-topic");
 
-/** The batch job notifying Discord of the UMA one-draw topic. */
 export const umaOneDrawTopicJob = async (
 	_event: unknown,
 ): Promise<BatchResponse> => {

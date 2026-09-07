@@ -10,7 +10,6 @@ import {
 	TOPIC_RARITY_WEIGHTS,
 } from "./topic-settings.js";
 
-/** The UMA one-draw topic message. */
 export interface TopicMessage {
 	content: string;
 }
@@ -29,7 +28,6 @@ const selectTopicName = async (): Promise<string> => {
 	return gacha.draw().name;
 };
 
-/** Writes the body of the UMA one-draw topic notification. */
 export const buildTopicMessage = async (): Promise<TopicMessage> => {
 	const messageTemplate = TOPIC_MESSAGE_TEMPLATE;
 	const selectedName = await selectTopicName();

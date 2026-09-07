@@ -2,7 +2,6 @@
 // Out of scope: talking to R2, reading metadata, writing to the DB, thumbnail generation
 import type { MediaObjectSummary } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 
-/** One object found in the R2 listing. */
 export interface ScannedObject {
 	key: string;
 	byteSize: number;

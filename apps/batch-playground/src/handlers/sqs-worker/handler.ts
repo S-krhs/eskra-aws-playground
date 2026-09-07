@@ -18,7 +18,6 @@ import {
 
 const logger = createBatchLogger("sqs-job-worker");
 
-/** Delegates a message to the job that matches it. */
 const runJob = (message: SqsJobMessage): Promise<void> => {
 	switch (message.job) {
 		case interactionJobNames.yacchoHelloReply:

@@ -4,10 +4,8 @@
 /** Prefix of a one-time schedule's name; the date follows it, making the name unique per day. */
 export const INVOCATION_SCHEDULE_NAME_PREFIX = "uma-one-draw-topic";
 
-/** Hour the firing window opens. */
 export const INVOCATION_WINDOW_START_HOUR = 12;
 
-/** Length of the firing window, in minutes. */
 export const INVOCATION_WINDOW_DURATION_MINUTES = 360;
 
 /** IANA timezone the firing time is read in. */
