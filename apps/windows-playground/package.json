@@ -14,6 +14,6 @@
 	"dependencies": {
 		"@eskra-aws-playground/integration-r2": "0.1.0",
 		"@eskra-aws-playground/shared-domains": "0.1.0",
-		"zod": "^4.5.3"
+		"zod": "^4.5.4"
 	}
 }
