@@ -1,47 +1,46 @@
-# 実装ルール
+# Coding rules
 
-モノレポ全体で共通する実装ルールです。配置と依存方向は `.claude/rules/architecture.md` を参照します。
+Repo-wide rules. See `architecture.md` for placement and dependency direction.
 
-## 基本方針
+## Principles
 
-- 小さく明示的に実装し、暗黙の副作用や広すぎる共通化を避ける。
-- 状態を持たない純粋な処理は class にしない。関数として実装する。
-- TypeScript の `strict` を前提に、外部入力は利用箇所の近くで型を絞る。
-- ESM に合わせ、相対 import には `.js` 拡張子を付ける。
-- `index.ts` とバレルファイルは禁止する。import 先のファイル名から責務が分かるようにする。ただし Feature-Sliced Design を採る `apps/static-site-playground` と `apps/media-library/frontend` は例外で、public API として slice（と `shared` の segment）ごとに `index.ts` を置く（それぞれの `.claude/rules/apps/` の rule を参照）。
-- シークレット、Webhook URL、不要に詳しい本文はログやレスポンスに含めない。
+- Small and explicit. No implicit side effects, no premature abstraction.
+- Stateless pure logic is a function, not a class.
+- TypeScript is `strict`. Narrow external input near where it's used, not everywhere.
+- ESM: `.js` extension on relative imports.
+- No `index.ts` barrel files — import paths should name the responsibility. Exception: `apps/static-site-playground` and `apps/media-library/frontend` use Feature-Sliced Design, where each slice (and each `shared` segment) has an `index.ts` as its public API — see their skills.
+- Never put secrets, webhook URLs, or unnecessarily detailed bodies in logs or responses.
 
-## ファイル冒頭コメント
+## File header
 
-各実装ファイル冒頭には、次の 2 行をこの順番で記載します。
+Every implementation file starts with:
 
 ```ts
-// In scope: <このファイルが担当すること>
-// Out of scope: <このファイルが担当しないこと>
+// In scope: <what this file owns>
+// Out of scope: <what it explicitly doesn't>
 ```
 
-- `In scope` が複数の大きな処理を含む場合は、ファイルを分割する。
-- ファイル名と `In scope` は同じ責務を指すようにする。
+Split the file if `In scope` covers more than one substantial concern. The filename and `In scope` should point at the same responsibility.
 
-## JSDoc
+## Comments
 
-- export する関数、class、interface、type、const には JSDoc を付ける。
-- 複雑な型、判断に迷いやすい仕様、外部から呼ばれる公開 API にも JSDoc を付ける。
-- 自明な代入や内部処理には JSDoc を付けない。
+Comments are for you (Claude), not for a human maintainer — write only what you'd actually need on a cold read: non-obvious *why*, a real gotcha, a contract that isn't visible in the signature. Delete anything that restates the code. Match the density of the surrounding file rather than adding a comment per line.
 
-## 依存追加
+Same bar for doc-comments: skip them when the name and types already say everything (`getPrismaClient`, an obvious getter). Write one when there's a real invariant, a non-obvious return shape, or a public API another workspace imports.
 
-- まず標準 API と既存依存で解決する。
-- 新しい npm 依存を追加する場合は、用途、代替案、Lambda パッケージサイズへの影響を確認する。
-- integration 固有の依存は、該当する `packages/integrations/<target>/package.json` に追加する。
-- app 固有の依存は、該当する `apps/<app>/package.json` に追加する。
-- repo 全体の開発ツールだけを root `package.json` に追加する。
+## Adding a dependency
 
-## 変更時チェックリスト
+- Reach for a standard API or an existing dependency first.
+- Before adding an npm dependency, check its purpose, alternatives, and impact on Lambda bundle size.
+- Integration-specific deps go in that `packages/integrations/<target>/package.json`.
+- App-specific deps go in that `apps/<app>/package.json`.
+- Only repo-wide dev tooling goes in the root `package.json`.
 
-- 責務は `.claude/rules/architecture.md` の package 境界に収まっているか。
-- 依存方向に逆流がないか。
-- feature 間 import が発生していないか。
-- export された API に JSDoc があるか。
-- workspace 固有のルールに影響する場合、該当する `.claude/rules/` の rule を更新したか。
-- `npm run validate` で確認したか。
+## Before you're done
+
+- Does the responsibility fit the package boundaries in `architecture.md`?
+- Any dependency pointing the wrong direction?
+- Any feature-to-feature import?
+- Does exported API have a doc-comment where it actually needs one?
+- Did a change affect a workspace's Skill? Update it.
+- Did `npm run validate` pass?

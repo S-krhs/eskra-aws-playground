@@ -1,18 +1,23 @@
 # Eskra AWS Playground
 
-AWS Lambda と SST でバッチジョブを運用する TypeScript モノレポ(npm workspaces + Turbo)。
-実装ルールは `.claude/rules/` にあり、共通 rule は常時、workspace 別 rule は該当ファイルを扱うときに読み込まれる。人間向けの運用マニュアルは `docs/` と各 README。
+TypeScript monorepo (npm workspaces + Turbo) running AWS Lambda batch jobs with SST.
 
-## 検証
+## Before writing or changing code
 
-- 変更後は最低限 `npm run typecheck` を実行する。
-- import、フォーマット、未使用コードに触れた場合は `npm run lint` も実行する。
-- リリース前や複数ファイルを触った場合は `npm run validate`(typecheck + lint + test)を実行する。
-- Webhook 実送信を伴う確認は、送信先と環境変数を明示してから行う。
+Find 2-3 existing files doing the same kind of thing (same layer, same app, same package) and match their shape exactly: how they read config, how they return values, how they're named, how they're organized. Don't invent a new pattern when one already exists nearby — copy it. If existing code and a rule/skill disagree, prefer existing code and flag the mismatch instead of silently picking one.
 
-## 慣習
+`.claude/rules/coding.md` and `.claude/rules/architecture.md` are always loaded and cover the whole repo. A per-workspace Skill may exist for the area you're touching (`.claude/skills/`) — check the skill listing and invoke one if it matches. Skills are not auto-loaded by path; unlike the two always-on rule files above, you have to actively decide to use one.
 
-- ログ・エラーメッセージ・ドキュメントは日本語で書く。
-- コミットメッセージは `type: 日本語要約` 形式(feat / fix / refactor / docs / chore / infra / ci / style / test / perf)。
-- `git add -A` は使わず、対象ファイルを明示して add する。
-- フェーズ(意味のある作業単位)ごとに即コミットする。
+## Verify
+
+- After any change, run at least `npm run typecheck`.
+- If you touched imports, formatting, or dead code, also run `npm run lint`.
+- Before a release, or after touching multiple files, run `npm run validate` (typecheck + lint + test).
+- Before sending anything to a real webhook, state the destination and the env vars involved first.
+
+## Conventions
+
+- Logs, error messages, and docs (`docs/`, `README.md` files) are written in Japanese — see `.claude/rules/coding.md` for what to write in code comments instead.
+- Commit messages: `type: 日本語要約` (feat / fix / refactor / docs / chore / infra / ci / style / test / perf).
+- Don't use `git add -A`; add files explicitly by path.
+- Commit immediately after each meaningful phase of work, not at the end of the whole task.
