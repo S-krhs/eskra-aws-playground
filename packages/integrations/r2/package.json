@@ -1,0 +1,29 @@
+{
+	"name": "@eskra-aws-playground/integration-r2",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./r2-client.js": {
+			"types": "./dist/r2-client.d.ts",
+			"default": "./dist/r2-client.js"
+		},
+		"./r2-object-store.js": {
+			"types": "./dist/r2-object-store.d.ts",
+			"default": "./dist/r2-object-store.js"
+		}
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc -p tsconfig.json",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1127.0",
+		"@aws-sdk/lib-storage": "^3.1127.0",
+		"zod": "^4.5.3"
+	}
+}

@@ -6,6 +6,7 @@
 
 - [bigquery](bigquery/README.md): Google BigQuery への書き込み境界（日付パーティション単位の load job）。
 - [discord](discord/README.md): Discord API との通信境界（Webhook / Bot / Command の 3 クライアント）。
+- [r2](r2/README.md): Cloudflare R2 のオブジェクトストレージとの通信境界（S3 互換 API）。
 - [scheduler](scheduler/README.md): EventBridge Scheduler への one-time schedule 登録境界。
 - [sqs](sqs/README.md): AWS SQS への message 送信境界。
 
