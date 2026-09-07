@@ -5,7 +5,6 @@ import { alarmNotificationJob } from "@/jobs/alarm-notification.js";
 
 const logger = createBatchLogger("alarm-notifier");
 
-/** The entry point of the Lambda notifying Discord of a CloudWatch alarm. */
 export const handler = async (event: unknown): Promise<void> => {
 	// A failure to notify is logged and swallowed, so it never triggers an SNS retry.
 	try {

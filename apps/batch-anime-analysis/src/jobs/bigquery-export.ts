@@ -45,7 +45,6 @@ const readScrapingMetricRows = async function* (
 	}
 };
 
-/** Exports a date range of anime metrics to BigQuery. */
 export const bigQueryExportJob = async (
 	event: unknown,
 ): Promise<BigQueryExportResponse> => {

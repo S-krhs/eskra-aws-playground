@@ -41,7 +41,6 @@ export const buildMetrics = (
 	return { metrics, skippedCount };
 };
 
-/** Converts any value into a metric label. */
 export const normalizeMetricLabel = (value: unknown): string => {
 	const label = String(value ?? "").trim();
 

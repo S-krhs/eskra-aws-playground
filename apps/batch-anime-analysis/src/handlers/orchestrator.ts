@@ -3,7 +3,6 @@
 import { orchestratorJob } from "@/jobs/orchestrator.js";
 import type { OrchestratorResponse } from "@/shared/schemas/lambda/orchestrator/response.js";
 
-/** The anime-analysis orchestrator Lambda's entry point. */
 export const handler = async (
 	event: unknown = {},
 ): Promise<OrchestratorResponse> => {

@@ -13,7 +13,6 @@ interface CloudWatchAlarmMessage {
 
 const MAX_REASON_LENGTH = 500;
 
-/** Writes the Discord notification from a CloudWatch alarm's SNS message. */
 export const buildAlarmReport = (snsMessage: string): string => {
 	const alarm = parseAlarmMessage(snsMessage);
 
@@ -63,7 +62,6 @@ const parseAlarmMessage = (
 	return null;
 };
 
-/** Truncates a string to a maximum length. */
 const truncate = (text: string, maxLength: number): string => {
 	return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
 };

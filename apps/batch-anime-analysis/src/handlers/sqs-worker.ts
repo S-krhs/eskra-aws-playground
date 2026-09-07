@@ -3,7 +3,6 @@
 import { dataSourceJob } from "@/jobs/data-source.js";
 import type { SqsWorkerResponse } from "@/shared/schemas/lambda/sqs-worker/response.js";
 
-/** The per-dataSource scraping Lambda's entry point. */
 export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
 	return dataSourceJob(event);
 };

@@ -2,7 +2,6 @@
 // Out of scope: deciding what to run from it, enqueuing on SQS
 import { z } from "zod";
 
-/** The launch event the orchestrator Lambda receives. */
 export const orchestratorEventSchema = z.object({
 	scheduleHour: z.number().int().min(0).max(23),
 });

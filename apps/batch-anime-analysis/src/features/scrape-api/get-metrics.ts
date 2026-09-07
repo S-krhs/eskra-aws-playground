@@ -7,10 +7,8 @@ import {
 	parseJsonMetrics,
 } from "./json-parser.js";
 
-/** Fetch timeout, in milliseconds. */
 const FETCH_TIMEOUT_MS = 10_000;
 
-/** Largest API response accepted, roughly in bytes. */
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 
 /** The source definition pulling metrics out of an API. */

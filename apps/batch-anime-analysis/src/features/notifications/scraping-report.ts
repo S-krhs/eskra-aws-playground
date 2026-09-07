@@ -7,7 +7,6 @@ const DEFAULT_PREVIEW_LIMIT = 5;
 const TRUNCATION_NOTE = "\n…（文字数上限のため以降を省略）";
 const RANK_MEDALS = ["🥇", "🥈", "🥉"];
 
-/** The source details attached to a scrape report. */
 export interface ScrapingReportSource {
 	websiteName: string;
 	metricName: string;
@@ -21,7 +20,6 @@ export interface ScrapingReportInput {
 	previewLimit?: number;
 }
 
-/** Writes the Discord notification for an anime-metric scrape result. */
 export const buildScrapingReport = ({
 	source,
 	metrics,

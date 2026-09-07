@@ -16,7 +16,6 @@ import { getDataSourceSettings } from "./runtime-settings/data-source-setting-re
 
 const logger = createBatchLogger(batchNames.animeScrapingDataSource);
 
-/** Processes an SQS message as one dataSource's anime scrape. */
 export const dataSourceJob = async (
 	event: unknown,
 ): Promise<SqsWorkerResponse> => {
