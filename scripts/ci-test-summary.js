@@ -1,6 +1,6 @@
-// vitest の JSON レポート (各パッケージの vitest-report.json) を集約し、
-// GitHub Actions の Job Summary にパッケージ別のテスト結果表を出力する。
-// レポートが 1 件も無い場合や集計に失敗した場合でも CI 自体は落とさない。
+// Aggregates the vitest JSON reports (each package's vitest-report.json) and writes a per-package
+// results table into GitHub Actions' Job Summary.
+// Neither an empty set of reports nor a failed aggregation fails CI itself.
 import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
@@ -15,7 +15,7 @@ const IGNORED_DIRS = new Set([
 	"coverage",
 ]);
 
-/** vitest-report.json を再帰的に探す */
+/** Finds vitest-report.json recursively */
 function findReports(dir, found = []) {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		if (entry.isDirectory()) {
@@ -29,7 +29,7 @@ function findReports(dir, found = []) {
 	return found;
 }
 
-/** レポートのあるディレクトリから npm パッケージ名を得る (無ければ相対パス) */
+/** Reads the npm package name from a report's directory, falling back to the relative path */
 function packageName(reportPath) {
 	const pkgDir = dirname(reportPath);
 	const pkgJson = join(pkgDir, "package.json");
@@ -38,7 +38,7 @@ function packageName(reportPath) {
 			const { name } = JSON.parse(readFileSync(pkgJson, "utf8"));
 			if (name) return name;
 		} catch {
-			// package.json が壊れていてもパス表示にフォールバック
+			// A broken package.json still falls back to showing the path
 		}
 	}
 	return relative(ROOT, pkgDir) || ".";
