@@ -10,7 +10,9 @@ apps/
   batch-anime-analysis/
   batch-playground/
   function-url-playground/
+  media-library/
   static-site-playground/
+  windows-playground/
 infra/
 migration/
 repositories/
@@ -31,7 +33,7 @@ docs/
 
 ## Workspace
 
-- `apps/*`: デプロイ単位または実行単位のアプリ。
+- `apps/*`: デプロイ単位または実行単位のアプリ。`media-library` と `windows-playground` はデプロイせず、利用者の WSL で動かす。
 - `infra/`: SST など、アプリをデプロイするためのインフラ定義。
 - `migration/`: Prisma schema と migration history。workspace ではなく、root の `prisma` CLI と `prisma.config.ts` から使う。
 - `repositories/`: 複数 app から参照するデータアクセス境界。静的データ、DB、外部ストレージの詳細を隠蔽する。DB client と生成コード(`db/`、`generated/`)は exports に含めず app から import できない。

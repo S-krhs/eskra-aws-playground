@@ -8,7 +8,7 @@
 - 状態を持たない純粋な処理は class にしない。関数として実装する。
 - TypeScript の `strict` を前提に、外部入力は利用箇所の近くで型を絞る。
 - ESM に合わせ、相対 import には `.js` 拡張子を付ける。
-- `index.ts` とバレルファイルは禁止する。import 先のファイル名から責務が分かるようにする。ただし `apps/static-site-playground` は例外で、Feature-Sliced Design の public API として slice ごとに `index.ts` を置く（`.claude/rules/apps/static-site-playground.md` を参照）。
+- `index.ts` とバレルファイルは禁止する。import 先のファイル名から責務が分かるようにする。ただし Feature-Sliced Design を採る `apps/static-site-playground` と `apps/media-library/frontend` は例外で、public API として slice（と `shared` の segment）ごとに `index.ts` を置く（それぞれの `.claude/rules/apps/` の rule を参照）。
 - シークレット、Webhook URL、不要に詳しい本文はログやレスポンスに含めない。
 
 ## ファイル冒頭コメント
