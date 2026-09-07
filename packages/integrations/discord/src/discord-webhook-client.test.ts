@@ -11,7 +11,7 @@ describe("DiscordWebhookClient", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("Discord Webhook URL だけを受け付ける", () => {
+	it("only accepts a Discord Webhook URL", () => {
 		expect(() => {
 			return new DiscordWebhookClient(
 				"https://discord.com/api/webhooks/1234567890/token",
@@ -25,7 +25,7 @@ describe("DiscordWebhookClient", () => {
 		}).not.toThrow();
 	});
 
-	it("https 以外の Discord Webhook URL を拒否する", () => {
+	it("rejects a non-https Discord Webhook URL", () => {
 		expect(() => {
 			return new DiscordWebhookClient(
 				"http://discord.com/api/webhooks/1234567890/token",
@@ -33,7 +33,7 @@ describe("DiscordWebhookClient", () => {
 		}).toThrow(DiscordWebhookError);
 	});
 
-	it("Discord 以外のホストを拒否する", () => {
+	it("rejects a non-Discord host", () => {
 		expect(() => {
 			return new DiscordWebhookClient(
 				"https://example.com/api/webhooks/1234567890/token",
@@ -41,13 +41,13 @@ describe("DiscordWebhookClient", () => {
 		}).toThrow(DiscordWebhookError);
 	});
 
-	it("Discord Webhook API 以外のパスを拒否する", () => {
+	it("rejects a path that isn't the Discord Webhook API", () => {
 		expect(() => {
 			return new DiscordWebhookClient("https://discord.com/api/users/@me");
 		}).toThrow(DiscordWebhookError);
 	});
 
-	it("失敗応答の本文をエラーメッセージに含めず details で安全化する", async () => {
+	it("keeps the failure body out of the error message and sanitizes it in details", async () => {
 		const webhookUrl =
 			"https://discord.com/api/webhooks/1234567890/super-secret-token";
 		const responseBody = `${webhookUrl} ${"x".repeat(700)}`;

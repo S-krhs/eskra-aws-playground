@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { parseInteraction } from "./parse-interaction.js";
 
 describe("parseInteraction", () => {
-	it("PING interaction を parse する", () => {
+	it("parses a PING interaction", () => {
 		expect(parseInteraction('{"type":1}')).toEqual({ kind: "ping" });
 	});
 
-	it("application command を command と実行コンテキストへ分けて parse する", () => {
+	it("parses an application command into its command and execution context", () => {
 		expect(
 			parseInteraction(
 				'{"type":2,"data":{"name":"hello"},"user":{"id":"123"}}',
@@ -20,7 +20,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("未対応 option は command 全体を不正にせず意味未解釈として保持する", () => {
+	it("keeps an unsupported option as uninterpreted instead of invalidating the whole command", () => {
 		expect(
 			parseInteraction(
 				'{"type":2,"data":{"name":"search","options":[{"type":3,"name":"query","value":"hello"}]},"user":{"id":"123"}}',
@@ -34,7 +34,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("既知 option type の value・options 契約違反は parse しない", () => {
+	it("doesn't parse a known option type whose value/options break its contract", () => {
 		expect(
 			parseInteraction(
 				'{"type":2,"data":{"name":"broken","options":[{"type":1,"name":"subcommand","value":"invalid"}]},"user":{"id":"123"}}',
@@ -47,7 +47,7 @@ describe("parseInteraction", () => {
 		).toBeUndefined();
 	});
 
-	it("guild command の場所・実行者・subcommand option を parse する", () => {
+	it("parses a guild command's location, invoker, and subcommand option", () => {
 		expect(
 			parseInteraction(
 				JSON.stringify({
@@ -88,7 +88,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("message component を生の custom_id と操作ユーザー(guild member)へ変換する", () => {
+	it("converts a message component into its raw custom_id and the acting user (guild member)", () => {
 		expect(
 			parseInteraction(
 				'{"type":3,"data":{"custom_id":"test-choice:123:yes"},"member":{"user":{"id":"456"}}}',
@@ -100,7 +100,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("DM component ではトップレベルの user ID を取り出す", () => {
+	it("takes the top-level user ID for a DM component", () => {
 		expect(
 			parseInteraction(
 				'{"type":3,"data":{"custom_id":"test-choice:123:no"},"user":{"id":"123"}}',
@@ -112,7 +112,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("custom_id は規約解釈せず生文字列のまま保持する", () => {
+	it("keeps custom_id as the raw string, without interpreting its convention", () => {
 		expect(
 			parseInteraction(
 				'{"type":3,"data":{"custom_id":"invalid-custom-id"},"user":{"id":"123"}}',
@@ -124,7 +124,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("未対応の interaction type を不正リクエストと混同しない", () => {
+	it("doesn't confuse an unsupported interaction type with a malformed request", () => {
 		expect(
 			parseInteraction('{"type":99,"data":{"options":"unknown-shape"}}'),
 		).toEqual({
@@ -133,7 +133,7 @@ describe("parseInteraction", () => {
 		});
 	});
 
-	it("不正な JSON・interaction 構造は parse しない", () => {
+	it("doesn't parse malformed JSON or an invalid interaction structure", () => {
 		expect(parseInteraction("not-a-json")).toBeUndefined();
 		expect(parseInteraction('{"type":"1"}')).toBeUndefined();
 		expect(parseInteraction('{"type":2}')).toBeUndefined();

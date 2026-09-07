@@ -23,7 +23,7 @@ describe("DiscordInteractionClient", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("数字のみでない application ID と空の interaction token を拒否する", () => {
+	it("rejects a non-numeric application ID and an empty interaction token", () => {
 		expect(() => {
 			return new DiscordInteractionClient("not-a-snowflake", INTERACTION_TOKEN);
 		}).toThrow(DiscordInteractionError);
@@ -33,7 +33,7 @@ describe("DiscordInteractionClient", () => {
 		}).toThrow(DiscordInteractionError);
 	});
 
-	it("元メッセージの編集を @original へ PATCH する", async () => {
+	it("PATCHes @original to edit the original message", async () => {
 		const fetchMock = vi.fn(async () => {
 			return new Response(null, { status: 200 });
 		});
@@ -59,7 +59,7 @@ describe("DiscordInteractionClient", () => {
 		expect(JSON.parse(init.body as string)).toEqual(payload);
 	});
 
-	it("follow-up message を webhook URL へ POST する", async () => {
+	it("POSTs a follow-up message to the webhook URL", async () => {
 		const fetchMock = vi.fn(async () => {
 			return new Response(null, { status: 200 });
 		});
@@ -82,7 +82,7 @@ describe("DiscordInteractionClient", () => {
 		expect(init.method).toBe("POST");
 	});
 
-	it("失敗応答の本文から interaction token を除去する", async () => {
+	it("strips the interaction token out of the failure body", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => {
@@ -111,7 +111,7 @@ describe("DiscordInteractionClient", () => {
 		expect(details.body).not.toContain(INTERACTION_TOKEN);
 	});
 
-	it("fetch 例外のメッセージに interaction token が混入しない", async () => {
+	it("keeps the interaction token out of a fetch exception's message", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => {

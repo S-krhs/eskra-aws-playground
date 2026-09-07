@@ -1,5 +1,5 @@
-// In scope: Discord interaction body の JSON 構文解析と、用途ごとの型付きモデルへの変換
-// Out of scope: custom_id の規約解釈、署名検証、業務ルール、HTTP 通信
+// In scope: JSON-parsing a Discord interaction body and converting it into a typed model per kind
+// Out of scope: interpreting the custom_id convention, signature verification, business rules, HTTP transport
 import { z } from "zod";
 import type {
 	DiscordCommandOption,
@@ -113,11 +113,10 @@ const toCommandOption = (
 	};
 };
 
-/** JSON body を用途ごとの Discord interaction として parse する。 */
 export const parseInteraction = (
 	rawBody: string,
 ): DiscordInteraction | undefined => {
-	// JSON 文字列の構文解析は JSON.parse、parse 後の構造検証は Zod が担当する。
+	// JSON.parse handles the string's syntax; Zod validates the resulting structure.
 	let json: unknown;
 	try {
 		json = JSON.parse(rawBody) as unknown;

@@ -1,5 +1,5 @@
-// In scope: interaction token を使った deferred 応答の元メッセージ編集と follow-up message 投稿
-// Out of scope: interaction の parse、token・application ID の解決、payload の構築、業務ルール
+// In scope: editing a deferred interaction's original message and posting follow-ups, using the interaction token
+// Out of scope: parsing an interaction, resolving the token/application ID, building a payload, business rules
 import {
 	sanitizeText,
 	type TextReplacement,
@@ -7,18 +7,17 @@ import {
 import type { DiscordActionRow } from "./discord-bot-client.js";
 import { type JsonResponseDetails, sendJson } from "./internal/send-json.js";
 
-/** Discord Interaction API 失敗応答の安全化済み詳細。 */
+/** Sanitized Discord Interaction API failure detail. */
 export type DiscordInteractionResponseDetails = JsonResponseDetails;
 
 const DISCORD_API_BASE_URL = "https://discord.com/api/v10";
 const DISCORD_SNOWFLAKE_PATTERN = /^\d{1,20}$/;
 
-/** interaction の応答として送るメッセージ payload。 */
 export interface DiscordInteractionMessagePayload {
 	content: string;
-	/** 空配列を渡すと元メッセージのボタンを取り除ける。 */
+	/** An empty array removes the original message's buttons. */
 	components?: readonly DiscordActionRow[];
-	/** Discord message flag。呼び出し元だけに見せる場合に指定する。 */
+	/** Discord message flag — set to make the response visible only to the invoking user. */
 	flags?: number;
 	allowed_mentions: {
 		parse: readonly string[];
@@ -26,12 +25,10 @@ export interface DiscordInteractionMessagePayload {
 	};
 }
 
-/** Discord Interaction API のメッセージ送信時に上書きできるオプション。 */
 export interface DiscordInteractionMessageOptions {
 	timeoutMs?: number;
 }
 
-/** Discord Interaction API 連携で発生した失敗を表すエラー。 */
 export class DiscordInteractionError extends Error {
 	public readonly responseDetails: unknown | null;
 
@@ -43,8 +40,8 @@ export class DiscordInteractionError extends Error {
 }
 
 /**
- * deferred 応答済み interaction へのメッセージ送信を担当するクライアント。
- * interaction token 自体が認証情報のため Bot token を必要としない。token の有効期限は Discord 側の仕様で 15 分。
+ * The interaction token itself is the credential, so this needs no bot token.
+ * Discord expires the token 15 minutes after issuance.
  */
 export class DiscordInteractionClient {
 	private readonly applicationId: string;
@@ -68,7 +65,7 @@ export class DiscordInteractionClient {
 		this.interactionToken = normalizedInteractionToken;
 	}
 
-	/** deferred 応答で表示中のメッセージを、確定した内容へ差し替える。 */
+	/** Replaces the deferred placeholder message with the final content. */
 	public async editOriginalResponse(
 		payload: DiscordInteractionMessagePayload,
 		options: DiscordInteractionMessageOptions = {},
@@ -81,7 +78,7 @@ export class DiscordInteractionClient {
 		);
 	}
 
-	/** 元メッセージとは別に、同じ interaction へ追加のメッセージを送る。 */
+	/** Sends an additional message on the same interaction, separate from the original. */
 	public async postFollowupMessage(
 		payload: DiscordInteractionMessagePayload,
 		options: DiscordInteractionMessageOptions = {},
@@ -112,12 +109,10 @@ export class DiscordInteractionClient {
 		}
 	}
 
-	/** interaction token を含む webhook API の URL を組み立てる。 */
 	private webhookUrl(): string {
 		return `${DISCORD_API_BASE_URL}/webhooks/${this.applicationId}/${this.interactionToken}`;
 	}
 
-	/** interaction token を秘匿するための置換ルール。 */
 	private interactionTokenReplacements(): readonly TextReplacement[] {
 		return [
 			{
@@ -127,7 +122,7 @@ export class DiscordInteractionClient {
 		];
 	}
 
-	/** fetch が投げた例外のメッセージから interaction token を除去して返す。 */
+	/** Strips the interaction token out of a message thrown by fetch, if present. */
 	private sanitizeUnknownError(error: unknown): unknown {
 		if (
 			error instanceof Error &&

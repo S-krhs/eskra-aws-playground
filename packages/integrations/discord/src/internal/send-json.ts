@@ -1,33 +1,32 @@
-// In scope: Discord API への JSON 送信(POST/PUT/PATCH)の timeout 制御・応答検査・エラー整形を共通化する
-// Out of scope: 各 API 固有の URL 組み立て、認証情報の解決、payload 生成を行う
+// In scope: shared timeout handling, response checking, and error shaping for a JSON send (POST/PUT/PATCH) to a Discord API
+// Out of scope: a specific API's URL construction, resolving credentials, building a payload
 import {
 	sanitizeText,
 	type TextReplacement,
 } from "@eskra-aws-playground/libs/string/text-sanitizer.js";
 
-/** JSON 送信の失敗応答の安全化済み詳細。 */
+/** Sanitized. */
 export interface JsonResponseDetails {
 	status: number;
 	body: string;
 }
 
-/** JSON 送信の実行に必要な入力。 */
 export interface JsonSendRequest {
 	url: string;
-	/** HTTP メソッド。一覧の総入れ替えなど冪等な更新には PUT、既存リソースの部分更新には PATCH を使う。 */
+	/** PUT for an idempotent full replace (e.g. overwriting a whole command list); PATCH for a partial update to an existing resource. */
 	method: "POST" | "PUT" | "PATCH";
 	headers?: Record<string, string>;
 	payload: unknown;
 	timeoutMs: number;
-	/** エラーメッセージの主語に使う API 名(例: "Discord Webhook")。 */
+	/** API name used as the subject of an error message, e.g. "Discord Webhook". */
 	apiLabel: string;
-	/** 失敗応答 body へ適用する秘匿置換。 */
+	/** Redaction rules applied to a failure response's body. */
 	responseBodyReplacements?: readonly TextReplacement[];
-	/** この API 固有のエラー型を作る。 */
+	/** Builds this API's own error type. */
 	createError: (message: string, responseDetails?: unknown) => Error;
 }
 
-/** JSON payload を timeout 付きで送信し、失敗を API 固有のエラーにして投げる。 */
+/** Throws via `createError` on failure. */
 export const sendJson = async (request: JsonSendRequest): Promise<void> => {
 	const {
 		url,
