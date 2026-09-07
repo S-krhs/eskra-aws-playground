@@ -19,6 +19,7 @@
 		"db:migrate:dev": "prisma migrate dev",
 		"build": "turbo run build",
 		"build:browser-runtime-layer": "node infra/layers/browser-runtime/build.mjs",
+		"build:ffmpeg-layer": "node infra/layers/ffmpeg/build.mjs",
 		"deploy": "npm run build && npm run build:browser-runtime-layer && sst deploy --stage develop --config infra/sst.config.ts",
 		"discord:sync": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run",
 		"discord:sync:run": "node apps/function-url-playground/dist/scripts/sync-discord-commands.js",
