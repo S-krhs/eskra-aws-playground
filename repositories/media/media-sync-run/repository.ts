@@ -73,14 +73,15 @@ export const mediaSyncRunRepository = {
 	},
 
 	/**
-	 * 終了していない実行を返す。
-	 * 画面からの起動が既に走っている同期を二重に呼ばないための判定に使う。
+	 * 終了していない実行のうち最も古いものを返す。
+	 * 二重起動の判定に使うため、後から始まった実行が自分だと分かるよう
+	 * 新しい方ではなく古い方を返す。打ち切り判定の起点にもなる。
 	 */
 	findRunning: async (): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaSyncRun.findFirst({
 			where: { finishedAt: null },
-			orderBy: { startedAt: "desc" },
+			orderBy: { startedAt: "asc" },
 		});
 
 		return row ? toMediaSyncRun(row) : undefined;

@@ -14,11 +14,12 @@ describe("buildMediaSyncPlan", () => {
 	it("key が一致したものを登録済みとして分ける", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("_inbox/a.png")],
-			known: [{ id: "id-a", objectKey: "_inbox/a.png" }],
+			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" }],
 		});
 
 		expect(plan).toEqual({
 			unchangedIds: ["id-a"],
+			changedObjects: [],
 			unknownObjects: [],
 			missingIds: [],
 		});
@@ -39,10 +40,26 @@ describe("buildMediaSyncPlan", () => {
 		expect(plan.unchangedIds).toEqual([]);
 	});
 
+	// 同じ key へ上書きされると etag だけが変わる。放っておくと寸法とサムネイルが古いまま残る
+	it("key が同じで etag が違うものを差し替えとして分ける", () => {
+		const plan = buildMediaSyncPlan({
+			scanned: [{ ...scanned("_inbox/a.png"), etag: "new-etag" }],
+			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "old-etag" }],
+		});
+
+		expect(
+			plan.changedObjects.map((changed) => {
+				return changed.id;
+			}),
+		).toEqual(["id-a"]);
+		expect(plan.unchangedIds).toEqual([]);
+		expect(plan.missingIds).toEqual([]);
+	});
+
 	it("R2 に無い id を欠落として挙げる", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [],
-			known: [{ id: "id-a", objectKey: "_inbox/a.png" }],
+			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" }],
 		});
 
 		expect(plan.missingIds).toEqual(["id-a"]);
@@ -52,7 +69,7 @@ describe("buildMediaSyncPlan", () => {
 	it("移動されたものを欠落と未知の両方へ入れる", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("illust/a.png")],
-			known: [{ id: "id-a", objectKey: "_inbox/a.png" }],
+			known: [{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" }],
 		});
 
 		expect(plan.missingIds).toEqual(["id-a"]);
@@ -68,8 +85,8 @@ describe("buildMediaSyncPlan", () => {
 		const plan = buildMediaSyncPlan({
 			scanned: [scanned("_inbox/a.png"), scanned("_inbox/new.png")],
 			known: [
-				{ id: "id-a", objectKey: "_inbox/a.png" },
-				{ id: "id-gone", objectKey: "_inbox/gone.png" },
+				{ id: "id-a", objectKey: "_inbox/a.png", etag: "etag" },
+				{ id: "id-gone", objectKey: "_inbox/gone.png", etag: "etag" },
 			],
 		});
 
@@ -85,6 +102,7 @@ describe("buildMediaSyncPlan", () => {
 	it("空の入力で空の計画を返す", () => {
 		expect(buildMediaSyncPlan({ scanned: [], known: [] })).toEqual({
 			unchangedIds: [],
+			changedObjects: [],
 			unknownObjects: [],
 			missingIds: [],
 		});

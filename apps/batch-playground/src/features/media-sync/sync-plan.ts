@@ -1,6 +1,6 @@
 // In scope: R2 の走査結果と登録済みの key を突き合わせ、同期でやることを分類する
 // Out of scope: R2 への通信、metadata の読み出し、DB への反映、サムネイル生成
-import type { MediaObjectKey } from "@eskra-aws-playground/repositories/media/media-object/types.js";
+import type { MediaObjectSummary } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 
 /** R2 の一覧で見つかった 1 オブジェクト。 */
 export interface ScannedObject {
@@ -10,10 +10,18 @@ export interface ScannedObject {
 	lastModified: Date;
 }
 
+/** key は同じまま中身が差し替わったメディア。 */
+export interface ChangedMediaObject {
+	id: string;
+	object: ScannedObject;
+}
+
 /** 同期でやることの分類。 */
 export interface MediaSyncPlan {
-	/** DB の key と一致した登録済みの id。確認時刻だけ更新する。 */
+	/** key も etag も一致した登録済みの id。確認時刻だけ更新する。 */
 	unchangedIds: string[];
+	/** key は同じで etag が違うもの。大きさとサムネイルを作り直す。 */
+	changedObjects: ChangedMediaObject[];
 	/** DB に無い key。metadata を読んで新規か移動かを判定する。 */
 	unknownObjects: ScannedObject[];
 	/** DB にあって R2 に無い id。移動でなければ削除する。 */
@@ -27,29 +35,41 @@ export interface MediaSyncPlan {
  */
 export const buildMediaSyncPlan = (input: {
 	scanned: ScannedObject[];
-	known: MediaObjectKey[];
+	known: MediaObjectSummary[];
 }): MediaSyncPlan => {
-	const idByKey = new Map(
+	const knownByKey = new Map(
 		input.known.map((media) => {
-			return [media.objectKey, media.id];
+			return [media.objectKey, media];
 		}),
 	);
 
 	const unchangedIds: string[] = [];
+	const changedObjects: ChangedMediaObject[] = [];
 	const unknownObjects: ScannedObject[] = [];
 
 	for (const object of input.scanned) {
-		const id = idByKey.get(object.key);
+		const known = knownByKey.get(object.key);
 
-		if (id === undefined) {
+		if (!known) {
 			unknownObjects.push(object);
 			continue;
 		}
 
-		unchangedIds.push(id);
+		// 同じ key へ上書きされた場合は etag だけが変わる
+		if (known.etag === object.etag) {
+			unchangedIds.push(known.id);
+			continue;
+		}
+
+		changedObjects.push({ id: known.id, object });
 	}
 
-	const foundIds = new Set(unchangedIds);
+	const foundIds = new Set([
+		...unchangedIds,
+		...changedObjects.map((changed) => {
+			return changed.id;
+		}),
+	]);
 	const missingIds = input.known
 		.filter((media) => {
 			return !foundIds.has(media.id);
@@ -58,5 +78,5 @@ export const buildMediaSyncPlan = (input: {
 			return media.id;
 		});
 
-	return { unchangedIds, unknownObjects, missingIds };
+	return { unchangedIds, changedObjects, unknownObjects, missingIds };
 };

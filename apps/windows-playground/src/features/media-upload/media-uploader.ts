@@ -6,9 +6,9 @@ import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import type { R2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
+import { resolveContentType } from "@eskra-aws-playground/shared-domains/contracts/media-content-type.js";
 import { buildInboxKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
-import { resolveContentType } from "./media-content-type.js";
 
 // 同じミリ秒に更新されたファイルが並ぶことは稀で、これを超えるなら設定の誤りを疑う
 const MAX_KEY_SEQUENCE = 100;

@@ -1,5 +1,6 @@
 // In scope: R2 の object metadata とメディアの素性の相互変換
 // Out of scope: R2 への通信、key の組み立て、metadata の保存先の決定
+import { z } from "zod";
 import {
 	MEDIA_ID_METADATA_KEY,
 	type MediaObjectMetadata,
@@ -20,16 +21,19 @@ export const buildMediaObjectMetadata = (
 	};
 };
 
+const mediaIdSchema = z.uuid();
+
 /**
  * R2 から読んだ metadata をメディアの素性へ戻す。
- * media-id が無ければアプリ外から置かれたものとして undefined を返す。
+ * metadata は誰でも書けるため、UUID として読めない media-id は
+ * 無いものとして扱う(そのまま主キーへ入れると以降の登録が全て失敗する)。
  */
 export const parseMediaObjectMetadata = (
 	metadata: Record<string, string> | undefined,
 ): MediaObjectMetadata | undefined => {
 	const mediaId = metadata?.[MEDIA_ID_METADATA_KEY];
 
-	if (!mediaId) {
+	if (!mediaId || !mediaIdSchema.safeParse(mediaId).success) {
 		return undefined;
 	}
 

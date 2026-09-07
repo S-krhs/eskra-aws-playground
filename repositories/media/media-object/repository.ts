@@ -6,8 +6,9 @@ import type {
 	InsertMediaObjectInput,
 	MediaObject,
 	MediaObjectCursor,
-	MediaObjectKey,
 	MediaObjectPage,
+	MediaObjectSummary,
+	RefreshMediaObjectInput,
 	RelocateMediaObjectInput,
 	SetMediaThumbnailInput,
 	ThumbnaillessMediaObject,
@@ -75,15 +76,40 @@ const toCursorFilter = (cursor: MediaObjectCursor) => {
 /** メディアの永続化操作。 */
 export const mediaObjectRepository = {
 	/**
-	 * 登録済みの id と key を全件返す。
+	 * 登録済みの id・key・etag を全件返す。
 	 * 同期が R2 の一覧と突き合わせるための射影で、本文の列は読まない。
 	 */
-	findAllKeys: async (): Promise<MediaObjectKey[]> => {
+	findAllSummaries: async (): Promise<MediaObjectSummary[]> => {
 		const prisma = getPrismaClient();
 
 		return await prisma.mediaObject.findMany({
-			select: { id: true, objectKey: true },
+			select: { id: true, objectKey: true, etag: true },
 		});
+	},
+
+	/** 指定した id が持つサムネイルの key を返す。行を消す前の後片付けに使う。 */
+	findThumbnailKeys: async (ids: string[]): Promise<string[]> => {
+		if (ids.length === 0) {
+			return [];
+		}
+
+		const prisma = getPrismaClient();
+		const thumbnailKeys: string[] = [];
+
+		for (const chunk of toChunks(ids)) {
+			const rows = await prisma.mediaObject.findMany({
+				where: { id: { in: chunk }, thumbnailKey: { not: null } },
+				select: { thumbnailKey: true },
+			});
+
+			for (const row of rows) {
+				if (row.thumbnailKey) {
+					thumbnailKeys.push(row.thumbnailKey);
+				}
+			}
+		}
+
+		return thumbnailKeys;
 	},
 
 	/** id で 1 件取得する。ゴミ箱に入れたものも返す。 */
@@ -142,12 +168,19 @@ export const mediaObjectRepository = {
 		});
 	},
 
-	/** 生成したサムネイルの所在と、併せて読めた寸法・尺を記録する。 */
-	setThumbnail: async (input: SetMediaThumbnailInput): Promise<void> => {
+	/**
+	 * 生成したサムネイルの所在と、併せて読めた寸法・尺を記録する。
+	 * 生成中に行が消えていても失敗にしないため、更新できた件数を返す。
+	 */
+	setThumbnail: async (input: SetMediaThumbnailInput): Promise<number> => {
 		const prisma = getPrismaClient();
 		const { id, ...values } = input;
+		const result = await prisma.mediaObject.updateMany({
+			where: { id },
+			data: values,
+		});
 
-		await prisma.mediaObject.update({ where: { id }, data: values });
+		return result.count;
 	},
 
 	/** 新規に見つかったメディアをまとめて登録する。既に登録済みの id は無視する。 */
@@ -198,6 +231,41 @@ export const mediaObjectRepository = {
 		}
 
 		return updated;
+	},
+
+	/**
+	 * 同じ key のまま差し替わったメディアを作り直す。
+	 * サムネイルと寸法は元の中身に基づくため消し、次の同期で作り直させる。
+	 */
+	refreshMany: async (inputs: RefreshMediaObjectInput[]): Promise<number> => {
+		if (inputs.length === 0) {
+			return 0;
+		}
+
+		const prisma = getPrismaClient();
+		let refreshed = 0;
+
+		for (const chunk of toChunks(inputs)) {
+			const updates = chunk.map((input) => {
+				return prisma.mediaObject.update({
+					where: { id: input.id },
+					data: {
+						byteSize: BigInt(input.byteSize),
+						etag: input.etag,
+						uploadedAt: input.uploadedAt,
+						syncedAt: input.syncedAt,
+						thumbnailKey: null,
+						width: null,
+						height: null,
+						durationMs: null,
+					},
+				});
+			});
+
+			refreshed += (await prisma.$transaction(updates)).length;
+		}
+
+		return refreshed;
 	},
 
 	/** R2 に依然として存在していたメディアの確認時刻を更新する。 */

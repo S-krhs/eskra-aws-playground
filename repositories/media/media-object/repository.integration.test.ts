@@ -90,16 +90,72 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(inserted).toBe(0);
 	});
 
-	it("突き合わせ用に id と key だけを返す", async () => {
+	it("突き合わせ用に id と key と etag だけを返す", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
 
-		const keys = await mediaObjectRepository.findAllKeys();
-		expect(keys).toContainEqual({
+		const summaries = await mediaObjectRepository.findAllSummaries();
+		expect(summaries).toContainEqual({
 			id: olderId,
 			objectKey: `${keyPrefix}a.png`,
+			etag: "etag-1",
 		});
+	});
+
+	// 同じ key のまま差し替わった場合、サムネイルと寸法は作り直しになる
+	it("差し替わったメディアを作り直し、サムネイルを消す", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+		]);
+		await mediaObjectRepository.setThumbnail({
+			id: olderId,
+			thumbnailKey: "_thumb/a.webp",
+			width: 320,
+			height: 180,
+		});
+
+		const refreshedAt = new Date("2026-09-10T00:00:00.000Z");
+		await mediaObjectRepository.refreshMany([
+			{
+				id: olderId,
+				byteSize: 5678,
+				etag: "etag-2",
+				uploadedAt: refreshedAt,
+				syncedAt: refreshedAt,
+			},
+		]);
+
+		const found = await mediaObjectRepository.findById(olderId);
+		expect(found?.etag).toBe("etag-2");
+		expect(found?.byteSize).toBe(5678);
+		expect(found?.thumbnailKey).toBeUndefined();
+		expect(found?.width).toBeUndefined();
+	});
+
+	it("消える前のサムネイルの key を拾える", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
+		]);
+		await mediaObjectRepository.setThumbnail({
+			id: olderId,
+			thumbnailKey: "_thumb/a.webp",
+		});
+
+		expect(
+			await mediaObjectRepository.findThumbnailKeys([olderId, newerId]),
+		).toEqual(["_thumb/a.webp"]);
+	});
+
+	// 生成中に行が消えていても worker を失敗させない
+	it("消えた行へのサムネイル記録を 0 件として返す", async () => {
+		expect(
+			await mediaObjectRepository.setThumbnail({
+				id: trashedId,
+				thumbnailKey: "_thumb/gone.webp",
+			}),
+		).toBe(0);
 	});
 
 	it("新着順に返し、ゴミ箱に入れたものを除外する", async () => {

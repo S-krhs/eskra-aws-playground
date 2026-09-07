@@ -99,6 +99,17 @@ describe.skipIf(!testDatabaseUrl)(
 			});
 		});
 
+		// 後から始まった実行が「自分より先の実行がある」と判断できる必要がある
+		it("実行中が複数あれば古い方を返す", async () => {
+			await mediaSyncRunRepository.start(runId, startedAt);
+			await mediaSyncRunRepository.start(
+				laterRunId,
+				new Date("2099-09-07T02:00:00.000Z"),
+			);
+
+			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
+		});
+
 		it("開始が新しい実行を最新として返す", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			await mediaSyncRunRepository.start(

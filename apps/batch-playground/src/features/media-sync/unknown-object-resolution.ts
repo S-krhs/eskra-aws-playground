@@ -157,7 +157,8 @@ export const resolveUnknownObjects = async (
 		const chunk = input.objects.slice(offset, offset + HEAD_CONCURRENCY);
 		const resolved = await Promise.all(
 			chunk.map(async (object) => {
-				const head = await r2ObjectStore.head(client, {
+				// 一覧を取った後に消えた object で同期全体を落とさない
+				const head = await r2ObjectStore.headIfExists(client, {
 					bucket: input.bucket,
 					key: object.key,
 				});
@@ -167,6 +168,10 @@ export const resolveUnknownObjects = async (
 		);
 
 		for (const { object, head } of resolved) {
+			if (!head) {
+				continue;
+			}
+
 			const decision = decideUnknownObject(
 				parseMediaObjectMetadata(head.metadata),
 				input.knownIds,

@@ -18,6 +18,7 @@ Lambda イベントの `job` に応じてバッチジョブを実行する app �
 - サムネイル未生成のメディアを queue へ積み、`media-thumbnail` が ffmpeg で webp を作ります。
 - 接続先は SST secret の `R2Credentials`(JSON)と、環境変数 `MEDIA_BUCKET` から解決します。
 - 実行記録は `media.media_sync_runs` に残り、管理ツールの進捗表示と二重起動の判定に使います。
+- **削除には歯止めがあります。** R2 の一覧が空、または一度に消える割合が大きすぎる場合は、token の権限か `MEDIA_BUCKET` の誤りとみなして削除せずエラーにします。行を消すとタグの紐付けも道連れになるためです。
 
 ## 実行できるジョブ
 

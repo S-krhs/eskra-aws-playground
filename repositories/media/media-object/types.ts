@@ -19,10 +19,14 @@ export interface MediaObject {
 	trashedAt: Date | undefined;
 }
 
-/** 同期が key を突き合わせるための軽量な射影。 */
-export interface MediaObjectKey {
+/**
+ * 同期が R2 の一覧と突き合わせるための軽量な射影。
+ * etag は同じ key のまま中身が差し替わった場合を見つけるために持つ。
+ */
+export interface MediaObjectSummary {
 	id: string;
 	objectKey: string;
+	etag: string;
 }
 
 /** 同期が新規に登録する 1 件。 */
@@ -32,6 +36,18 @@ export interface InsertMediaObjectInput {
 	logicalPath: string;
 	fileName: string;
 	contentType: string;
+	byteSize: number;
+	etag: string;
+	uploadedAt: Date;
+	syncedAt: Date;
+}
+
+/**
+ * 同じ key のまま差し替わった 1 件の作り直し。
+ * サムネイルと寸法は作り直しになるため、この更新で消える。
+ */
+export interface RefreshMediaObjectInput {
+	id: string;
 	byteSize: number;
 	etag: string;
 	uploadedAt: Date;

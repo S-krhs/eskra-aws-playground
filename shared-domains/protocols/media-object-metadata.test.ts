@@ -35,6 +35,13 @@ describe("parseMediaObjectMetadata", () => {
 		expect(parseMediaObjectMetadata(undefined)).toBeUndefined();
 	});
 
+	// metadata は誰でも書ける。主キーへ入る値なので UUID として読めなければ捨てる
+	it("UUID として読めない media-id を無いものとして扱う", () => {
+		expect(
+			parseMediaObjectMetadata({ "media-id": "not-a-uuid" }),
+		).toBeUndefined();
+	});
+
 	it("ファイル名が無ければ空文字にする", () => {
 		expect(parseMediaObjectMetadata({ "media-id": mediaId })).toEqual({
 			mediaId,

@@ -16,4 +16,16 @@ describe("isMediaKey", () => {
 	it("名前の似たフォルダを除かない", () => {
 		expect(isMediaKey("_thumbnails/a.png")).toBe(true);
 	});
+
+	// 取り込むとサムネイル生成が毎回失敗して DLQ が埋まり続ける
+	it("メディアでない拡張子を除く", () => {
+		expect(isMediaKey("_inbox/memo.txt")).toBe(false);
+		expect(isMediaKey("_inbox/archive.zip")).toBe(false);
+	});
+
+	// R2 のダッシュボードが作るフォルダの placeholder
+	it("拡張子を持たない key を除く", () => {
+		expect(isMediaKey("illust/")).toBe(false);
+		expect(isMediaKey("_inbox/no-extension")).toBe(false);
+	});
 });

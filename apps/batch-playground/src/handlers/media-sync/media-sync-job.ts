@@ -2,9 +2,11 @@
 // Out of scope: 未知 key の判定、R2 の wire 解釈、サムネイル生成、Lambda イベントの検証
 import { randomUUID } from "node:crypto";
 import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
+import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
+import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";
 import { scanMediaObjects } from "@/features/media-sync/media-object-scan.js";
 import { buildMediaSyncPlan } from "@/features/media-sync/sync-plan.js";
 import { resolveUnknownObjects } from "@/features/media-sync/unknown-object-resolution.js";
@@ -80,11 +82,43 @@ export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
 	};
 
 	await mediaSyncRunRepository.start(runId, startedAt);
+
+	// findRunning と start の間に別の実行が始まっていないか確かめ、
+	// 後から始まった側が降りる。窓は狭まるが完全な排他ではない
+	const earliestRunning = await mediaSyncRunRepository.findRunning();
+
+	if (earliestRunning && earliestRunning.id !== runId) {
+		await mediaSyncRunRepository.finish({
+			id: runId,
+			...progress,
+			finishedAt: new Date(),
+			error: "同時に始まった実行があるため取りやめました",
+		});
+		logger.complete({ skipped: true, runningId: earliestRunning.id });
+
+		return {
+			runId: undefined,
+			skipped: true,
+			scannedCount: 0,
+			insertedCount: 0,
+			updatedCount: 0,
+			deletedCount: 0,
+		};
+	}
+
 	logger.start({ runId });
 
 	try {
 		const scanned = await scanMediaObjects(client, settings.bucket);
-		const known = await mediaObjectRepository.findAllKeys();
+		const known = await mediaObjectRepository.findAllSummaries();
+
+		// 一覧が空なのに登録があるのは、権限か bucket 指定の誤りとみなす
+		if (scanned.length === 0 && known.length > 0) {
+			throw new Error(
+				"R2 の一覧が空でした。token の権限か MEDIA_BUCKET の指定を確認してください。",
+			);
+		}
+
 		const plan = buildMediaSyncPlan({ scanned, known });
 
 		progress.scannedCount = scanned.length;
@@ -128,10 +162,31 @@ export const mediaSyncJob = async (): Promise<MediaSyncResponse> => {
 		const deletableIds = plan.missingIds.filter((id) => {
 			return !relocatedIds.has(id);
 		});
+		assertDeletableSize(deletableIds.length, known.length);
 
 		progress.insertedCount = await mediaObjectRepository.insertMany(inserts);
 		progress.updatedCount =
-			await mediaObjectRepository.relocateMany(relocations);
+			(await mediaObjectRepository.relocateMany(relocations)) +
+			(await mediaObjectRepository.refreshMany(
+				plan.changedObjects.map((changed) => {
+					return {
+						id: changed.id,
+						byteSize: changed.object.byteSize,
+						etag: changed.object.etag,
+						uploadedAt: changed.object.lastModified,
+						syncedAt: startedAt,
+					};
+				}),
+			));
+
+		// 行を消すとサムネイルは走査から外れて辿れなくなるため、先に R2 から消す
+		const orphanedThumbnailKeys =
+			await mediaObjectRepository.findThumbnailKeys(deletableIds);
+
+		for (const key of orphanedThumbnailKeys) {
+			await r2ObjectStore.delete(client, { bucket: settings.bucket, key });
+		}
+
 		progress.deletedCount =
 			await mediaObjectRepository.deleteByIds(deletableIds);
 		await mediaObjectRepository.touchMany(plan.unchangedIds, startedAt);

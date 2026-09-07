@@ -74,13 +74,21 @@ const generateForMessage = async (
 			contentType: THUMBNAIL_CONTENT_TYPE,
 		});
 
-		await mediaObjectRepository.setThumbnail({
+		const recorded = await mediaObjectRepository.setThumbnail({
 			id: message.mediaId,
 			thumbnailKey,
 			width: probe.width,
 			height: probe.height,
 			durationMs: probe.durationMs,
 		});
+
+		// 生成中に行が消えていた場合、記録先が無いので上げた webp も残さない
+		if (recorded === 0) {
+			await r2ObjectStore.delete(client, {
+				bucket: settings.bucket,
+				key: thumbnailKey,
+			});
+		}
 	} finally {
 		await rm(workDir, { recursive: true, force: true });
 	}
