@@ -60,24 +60,7 @@ shared/styles/index.css               Tailwind entry point
 - Config comes from `~/.config/eskra-media-library/config.json`. Its location is decided in `shared-domains`'s `media-library-config`, shared with the uploader.
 - `repositories` reads its connection from `DATABASE_URL` — set it in `server.ts` before any route runs.
 - **Connection settings and clients live at module scope, read through a getter.** Don't turn a route into a factory taking a context object. Same shape as `repositories/db/client.ts`'s `getPrismaClient`: settings via `getLibrarySettings`, R2 client via `getR2Client`. A route is exported as a `new Hono()` value; `app.ts` wires it in with `.route()`.
-- Sync starts via an async Lambda invoke and doesn't wait for completion. Double-start protection is the sync job's job (it checks its own running record) — this app doesn't guard against it.
-- Thumbnails get cached locally. Write to a temp name and rename into place, so a request mid-write never reads a partial file.
-- A thumbnail's id becomes its filename directly — validate it as a UUID before it touches R2 or the DB.
 - Bind to `127.0.0.1` only — don't open this up to other devices without an explicit decision to.
 - If the port is already taken, assume another instance is running and exit 0. A resident restart should never end up running two instances.
 
-## Layers
-
-| Layer | Owns | Doesn't own |
-| --- | --- | --- |
-| `backend/src/server.ts` | loading config, creating clients, starting the listener, handling startup failure | route implementation, business logic |
-| `backend/src/app.ts` | composing routes, serving static files, the shared error response | individual route implementation, DB/R2 calls |
-| `backend/src/routes/` | HTTP in/out, input validation, calling repository/integration | file operations, external-service wire detail |
-| `backend/src/routes/intermediate-models/` | response types, converting from repository types | DB queries, HTTP status decisions |
-| `backend/src/features/<concern>/` | logic pulled out of a route (cache, Lambda invoke) | HTTP interpretation, response assembly |
-| `backend/src/shared/` | config loading, process-lifetime client creation | business logic, route implementation |
-| `frontend/src/app/` | React bootstrap, global style import | screen implementation, feature implementation |
-| `frontend/src/pages/` | screen assembly and its state | feature implementation, API calls |
-| `frontend/src/features/<concern>/` | feature-level hooks and display | screen assembly, another feature's implementation |
-| `frontend/src/entities/` | types used by more than one feature | a type only one feature uses |
-| `frontend/src/shared/` | API client, formatting | screen state, feature-specific logic |
+Backend files: each file's own header states its scope — read it before assuming.

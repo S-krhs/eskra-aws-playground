@@ -14,21 +14,7 @@ Discord requires a response inside 3 seconds, so nothing here builds a final res
 - Never build/send the final message here — `sqs-worker` (in `batch-playground`) edits the original message using the interaction token.
 - Interaction tokens expire in 15 minutes; keep the follow-up job's retry window inside that.
 
-## Layers
-
-| Layer | Owns | Doesn't own |
-| --- | --- | --- |
-| `src/handlers/handler.ts` | Lambda entry point, request-envelope validation, path → route resolution/delegation | route-specific parsing, business logic |
-| `src/handlers/contracts/paths.ts` | the one place listing public paths | route implementation |
-| `src/handlers/routes/<route>/route.ts` | request-envelope parsing, auth, interaction-type → operation dispatch, HTTP response shaping | Discord interaction body parsing, payload building, type-specific orchestration |
-| `src/handlers/routes/<route>/operations/` | interaction-type-specific orchestration, integration/shared-domains calls, follow-up job message building + enqueue, deferred-ack generation | route selection, signature verification, HTTP response shaping, calling another operation, building the final message, DB access |
-| `src/handlers/routes/<route>/contracts/` | that bot's slash-command contract (`commands.ts`, synced to global scope post-deploy by CD) | command execution |
-| `src/handlers/routes/intermediate-models/` | operation-result intermediate type (`operation-result.ts`) | HTTP response shaping, operation implementation |
-| `src/handlers/schema.ts` | Function URL event validation schema + response type | route decision, target-specific types |
-| `src/scripts/` | ops scripts run via `sst shell` (`sync-discord-commands.ts`) | anything Lambda-invoked |
-| `sst-resource-links.d.ts` (package root) | typed `Resource` declarations for linked secrets | runtime value resolution |
-
-Discord parsing/verification/response types come from `@eskra-aws-playground/integration-discord`; custom_id conventions, interaction job names/message schemas shared with the producer live in `@eskra-aws-playground/shared-domains`; follow-up enqueue uses `@eskra-aws-playground/integration-sqs`.
+Each file's own header states its scope — read it before assuming. `src/scripts/` runs ops scripts via `sst shell` (`sync-discord-commands.ts`), not from Lambda; `sst-resource-links.d.ts` at the package root types the linked `Resource` secrets. Discord parsing/verification/response types come from `@eskra-aws-playground/integration-discord`; custom_id conventions, interaction job names/message schemas shared with the producer live in `@eskra-aws-playground/shared-domains`; follow-up enqueue uses `@eskra-aws-playground/integration-sqs`.
 
 ## Dependency direction
 

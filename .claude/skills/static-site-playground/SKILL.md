@@ -5,18 +5,7 @@ description: Rules for static-site-playground — the Astro/FSD static site at s
 
 Astro app generating the static site at `sasahara.uk`. `astro build` outputs HTML/assets to `dist/`; `infra/sst.config.ts`'s `StaticSitePlayground` (CloudFront + S3) serves it. Unknown paths get the origin's standard error. Delivery setup: `docs/sasahara-uk-site.md`.
 
-## Layers
-
-| Layer | Owns | Doesn't own |
-| --- | --- | --- |
-| `src/pages/` | Astro routing — file path is the URL. Keep a page a thin shell dropping in one widget | UI implementation, data-fetch implementation |
-| `src/features/` | a self-contained feature: state + data + display together | a cut that isn't meant to be reused elsewhere |
-| `src/widgets/` | self-contained UI block used on more than one page — add only once needed | something used on a single page |
-| `src/entities/` | type/data/display for something more than one feature deals with — add only once needed | a type/data only one feature uses |
-| `src/shared/` | business-agnostic reusable parts (UI kit, etc.) | anything specific to one screen/action/target |
-| `src/layouts/` | the shared shell around a page (`<html>`/`<head>`/nav) | page-specific content |
-| `public/` | static files served as-is, no build step (images) | page/component implementation |
-| `astro.config.mjs` | Astro build config | page/component implementation |
+`.astro` files skip the `In scope`/`Out of scope` header (see Rules), so their responsibility isn't self-documented in code the way a `.ts`/`.tsx` file's is — check here instead. `src/pages/` is Astro routing, file path is the URL; keep a page a thin shell dropping in one widget/feature, nothing UI- or data-fetch-specific of its own. `src/layouts/` holds the shared shell around a page (`<html>`/`<head>`/nav), never page-specific content. `public/` is static files served as-is with no build step. `astro.config.mjs` is the Astro build config only — no page/component implementation. `.ts`/`.tsx` layers (`features/`, `shared/`, and `widgets/`/`entities/` once they exist) carry their own header, and their FSD roles are below.
 
 ## Directory layout (Feature-Sliced Design)
 
@@ -50,25 +39,16 @@ src/shared/styles/index.css               Tailwind entry point
 
 A page whose UI changes with interaction is a `@astrojs/react` island. The page stays `.astro`; only the island hydrates, via `<Component client:load />`.
 
-- An island's state lives in that island's top-level component, via `useState` (currently `features/gamble-rumble/ui/gamble-rumble-desktop.tsx` and the per-window `gamble-rumble.tsx`). Lower components get values/callbacks as props. No state-management library.
-- Props from `.astro` to an island get serialized — no functions. Anything wiring window contents to an icon happens on the React side (`ui/gamble-rumble-desktop.tsx`).
-- Context is only for the window-arranging container talking to individual windows (`shared/ui/win-forms/window-host.ts`) — threading that through props would make a feature carry window-stacking concerns. Apply the same bar before adding another context.
-- Don't represent stacking order by reordering an array. Reordering keyed siblings moves DOM nodes, which drops a click mid-press (a background window's button stops responding to a single click). Keep render order fixed; change only the `z-index` value.
-- Don't rely on `onDoubleClick` to trigger an action. The browser's native `dblclick` only fires on exactly 2 clicks — rapid clicking beyond that stops firing it (Chrome counts up to 3 then resets to 1, so 6 rapid clicks only fires it twice). Track click timestamps yourself and fire on a second click within a window, then reset the count.
-- Don't represent a minimized window's slot by its index in the minimized-windows array. Restoring one shifts every later index, which makes the taskbar bar visually collapse leftward. Use an array indexed by slot with the window as the value; leave a freed slot `null` and reuse it for the next minimize.
+- An island's state lives in its top-level component, via `useState`. Lower components get values/callbacks as props. No state-management library.
+- Props from `.astro` to an island get serialized — no functions.
+- Reach for Context only when threading a value through props would make an unrelated component carry a cross-cutting concern it has no other reason to know about. Apply that bar before adding another one.
 - A page that's purely static display doesn't get an island — plain `.astro`.
 
 ## Style
 
 Tailwind CSS; no plain CSS files. `style` attribute is only for a value decided at runtime (a drag position) — Tailwind statically scans class names, so it can't turn a runtime value into a class. Never use it for a fixed look. `.astro`'s scoped style doesn't reach an island's DOM, so style islands via class on the component.
 
-| Where | What goes there |
-| --- | --- |
-| a component's `className` | essentially all visual styling; a value with no theme token is an arbitrary value (`bg-[#ffe0e0]`) |
-| `src/shared/styles/index.css` | Tailwind entry point — just `@import "tailwindcss"` plus the kit imports |
-| `src/shared/ui/<kit>/<kit>.css` | the kit's `@theme` tokens and `@utility` — color/type/border its components use |
-| a `.css` inside a slice | only what can't be a class (`@keyframes`, etc.) — imported by the component |
-| a page's `<style is:global>` | page-wide background/spacing that lands on `body` |
+Nearly all visual styling lives in a component's `className` — a value with no theme token is an arbitrary value (`bg-[#ffe0e0]`). `src/shared/styles/index.css` is only the Tailwind entry point (`@import "tailwindcss"` plus the kit imports). A kit's own `@theme` tokens and `@utility` (the color/type/border its components use) live in `src/shared/ui/<kit>/<kit>.css`. A `.css` file inside a slice holds only what can't be a class (`@keyframes`, etc.), imported by the component that needs it. Page-wide background/spacing that lands on `body` goes in that page's `<style is:global>`.
 
 - Don't add a slice-specific color/typeface to `shared`'s `@theme` — write the arbitrary value at the component that uses it.
 - Whether/how something displays is the caller's decision; a component renders what it's given. Don't have a component return `null` based on `props` or compare against a threshold — keep thresholds in the one place that decides.
@@ -83,12 +63,8 @@ Tailwind CSS; no plain CSS files. `style` attribute is only for a value decided 
 
 ### steiger (the official FSD linter)
 
-Checks layers and import direction. Config: `steiger.config.js`.
+Checks layers and import direction. Config: `steiger.config.js`, whose own comments say why each override exists — read it before assuming, same as any other file.
 
-- Config is `.js` — cosmiconfig's TypeScript loader doesn't support this repo's TypeScript 7, and a `steiger.config.ts` fails with `findConfigFile is not a function`.
-- `src/pages/**` is excluded — it's Astro routing, not the FSD `pages` layer, and would otherwise get `index.astro` flagged as that layer's public API.
-- `fsd/insignificant-slice` is off only for `src/features/gamble-rumble` — only Astro pages reference this slice, and those are excluded above, so steiger sees zero references. Every other slice keeps the rule on.
-- Nothing else is disabled. `index.ts` stays on every slice for `fsd/public-api`; `fsd/forbidden-imports` (cross-layer errors) and `fsd/insignificant-slice` (over-splitting) both stay on.
 - Prefer fixing the structure over disabling a rule. An `insignificant-slice` hit usually means "this layer isn't needed yet."
 
 ### biome's Tailwind rules
