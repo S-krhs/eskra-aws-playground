@@ -1,5 +1,5 @@
 // In scope: making a webp thumbnail out of an image or video with ffmpeg
-// Out of scope: reading dimensions, reading/writing R2, writing to the DB
+// Out of scope: reading dimensions, fetching the file or storing what came out of it
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 

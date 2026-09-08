@@ -1,5 +1,5 @@
 // In scope: reading a media file's dimensions and duration with ffprobe
-// Out of scope: generating a thumbnail, reading/writing R2, writing to the DB
+// Out of scope: generating a thumbnail, fetching the file or storing what came out of it
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { z } from "zod";

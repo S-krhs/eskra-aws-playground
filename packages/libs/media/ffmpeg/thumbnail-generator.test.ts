@@ -17,7 +17,7 @@ const execFileAsync = promisify(execFile);
 
 const layerBinDir = resolve(
 	import.meta.dirname,
-	"../../../../../.tmp/layers/ffmpeg/bin",
+	"../../../../.tmp/layers/ffmpeg/bin",
 );
 const ffmpegPath = join(layerBinDir, "ffmpeg");
 const hasFfmpeg = existsSync(ffmpegPath);

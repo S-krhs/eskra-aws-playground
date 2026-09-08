@@ -25,6 +25,7 @@ packages/
     sqs/
   libs/
     browser/
+    media/
     utils/
 scripts/
 docs/
@@ -40,6 +41,7 @@ docs/
 - `packages/integrations/*`: one package per external service. Owns both outbound calls and inbound wire parsing for that target.
 - `packages/libs/utils`: generic logic, can take light npm deps (e.g. dayjs).
 - `packages/libs/browser`: generic logic needing browser-execution deps (Playwright-core).
+- `packages/libs/media`: generic logic needing the ffmpeg / ffprobe binaries a Lambda layer supplies.
 - `scripts/`: CI helper scripts, not a workspace.
 
 `packages/` is for generic, redistributable code only (integrations, libs). Anything domain-specific goes to `shared-domains/` (or `repositories/` for data access) instead, since it can't be distributed generically.
@@ -50,6 +52,7 @@ Apps depend down into packages/shared-domains, never the other way.
 
 ```text
 apps/* -> packages/libs/browser
+apps/* -> packages/libs/media
 apps/* -> packages/libs/utils
 apps/* -> packages/integrations/* -> packages/libs/utils
 apps/* -> repositories -> packages/libs/utils
@@ -73,7 +76,7 @@ apps/* -> shared-domains -> packages/libs/utils
 
 - One integration package per target — heavy transport libs and auth SDKs accumulate per target. External storage is the exception: its client and operations belong to `repositories`, which is what hides a data source from an app.
 - An integration owns: target-specific types, outbound HTTP/auth, inbound wire parsing/signature verification, error translation for failure responses. It does NOT own: URL/token resolution, target-agnostic convention parsing (e.g. custom_id), job decisions, message generation, or app-specific business types.
-- `libs` splits by dependency weight: `packages/libs/utils` (pure, light deps only) vs `packages/libs/browser` (browser-execution deps).
+- `libs` splits by dependency weight: `packages/libs/utils` (pure, light deps only) vs a package per heavy runtime dependency (`packages/libs/browser`, `packages/libs/media`). An external binary a Lambda layer supplies counts as heavy even when the npm deps are light — importing it without that layer fails at runtime.
 - App-specific parsers or domain types don't belong in libs — put them in that app's `features/` (single app) or `shared-domains` (shared across apps).
 
 ## Where things are documented

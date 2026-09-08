@@ -6,12 +6,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { probeMedia } from "@eskra-aws-playground/libs-media/ffmpeg/media-probe.js";
+import { generateThumbnail } from "@eskra-aws-playground/libs-media/ffmpeg/thumbnail-generator.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
-import { probeMedia } from "@/features/media-thumbnail/media-probe.js";
-import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generator.js";
 
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 
