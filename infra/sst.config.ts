@@ -36,6 +36,9 @@ export default $config({
 		}
 
 		const { jobSchedules } = await import("./config/job-schedules.js");
+		const { MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT } = await import(
+			"@eskra-aws-playground/shared-domains/contracts/media-jobs.js"
+		);
 		const { alarmDescriptions } = await import(
 			"./config/alarm-descriptions.js"
 		);
@@ -354,7 +357,8 @@ export default $config({
 			visibilityTimeout: "6 minutes",
 			dlq: {
 				queue: mediaThumbnailDeadLetterQueue.arn,
-				retry: 3,
+				// The job gives up and moves the media aside on this delivery, so both sides read one value
+				retry: MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
 			},
 		});
 

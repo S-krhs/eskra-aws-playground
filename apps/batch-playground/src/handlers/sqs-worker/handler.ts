@@ -18,7 +18,10 @@ import {
 
 const logger = createBatchLogger("sqs-job-worker");
 
-const runJob = (message: SqsJobMessage): Promise<void> => {
+const runJob = (
+	message: SqsJobMessage,
+	receiveCount: number,
+): Promise<void> => {
 	switch (message.job) {
 		case interactionJobNames.yacchoHelloReply:
 			return yacchoHelloReplyJob(message);
@@ -31,7 +34,7 @@ const runJob = (message: SqsJobMessage): Promise<void> => {
 		case interactionJobNames.playCheckReminderChoice:
 			return playCheckReminderChoiceJob(message);
 		case mediaJobNames.mediaThumbnail:
-			return mediaThumbnailJob(message);
+			return mediaThumbnailJob(message, receiveCount);
 	}
 };
 
@@ -51,7 +54,7 @@ export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
 			const message = sqsJobMessageSchema.parse(JSON.parse(record.body));
 			logger.start({ messageId, job: message.job });
 
-			await runJob(message);
+			await runJob(message, record.attributes?.ApproximateReceiveCount ?? 1);
 
 			logger.complete({ messageId, job: message.job });
 		} catch (error) {

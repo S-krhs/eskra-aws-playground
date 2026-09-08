@@ -6,7 +6,7 @@
 
 | コマンド | 用途 |
 | --- | --- |
-| `npm run media:upload -- <パス>...` | 引数のファイルを R2 の `_inbox/` へ保存する(root で実行) |
+| `npm run media:upload -- <パス>...` | 引数のファイルを R2 の `_pending/` へ保存する(root で実行)。サムネイル生成後に `_inbox/` へ移る |
 
 ## 設定
 

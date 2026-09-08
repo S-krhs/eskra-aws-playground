@@ -10,6 +10,13 @@ export const sqsWorkerEventSchema = z.object({
 		z.object({
 			messageId: z.string().min(1),
 			body: z.string(),
+			// SQS counts deliveries per message. A job that has to give up before the DLQ takes over
+			// reads how many times it has been handed this message from here
+			attributes: z
+				.object({
+					ApproximateReceiveCount: z.coerce.number().int().min(1).catch(1),
+				})
+				.optional(),
 		}),
 	),
 });

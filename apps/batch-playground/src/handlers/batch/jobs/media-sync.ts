@@ -6,13 +6,19 @@ import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
-import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import {
+	PENDING_PREFIX,
+	THUMBNAIL_PREFIX,
+} from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import { Resource } from "sst/resource";
 import { z } from "zod";
 import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";
 import { scanMediaObjects } from "@/features/media-sync/media-object-scan.js";
 import { buildMediaSyncPlan } from "@/features/media-sync/sync-plan.js";
-import { enqueueMissingThumbnails } from "@/features/media-sync/thumbnail-enqueue.js";
+import {
+	enqueueThumbnailRequests,
+	type ThumbnailRequest,
+} from "@/features/media-sync/thumbnail-enqueue.js";
 import {
 	type RegisteredMediaIds,
 	resolveUnknownObjects,
@@ -194,12 +200,38 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		progress.deletedCount =
 			await mediaObjectRepository.deleteByIds(deletableIds);
 
-		// 10. Enqueue the media with no thumbnail yet. This comes after the delete — enqueuing first would
-		//    ask for thumbnails on media that is about to disappear.
-		const enqueuedCount = await enqueueMissingThumbnails({
+		// 10. Request thumbnails for whatever is still waiting: everything sitting under the pending
+		//     prefix, plus anything whose content was replaced under an unchanged key. Both sets come
+		//     out of the listing, so media about to be deleted can never appear in them and this no
+		//     longer has to run after the delete.
+		const mediaIdByKey = new Map<string, string>([
+			...known.map((media): [string, string] => {
+				return [media.objectKey, media.id];
+			}),
+			...resolved.inserts.map((insert): [string, string] => {
+				return [insert.objectKey, insert.id];
+			}),
+			...resolved.relocations.map((relocation): [string, string] => {
+				return [relocation.objectKey, relocation.id];
+			}),
+		]);
+		const enqueuedCount = await enqueueThumbnailRequests({
 			queueUrl: Resource.MediaThumbnailQueue.url,
 			job: mediaJobNames.mediaThumbnail,
-			enqueuedAt: new Date(),
+			requests: [
+				...scanned
+					.filter((object) => {
+						return object.key.startsWith(`${PENDING_PREFIX}/`);
+					})
+					.flatMap((object): ThumbnailRequest[] => {
+						const mediaId = mediaIdByKey.get(object.key);
+
+						return mediaId ? [{ mediaId, objectKey: object.key }] : [];
+					}),
+				...plan.changedObjects.map((changed): ThumbnailRequest => {
+					return { mediaId: changed.id, objectKey: changed.object.key };
+				}),
+			],
 		});
 
 		// 11. Close the run record and put the result in the log and the response.

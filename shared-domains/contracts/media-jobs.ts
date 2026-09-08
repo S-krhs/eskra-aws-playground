@@ -16,3 +16,9 @@ export const mediaThumbnailMessageSchema = z.object({
 });
 
 export type MediaThumbnailMessage = z.infer<typeof mediaThumbnailMessageSchema>;
+
+/**
+ * How many times SQS delivers a thumbnail request before the DLQ takes it.
+ * The queue's redrive policy and the job's give-up point both read this, so they can't drift apart.
+ */
+export const MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT = 3;

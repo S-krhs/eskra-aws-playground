@@ -204,6 +204,8 @@ export const resolveUnknownObjects = async (
 					id: decision.mediaId,
 					objectKey: object.key,
 					logicalPath: extractLogicalPath(object.key),
+					byteSize: object.byteSize,
+					etag: object.etag,
 					syncedAt: input.syncedAt,
 				});
 				continue;

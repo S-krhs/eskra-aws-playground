@@ -84,10 +84,6 @@ model MediaObject {
   height       Int?
   durationMs   Int?      @map("duration_ms")
   thumbnailKey String?   @map("thumbnail_key") @db.VarChar(1024)
-  /// サムネイル生成を queue へ投入した時刻。処理中の再投入を避けるために持つ
-  thumbnailEnqueuedAt DateTime? @map("thumbnail_enqueued_at") @db.Timestamptz
-  /// サムネイル生成を試行した回数。生成できないメディアへの再試行を無制限に続けないために持つ
-  thumbnailAttempts   Int       @default(0) @map("thumbnail_attempts")
   uploadedAt   DateTime  @map("uploaded_at") @db.Timestamptz
   syncedAt     DateTime  @map("synced_at") @db.Timestamptz
   trashedAt    DateTime? @map("trashed_at") @db.Timestamptz

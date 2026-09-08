@@ -13,10 +13,7 @@ import {
 
 import { getPrismaClient } from "../../client/prisma.js";
 import { mediaObjectRepository } from "./repository.js";
-import type {
-	FindThumbnaillessInput,
-	InsertMediaObjectInput,
-} from "./types.js";
+import type { InsertMediaObjectInput } from "./types.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const testId = Date.now().toString();
@@ -46,30 +43,6 @@ const buildInput = (
 		syncedAt,
 		...overrides,
 	};
-};
-
-const thumbnailQuery: FindThumbnaillessInput = {
-	limit: 1_000,
-	maxAttempts: 3,
-	retryBefore: new Date("2026-09-07T00:00:00.000Z"),
-};
-
-// findWithoutThumbnail scans every matching row, so narrow it to the ids this run inserted
-const findThumbnaillessIds = async (
-	overrides: Partial<FindThumbnaillessInput> = {},
-): Promise<string[]> => {
-	const found = await mediaObjectRepository.findWithoutThumbnail({
-		...thumbnailQuery,
-		...overrides,
-	});
-
-	return found
-		.map((media) => {
-			return media.id;
-		})
-		.filter((id) => {
-			return ids.includes(id);
-		});
 };
 
 const deleteTestRows = async (): Promise<void> => {
@@ -135,7 +108,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
-		await mediaObjectRepository.setThumbnail({
+		await mediaObjectRepository.completeThumbnail({
 			id: olderId,
 			thumbnailKey: "_thumb/a.webp",
 			width: 320,
@@ -163,7 +136,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 	// A row deleted mid-generation must not fail the worker
 	it("reports 0 rows when recording a thumbnail onto a deleted row", async () => {
 		expect(
-			await mediaObjectRepository.setThumbnail({
+			await mediaObjectRepository.completeThumbnail({
 				id: trashedId,
 				thumbnailKey: "_thumb/gone.webp",
 			}),
@@ -254,12 +227,18 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 				id: olderId,
 				objectKey: `${keyPrefix}illust/a.png`,
 				logicalPath: `${keyPrefix}illust`,
+				byteSize: 4321,
+				etag: "etag-moved",
 				syncedAt: relocatedAt,
 			},
 		]);
 
 		const found = await mediaObjectRepository.findById(olderId);
 		expect(found?.objectKey).toBe(`${keyPrefix}illust/a.png`);
+		// A move is carried out as a copy, which can change the etag; leaving it stale would make the
+		// next sync read the object as replaced content
+		expect(found?.etag).toBe("etag-moved");
+		expect(found?.byteSize).toBe(4321);
 		expect(found?.syncedAt).toEqual(relocatedAt);
 	});
 
@@ -286,66 +265,31 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await mediaObjectRepository.findById(olderId)).toBeUndefined();
 	});
 
-	it("drops a row that already has a thumbnail from the generation set", async () => {
+	// Generation moves media out of the pending area, and the row has to follow it in the same write
+	it("records where the media landed along with its thumbnail", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
-			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
 		]);
-		await mediaObjectRepository.setThumbnail({
-			id: newerId,
-			thumbnailKey: "_thumb/b.webp",
+		const completedAt = new Date("2026-09-08T00:00:00.000Z");
+
+		await mediaObjectRepository.completeThumbnail({
+			id: olderId,
+			thumbnailKey: "_thumb/a.webp",
+			width: 320,
+			height: 180,
+			location: {
+				objectKey: `${keyPrefix}_inbox/a.png`,
+				logicalPath: `${keyPrefix}_inbox`,
+				byteSize: 4321,
+				etag: "etag-moved",
+				syncedAt: completedAt,
+			},
 		});
 
-		expect(await findThumbnaillessIds()).toEqual([olderId]);
-	});
-
-	it("drops a trashed row from the generation set", async () => {
-		await mediaObjectRepository.insertMany([
-			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
-			buildInput(trashedId, "c.png", "2026-09-03T00:00:00.000Z"),
-		]);
-		await getPrismaClient().mediaObject.update({
-			where: { id: trashedId },
-			data: { trashedAt: syncedAt },
-		});
-
-		expect(await findThumbnaillessIds()).toEqual([olderId]);
-	});
-
-	// The boundary that keeps an in-flight row from being enqueued twice
-	it("skips a just-enqueued row and returns it again once the interval passes", async () => {
-		await mediaObjectRepository.insertMany([
-			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
-		]);
-		const enqueuedAt = new Date("2026-09-07T12:00:00.000Z");
-
-		const marked = await mediaObjectRepository.markThumbnailEnqueued(
-			[olderId],
-			enqueuedAt,
-		);
-		expect(marked).toBe(1);
-		expect(await findThumbnaillessIds()).toEqual([]);
-
-		expect(
-			await findThumbnaillessIds({
-				retryBefore: new Date("2026-09-08T00:00:00.000Z"),
-			}),
-		).toEqual([olderId]);
-	});
-
-	// The cap that stops media which can't be generated from being re-enqueued forever
-	it("drops a row that used up its attempts", async () => {
-		await mediaObjectRepository.insertMany([
-			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
-		]);
-		const enqueuedAt = new Date("2026-09-01T00:00:00.000Z");
-
-		for (let attempt = 0; attempt < 3; attempt += 1) {
-			await mediaObjectRepository.markThumbnailEnqueued([olderId], enqueuedAt);
-		}
-
-		expect(await findThumbnaillessIds()).toEqual([]);
-		expect(await findThumbnaillessIds({ maxAttempts: 4 })).toEqual([olderId]);
+		const found = await mediaObjectRepository.findById(olderId);
+		expect(found?.thumbnailKey).toBe("_thumb/a.webp");
+		expect(found?.objectKey).toBe(`${keyPrefix}_inbox/a.png`);
+		expect(found?.etag).toBe("etag-moved");
 	});
 
 	it("does not hit the DB on empty input", async () => {
@@ -353,8 +297,5 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await mediaObjectRepository.relocateMany([])).toBe(0);
 		expect(await mediaObjectRepository.touchMany([], syncedAt)).toBe(0);
 		expect(await mediaObjectRepository.deleteByIds([])).toBe(0);
-		expect(
-			await mediaObjectRepository.markThumbnailEnqueued([], syncedAt),
-		).toBe(0);
 	});
 });
