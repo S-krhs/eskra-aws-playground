@@ -1,7 +1,7 @@
 // In scope: the input/output types of the ChannelSetting repository
 // Out of scope: validation schemas, DB access, interpreting a settingKey
-import type { ApplicationKey } from "../shared/literals/application-key.js";
-import type { SettingKey } from "../shared/literals/setting-key.js";
+import type { ApplicationKey } from "../_shared/literals/application-key.js";
+import type { SettingKey } from "../_shared/literals/setting-key.js";
 
 /** The Discord channel setting for one guild and target user. */
 export interface ChannelSetting {

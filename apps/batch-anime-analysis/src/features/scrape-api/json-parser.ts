@@ -3,7 +3,7 @@
 import {
 	buildMetrics,
 	type MetricBuildResult,
-} from "@/shared/intermediate-models/metric/metric.js";
+} from "@/_shared/intermediate-models/metric/metric.js";
 
 export type JsonValueTarget =
 	| {

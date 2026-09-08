@@ -2,8 +2,8 @@
 // Out of scope: the Lambda entry point, swallowing a notification failure, writing the notification
 import { DiscordWebhookClient } from "@eskra-aws-playground/integration-discord/discord-webhook-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
+import { alarmNotifierEventSchema } from "@/_shared/schemas/lambda/alarm-notifier/event.js";
 import { buildAlarmReport } from "@/features/notifications/alarm-report.js";
-import { alarmNotifierEventSchema } from "@/shared/schemas/lambda/alarm-notifier/event.js";
 import { getAlertSettings } from "./runtime-settings/alert-setting-resolver.js";
 
 const logger = createBatchLogger("alarm-notification");

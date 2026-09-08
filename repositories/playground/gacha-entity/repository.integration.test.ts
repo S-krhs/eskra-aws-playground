@@ -12,8 +12,8 @@ import {
 import { z } from "zod";
 
 import { getPrismaClient } from "../../client/prisma.js";
-import { gachaPoolKeys } from "../shared/literals/gacha-pool-key.js";
-import { gachaRarities } from "../shared/literals/gacha-rarity.js";
+import { gachaPoolKeys } from "../_shared/literals/gacha-pool-key.js";
+import { gachaRarities } from "../_shared/literals/gacha-rarity.js";
 import { gachaEntityRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;

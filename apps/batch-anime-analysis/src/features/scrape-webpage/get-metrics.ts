@@ -1,7 +1,7 @@
 // In scope: fetching HTML from a webpage URL and turning it into a metric list
 // Out of scope: launching a browser and controlling rendering, this app's own conversion rules
 import { fetchWebpageHtml } from "@eskra-aws-playground/libs-browser/html-scraper/webpage-html.js";
-import type { MetricBuildResult } from "@/shared/intermediate-models/metric/metric.js";
+import type { MetricBuildResult } from "@/_shared/intermediate-models/metric/metric.js";
 import {
 	type HtmlParseOptions,
 	type HtmlValueTarget,

@@ -1,6 +1,6 @@
 // In scope: fetching JSON from an API URL (with a timeout and a response-size cap) and turning it into a metric list
 // Out of scope: retry control, this app's own definition conversion
-import type { MetricBuildResult } from "@/shared/intermediate-models/metric/metric.js";
+import type { MetricBuildResult } from "@/_shared/intermediate-models/metric/metric.js";
 import {
 	type JsonParseOptions,
 	type JsonValueTarget,

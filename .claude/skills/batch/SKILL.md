@@ -14,7 +14,7 @@ handlers/    entry point. Validates the event, dispatches, shapes the response.
   contracts/ job names and message schemas this handler tree routes on
 jobs/        orchestration: ordering repository, integration, and feature calls
 features/    the actual logic, one concern per directory
-shared/      app-wide schemas and intermediate models
+_shared/     app-wide schemas and intermediate models
 ```
 
 Two layouts are in use. When one handler dispatches several jobs by name, `jobs/` and `contracts/` nest under that handler (`handlers/<trigger>/jobs/`); when each handler is a single-purpose Lambda, they sit at `src/` level. Follow whichever the app already does.

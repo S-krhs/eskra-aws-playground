@@ -2,9 +2,9 @@
 // Out of scope: writing the reminder message, Discord bot API HTTP detail
 import { DiscordBotClient } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
+import { applicationKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/application-key.js";
+import { settingKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/setting-key.js";
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
-import { applicationKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/application-key.js";
-import { settingKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/setting-key.js";
 import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/reminder-choices.js";
 import { Resource } from "sst/resource";
 import {

@@ -5,7 +5,7 @@ import * as cheerio from "cheerio";
 import {
 	buildMetrics,
 	type MetricBuildResult,
-} from "@/shared/intermediate-models/metric/metric.js";
+} from "@/_shared/intermediate-models/metric/metric.js";
 
 /** Picks one element out of an HTML document. */
 export interface HtmlElementTarget {

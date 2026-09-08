@@ -1,9 +1,9 @@
 // In scope: removing the caller's gamble-check-disable setting and swapping the deferred response's original message for the final content
 // Out of scope: job dispatch, interpreting the SQS event, checking where it was run (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
+import { applicationKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/application-key.js";
+import { settingKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/setting-key.js";
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
-import { applicationKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/application-key.js";
-import { settingKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/setting-key.js";
 import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-job-message.js";
 import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
 

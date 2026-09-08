@@ -1,6 +1,6 @@
 // In scope: writing the Discord notification for an anime-metric scrape result
 // Out of scope: running the scrape, resolving the webhook URL, HTTP calls
-import type { Metric } from "@/shared/intermediate-models/metric/metric.js";
+import type { Metric } from "@/_shared/intermediate-models/metric/metric.js";
 
 const DISCORD_CONTENT_LIMIT = 2_000;
 const DEFAULT_PREVIEW_LIMIT = 5;

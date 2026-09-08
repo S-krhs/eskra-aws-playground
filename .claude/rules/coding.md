@@ -9,6 +9,8 @@ Repo-wide rules. See `architecture.md` for placement and dependency direction.
 - TypeScript is `strict`. Narrow external input near where it's used, not everywhere.
 - ESM: `.js` extension on relative imports.
 - No `index.ts` barrel files — import paths should name the responsibility. Exception: a UI app uses Feature-Sliced Design, where each slice (and each `shared` segment) has an `index.ts` as its public API — see the `frontend` skill.
+- A directory that exists only to hold what its sibling directories share is named `_shared/`. The underscore says it is not one of the siblings — it names a place, not an element of the structure. `repositories/media/_shared/` sits beside `media-object/` and `media-storage/`; `routes/_shared/` sits beside each route.
+- That is a different thing from a directory whose own name happens to be `shared`. A UI app's FSD `shared` is a layer, a peer of `features` and `entities` — a named element of the methodology, not a place its siblings share. It keeps its name.
 - Never put secrets, webhook URLs, or unnecessarily detailed bodies in logs or responses.
 
 ## File header
