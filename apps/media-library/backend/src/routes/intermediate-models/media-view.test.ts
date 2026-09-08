@@ -23,8 +23,8 @@ const buildMedia = (overrides: Partial<MediaObject> = {}): MediaObject => {
 };
 
 describe("toMediaView", () => {
-	// R2 の key は画面から使わないため、応答に載せない
-	it("objectKey と thumbnailKey を落とし、サムネイルの有無だけを渡す", () => {
+	// The screen never uses an R2 key, so none goes in the response
+	it("drops objectKey and thumbnailKey, passing only whether a thumbnail exists", () => {
 		const view = toMediaView(buildMedia({ thumbnailKey: "_thumb/x.webp" }));
 
 		expect(view).not.toHaveProperty("objectKey");
@@ -32,11 +32,11 @@ describe("toMediaView", () => {
 		expect(view.hasThumbnail).toBe(true);
 	});
 
-	it("サムネイル未生成は hasThumbnail を false にする", () => {
+	it("reports hasThumbnail false while no thumbnail is generated", () => {
 		expect(toMediaView(buildMedia()).hasThumbnail).toBe(false);
 	});
 
-	it("日時は ISO 文字列で返す", () => {
+	it("returns timestamps as ISO strings", () => {
 		expect(toMediaView(buildMedia()).uploadedAt).toBe(
 			"2026-09-01T00:00:00.000Z",
 		);

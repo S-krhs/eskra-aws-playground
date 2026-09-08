@@ -1,7 +1,7 @@
-// In scope: MediaSyncRun repository の入出力型
-// Out of scope: validation schema、DB 操作、同期そのものの実行
+// In scope: the input/output types of the MediaSyncRun repository
+// Out of scope: validation schemas, DB access, running the sync itself
 
-/** 同期の 1 回の実行。finishedAt が undefined なら実行中。 */
+/** One sync run; an undefined finishedAt means it is still running. */
 export interface MediaSyncRun {
 	id: string;
 	startedAt: Date;
@@ -13,7 +13,7 @@ export interface MediaSyncRun {
 	error: string | undefined;
 }
 
-/** 実行中に書き戻す件数。 */
+/** The counts written back while a run is in flight. */
 export interface MediaSyncProgress {
 	scannedCount: number;
 	insertedCount: number;
@@ -21,12 +21,11 @@ export interface MediaSyncProgress {
 	deletedCount: number;
 }
 
-/** 進捗の更新入力。 */
 export interface UpdateMediaSyncProgressInput extends MediaSyncProgress {
 	id: string;
 }
 
-/** 終了の記録入力。error があれば失敗として残す。 */
+/** Records the end of a run; an `error` marks it as failed. */
 export interface FinishMediaSyncRunInput extends UpdateMediaSyncProgressInput {
 	finishedAt: Date;
 	error?: string;

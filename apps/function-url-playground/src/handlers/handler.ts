@@ -1,5 +1,5 @@
-// In scope: Function URL の公開エンドポイントとして envelope を検証し、リクエストパスから担当 route へ委譲する
-// Out of scope: 署名検証、interaction 内容の解釈、応答 payload の中身を持つ
+// In scope: validating the envelope as the public Function URL endpoint and delegating by request path to the owning route
+// Out of scope: signature verification, interpreting an interaction, the contents of a response payload
 import { paths } from "./contracts/paths.js";
 import { kaguyaBotInteractionRoute } from "./routes/kaguya-bot-interaction/route.js";
 import { yacchoBotInteractionRoute } from "./routes/yaccho-bot-interaction/route.js";
@@ -9,18 +9,17 @@ import {
 	functionUrlEventSchema,
 } from "./schema.js";
 
-/** Function URL のリクエストを受け取り HTTP response を返す route。 */
 type FunctionUrlRoute = (
 	event: FunctionUrlEvent,
 ) => Promise<FunctionUrlResponse>;
 
-/** リクエストパスと担当 route の対応。route を追加したらここへ登録する(例: "/slack/events")。 */
+/** Request path to owning route; a new route gets registered here (e.g. "/slack/events"). */
 const routesByPath = new Map<string, FunctionUrlRoute>([
 	[paths.yacchoBotInteraction, yacchoBotInteractionRoute],
 	[paths.kaguyaBotInteraction, kaguyaBotInteractionRoute],
 ]);
 
-/** Lambda Function URL のエントリポイント。envelope を検証し、パスに対応する route へ委譲する。 */
+/** The Lambda Function URL entry point; validates the envelope and delegates to the route for that path. */
 export const handler = async (
 	event: unknown = {},
 ): Promise<FunctionUrlResponse> => {

@@ -27,7 +27,7 @@ beforeEach(() => {
 });
 
 describe("handler", () => {
-	it("イベントの job を正規化し、対応するジョブへイベントと context を渡す", async () => {
+	it("normalizes the event's job and hands the event and context to the matching job", async () => {
 		const response = { ok: true, job: "uma-one-draw-topic" };
 		jobs.umaOneDrawTopicJob.mockResolvedValue(response);
 		const event = { job: " UMA-ONE-DRAW-TOPIC " };
@@ -39,7 +39,7 @@ describe("handler", () => {
 		);
 	});
 
-	it("登録済みの全ジョブへ解決する", async () => {
+	it("resolves to every registered job", async () => {
 		jobs.umaOneDrawTopicSchedulerJob.mockResolvedValue({
 			ok: true,
 			job: "uma-one-draw-topic-scheduler",
@@ -56,19 +56,19 @@ describe("handler", () => {
 		expect(jobs.playCheckReminderJob).toHaveBeenCalledOnce();
 	});
 
-	it("job が未設定ならエラーにする", async () => {
+	it("errors when job is unset", async () => {
 		await expect(handler({})).rejects.toThrow(
 			"有効な job が指定されていません",
 		);
 	});
 
-	it("job が string でないイベントもエラーにする", async () => {
+	it("also errors when job is not a string", async () => {
 		await expect(handler({ job: 1 })).rejects.toThrow(
 			"有効な job が指定されていません",
 		);
 	});
 
-	it("未対応の job は入力値を含めずにエラーにする", async () => {
+	it("errors on an unsupported job without echoing the input value", async () => {
 		const unknownJob = "secret-like-value";
 
 		const error = await handler({ job: unknownJob }).catch(

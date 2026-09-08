@@ -1,5 +1,5 @@
-// In scope: 固定版の ffmpeg static build を取得し、Lambda Layer の bin/ を組み立てる
-// Out of scope: LayerVersion リソースの定義、layer を利用する Lambda function の構成
+// In scope: fetching the pinned ffmpeg static build and assembling the Lambda Layer's bin/
+// Out of scope: defining the LayerVersion resource, configuring the Lambda functions that use it
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -38,7 +38,7 @@ const digestOf = (filePath) => {
 
 mkdirSync(downloadDir, { recursive: true });
 
-// 配布物は 40MB を超えるため、checksum が一致する取得済み archive は再利用する
+// The download is over 40MB, so an already-fetched archive whose checksum matches is reused
 if (!existsSync(archivePath) || digestOf(archivePath) !== release.sha256) {
 	const response = await fetch(release.url);
 
@@ -81,7 +81,7 @@ execFileSync(
 	{ stdio: "inherit" },
 );
 
-// Lambda は /opt/bin を PATH に含めるが、実行権限は archive から引き継がれないことがある
+// Lambda puts /opt/bin on PATH, but the executable bit doesn't always survive the archive
 for (const binaryName of release.binaries) {
 	chmodSync(resolve(outputBinDir, binaryName), 0o755);
 }

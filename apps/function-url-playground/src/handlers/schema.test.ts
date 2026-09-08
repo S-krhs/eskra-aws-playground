@@ -4,7 +4,7 @@ import { paths } from "./contracts/paths.js";
 import { functionUrlEventSchema } from "./schema.js";
 
 describe("functionUrlEventSchema", () => {
-	it("rawPath と headers と body と isBase64Encoded を受け付ける", () => {
+	it("accepts rawPath, headers, body and isBase64Encoded", () => {
 		expect(
 			functionUrlEventSchema.parse({
 				rawPath: paths.yacchoBotInteraction,
@@ -20,19 +20,19 @@ describe("functionUrlEventSchema", () => {
 		});
 	});
 
-	it("body と isBase64Encoded は省略できる", () => {
+	it("allows body and isBase64Encoded to be omitted", () => {
 		expect(functionUrlEventSchema.parse({ rawPath: "/", headers: {} })).toEqual(
 			{ rawPath: "/", headers: {} },
 		);
 	});
 
-	it("rawPath が欠けたイベントはエラーにする", () => {
+	it("errors on an event missing rawPath", () => {
 		expect(() => {
 			return functionUrlEventSchema.parse({ headers: {} });
 		}).toThrow();
 	});
 
-	it("headers が record でないイベントはエラーにする", () => {
+	it("errors on an event whose headers is not a record", () => {
 		expect(() => {
 			return functionUrlEventSchema.parse({ rawPath: "/", headers: "x" });
 		}).toThrow();

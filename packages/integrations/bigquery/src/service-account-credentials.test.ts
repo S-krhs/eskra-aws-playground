@@ -9,7 +9,7 @@ const validKey = JSON.stringify({
 });
 
 describe("parseServiceAccountKey", () => {
-	it("鍵 JSON から認証情報を取り出す", () => {
+	it("extracts credentials from the key JSON", () => {
 		expect(parseServiceAccountKey(validKey)).toEqual({
 			projectId: "example-project",
 			clientEmail: "exporter@example-project.iam.gserviceaccount.com",
@@ -18,19 +18,19 @@ describe("parseServiceAccountKey", () => {
 		});
 	});
 
-	it("JSON として解釈できない鍵はエラーにする", () => {
+	it("errors on a key that isn't valid JSON", () => {
 		expect(() => {
 			return parseServiceAccountKey("not-json");
 		}).toThrow("JSON として解釈できません");
 	});
 
-	it("必須項目が欠けた鍵はエラーにする", () => {
+	it("errors on a key missing a required field", () => {
 		expect(() => {
 			return parseServiceAccountKey(JSON.stringify({ project_id: "p" }));
 		}).toThrow("project_id・client_email・private_key");
 	});
 
-	it("鍵の中身をエラーメッセージへ含めない", () => {
+	it("never puts the key's contents in the error message", () => {
 		const secretValue = "super-secret-private-key";
 
 		expect(() => {

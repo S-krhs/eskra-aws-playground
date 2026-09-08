@@ -45,7 +45,7 @@ describe("DiscordBotClient", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("空の bot token を拒否する", () => {
+	it("rejects an empty bot token", () => {
 		expect(() => {
 			return new DiscordBotClient("");
 		}).toThrow(DiscordBotError);
@@ -55,7 +55,7 @@ describe("DiscordBotClient", () => {
 		}).toThrow(DiscordBotError);
 	});
 
-	it("数字のみでない channel ID を拒否する", async () => {
+	it("rejects a channel ID that isn't numeric-only", async () => {
 		const client = new DiscordBotClient(BOT_TOKEN);
 
 		await expect(
@@ -66,7 +66,7 @@ describe("DiscordBotClient", () => {
 		);
 	});
 
-	it("チャンネルメッセージ API へ正しい URL・ヘッダー・payload で POST する", async () => {
+	it("POSTs to the channel-message API with the right URL, headers, and payload", async () => {
 		const fetchMock = vi.fn(async () => {
 			return new Response(null, { status: 200 });
 		});
@@ -93,7 +93,7 @@ describe("DiscordBotClient", () => {
 		expect(JSON.parse(init.body as string)).toEqual(payload);
 	});
 
-	it("失敗応答の本文をエラーメッセージに含めず details で安全化する", async () => {
+	it("keeps the failure body out of the error message and sanitizes it in details", async () => {
 		const responseBody = `token=${BOT_TOKEN} ${"x".repeat(700)}`;
 
 		vi.stubGlobal(
@@ -124,7 +124,7 @@ describe("DiscordBotClient", () => {
 		expect(details.body.length).toBeLessThanOrEqual(512);
 	});
 
-	it("タイムアウトすると DiscordBotError を投げる", async () => {
+	it("throws DiscordBotError on timeout", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async (_url: string, init: RequestInit) => {
@@ -154,7 +154,7 @@ describe("DiscordBotClient", () => {
 		});
 	});
 
-	it("fetch 例外のメッセージに bot token が混入しない", async () => {
+	it("keeps the bot token out of a fetch exception's message", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => {
@@ -176,7 +176,7 @@ describe("DiscordBotClient", () => {
 		);
 	});
 
-	it("数字のみでない application ID・guild ID を拒否する", async () => {
+	it("rejects an application ID or guild ID that isn't numeric-only", async () => {
 		const client = new DiscordBotClient(BOT_TOKEN);
 
 		await expect(
@@ -196,7 +196,7 @@ describe("DiscordBotClient", () => {
 		);
 	});
 
-	it("guild コマンド API へ正しい URL・メソッド・ヘッダー・payload で PUT する", async () => {
+	it("PUTs to the guild-commands API with the right URL, method, headers, and payload", async () => {
 		const fetchMock = vi.fn(async () => {
 			return new Response(null, { status: 200 });
 		});
@@ -222,7 +222,7 @@ describe("DiscordBotClient", () => {
 		expect(JSON.parse(init.body as string)).toEqual(commands);
 	});
 
-	it("global コマンド API へ正しい URL・メソッド・ヘッダー・payload で PUT する", async () => {
+	it("PUTs to the global-commands API with the right URL, method, headers, and payload", async () => {
 		const fetchMock = vi.fn(async () => {
 			return new Response(null, { status: 200 });
 		});
@@ -248,7 +248,7 @@ describe("DiscordBotClient", () => {
 		expect(JSON.parse(init.body as string)).toEqual(commands);
 	});
 
-	it("guild コマンド API へ正しい URL・メソッド・ヘッダーで GET し、登録済みコマンドを返す", async () => {
+	it("GETs the guild-commands API with the right URL/method/headers and returns the registered commands", async () => {
 		const registered = [
 			{ id: "999", name: "hello", description: "やおよろ～と挨拶を返す" },
 		];
@@ -273,7 +273,7 @@ describe("DiscordBotClient", () => {
 		expect(init.headers).toEqual({ Authorization: `Bot ${BOT_TOKEN}` });
 	});
 
-	it("global コマンド API へ正しい URL・メソッド・ヘッダーで GET し、登録済みコマンドを返す", async () => {
+	it("GETs the global-commands API with the right URL/method/headers and returns the registered commands", async () => {
 		const registered = [
 			{ id: "999", name: "hello", description: "やおよろ～と挨拶を返す" },
 		];
@@ -298,7 +298,7 @@ describe("DiscordBotClient", () => {
 		expect(init.headers).toEqual({ Authorization: `Bot ${BOT_TOKEN}` });
 	});
 
-	it("command 失敗応答の本文をエラーメッセージに含めず details で安全化する", async () => {
+	it("keeps a command failure body out of the error message and sanitizes it in details", async () => {
 		const responseBody = `token=${BOT_TOKEN} ${"x".repeat(700)}`;
 
 		vi.stubGlobal(

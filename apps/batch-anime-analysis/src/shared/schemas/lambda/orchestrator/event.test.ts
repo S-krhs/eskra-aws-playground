@@ -2,25 +2,25 @@ import { describe, expect, it } from "vitest";
 import { orchestratorEventSchema } from "./event.js";
 
 describe("orchestratorEventSchema", () => {
-	it("起動イベントを検証して正規化する", () => {
+	it("validates and normalizes the launch event", () => {
 		expect(orchestratorEventSchema.parse({ scheduleHour: 9 })).toEqual({
 			scheduleHour: 9,
 		});
 	});
 
-	it("scheduleHour が欠けたイベントはエラーにする", () => {
+	it("errors on an event missing scheduleHour", () => {
 		expect(() => {
 			return orchestratorEventSchema.parse({});
 		}).toThrow("scheduleHour");
 	});
 
-	it("scheduleHour が number でないイベントはエラーにする", () => {
+	it("errors on an event whose scheduleHour is not a number", () => {
 		expect(() => {
 			return orchestratorEventSchema.parse({ scheduleHour: "9" });
 		}).toThrow("scheduleHour");
 	});
 
-	it("scheduleHour が 0 から 23 の整数でないイベントはエラーにする", () => {
+	it("errors on a scheduleHour that is not an integer from 0 to 23", () => {
 		expect(() => {
 			return orchestratorEventSchema.parse({ scheduleHour: 24 });
 		}).toThrow("scheduleHour");

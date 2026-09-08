@@ -1,7 +1,6 @@
-// In scope: Kaguya Bot として Discord へ登録し、routing する application command を一元管理する
-// Out of scope: Discord API 登録形式への変換、routing、operation の実装を行う
+// In scope: the one place listing the application commands registered with Discord and routed as Kaguya Bot
+// Out of scope: converting to the Discord API's registration form, routing, operation implementations
 
-/** Kaguya Bot の Discord application command 定義。 */
 export const commands = {
 	inuihiroshi: {
 		name: "inuihiroshi",

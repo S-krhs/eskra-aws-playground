@@ -1,19 +1,19 @@
 import fsd from "@feature-sliced/steiger-plugin";
 import { defineConfig } from "steiger";
 
-// 設定は .js で書く。cosmiconfig の TypeScript loader が repo の TypeScript 7 に
-// 未対応で、steiger.config.ts を置くと findConfigFile が無いと言って落ちる。
+// The config is .js: cosmiconfig's TypeScript loader doesn't support this repo's TypeScript 7,
+// and a steiger.config.ts dies saying findConfigFile is missing.
 export default defineConfig([
 	...fsd.configs.recommended,
-	// src/pages/ は Astro のルーティングであって FSD の pages 層ではない。
-	// index.astro を層の public API と誤検知し、ルートの単位を segment へ割れとも言う。
+	// src/pages/ is Astro routing, not the FSD pages layer. Otherwise index.astro gets flagged as
+	// that layer's public API, and each route is told to split into segments.
 	{ ignores: ["./src/pages/**"] },
 	{
 		files: ["./src/features/**"],
 		rules: {
-			// feature を参照するのは Astro のページだけで、それは上で対象外にしている。
-			// steiger からは参照ゼロに見えるため、features 層に限って無効化する。
-			// widgets・entities では有効なままにし、切り出しすぎを検出させる。
+			// Only Astro pages reference this feature, and those are excluded above, so steiger sees zero
+			// references. It is disabled for the features layer alone, and stays on for widgets and
+			// entities to keep catching over-splitting.
 			"fsd/insignificant-slice": "off",
 		},
 	},

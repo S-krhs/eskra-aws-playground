@@ -1,5 +1,5 @@
-// In scope: 押しボタンの見た目をした、別タブで開くリンク
-// Out of scope: リンク先の組み立て
+// In scope: a link that looks like a push button and opens in a new tab
+// Out of scope: building the destination URL
 
 import type { ReactNode } from "react";
 
@@ -8,7 +8,7 @@ interface Props {
 	children: ReactNode;
 }
 
-/** 押しボタンと同じ見た目のリンク。常に別タブで開く */
+/** A link styled as a push button; always opens in a new tab */
 export const LinkButton = ({ href, children }: Props) => {
 	return (
 		<a

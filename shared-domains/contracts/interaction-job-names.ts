@@ -1,7 +1,5 @@
-// In scope: sqs-worker が受け付ける interaction ジョブ名を一元管理する
-// Out of scope: ジョブの実装、SQS message の構築、ルーティングを持つ
-
-/** deferred 応答済み interaction を後追い処理する SQS ジョブ名。 */
+// In scope: the one place listing interaction job names sqs-worker accepts
+// Out of scope: job implementation, building an SQS message, routing
 export const interactionJobNames = {
 	yacchoHelloReply: "yaccho-hello-reply",
 	kaguyaInuihiroshiReply: "kaguya-inuihiroshi-reply",

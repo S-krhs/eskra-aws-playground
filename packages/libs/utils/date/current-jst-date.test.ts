@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getCurrentJstDateString } from "./current-jst-date.js";
 
 describe("getCurrentJstDateString", () => {
-	it("JST 基準の現在日付を YYYY-MM-DD 形式で返す", () => {
+	it("returns today's date in JST as YYYY-MM-DD", () => {
 		const expected = new Date(Date.now() + 9 * 60 * 60 * 1000)
 			.toISOString()
 			.slice(0, 10);
@@ -11,7 +11,7 @@ describe("getCurrentJstDateString", () => {
 		expect(getCurrentJstDateString()).toBe(expected);
 	});
 
-	it("YYYY-MM-DD 形式である", () => {
+	it("is in YYYY-MM-DD format", () => {
 		expect(getCurrentJstDateString()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 	});
 });

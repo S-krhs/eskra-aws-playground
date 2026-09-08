@@ -1,7 +1,5 @@
-// In scope: Discord component custom_id routing に使う prefix を一元管理する
-// Out of scope: custom_id の生成・解釈、routing
-
-/** Discord component custom_id prefix。 */
+// In scope: the one place listing prefixes used to route a Discord component's custom_id
+// Out of scope: building/interpreting a custom_id, routing
 export const prefixes = {
 	playCheckReminder: "play-check-reminder",
 } as const;

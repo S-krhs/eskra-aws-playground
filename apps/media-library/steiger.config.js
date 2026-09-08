@@ -1,16 +1,16 @@
 import fsd from "@feature-sliced/steiger-plugin";
 import { defineConfig } from "steiger";
 
-// 設定は .js で書く。cosmiconfig の TypeScript loader が repo の TypeScript 7 に
-// 未対応で、steiger.config.ts を置くと findConfigFile が無いと言って落ちる。
+// The config is .js: cosmiconfig's TypeScript loader doesn't support this repo's TypeScript 7,
+// and a steiger.config.ts dies saying findConfigFile is missing.
 export default defineConfig([
 	...fsd.configs.recommended,
 	{
 		rules: {
-			// 画面が 1 つしかないため、どの slice も参照が 1 件になり全件が指摘される。
-			// files で範囲を絞ると、その範囲のファイルが参照元として数えられなくなり
-			// entities/media まで「参照 1 件」に見えるため、範囲を絞らず切る。
-			// 2 つ目の画面を足したらこの無効化を外し、指摘が消えることを確かめる。
+			// With one screen, every slice has exactly one reference and all of them get flagged. Scoping
+			// the rule with files doesn't help — files outside the scope stop counting as references, so
+			// even entities/media looks like "one reference" — hence the unscoped off.
+			// Once a second screen exists, remove this and confirm the warnings actually go away.
 			"fsd/insignificant-slice": "off",
 		},
 	},

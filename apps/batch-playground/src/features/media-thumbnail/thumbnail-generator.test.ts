@@ -1,5 +1,5 @@
-// ffmpeg の実バイナリを使う検証は、layer をビルド済みの場合だけ実行される。
-// 未ビルドなら `npm run build:ffmpeg-layer` で用意する。
+// The checks against the real ffmpeg binaries only run once the layer is built.
+// Build it with `npm run build:ffmpeg-layer` if it isn't.
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -23,16 +23,16 @@ const ffmpegPath = join(layerBinDir, "ffmpeg");
 const hasFfmpeg = existsSync(ffmpegPath);
 
 describe("resolvePosterSeconds", () => {
-	it("十分に長い動画は 1 秒地点から取る", () => {
+	it("takes the frame at 1 second from a long enough video", () => {
 		expect(resolvePosterSeconds(10_000)).toBe(1);
 	});
 
-	// 1 秒に満たない動画で -ss 1 を指定すると 1 フレームも取れない
-	it("短い動画は先頭から取る", () => {
+	// -ss 1 on a video under a second yields no frame at all
+	it("takes the frame from the start of a short video", () => {
 		expect(resolvePosterSeconds(500)).toBe(0);
 	});
 
-	it("尺が読めなければ既定の位置から取る", () => {
+	it("falls back to the default position when the duration is unreadable", () => {
 		expect(resolvePosterSeconds(undefined)).toBe(1);
 	});
 });
@@ -90,7 +90,7 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 		return path;
 	};
 
-	it("画像の寸法を読み、尺は空にする", async () => {
+	it("reads an image's dimensions and leaves the duration empty", async () => {
 		const probe = await probeMedia(await buildImage());
 
 		expect(probe.width).toBe(1920);
@@ -98,7 +98,7 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 		expect(probe.durationMs).toBeUndefined();
 	});
 
-	it("動画の寸法と尺を読む", async () => {
+	it("reads a video's dimensions and duration", async () => {
 		const probe = await probeMedia(await buildVideo());
 
 		expect(probe.width).toBe(1280);
@@ -106,7 +106,7 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 		expect(probe.durationMs).toBe(3000);
 	});
 
-	it("画像から幅 320 の webp を作る", async () => {
+	it("makes a 320-wide webp from an image", async () => {
 		const destinationPath = join(workDir, "image.webp");
 		await generateThumbnail({
 			sourcePath: await buildImage(),
@@ -119,7 +119,7 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 		expect(probe.height).toBe(180);
 	});
 
-	it("動画から幅 320 の webp を作る", async () => {
+	it("makes a 320-wide webp from a video", async () => {
 		const destinationPath = join(workDir, "video.webp");
 		await generateThumbnail({
 			sourcePath: await buildVideo(),

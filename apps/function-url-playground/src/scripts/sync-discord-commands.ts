@@ -1,5 +1,5 @@
-// In scope: Bot ごとのスラッシュコマンドを Discord API の登録形式へ変換し、global scope へ bulk overwrite する
-// Out of scope: コマンドの宣言、応答内容、interaction の解釈
+// In scope: converting each bot's slash commands into the Discord API's registration form and bulk-overwriting them at global scope
+// Out of scope: declaring the commands, their response content, interpreting an interaction
 import {
 	DiscordBotClient,
 	type DiscordCommandDefinition,
@@ -17,9 +17,9 @@ interface DiscordCommandSyncTarget {
 }
 
 /**
- * Botごとのコマンド定義を global scope へ bulk overwrite で同期する。
- * --dry-run では送信せず、現登録と登録予定を並べて表示するだけ。
- * SST secret を Resource で参照するため `sst shell` 経由で起動する(root の `npm run discord:sync` / `discord:sync:dry`)。
+ * Syncs each bot's commands to global scope by bulk overwrite. --dry-run sends nothing and only prints
+ * what is registered now beside what would be. SST secrets are read through Resource, so it runs via
+ * `sst shell` (the root's `npm run discord:sync` / `discord:sync:dry`).
  */
 const syncDiscordCommands = async (): Promise<void> => {
 	const targets: readonly DiscordCommandSyncTarget[] = [

@@ -1,5 +1,5 @@
-// In scope: 1 ファイルを R2 の _inbox へ保存する(key の衝突回避と metadata の付与を含む)
-// Out of scope: 引数の解釈、設定の読み込み、DB への反映、サムネイル生成
+// In scope: storing one file into R2's _inbox, key-collision avoidance and metadata included
+// Out of scope: reading arguments, loading config, writing to the DB, thumbnail generation
 import { randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
@@ -10,17 +10,16 @@ import { resolveContentType } from "@eskra-aws-playground/shared-domains/contrac
 import { buildInboxKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
 
-// 同じミリ秒に更新されたファイルが並ぶことは稀で、これを超えるなら設定の誤りを疑う
+// Files sharing a modified millisecond are rare; going past this points at a misconfiguration
 const MAX_KEY_SEQUENCE = 100;
 
-/** 保存したメディアの所在。 */
 export interface UploadedMedia {
 	objectKey: string;
 	mediaId: string;
 	byteSize: number;
 }
 
-/** 保存の入力。filePath は WSL から見えるパス。 */
+/** `filePath` is the path as WSL sees it. */
 export interface UploadMediaFileInput {
 	bucket: string;
 	filePath: string;
@@ -36,7 +35,7 @@ const resolveAvailableKey = async (
 		const objectKey = buildInboxKey({
 			modifiedAt,
 			extension,
-			// 最初の 1 つは連番を付けず、衝突したときだけ -2 から振る
+			// The first key carries no counter; a collision starts numbering at -2
 			sequence: sequence === 0 ? undefined : sequence + 1,
 		});
 
@@ -53,8 +52,8 @@ const resolveAvailableKey = async (
 };
 
 /**
- * ファイルを R2 の _inbox へ保存する。
- * UUID と元のファイル名は metadata に載せるだけで DB へは書かず、DB への反映は同期ジョブに任せる。
+ * Stores a file into R2's _inbox. The UUID and original file name only go into object metadata —
+ * nothing is written to the DB, which the sync job takes care of later.
  */
 export const uploadMediaFile = async (
 	client: R2Client,
@@ -84,7 +83,7 @@ export const uploadMediaFile = async (
 	await r2ObjectStore.upload(client, {
 		bucket: input.bucket,
 		key: objectKey,
-		// 大きい動画をメモリに載せないため stream で渡す
+		// Streamed, so a large video never sits in memory
 		body: createReadStream(input.filePath),
 		contentType,
 		metadata: buildMediaObjectMetadata({

@@ -1,25 +1,25 @@
-// In scope: app 内の処理間で受け渡す metric 中間表現の型と正規化処理を提供する
-// Out of scope: データ取得、selector 解釈、通知文生成を扱う
+// In scope: the intermediate metric type passed between steps inside this app, and its normalization
+// Out of scope: fetching data, interpreting selectors, writing notifications
 
-/** app 内の処理間で受け渡す対象名に紐づく数値 metric。 */
+/** A numeric metric tied to a label, passed between steps inside this app. */
 export interface Metric {
 	label: string;
 	value: number;
 }
 
-/** metric 中間表現を作るための未正規化入力。 */
+/** The unnormalized input a metric is built from. */
 export interface MetricInput {
 	label: unknown;
 	value: unknown;
 }
 
-/** 未正規化入力一覧から作った metric 中間表現一覧と、変換できず除外した入力の件数。 */
+/** The metrics built from a list of unnormalized inputs, plus how many were excluded as unconvertible. */
 export interface MetricBuildResult {
 	metrics: Metric[];
 	skippedCount: number;
 }
 
-/** 未正規化入力一覧から metric 中間表現一覧を作る。変換できない入力は除外して件数に数える。 */
+/** Builds metrics from unnormalized inputs; an input that can't be converted is excluded and counted. */
 export const buildMetrics = (
 	inputs: readonly MetricInput[],
 ): MetricBuildResult => {
@@ -41,7 +41,6 @@ export const buildMetrics = (
 	return { metrics, skippedCount };
 };
 
-/** 任意の値を metric label へ変換する。 */
 export const normalizeMetricLabel = (value: unknown): string => {
 	const label = String(value ?? "").trim();
 
@@ -52,7 +51,7 @@ export const normalizeMetricLabel = (value: unknown): string => {
 	return label;
 };
 
-/** 任意の値を metric value へ変換する。空文字や欠損値は 0 とみなさずエラーにする。 */
+/** Converts any value into a metric value; an empty string or a missing value errors rather than counting as 0. */
 export const normalizeMetricValue = (value: unknown): number => {
 	if (typeof value === "number") {
 		if (!Number.isFinite(value)) {

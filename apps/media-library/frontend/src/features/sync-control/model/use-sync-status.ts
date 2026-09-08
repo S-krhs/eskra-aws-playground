@@ -1,5 +1,5 @@
-// In scope: 同期の起動と、実行中の進捗のポーリング
-// Out of scope: 同期そのものの実行、一覧の取得、表示
+// In scope: starting a sync and polling its progress while it runs
+// Out of scope: running the sync itself, fetching the listing, display
 import type { InferResponseType } from "hono/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/shared/api";
@@ -9,10 +9,9 @@ type StatusResponse = InferResponseType<
 	200
 >;
 
-/** 同期 1 回分の実行記録。backend の応答から型を導出する。 */
+/** One sync run record; the type is derived from the backend's response. */
 export type SyncRun = NonNullable<StatusResponse["latest"]>;
 
-/** 同期の状態と操作。 */
 export interface SyncStatus {
 	latest: SyncRun | undefined;
 	running: SyncRun | undefined;
@@ -21,21 +20,18 @@ export interface SyncStatus {
 	start: () => void;
 }
 
-// 実行中だけ短い間隔で読む。同期は分単位で掛かるので、これ以上細かくしても見え方は変わらない
+// Only a running sync is read on the short interval; a sync takes minutes, so anything finer changes nothing on screen
 const RUNNING_INTERVAL_MS = 2_000;
 const IDLE_INTERVAL_MS = 30_000;
 
-/**
- * 同期の進捗を読み続ける。
- * 実行中は 2 秒ごと、そうでなければ 30 秒ごとに読む。
- */
+/** Read every 2 seconds while running, every 30 seconds otherwise. */
 export const useSyncStatus = (onFinished: () => void): SyncStatus => {
 	const [latest, setLatest] = useState<SyncRun | undefined>(undefined);
 	const [running, setRunning] = useState<SyncRun | undefined>(undefined);
 	const [isStarting, setIsStarting] = useState(false);
 	const [error, setError] = useState<string | undefined>(undefined);
 
-	// 実行中から実行中でないへ変わった回だけ一覧を取り直すため、前回の状態を覚えておく
+	// The previous state is remembered, so the listing only refetches on the running-to-idle transition
 	const wasRunning = useRef(false);
 	const finishedCallback = useRef(onFinished);
 	finishedCallback.current = onFinished;
@@ -101,7 +97,7 @@ export const useSyncStatus = (onFinished: () => void): SyncStatus => {
 					throw new Error(`同期を起動できませんでした (${response.status})`);
 				}
 
-				// 実行記録は Lambda 側で作られる。読みに行く間隔を短い方へ切り替える
+				// The run record is created on the Lambda side; switch to the shorter read interval
 				setRunningNow(true);
 			} catch (cause) {
 				setError(cause instanceof Error ? cause.message : String(cause));

@@ -4,11 +4,11 @@ import { animeMetricDataSources } from "./data.js";
 import { dataSourceRepository } from "./data-source.repository.js";
 
 describe("dataSourceRepository", () => {
-	it("定義済み data source を一覧で返す", () => {
+	it("lists every defined data source", () => {
 		expect(dataSourceRepository.findMany()).toEqual(animeMetricDataSources);
 	});
 
-	it("id に一致する data source を返す", () => {
+	it("returns the data source matching an id", () => {
 		const dataSource = animeMetricDataSources.find((ds) => {
 			return ds.id === "danime-rank";
 		});
@@ -16,11 +16,11 @@ describe("dataSourceRepository", () => {
 		expect(dataSourceRepository.findUnique("danime-rank")).toEqual(dataSource);
 	});
 
-	it("id に一致する data source がない場合は null を返す", () => {
+	it("returns null when no data source matches the id", () => {
 		expect(dataSourceRepository.findUnique("unknown")).toBeNull();
 	});
 
-	it("schedule hour に一致する data source だけを返す", () => {
+	it("returns only the data sources on a given schedule hour", () => {
 		expect(
 			dataSourceRepository.findManyByScheduleHour(9).map((dataSource) => {
 				return dataSource.id;
@@ -46,7 +46,7 @@ describe("dataSourceRepository", () => {
 		]);
 	});
 
-	it("一覧は防御的コピーとして返す", () => {
+	it("hands back a defensive copy of the list", () => {
 		const dataSources = dataSourceRepository.findMany();
 		dataSources.pop();
 
@@ -55,7 +55,7 @@ describe("dataSourceRepository", () => {
 		);
 	});
 
-	it("data source id は重複しない", () => {
+	it("has no duplicate data source id", () => {
 		const ids = animeMetricDataSources.map((dataSource) => {
 			return dataSource.id;
 		});

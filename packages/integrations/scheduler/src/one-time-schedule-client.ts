@@ -1,36 +1,31 @@
-// In scope: AWS SDK を使って EventBridge Scheduler へ one-time schedule を登録する
-// Out of scope: 実行時刻の決定、schedule 名や対象 ARN の解決、Lambda イベント解釈を持つ
+// In scope: registering a one-time EventBridge Scheduler schedule via the AWS SDK
+// Out of scope: deciding the run time, resolving the schedule name or target ARN, Lambda event parsing
 import {
 	ConflictException,
 	CreateScheduleCommand,
 	SchedulerClient,
 } from "@aws-sdk/client-scheduler";
 
-/** 登録する one-time schedule の最小入力。 */
 export interface OneTimeScheduleInput {
-	/** schedule 名。group 内で一意にする。 */
+	/** Unique within `groupName`. */
 	name: string;
-	/** schedule を所属させる schedule group 名。 */
 	groupName: string;
-	/** 起動時刻。timezone ローカルの YYYY-MM-DDTHH:mm:ss 形式。 */
+	/** Local to `timezone`, as `YYYY-MM-DDTHH:mm:ss`. */
 	scheduleAt: string;
-	/** scheduleAt を解釈する IANA タイムゾーン。 */
+	/** IANA zone `scheduleAt` is interpreted in. */
 	timezone: string;
-	/** 起動対象の ARN。 */
 	targetArn: string;
-	/** EventBridge Scheduler が起動時に引き受ける role の ARN。 */
+	/** Role EventBridge Scheduler assumes to invoke the target. */
 	roleArn: string;
-	/** 起動対象へ渡すイベント。 */
 	input: unknown;
 }
 
-/** one-time schedule の登録結果。 */
 export interface OneTimeScheduleResult {
-	/** 新規に登録できたら true。同名 schedule が既に存在する場合は false。 */
+	/** false means a schedule with this name already exists, not an error. */
 	created: boolean;
 }
 
-/** AWS SDK を使って、実行後に自動削除される one-time schedule を登録するクライアント。 */
+/** Registers a one-time schedule that deletes itself after it fires. */
 export class OneTimeScheduleClient {
 	private readonly client = new SchedulerClient({});
 
@@ -50,7 +45,7 @@ export class OneTimeScheduleClient {
 						Arn: schedule.targetArn,
 						RoleArn: schedule.roleArn,
 						Input: JSON.stringify(schedule.input),
-						// 配信リトライは Lambda が受理する前の失敗にのみ働き、重複起動しない
+						// Only retries a delivery failure before Lambda accepts the invoke — never a duplicate run
 						RetryPolicy: { MaximumRetryAttempts: 3 },
 					},
 				}),

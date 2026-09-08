@@ -1,7 +1,7 @@
-// In scope: ツイート文面を投稿画面の URL にする
-// Out of scope: 文面の組み立て、リンクの描画
+// In scope: turning the tweet text into the compose-screen URL
+// Out of scope: assembling the text, rendering the link
 
-/** 渡された文面を載せて、ツイート画面を開く URL を作る */
+/** Builds the URL that opens the tweet screen carrying the given text */
 export const shareUrl = (text: string): string => {
 	return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&hashtags=sasaharaUK`;
 };

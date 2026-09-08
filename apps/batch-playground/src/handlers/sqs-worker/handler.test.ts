@@ -56,7 +56,7 @@ beforeEach(() => {
 });
 
 describe("sqs-worker handler", () => {
-	it("gamble-check-enable は設定を保存し確定メッセージへ差し替える", async () => {
+	it("saves the setting for gamble-check-enable and swaps in the final message", async () => {
 		const response = await handler(
 			buildEvent([
 				{
@@ -85,7 +85,7 @@ describe("sqs-worker handler", () => {
 		expect(response).toEqual({ batchItemFailures: [] });
 	});
 
-	it("gamble-check-disable は削除結果で文言を切り替える", async () => {
+	it("switches the wording for gamble-check-disable on whether anything was deleted", async () => {
 		channelSettingRepository.deleteByGuildIdAndUserId.mockResolvedValue(false);
 
 		await handler(
@@ -106,7 +106,7 @@ describe("sqs-worker handler", () => {
 		});
 	});
 
-	it("play-check-reminder-choice は選択結果でボタンを外して差し替える", async () => {
+	it("strips the buttons and swaps in the result for play-check-reminder-choice", async () => {
 		await handler(
 			buildEvent([
 				{
@@ -125,7 +125,7 @@ describe("sqs-worker handler", () => {
 		});
 	});
 
-	it("静的応答ジョブは固定の公開メッセージへ差し替える", async () => {
+	it("swaps in a fixed public message for a static-reply job", async () => {
 		await handler(
 			buildEvent([
 				{ job: "yaccho-hello-reply", applicationId: "999", token: "tok" },
@@ -138,7 +138,7 @@ describe("sqs-worker handler", () => {
 		});
 	});
 
-	it("失敗した record だけを batchItemFailures に載せ、他は処理を続ける", async () => {
+	it("puts only the failed records in batchItemFailures and carries on with the rest", async () => {
 		discordInteraction.editOriginalResponse.mockResolvedValueOnce(undefined);
 		discordInteraction.editOriginalResponse.mockRejectedValueOnce(
 			new Error("Discord API 応答が失敗しました: 500"),
@@ -156,7 +156,7 @@ describe("sqs-worker handler", () => {
 		});
 	});
 
-	it("schema に合わない message body は失敗として再試行対象にする", async () => {
+	it("treats a message body off the schema as a failure to retry", async () => {
 		const response = await handler(
 			buildEvent([{ job: "unknown-job", applicationId: "999", token: "tok" }]),
 		);

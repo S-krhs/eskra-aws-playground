@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 
 describe("inuihiroshiCommandOperation", () => {
-	it("宣言ジョブを enqueue し公開 deferred で ACK する", async () => {
+	it("enqueues the declaration job and ACKs with a public deferred response", async () => {
 		const result = await inuihiroshiCommandOperation(callback);
 
 		expect(sqs.sendMessages).toHaveBeenCalledWith([

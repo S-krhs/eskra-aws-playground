@@ -1,5 +1,5 @@
-// In scope: Bot token を使った完成済み Discord message payload の投稿と application command の登録・取得
-// Out of scope: Bot token の解決、payload の構築、interaction の parse、業務ルール
+// In scope: posting a finished Discord message payload and managing application commands, using a bot token
+// Out of scope: resolving the bot token, building a payload, parsing an interaction, business rules
 import {
 	sanitizeText,
 	type TextReplacement,
@@ -7,13 +7,12 @@ import {
 import { fetchJson } from "./internal/fetch-json.js";
 import { type JsonResponseDetails, sendJson } from "./internal/send-json.js";
 
-/** Discord Bot API 失敗応答の安全化済み詳細。 */
+/** Sanitized Discord Bot API failure detail. */
 export type DiscordBotResponseDetails = JsonResponseDetails;
 
 const DISCORD_API_BASE_URL = "https://discord.com/api/v10";
 const DISCORD_SNOWFLAKE_PATTERN = /^\d{1,20}$/;
 
-/** Discord メッセージのボタンコンポーネント。 */
 export interface DiscordButtonComponent {
 	type: 2;
 	style: 1 | 2 | 3 | 4;
@@ -21,13 +20,11 @@ export interface DiscordButtonComponent {
 	custom_id: string;
 }
 
-/** ボタンを並べる action row コンポーネント。 */
 export interface DiscordActionRow {
 	type: 1;
 	components: readonly DiscordButtonComponent[];
 }
 
-/** Bot がチャンネルへ送るメッセージ payload。 */
 export interface DiscordChannelMessagePayload {
 	content?: string;
 	components?: readonly DiscordActionRow[];
@@ -37,7 +34,7 @@ export interface DiscordChannelMessagePayload {
 	};
 }
 
-/** Discord application command(スラッシュコマンド)の登録定義。 */
+/** Registration definition for a slash command. */
 export interface DiscordCommandDefinition {
 	name: string;
 	description: string;
@@ -47,7 +44,6 @@ export interface DiscordCommandDefinition {
 	contexts?: readonly (0 | 1 | 2)[];
 }
 
-/** Discord application command option の登録定義。 */
 export interface DiscordCommandOptionDefinition {
 	type: number;
 	name: string;
@@ -56,19 +52,17 @@ export interface DiscordCommandOptionDefinition {
 	options?: readonly DiscordCommandOptionDefinition[];
 }
 
-/** Discord に登録済みの application command(表示に使う主要フィールド)。 */
+/** The main display fields of a command already registered with Discord. */
 export interface DiscordRegisteredCommand {
 	id: string;
 	name: string;
 	description: string;
 }
 
-/** Discord Bot API 呼び出し時に上書きできるオプション。 */
 export interface DiscordBotRequestOptions {
 	timeoutMs?: number;
 }
 
-/** Discord Bot API 連携で発生した失敗を表すエラー。 */
 export class DiscordBotError extends Error {
 	public readonly responseDetails: unknown | null;
 
@@ -79,7 +73,6 @@ export class DiscordBotError extends Error {
 	}
 }
 
-/** Bot token を使った Discord Bot API 操作(message 投稿・command 登録)を担当するクライアント。 */
 export class DiscordBotClient {
 	private readonly botToken: string;
 	private readonly defaultTimeoutMs = 10_000;
@@ -88,7 +81,6 @@ export class DiscordBotClient {
 		this.botToken = validateDiscordBotToken(botToken);
 	}
 
-	/** チャンネルへメッセージを投稿する。 */
 	public async postChannelMessage(
 		channelId: string,
 		payload: DiscordChannelMessagePayload,
@@ -119,7 +111,7 @@ export class DiscordBotClient {
 		}
 	}
 
-	/** application の global command 一覧を定義どおりに一括置換する。 */
+	/** Bulk-replaces the application's entire global command list with `commands`. */
 	public async overwriteGlobalCommands(
 		applicationId: string,
 		commands: readonly DiscordCommandDefinition[],
@@ -147,7 +139,6 @@ export class DiscordBotClient {
 		}
 	}
 
-	/** application に現在登録されている global command 一覧を取得する。 */
 	public async getGlobalCommands(
 		applicationId: string,
 		options: DiscordBotRequestOptions = {},
@@ -173,8 +164,9 @@ export class DiscordBotClient {
 	}
 
 	/**
-	 * guild のコマンド一覧を定義どおりに一括置換する。
-	 * 定義に無いコマンドは Discord 側から削除されるため、宣言とコマンドが常に一致する。
+	 * Bulk-replaces the guild's command list with `commands`.
+	 * A command missing from `commands` gets deleted on Discord's side, so the
+	 * declaration and what's registered always match.
 	 */
 	public async overwriteGuildCommands(
 		applicationId: string,
@@ -204,7 +196,7 @@ export class DiscordBotClient {
 		}
 	}
 
-	/** guild に現在登録されている application command 一覧を取得する(read-only)。 */
+	/** Read-only. */
 	public async getGuildCommands(
 		applicationId: string,
 		guildId: string,
@@ -230,7 +222,7 @@ export class DiscordBotClient {
 		}
 	}
 
-	/** guild コマンド API の URL を組み立てる。ID は数字のみの snowflake であることを検証する。 */
+	/** Also validates that each ID is a numeric-only snowflake. */
 	private guildCommandsUrl(applicationId: string, guildId: string): string {
 		const normalizedApplicationId = this.validateSnowflake(
 			applicationId,
@@ -244,7 +236,6 @@ export class DiscordBotClient {
 		return `${DISCORD_API_BASE_URL}/applications/${normalizedApplicationId}/guilds/${normalizedGuildId}/commands`;
 	}
 
-	/** application の global command API URL を返す。 */
 	private globalCommandsUrl(applicationId: string): string {
 		const normalizedApplicationId = this.validateSnowflake(
 			applicationId,
@@ -263,7 +254,6 @@ export class DiscordBotClient {
 		return normalizedValue;
 	}
 
-	/** bot token を秘匿するための置換ルール。 */
 	private botTokenReplacements(): readonly TextReplacement[] {
 		return [
 			{
@@ -273,7 +263,7 @@ export class DiscordBotClient {
 		];
 	}
 
-	/** fetch が投げた例外のメッセージから bot token を除去して返す。 */
+	/** Strips the bot token out of a message thrown by fetch, if present. */
 	private sanitizeUnknownError(error: unknown): unknown {
 		if (error instanceof Error && error.message.includes(this.botToken)) {
 			return new DiscordBotError(

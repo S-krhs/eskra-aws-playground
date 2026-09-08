@@ -1,11 +1,10 @@
-// In scope: ChannelSetting の Discord ID と JSON configuration を検証する
-// Out of scope: DB 操作、Discord ID の発見、settingKey の解釈
+// In scope: validating a ChannelSetting's Discord IDs and JSON configuration
+// Out of scope: DB access, discovering Discord IDs, interpreting a settingKey
 import { z } from "zod";
 
-/** Discord Snowflake 文字列の schema。 */
 export const discordSnowflakeSchema = z.string().regex(/^[0-9]{1,20}$/);
 
-/** ChannelSetting の JSONB configuration schema。 */
+/** Shape of the JSONB configuration column on a ChannelSetting row. */
 export const channelSettingConfigurationSchema = z
 	.object({
 		version: z.literal(1),

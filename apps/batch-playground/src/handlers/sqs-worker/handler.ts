@@ -1,5 +1,5 @@
-// In scope: SQS event を検証し、message ごとに担当ジョブへ委譲する
-// Out of scope: 個別ジョブの処理内容、Discord API 通信、deferred ack の生成を持つ
+// In scope: validating the SQS event and delegating each message to its owning job
+// Out of scope: what each job does, Discord API calls, building a deferred ack
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
@@ -18,7 +18,6 @@ import {
 
 const logger = createBatchLogger("sqs-job-worker");
 
-/** message を対応するジョブへ委譲する。 */
 const runJob = (message: SqsJobMessage): Promise<void> => {
 	switch (message.job) {
 		case interactionJobNames.yacchoHelloReply:
@@ -37,9 +36,9 @@ const runJob = (message: SqsJobMessage): Promise<void> => {
 };
 
 /**
- * SQS 起動のジョブを担う worker のエントリポイント。
- * queue ごとに別の Lambda として動き、message の job 名で担当ジョブを解決する。
- * message 単位で失敗を分離し、失敗した record だけを SQS の再試行対象にする。
+ * The entry point for SQS-triggered jobs. It runs as a separate Lambda per queue and resolves the
+ * owning job from the message's job name. Failure is isolated per message, and only the failed
+ * records go back to SQS for retry.
  */
 export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
 	const { Records } = sqsWorkerEventSchema.parse(event);

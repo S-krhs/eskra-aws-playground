@@ -1,13 +1,12 @@
-// In scope: エクスプローラーから渡される Windows のパスを WSL のパスへ変換する
-// Out of scope: ファイルの読み取り、key の組み立て、R2 への通信
+// In scope: converting the Windows path Explorer hands over into a WSL path
+// Out of scope: reading the file, key construction, talking to R2
 
-// C:\Users\foo\a.png / C:/Users/foo/a.png のどちらの区切りでも受ける
+// Accepts either separator: C:\Users\foo\a.png or C:/Users/foo/a.png
 const WINDOWS_DRIVE_PATTERN = /^([A-Za-z]):[\\/](.*)$/s;
 
 /**
- * Windows のドライブパスを WSL のマウントパスへ変換する。
- * `C:\Users\foo\a.png` は `/mnt/c/Users/foo/a.png` になる。
- * 既に POSIX のパスならそのまま返す(WSL から直接呼んだ場合)。
+ * `C:\Users\foo\a.png` becomes `/mnt/c/Users/foo/a.png`.
+ * A path that is already POSIX comes back untouched (called straight from WSL).
  */
 export const toWslPath = (path: string): string => {
 	if (path.startsWith("/")) {

@@ -1,5 +1,5 @@
-// In scope: メディア一覧とサムネイル配信の HTTP route
-// Out of scope: DB の query 組み立て、キャッシュファイルの読み書き、R2 の wire 解釈
+// In scope: the HTTP routes for the media listing and for serving thumbnails
+// Out of scope: building DB queries, reading/writing cache files, R2 wire detail
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { Hono } from "hono";
@@ -13,11 +13,11 @@ import { getR2Client } from "../shared/r2-client.js";
 import { toInvalidQueryMessage } from "./intermediate-models/invalid-query.js";
 import { toMediaView } from "./intermediate-models/media-view.js";
 
-// 仮想スクロールが継ぎ足す単位。増やすと初回の描画が重く、減らすと継ぎ足しが目立つ
+// How much the virtual scroll appends at a time: larger makes the first paint heavier, smaller makes the appending visible
 const DEFAULT_LIMIT = 200;
 const MAX_LIMIT = 500;
 
-// サムネイルは中身が変われば別の id になるため、ブラウザにも持たせてよい
+// A thumbnail gets a new id whenever its content changes, so the browser may keep it
 const THUMBNAIL_CACHE_CONTROL = "private, max-age=86400";
 
 const listQuerySchema = z
@@ -40,7 +40,6 @@ const listQuerySchema = z
 
 const mediaIdSchema = z.uuid();
 
-/** 一覧とサムネイルの route。 */
 export const mediaRoutes = new Hono()
 	.get("/", async (c) => {
 		const query = listQuerySchema.safeParse(c.req.query());
@@ -73,7 +72,7 @@ export const mediaRoutes = new Hono()
 		});
 	})
 	.get("/:id/thumbnail", async (c) => {
-		// そのままファイル名に使うため、UUID であることを先に確かめる
+		// Checked as a UUID first, since it becomes a file name verbatim
 		const id = mediaIdSchema.safeParse(c.req.param("id"));
 
 		if (!id.success) {
@@ -96,7 +95,7 @@ export const mediaRoutes = new Hono()
 		const media = await mediaObjectRepository.findById(id.data);
 
 		if (!media?.thumbnailKey) {
-			// 同期が生成を終えるまでは存在しない。画面は代替の表示へ落とす
+			// Absent until the sync finishes generating it; the screen falls back to a placeholder
 			return c.json({ message: "サムネイルがまだありません" }, 404);
 		}
 

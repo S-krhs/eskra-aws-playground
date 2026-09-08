@@ -1,5 +1,5 @@
-// In scope: 同期ボタンと、実行中の進捗・直近の結果の表示
-// Out of scope: 同期の起動処理、状態の取得、一覧の表示
+// In scope: the sync button, the in-flight progress, and the last run's result
+// Out of scope: starting the sync, fetching the status, showing the listing
 import { formatUploadedAt } from "@/shared/lib/format.js";
 import type { SyncStatus } from "../model/use-sync-status.js";
 
@@ -22,7 +22,7 @@ const toProgressText = (status: SyncStatus): string => {
 	return `前回 ${formatUploadedAt(status.latest.startedAt)} / 追加 ${status.latest.insertedCount} / 更新 ${status.latest.updatedCount} / 削除 ${status.latest.deletedCount}`;
 };
 
-/** 同期の起動ボタンと進捗。実行中はボタンを押せなくする。 */
+/** The start button and its progress; the button is disabled while a sync runs. */
 export const SyncControl = ({ status }: { status: SyncStatus }) => {
 	const isRunning = status.running !== undefined;
 

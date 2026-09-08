@@ -1,5 +1,5 @@
-// In scope: アップローダが読む設定ファイルの場所の解決と検証
-// Out of scope: R2 への通信、key の組み立て、設定ファイルの作成
+// In scope: locating and validating the config file the uploader reads
+// Out of scope: talking to R2, key construction, creating the config file
 import { readFile } from "node:fs/promises";
 import {
 	parseR2Credentials,
@@ -13,16 +13,12 @@ const settingsSchema = z.object({
 	r2: z.unknown(),
 });
 
-/** アップローダが必要とする接続先。 */
 export interface UploadSettings {
 	credentials: R2Credentials;
 	bucket: string;
 }
 
-/**
- * 設定ファイルを読んで接続先を組み立てる。
- * 鍵が漏れないよう、失敗しても読み込んだ内容はエラーへ載せない。
- */
+/** A failure never puts the file's content on the error, so the key can't leak. */
 export const loadUploadSettings = async (): Promise<UploadSettings> => {
 	const settingsPath = resolveMediaLibraryConfigPath();
 	let raw: string;

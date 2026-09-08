@@ -1,9 +1,9 @@
-// In scope: 収支の値を、渡された調子で表示する
-// Out of scope: どの調子で出すかの判断、単位への換算と文字列の組み立て
+// In scope: showing the balance in whichever tone it is handed
+// Out of scope: deciding the tone, unit conversion and building the string
 
 import "./balance-display.css";
 
-/** 収支の見せ方。`loss` は赤、`jackpot` は虹色になる */
+/** How the balance is shown; `loss` is red, `jackpot` goes rainbow */
 export type BalanceTone = "normal" | "loss" | "jackpot";
 
 const toneClasses: Record<BalanceTone, string> = {
@@ -14,11 +14,10 @@ const toneClasses: Record<BalanceTone, string> = {
 
 interface Props {
 	tone: BalanceTone;
-	/** 単位付きに整形済みの収支。組み立ては通貨単位側が担う */
+	/** The balance already formatted with its unit; the currency-unit side builds it */
 	text: string;
 }
 
-/** 収支を表示する。色と虹色は呼び出し側が決めた調子に従う */
 export const BalanceDisplay = ({ tone, text }: Props) => {
 	return (
 		<output

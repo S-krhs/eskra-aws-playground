@@ -1,14 +1,11 @@
-// In scope: Prisma Client の生成と DATABASE_URL の解決。実行間で 1 インスタンスを再利用する。
-// Out of scope: 個別テーブルの query、app への公開(package exports の対象外)。
+// In scope: creating the Prisma Client and resolving DATABASE_URL, reusing one instance across invocations
+// Out of scope: per-table queries, exposing this to an app (deliberately outside the package exports)
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client.js";
 
 let prisma: PrismaClient | undefined;
 
-/**
- * module スコープで再利用する Prisma Client を返す。
- * 接続先は pooled 接続文字列(DATABASE_URL)から解決し、未設定なら接続を試みず throw する。
- */
+/** Resolved from the pooled connection string (DATABASE_URL); throws without attempting a connection when it is unset. */
 export const getPrismaClient = (): PrismaClient => {
 	if (prisma) {
 		return prisma;
@@ -21,7 +18,7 @@ export const getPrismaClient = (): PrismaClient => {
 		);
 	}
 
-	// Lambda 実行ごとの接続数を増やさないため pool を 1 接続に固定する
+	// Pinned to a single connection so one Lambda invocation never grows the pool
 	const adapter = new PrismaPg({ connectionString, max: 1 });
 	prisma = new PrismaClient({ adapter });
 	return prisma;

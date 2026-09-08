@@ -1,18 +1,18 @@
-// In scope: 同期 Lambda を待たずに起動する
-// Out of scope: 同期そのものの実行、実行記録の読み出し、設定ファイルの解決
+// In scope: kicking off the sync Lambda without waiting for it
+// Out of scope: running the sync itself, reading the run record, resolving the config file
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
 
-/** 同期 Lambda の起動先。 */
+/** Which sync Lambda to invoke. */
 export interface MediaSyncTarget {
 	functionName: string;
 	region: string;
 }
 
 /**
- * 同期 job を非同期で起動する。
- * 同期は分単位で掛かるため応答は待たず、進捗は MediaSyncRun を読んで確かめる。
- * 二重起動は同期 job 側が実行中の記録を見て弾くので、ここでは抑止しない。
+ * Starts the sync job asynchronously. A sync takes minutes, so nothing waits on the response —
+ * progress is read from MediaSyncRun instead. A double start is refused by the sync job itself,
+ * which checks its own running record, so nothing guards against it here.
  */
 export const startMediaSync = async (
 	target: MediaSyncTarget,

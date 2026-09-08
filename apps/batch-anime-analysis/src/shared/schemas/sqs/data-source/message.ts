@@ -1,11 +1,10 @@
-// In scope: worker が受け取る dataSource 単位のアニメスクレイピング要求 message の外部入力 schema と型を提供する
-// Out of scope: SQS 送受信、実行対象の決定、起動イベントの正規化を行う
+// In scope: the external-input schema and type for the per-dataSource scrape request the worker receives
+// Out of scope: SQS send/receive, deciding what to run, normalizing the launch event
 import { z } from "zod";
 
-/** Worker が処理する dataSource 単位のアニメスクレイピング要求 message schema。 */
+/** The per-dataSource scrape request the worker processes. */
 export const dataSourceMessageSchema = z.object({
 	dataSourceId: z.string().min(1),
 });
 
-/** Worker が処理する dataSource 単位のアニメスクレイピング要求 message。 */
 export type DataSourceMessage = z.infer<typeof dataSourceMessageSchema>;

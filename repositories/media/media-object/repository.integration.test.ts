@@ -1,5 +1,5 @@
-// TODO: 別タスクで testcontainers の PostgreSQL に移行する。
-//       それまでは TEST_DATABASE_URL(ローカル用 Neon branch)が設定されている場合のみ実行される。
+// TODO: move to a testcontainers PostgreSQL in a separate task.
+//       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import { randomUUID } from "node:crypto";
 import {
 	afterAll,
@@ -22,7 +22,7 @@ const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const testId = Date.now().toString();
 const keyPrefix = `_test-${testId}/`;
 
-// 並行実行や共有 branch で行を取り合わないよう、実行ごとに一意な id を使う
+// A unique id per run, so parallel runs and a shared branch never fight over the same rows
 const ids: string[] = [randomUUID(), randomUUID(), randomUUID()];
 const [olderId, newerId, trashedId] = ids as [string, string, string];
 
@@ -54,7 +54,7 @@ const thumbnailQuery: FindThumbnaillessInput = {
 	retryBefore: new Date("2026-09-07T00:00:00.000Z"),
 };
 
-// findWithoutThumbnail は条件に合う行を全件から探すため、この実行で入れた id だけに絞る
+// findWithoutThumbnail scans every matching row, so narrow it to the ids this run inserted
 const findThumbnaillessIds = async (
 	overrides: Partial<FindThumbnaillessInput> = {},
 ): Promise<string[]> => {
@@ -91,7 +91,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		await getPrismaClient().$disconnect();
 	});
 
-	it("登録した内容を型を戻して読み出す", async () => {
+	it("reads a registered row back with its types restored", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -101,15 +101,15 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 			id: olderId,
 			objectKey: `${keyPrefix}a.png`,
 			fileName: "イラスト.png",
-			// BigInt の列を number へ戻していることを確かめる
+			// Check that a BigInt column comes back as a number
 			byteSize: 1234,
 		});
-		// null の列は undefined へ寄せる
+		// A null column becomes undefined
 		expect(found?.width).toBeUndefined();
 		expect(found?.trashedAt).toBeUndefined();
 	});
 
-	it("同じ id の再登録を無視する", async () => {
+	it("ignores re-registering the same id", async () => {
 		const input = buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z");
 		await mediaObjectRepository.insertMany([input]);
 
@@ -117,7 +117,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(inserted).toBe(0);
 	});
 
-	it("突き合わせ用に id と key と etag だけを返す", async () => {
+	it("returns only id, key and etag for the comparison", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -130,8 +130,8 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		});
 	});
 
-	// 同じ key のまま差し替わった場合、サムネイルと寸法は作り直しになる
-	it("差し替わったメディアを作り直し、サムネイルを消す", async () => {
+	// When content is replaced under an unchanged key, the thumbnail and dimensions have to be rebuilt
+	it("re-registers replaced media and clears its thumbnail", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -160,8 +160,8 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(found?.width).toBeUndefined();
 	});
 
-	// 生成中に行が消えていても worker を失敗させない
-	it("消えた行へのサムネイル記録を 0 件として返す", async () => {
+	// A row deleted mid-generation must not fail the worker
+	it("reports 0 rows when recording a thumbnail onto a deleted row", async () => {
 		expect(
 			await mediaObjectRepository.setThumbnail({
 				id: trashedId,
@@ -170,7 +170,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		).toBe(0);
 	});
 
-	it("新着順に返し、ゴミ箱に入れたものを除外する", async () => {
+	it("returns newest first and excludes trashed rows", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
@@ -193,7 +193,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(page.nextCursor).toBeUndefined();
 	});
 
-	it("cursor で続きから返す", async () => {
+	it("resumes from a cursor", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
@@ -223,7 +223,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(second.nextCursor).toBeUndefined();
 	});
 
-	it("content-type の接頭辞で絞る", async () => {
+	it("filters by a content-type prefix", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 			buildInput(newerId, "b.mp4", "2026-09-02T00:00:00.000Z", {
@@ -243,7 +243,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		).toEqual([newerId]);
 	});
 
-	it("外部で移動された key を付け替える", async () => {
+	it("re-points a key moved outside this app", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -263,7 +263,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(found?.syncedAt).toEqual(relocatedAt);
 	});
 
-	it("存在し続けたものの確認時刻を更新する", async () => {
+	it("updates the last-seen time of rows still present", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -276,7 +276,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(found?.syncedAt).toEqual(touchedAt);
 	});
 
-	it("R2 から消えた行を削除する", async () => {
+	it("deletes rows gone from R2", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -286,7 +286,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await mediaObjectRepository.findById(olderId)).toBeUndefined();
 	});
 
-	it("サムネイルが付いた行を生成の対象から外す", async () => {
+	it("drops a row that already has a thumbnail from the generation set", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
@@ -299,7 +299,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await findThumbnaillessIds()).toEqual([olderId]);
 	});
 
-	it("ゴミ箱に入れた行を生成の対象から外す", async () => {
+	it("drops a trashed row from the generation set", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 			buildInput(trashedId, "c.png", "2026-09-03T00:00:00.000Z"),
@@ -312,8 +312,8 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await findThumbnaillessIds()).toEqual([olderId]);
 	});
 
-	// 処理中のものを重複して投入しないための境界
-	it("投入した直後は対象から外し、間隔が空けば再び返す", async () => {
+	// The boundary that keeps an in-flight row from being enqueued twice
+	it("skips a just-enqueued row and returns it again once the interval passes", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -333,8 +333,8 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		).toEqual([olderId]);
 	});
 
-	// 生成できないメディアを積み直し続けないための上限
-	it("試行回数を使い切った行を対象から外す", async () => {
+	// The cap that stops media which can't be generated from being re-enqueued forever
+	it("drops a row that used up its attempts", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
@@ -348,7 +348,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(await findThumbnaillessIds({ maxAttempts: 4 })).toEqual([olderId]);
 	});
 
-	it("空の入力で DB を呼ばない", async () => {
+	it("does not hit the DB on empty input", async () => {
 		expect(await mediaObjectRepository.insertMany([])).toBe(0);
 		expect(await mediaObjectRepository.relocateMany([])).toBe(0);
 		expect(await mediaObjectRepository.touchMany([], syncedAt)).toBe(0);

@@ -36,7 +36,7 @@ afterEach(async () => {
 });
 
 describe("loadLibrarySettings", () => {
-	it("設定ファイルから接続先を組み立てる", async () => {
+	it("assembles the connections from the config file", async () => {
 		await writeConfig(validConfig);
 
 		const settings = await loadLibrarySettings();
@@ -45,7 +45,7 @@ describe("loadLibrarySettings", () => {
 		expect(settings.syncFunctionName).toBe("media-sync");
 	});
 
-	it("省略した項目は既定値で埋める", async () => {
+	it("fills an omitted field with its default", async () => {
 		await writeConfig(validConfig);
 
 		const settings = await loadLibrarySettings();
@@ -53,26 +53,26 @@ describe("loadLibrarySettings", () => {
 		expect(settings.thumbnailCacheDir).toMatch(/eskra-media-library/);
 	});
 
-	it("設定ファイルが無ければ場所を示して落ちる", async () => {
+	it("fails naming the location when the config file is missing", async () => {
 		await expect(loadLibrarySettings()).rejects.toThrow(
 			/設定ファイルを読めませんでした/,
 		);
 	});
 
-	it("JSON として壊れていれば場所を示して落ちる", async () => {
+	it("fails naming the location when the JSON is broken", async () => {
 		await writeFile(configPath, "{", "utf8");
 
 		await expect(loadLibrarySettings()).rejects.toThrow(/JSON として不正です/);
 	});
 
-	// 接続文字列や鍵がそのままエラーへ乗ると、ログや画面へ流れる
-	it("項目が足りなければ項目名だけを示し、値は載せない", async () => {
+	// A connection string or key carried on the error would flow into the logs and the screen
+	it("names only the missing fields, never the values", async () => {
 		await writeConfig({ ...validConfig, databaseUrl: "" });
 
 		await expect(loadLibrarySettings()).rejects.toThrow(/databaseUrl/);
 	});
 
-	it("鍵が不正なら鍵の中身をエラーへ載せない", async () => {
+	it("keeps the key's content off the error when the key is invalid", async () => {
 		await writeConfig({ ...validConfig, r2: { accountId: "account" } });
 
 		await expect(loadLibrarySettings()).rejects.toThrow(

@@ -35,7 +35,7 @@ describe("OneTimeScheduleClient", () => {
 		vi.clearAllMocks();
 	});
 
-	it("実行後に自動削除される one-time schedule として登録する", async () => {
+	it("registers a one-time schedule that deletes itself after it runs", async () => {
 		send.mockResolvedValue({});
 		const client = new OneTimeScheduleClient();
 
@@ -60,7 +60,7 @@ describe("OneTimeScheduleClient", () => {
 		});
 	});
 
-	it("同名 schedule が既に存在する場合は created: false を返す", async () => {
+	it("returns created: false when a schedule with the same name already exists", async () => {
 		send.mockRejectedValue(
 			new ConflictException({
 				message: "conflict",
@@ -75,7 +75,7 @@ describe("OneTimeScheduleClient", () => {
 		});
 	});
 
-	it("重複以外のエラーはそのまま送出する", async () => {
+	it("rethrows any error other than a conflict", async () => {
 		send.mockRejectedValue(new Error("throttled"));
 		const client = new OneTimeScheduleClient();
 

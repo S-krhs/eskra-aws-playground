@@ -10,12 +10,12 @@ import {
 const modifiedAt = new Date("2026-09-07T04:30:45.123Z");
 
 describe("formatKeyTimestamp", () => {
-	// key は人が R2 のダッシュボードで読むため JST に寄せる
-	it("UTC の更新日時を JST の時刻文字列へ直す", () => {
+	// Keys are read by hand in the R2 dashboard, so they lean on JST
+	it("turns a UTC modified time into the JST string", () => {
 		expect(formatKeyTimestamp(modifiedAt)).toBe("20260907-133045123");
 	});
 
-	it("日付をまたぐ変換で日付も繰り上げる", () => {
+	it("rolls the date forward when the conversion crosses midnight", () => {
 		expect(formatKeyTimestamp(new Date("2026-09-07T15:00:00.000Z"))).toBe(
 			"20260908-000000000",
 		);
@@ -23,7 +23,7 @@ describe("formatKeyTimestamp", () => {
 });
 
 describe("buildMediaObjectKey", () => {
-	it("論理パスと時刻から key を組み立てる", () => {
+	it("builds a key from a logical path and a timestamp", () => {
 		expect(
 			buildMediaObjectKey({
 				logicalPath: "illust/original",
@@ -33,7 +33,7 @@ describe("buildMediaObjectKey", () => {
 		).toBe("illust/original/20260907-133045123.png");
 	});
 
-	it("拡張子の先頭の . を落とし小文字へ揃える", () => {
+	it("drops a leading . from the extension and lowercases it", () => {
 		expect(
 			buildMediaObjectKey({
 				logicalPath: "illust",
@@ -43,14 +43,14 @@ describe("buildMediaObjectKey", () => {
 		).toBe("illust/20260907-133045123.png");
 	});
 
-	it("拡張子がなければ付けない", () => {
+	it("appends nothing when there is no extension", () => {
 		expect(
 			buildMediaObjectKey({ logicalPath: "illust", modifiedAt, extension: "" }),
 		).toBe("illust/20260907-133045123");
 	});
 
-	// 同じミリ秒のファイルは key が衝突するため、連番を付けて回避する
-	it("連番を時刻の後ろに付ける", () => {
+	// Files sharing a millisecond would collide, so a counter separates them
+	it("puts the counter after the timestamp", () => {
 		expect(
 			buildMediaObjectKey({
 				logicalPath: "illust",
@@ -63,7 +63,7 @@ describe("buildMediaObjectKey", () => {
 });
 
 describe("buildInboxKey", () => {
-	it("_inbox の prefix を付ける", () => {
+	it("prefixes the key with _inbox", () => {
 		expect(buildInboxKey({ modifiedAt, extension: "mp4" })).toBe(
 			"_inbox/20260907-133045123.mp4",
 		);
@@ -71,8 +71,8 @@ describe("buildInboxKey", () => {
 });
 
 describe("buildThumbnailKey", () => {
-	// 論理パスを含めないので、移動しても DB に控えが無くても同じ key になる
-	it("UUID から一意に導ける", () => {
+	// Carries no logical path, so the key stays the same after a move and without a DB lookup
+	it("derives one key per UUID", () => {
 		expect(buildThumbnailKey("018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40")).toBe(
 			"_thumb/018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40.webp",
 		);
@@ -80,11 +80,11 @@ describe("buildThumbnailKey", () => {
 });
 
 describe("extractLogicalPath", () => {
-	it("最後の区切りより前を論理パスとする", () => {
+	it("takes everything before the last separator as the logical path", () => {
 		expect(extractLogicalPath("illust/original/a.png")).toBe("illust/original");
 	});
 
-	it("階層がなければ空文字を返す", () => {
+	it("returns an empty string when there is no directory part", () => {
 		expect(extractLogicalPath("a.png")).toBe("");
 	});
 });

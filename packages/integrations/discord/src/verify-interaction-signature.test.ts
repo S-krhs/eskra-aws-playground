@@ -28,7 +28,7 @@ describe("verifyInteractionSignature", () => {
 	const timestamp = "1720000000";
 	const rawBody = '{"type":1}';
 
-	it("正しい署名なら true を返す", () => {
+	it("returns true for a valid signature", () => {
 		const { publicKeyHex, privateKey } = createKeyPair();
 		const signature = signMessage(privateKey, timestamp, rawBody);
 
@@ -42,7 +42,7 @@ describe("verifyInteractionSignature", () => {
 		).toBe(true);
 	});
 
-	it("body が改ざんされていると false を返す", () => {
+	it("returns false when the body was tampered with", () => {
 		const { publicKeyHex, privateKey } = createKeyPair();
 		const signature = signMessage(privateKey, timestamp, rawBody);
 
@@ -56,7 +56,7 @@ describe("verifyInteractionSignature", () => {
 		).toBe(false);
 	});
 
-	it("別の鍵で署名されていると false を返す", () => {
+	it("returns false when signed with a different key", () => {
 		const { publicKeyHex } = createKeyPair();
 		const { privateKey: otherPrivateKey } = createKeyPair();
 		const signature = signMessage(otherPrivateKey, timestamp, rawBody);
@@ -71,7 +71,7 @@ describe("verifyInteractionSignature", () => {
 		).toBe(false);
 	});
 
-	it("hex として不正な public key や署名なら throw せず false を返す", () => {
+	it("returns false instead of throwing for a public key or signature that isn't valid hex", () => {
 		const { publicKeyHex, privateKey } = createKeyPair();
 		const signature = signMessage(privateKey, timestamp, rawBody);
 
@@ -112,7 +112,7 @@ describe("verifyInteractionSignature", () => {
 		).toBe(false);
 	});
 
-	it("空入力なら false を返す", () => {
+	it("returns false for empty input", () => {
 		expect(
 			verifyInteractionSignature({
 				publicKey: "",

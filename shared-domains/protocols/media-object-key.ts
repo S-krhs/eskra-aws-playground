@@ -1,5 +1,5 @@
-// In scope: 更新日時とファイル名から R2 の key を組み立て、key から論理パスを取り出す
-// Out of scope: 更新日時の取得、衝突の検出、R2 への通信、metadata の符号化
+// In scope: building an R2 key from a modified time and file name, and reading the logical path back out of a key
+// Out of scope: reading the modified time, detecting collisions, talking to R2, encoding metadata
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import {
@@ -9,12 +9,12 @@ import {
 
 dayjs.extend(utc);
 
-// JST は夏時間がなく UTC+9 固定
+// JST has no DST, so it is a fixed UTC+9
 const JST_UTC_OFFSET_MINUTES = 9 * 60;
 
 const KEY_TIMESTAMP_FORMAT = "YYYYMMDD-HHmmssSSS";
 
-/** key の本体を組み立てる入力。sequence は同じ時刻で衝突したときの連番。 */
+/** `sequence` is the counter appended when two files land on the same timestamp. */
 export interface MediaObjectKeyInput {
 	logicalPath: string;
 	modifiedAt: Date;
@@ -22,20 +22,14 @@ export interface MediaObjectKeyInput {
 	sequence?: number;
 }
 
-/**
- * 更新日時を key に使う JST の時刻文字列へ変換する。
- * 2026-09-07T04:30:45.123Z(UTC) は 20260907-133045123 になる。
- */
+/** Formats the modified time as the JST string a key uses: 2026-09-07T04:30:45.123Z becomes 20260907-133045123. */
 export const formatKeyTimestamp = (modifiedAt: Date): string => {
 	return dayjs(modifiedAt)
 		.utcOffset(JST_UTC_OFFSET_MINUTES)
 		.format(KEY_TIMESTAMP_FORMAT);
 };
 
-/**
- * 論理パスと更新日時から key を組み立てる。
- * 拡張子は先頭の "." の有無を問わず受け取り、小文字へ揃える。
- */
+/** The extension is accepted with or without a leading "." and lowercased. */
 export const buildMediaObjectKey = (input: MediaObjectKeyInput): string => {
 	const extension = input.extension.replace(/^\./, "").toLowerCase();
 	const suffix = input.sequence === undefined ? "" : `-${input.sequence}`;
@@ -44,25 +38,18 @@ export const buildMediaObjectKey = (input: MediaObjectKeyInput): string => {
 	return `${input.logicalPath}/${fileName}${extension ? `.${extension}` : ""}`;
 };
 
-/** _inbox の key を組み立てる。 */
 export const buildInboxKey = (
 	input: Omit<MediaObjectKeyInput, "logicalPath">,
 ): string => {
 	return buildMediaObjectKey({ ...input, logicalPath: INBOX_PREFIX });
 };
 
-/**
- * メディアの UUID からサムネイルの key を組み立てる。
- * 論理パスを含めないため移動で変わらず、DB に控えが無くても導ける。
- */
+/** Holds no logical path, so a move never changes it and it can be derived without a DB lookup. */
 export const buildThumbnailKey = (mediaId: string): string => {
 	return `${THUMBNAIL_PREFIX}/${mediaId}.webp`;
 };
 
-/**
- * key から論理パスを取り出す。
- * 階層を持たない key は論理パスなしとして空文字を返す。
- */
+/** A key with no directory part has no logical path, and returns an empty string. */
 export const extractLogicalPath = (objectKey: string): string => {
 	const separatorIndex = objectKey.lastIndexOf("/");
 

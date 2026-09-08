@@ -68,7 +68,7 @@ describe("playCheckReminderOperation", () => {
 		},
 	);
 
-	it("対象外ユーザーには enqueue せず即時の専用メッセージ payload を返す", async () => {
+	it("enqueues nothing for a user it is not addressed to and answers immediately with its own message", async () => {
 		const result = await execute("play-check-reminder:123:won", "999");
 
 		expect(sqs.sendMessages).not.toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe("playCheckReminderOperation", () => {
 		});
 	});
 
-	it("リマインダーの選択と解釈できない interaction には undefined を返す", async () => {
+	it("returns undefined for an interaction that does not read as a reminder choice", async () => {
 		expect(await execute("unknown:payload", "123")).toBeUndefined();
 		expect(await execute("play-check-reminder::won", "123")).toBeUndefined();
 		expect(

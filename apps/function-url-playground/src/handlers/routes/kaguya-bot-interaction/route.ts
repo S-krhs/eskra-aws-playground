@@ -1,5 +1,5 @@
-// In scope: request の parse、認証・認可、interaction 種別ごとの応答解決、response の形成
-// Out of scope: 署名検証アルゴリズム、機能ごとの応答内容の生成
+// In scope: parsing the request, authentication and authorization, resolving a response per interaction type, shaping the response
+// Out of scope: the signature-verification algorithm, building each feature's response content
 
 import type { DiscordInteractionResponsePayload } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import { verifyInteractionSignature } from "@eskra-aws-playground/integration-discord/verify-interaction-signature.js";
@@ -18,11 +18,10 @@ import { discordInteractionRequestSchema } from "./schema.js";
 
 const logger = createBatchLogger("kaguya-bot-interaction");
 
-/** Kaguya Bot の Discord interactions endpoint route。 */
 export const kaguyaBotInteractionRoute = async (
 	event: FunctionUrlEvent,
 ): Promise<FunctionUrlResponse> => {
-	// 1. request を route 固有の入力へ parse する。
+	// 1. Parse the request into this route's own input.
 	logger.start();
 	const parsedRequest = discordInteractionRequestSchema.safeParse(event);
 	if (!parsedRequest.success) {
@@ -36,7 +35,7 @@ export const kaguyaBotInteractionRoute = async (
 
 	const { signature, timestamp, rawBody, interaction } = parsedRequest.data;
 
-	// 2. parse 済み request を認証・認可する。
+	// 2. Authenticate and authorize the parsed request.
 	const publicKey = Resource.KaguyaDiscordInteractionPublicKey.value;
 	if (
 		!verifyInteractionSignature({ publicKey, signature, timestamp, rawBody })
@@ -49,9 +48,10 @@ export const kaguyaBotInteractionRoute = async (
 		};
 	}
 
-	// 3. interaction の種類と登録済み command から応答を解決する。
-	// ping は 3 秒制限内に確定応答を返し、command は deferred 応答で ACK して後追いジョブへ委譲する。
-	// enqueue の失敗は deferred 応答を返せないため、その場で確定する ephemeral 応答へ落とす。
+	// 3. Resolve the response from the interaction type and the registered commands.
+	// ping answers finally inside the 3-second limit; a command deferred-ACKs and hands off to a
+	// follow-up job. An enqueue failure can't return a deferred response, so it falls back to an
+	// ephemeral response settled on the spot.
 	const { callback } = parsedRequest.data;
 	let result: OperationResult<DiscordInteractionResponsePayload>;
 	try {
@@ -80,7 +80,7 @@ export const kaguyaBotInteractionRoute = async (
 	}
 	logger.complete({ interactionKind: interaction.kind, outcome: result.kind });
 
-	// 4. 解決済み payload から 200 response を形成する。
+	// 4. Shape a 200 response out of the resolved payload.
 	return {
 		statusCode: 200,
 		headers: { "Content-Type": "application/json" },

@@ -1,63 +1,59 @@
-// In scope: schedule 起動する batch job の実行タイミング設定を一元管理する
-// Out of scope: Lambda function 本体やイベントルーティングの定義
+// In scope: the one place holding when each schedule-triggered batch job runs
+// Out of scope: the Lambda function itself and event routing
 
 import { batchNames as animeBatchNames } from "../../apps/batch-anime-analysis/src/shared/routes/batch-names.js";
 import { batchJobNames as playgroundBatchJobNames } from "../../apps/batch-playground/src/handlers/batch/contracts/job-names.js";
 
-/** schedule 起動する batch job 1 件分のスケジュール設定。CronV2 へ spread して使う。 */
+/** One schedule-triggered batch job's timing, spread into a CronV2. */
 export type JobSchedule = {
-	/** EventBridge Scheduler の cron 式。 */
+	/** EventBridge Scheduler cron expression. */
 	readonly schedule: `cron(${string})`;
-	/** cron 式を解釈する IANA タイムゾーン。 */
+	/** IANA timezone the cron expression is read in. */
 	readonly timezone: string;
-	/** 起動失敗時のリトライ回数。 */
+	/** How many times a failed trigger is retried. */
 	readonly retries: number;
-	/** Lambda に渡すイベント。batch-router がこの job 名でジョブを解決する。 */
+	/** The event handed to Lambda; batch-router resolves the job from this name. */
 	readonly event: {
 		readonly job: string;
-		/** 起動スケジュールごとに対象を切り替える job（アニメ orchestrator）へ渡す時刻。 */
+		/** The hour handed to a job whose targets differ per schedule (the anime orchestrator). */
 		readonly scheduleHour?: number;
 	};
 };
 
-/** schedule 起動する batch job のスケジュール設定を job 単位で一元管理する。 */
 export const jobSchedules = {
-	/** UMA ワンドロお題の scheduler job を毎日 JST 00:00 に起動する。job が当日 12:00-18:00 のランダム時刻へお題通知の one-time schedule を登録する。 */
+	/** The job registers a one-time schedule for the topic notification at a random time between 12:00 and 18:00 that day. */
 	umaOneDrawTopicScheduler: {
 		schedule: "cron(0 0 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: playgroundBatchJobNames.umaOneDrawTopicScheduler },
 	},
-	/** 遊技チェックリマインダーを毎日 JST 22:00 に起動する。 */
 	playCheckReminder: {
 		schedule: "cron(0 22 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: playgroundBatchJobNames.playCheckReminder },
 	},
-	/** メディアライブラリの同期を 2 時間ごとに起動する。共通バッチと同じ router で解決する。 */
+	/** Resolved through the same router as the other batch jobs. */
 	mediaSync: {
 		schedule: "cron(0 0/2 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: playgroundBatchJobNames.mediaSync },
 	},
-	/** アニメ分析 orchestrator を毎日 JST 09:00 に起動する。 */
 	animeScrapingOrchestrator9: {
 		schedule: "cron(0 9 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: animeBatchNames.animeScrapingOrchestrator, scheduleHour: 9 },
 	},
-	/** アニメ指標の BigQuery 連携を毎日 JST 01:00 に起動する。前日分の取得日を対象にする。 */
+	/** Targets the previous day's scraped date. */
 	animeMetricBigQueryExport: {
 		schedule: "cron(0 1 * * ? *)",
 		timezone: "Asia/Tokyo",
 		retries: 0,
 		event: { job: animeBatchNames.animeMetricBigQueryExport },
 	},
-	/** アニメ分析 orchestrator を毎日 JST 23:00 に起動する。 */
 	animeScrapingOrchestrator23: {
 		schedule: "cron(0 23 * * ? *)",
 		timezone: "Asia/Tokyo",

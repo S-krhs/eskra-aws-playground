@@ -1,16 +1,15 @@
-// In scope: 絞り込み・一覧・同期の各機能を 1 画面にまとめる
-// Out of scope: 各機能の実装、API の呼び出し、表記の整形
+// In scope: assembling the filter, listing and sync features into one screen
+// Out of scope: each feature's implementation, calling the API, formatting
 import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
 import { MediaFilterBar } from "@/features/media-filter";
 import { MediaGrid, useMediaPage } from "@/features/media-grid";
 import { SyncControl, useSyncStatus } from "@/features/sync-control";
 
-/** 管理ツールの画面全体。 */
 export const MediaLibraryPage = () => {
 	const [filter, setFilter] = useState<MediaFilter>({});
 	const page = useMediaPage(filter);
-	// 同期が終わった時点で取り込まれた分を出すため、一覧を取り直す
+	// Refetch the listing once the sync ends, so what it took in shows up
 	const status = useSyncStatus(page.reload);
 
 	return (

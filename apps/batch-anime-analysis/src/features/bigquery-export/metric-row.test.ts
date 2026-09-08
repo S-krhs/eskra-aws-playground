@@ -12,7 +12,7 @@ describe("toScrapingMetricRow", () => {
 		createdAt: "2026-09-01T14:00:00.000Z",
 	};
 
-	it("連携先テーブルの列名へ変換する", () => {
+	it("converts to the destination table's column names", () => {
 		expect(toScrapingMetricRow(metric)).toEqual({
 			id: "12345678901234",
 			data_source_id: "bilibili-rank",
@@ -23,7 +23,7 @@ describe("toScrapingMetricRow", () => {
 		});
 	});
 
-	it("テーブル定義の列をすべて埋める", () => {
+	it("fills every column in the table definition", () => {
 		const fieldNames = scrapingMetricTableDefinition.fields.map((field) => {
 			return field.name;
 		});

@@ -91,7 +91,7 @@ const buildCommandInteractionBody = (
 	});
 };
 
-/** 成功 response であることを確認し、Discord payload を取り出す。 */
+/** Checks the response succeeded and pulls the Discord payload out of it. */
 const okBody = (
 	response: FunctionUrlResponse,
 ): {
@@ -115,7 +115,7 @@ beforeEach(() => {
 });
 
 describe("yacchoBotInteractionRoute", () => {
-	it("署名検証に失敗したら 401 response を返す", async () => {
+	it("returns 401 when signature verification fails", async () => {
 		verifier.verifyInteractionSignature.mockReturnValue(false);
 
 		const result = await yacchoBotInteractionRoute(buildEvent('{"type":1}'));
@@ -124,14 +124,14 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(JSON.parse(result.body)).toEqual({ error: "署名が不正です。" });
 	});
 
-	it("PING には PONG を返す", async () => {
+	it("answers a PING with a PONG", async () => {
 		const result = await yacchoBotInteractionRoute(buildEvent('{"type":1}'));
 
 		expect(result.statusCode).toBe(200);
 		expect(JSON.parse(result.body)).toEqual({ type: 1 });
 	});
 
-	it("base64 エンコードされた body はデコードした raw body で署名を検証する", async () => {
+	it("verifies the signature against the decoded raw body for a base64-encoded body", async () => {
 		const result = await yacchoBotInteractionRoute(
 			buildEvent('{"type":1}', { base64: true }),
 		);
@@ -145,7 +145,7 @@ describe("yacchoBotInteractionRoute", () => {
 		});
 	});
 
-	it("対象ユーザーのボタン押下は結果反映ジョブを enqueue し deferred update で ACK する", async () => {
+	it("enqueues the recording job and ACKs with a deferred update when the addressed user presses a button", async () => {
 		const rawBody = buildComponentInteractionBody(
 			`play-check-reminder:${targetUserId}:won`,
 			targetUserId,
@@ -167,7 +167,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.type).toBe(6);
 	});
 
-	it("対象外ユーザーのボタン押下は enqueue せず本人にだけ見える専用メッセージを返す", async () => {
+	it("enqueues nothing and answers with a message only they can see when someone else presses a button", async () => {
 		const rawBody = buildComponentInteractionBody(
 			`play-check-reminder:${targetUserId}:won`,
 			otherUserId,
@@ -181,7 +181,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.content).toContain(`<@${targetUserId}>`);
 	});
 
-	it("不明な custom_id は対応外の ephemeral メッセージを返す", async () => {
+	it("answers an unknown custom_id with the unsupported ephemeral message", async () => {
 		const rawBody = buildComponentInteractionBody(
 			"unknown-feature:xxx",
 			targetUserId,
@@ -195,7 +195,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.content).toBe("自分で調べろｶｽ");
 	});
 
-	it("prefix 区切りのない custom_id は対応外の ephemeral メッセージを返す", async () => {
+	it("answers a custom_id without prefix separators with the unsupported ephemeral message", async () => {
 		const rawBody = buildComponentInteractionBody(
 			"play-check-reminder",
 			targetUserId,
@@ -207,7 +207,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("解釈できない選択肢は対応外の ephemeral メッセージを返す", async () => {
+	it("answers an unreadable choice with the unsupported ephemeral message", async () => {
 		const rawBody = buildComponentInteractionBody(
 			`play-check-reminder:${targetUserId}:unknown`,
 			targetUserId,
@@ -219,7 +219,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("/hello コマンドはあいさつジョブを enqueue し公開 deferred で ACK する", async () => {
+	it("enqueues the greeting job for /hello and ACKs with a public deferred response", async () => {
 		const rawBody = buildCommandInteractionBody("hello", {
 			user: { id: targetUserId },
 		});
@@ -240,7 +240,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBeUndefined();
 	});
 
-	it("gamble-check-enable はサーバー内チャンネルで登録ジョブを enqueue する", async () => {
+	it("enqueues the registration job for gamble-check-enable in a server channel", async () => {
 		const rawBody = buildCommandInteractionBody("gamble-check-enable", {
 			guild_id: "555555555555555555",
 			channel_id: "666666666666666666",
@@ -266,7 +266,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("gamble-check-disable は削除ジョブを enqueue する", async () => {
+	it("enqueues the removal job for gamble-check-disable", async () => {
 		const rawBody = buildCommandInteractionBody("gamble-check-disable", {
 			guild_id: "555555555555555555",
 			member: { user: { id: targetUserId } },
@@ -290,7 +290,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("enqueue に失敗したら deferred ではなく再試行を促す ephemeral を返す", async () => {
+	it("answers with an ephemeral retry prompt instead of a deferred response when the enqueue fails", async () => {
 		sqs.sendMessages.mockRejectedValue(
 			new Error("SQS message の送信に失敗しました: interaction-job"),
 		);
@@ -307,7 +307,7 @@ describe("yacchoBotInteractionRoute", () => {
 		);
 	});
 
-	it("未対応のコマンドは対応外の ephemeral メッセージを返す", async () => {
+	it("answers an unsupported command with the unsupported ephemeral message", async () => {
 		const rawBody = buildCommandInteractionBody("unknown", {
 			user: { id: targetUserId },
 		});
@@ -319,7 +319,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("未対応の interaction type は対応外の ephemeral メッセージを返す", async () => {
+	it("answers an unsupported interaction type with the unsupported ephemeral message", async () => {
 		const body = okBody(
 			await yacchoBotInteractionRoute(buildEvent('{"type":99}')),
 		);
@@ -328,7 +328,7 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("autocomplete には空の候補一覧を返す", async () => {
+	it("answers an autocomplete with an empty candidate list", async () => {
 		const result = await yacchoBotInteractionRoute(
 			buildEvent(
 				`{"type":4,"data":{"name":"hello"},"user":{"id":"${targetUserId}"}}`,
@@ -342,7 +342,7 @@ describe("yacchoBotInteractionRoute", () => {
 		});
 	});
 
-	it("interaction body の JSON が不正なら 400 response を返す", async () => {
+	it("returns 400 when the interaction body's JSON is malformed", async () => {
 		const result = await yacchoBotInteractionRoute(buildEvent("not-a-json"));
 
 		expect(result.statusCode).toBe(400);

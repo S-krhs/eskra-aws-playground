@@ -1,5 +1,5 @@
-// In scope: Windows Forms 風の窓の枠と、最小化・最大化・閉じる・移動の操作
-// Out of scope: 窓に載せる中身、業務上の意味を持つ表示
+// In scope: the Windows-Forms-style window frame and its minimize, maximize, close and move actions
+// Out of scope: what goes inside the window, any display carrying business meaning
 
 import {
 	type ReactNode,
@@ -10,17 +10,17 @@ import {
 } from "react";
 import { WindowHostContext } from "./window-host.js";
 
-/** 窓の表示状態。閉じたら中身ごと描画しない */
+/** The window's display state; once closed nothing is rendered at all */
 type WindowState = "normal" | "minimized" | "maximized" | "closed";
 
-/** 画面外へ出しきらないよう、掴める幅と高さをこれだけ残す */
+/** How much grabbable width and height stays on screen, so a window can't be dragged out of reach */
 const grabMargin = 80;
 const titleBarHeight = 24;
 
-/** アイコン列を覆わないよう、2 枚目以降はこの右から重ねる */
+/** The second window onward cascades from this offset, clearing the icon column */
 const iconColumnWidth = 140;
 
-/** 最小化した窓を下辺へ並べる間隔。バーの幅どおりに詰めて置く */
+/** Spacing of minimized windows along the bottom edge, packed to the bar's own width */
 const minimizedPitch = 240;
 
 const ControlButton = ({
@@ -51,7 +51,7 @@ const ControlButton = ({
 	);
 };
 
-/** 窓の枠。最小化すると左下の小さなバーになり、閉じると何も描画しなくなる */
+/** The window frame; minimizing turns it into a small bar at the bottom left, closing renders nothing */
 export const Window = ({
 	title,
 	statusFields,
@@ -60,7 +60,7 @@ export const Window = ({
 }: {
 	title: string;
 	statusFields: readonly string[];
-	/** 最大化ボタンを押せるようにするか。false のときは押せない見た目で出す */
+	/** Whether the maximize button is usable; false renders it in its disabled look */
 	maximizable?: boolean;
 	children: ReactNode;
 }) => {
@@ -100,7 +100,7 @@ export const Window = ({
 		if (event.button !== 0 || !frame) {
 			return;
 		}
-		// ボタンを押したときは掴まない
+		// A press on a button doesn't grab the window
 		if (event.target instanceof Element && event.target.closest("button")) {
 			return;
 		}
@@ -154,7 +154,7 @@ export const Window = ({
 				label="閉じる"
 				glyph="✕"
 				onPress={() => {
-					// デスクトップに載っているときは、並べている側が窓ごと外す
+					// On the desktop the arranging side removes the whole window
 					return host ? host.onClose() : setState("closed");
 				}}
 			/>
@@ -181,10 +181,10 @@ export const Window = ({
 		"bevel-raised bg-face p-[3px] font-ui text-black text-xs shadow-[3px_3px_8px_rgb(0_0_0/40%)]";
 
 	if (isMinimized) {
-		// 下辺に横並びで置く。位置は実行時に決まるため class にできない
+		// Laid out along the bottom edge; the position is decided at runtime and can't be a class
 		const slot = host ? Math.max(host.minimizedSlot, 0) : 0;
 		return (
-			// biome-ignore lint/a11y/noStaticElementInteractions: ダブルクリックは復元ボタンの補助で、同じ操作は「元のサイズに戻す」ボタンから行える
+			// biome-ignore lint/a11y/noStaticElementInteractions: the double click only supplements the restore button, and the same action is available from it
 			<div
 				className={`${frameClasses} fixed bottom-3 z-10 w-60`}
 				style={{ left: 12 + slot * minimizedPitch, zIndex: host?.zIndex }}
@@ -204,7 +204,7 @@ export const Window = ({
 	}
 
 	const isMoved = position !== null && !isMaximized;
-	// 位置と重なり順は実行時に決まるため class にできない
+	// Position and stacking order are decided at runtime and can't be classes
 	const placementStyle = isMoved
 		? { left: position.x, top: position.y, zIndex: host?.zIndex }
 		: host

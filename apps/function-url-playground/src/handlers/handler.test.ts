@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 
 describe("handler", () => {
-	it("path に対応する route の HTTP response をそのまま返す", async () => {
+	it("returns the HTTP response of the route matching the path, untouched", async () => {
 		route.yacchoBotInteractionRoute.mockResolvedValue({
 			statusCode: 200,
 			headers: { "Content-Type": "application/json" },
@@ -50,7 +50,7 @@ describe("handler", () => {
 		});
 	});
 
-	it("Kaguya Bot の path を専用 route へ委譲する", async () => {
+	it("delegates the Kaguya Bot path to its own route", async () => {
 		route.kaguyaBotInteractionRoute.mockResolvedValue({
 			statusCode: 200,
 			headers: { "Content-Type": "application/json" },
@@ -64,7 +64,7 @@ describe("handler", () => {
 		expect(route.yacchoBotInteractionRoute).not.toHaveBeenCalled();
 	});
 
-	it("route のエラー response をそのまま返す", async () => {
+	it("returns a route's error response untouched", async () => {
 		route.yacchoBotInteractionRoute.mockResolvedValue({
 			statusCode: 401,
 			headers: { "Content-Type": "application/json" },
@@ -76,7 +76,7 @@ describe("handler", () => {
 		expect(response.statusCode).toBe(401);
 	});
 
-	it("envelope 形式が不正なら 400 を返し route を呼ばない", async () => {
+	it("returns 400 without calling a route when the envelope is malformed", async () => {
 		const response = await handler({ headers: {} });
 
 		expect(response.statusCode).toBe(400);
@@ -84,7 +84,7 @@ describe("handler", () => {
 		expect(route.kaguyaBotInteractionRoute).not.toHaveBeenCalled();
 	});
 
-	it("対応しないパスは 404 を返し route を呼ばない", async () => {
+	it("returns 404 without calling a route for an unhandled path", async () => {
 		const response = await handler({ rawPath: "/unknown", headers: {} });
 
 		expect(response.statusCode).toBe(404);

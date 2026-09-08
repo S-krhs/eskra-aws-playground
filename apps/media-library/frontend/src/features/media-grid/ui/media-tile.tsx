@@ -1,9 +1,9 @@
-// In scope: 一覧の 1 タイルの見た目
-// Out of scope: 一覧の取得、仮想スクロールの計算、絞り込み
+// In scope: how one tile in the listing looks
+// Out of scope: fetching the listing, the virtual-scroll arithmetic, filtering
 import { formatByteSize, formatDuration } from "@/shared/lib/format.js";
 import type { MediaItem } from "../model/use-media-page.js";
 
-/** 一覧の 1 件。サムネイルが未生成のものは種別だけを出す。 */
+/** One item in the listing; anything without a thumbnail yet shows only its kind. */
 export const MediaTile = ({ media }: { media: MediaItem }) => {
 	const isVideo = media.contentType.startsWith("video/");
 

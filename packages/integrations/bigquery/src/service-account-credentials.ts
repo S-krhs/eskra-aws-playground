@@ -1,8 +1,7 @@
-// In scope: GCP サービスアカウント鍵 JSON を BigQuery クライアント用の認証情報へ検証・変換する
-// Out of scope: 鍵の取得元の解決、BigQuery API の呼び出しを行う
+// In scope: validating and converting a GCP service-account key JSON into BigQuery client credentials
+// Out of scope: resolving where the key comes from, calling the BigQuery API
 import { z } from "zod";
 
-/** BigQuery クライアントへ渡す GCP サービスアカウント認証情報。 */
 export interface BigQueryServiceAccountCredentials {
 	projectId: string;
 	clientEmail: string;
@@ -15,10 +14,7 @@ const serviceAccountKeySchema = z.object({
 	private_key: z.string().min(1),
 });
 
-/**
- * GCP サービスアカウント鍵 JSON を認証情報へ変換する。
- * 鍵の中身が漏れないよう、失敗時は検証結果の詳細をエラーメッセージへ含めない。
- */
+/** Never includes validation detail in the thrown error, so the key's contents can't leak through it. */
 export const parseServiceAccountKey = (
 	serviceAccountKey: string,
 ): BigQueryServiceAccountCredentials => {

@@ -1,13 +1,10 @@
-// In scope: prefix・任意の target・action と Discord custom_id の相互変換
-// Out of scope: prefix・target・action の機能固有な意味付けと登録値との照合
+// In scope: converting between a Discord custom_id and its prefix / optional target / action
+// Out of scope: what a prefix, target, or action means to a feature, and checking it against registered values
 import type { DiscordCustomId } from "../contracts/discord-custom-id.js";
 
 const CUSTOM_ID_SEPARATOR = ":";
 
-/**
- * prefix・target・action から Discord custom_id を生成する。
- * target がない場合も2番目の区画を残し、`prefix::action` とする。
- */
+/** With no target the second segment is still kept, giving `prefix::action`. */
 export const buildCustomId = ({
 	prefix,
 	target = "",
@@ -26,7 +23,6 @@ export const buildCustomId = ({
 	return [prefix, target, action].join(CUSTOM_ID_SEPARATOR);
 };
 
-/** Discord custom_id を prefix・任意の target・action に分解する。 */
 export const parseCustomId = (
 	customId: string,
 ): DiscordCustomId | undefined => {

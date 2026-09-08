@@ -1,5 +1,5 @@
-// In scope: アニメ指標スクレイピング対象の静的カタログを定義する
-// Out of scope: 定義の読み込み、スクレイピング実行、parser 入力変換、外部通知を行う
+// In scope: the static catalog of anime-metric scraping targets
+// Out of scope: loading the catalog, running the scrape, converting parser input, outbound notifications
 import type {
 	AnimeApiMetricSource,
 	AnimeMetricDataSource,
@@ -116,7 +116,7 @@ const myAnimeListScoreWebpageSource: AnimeWebpageMetricSource = {
 	wrapper: {
 		selector: ".js-categories-seasonal",
 	},
-	// .title の中の .js-score は非表示のソート用要素で、未評価の作品には MAL 側が "0" を入れているため使えない。
+	// .js-score inside .title is a hidden sort helper, and MAL puts "0" there for unrated titles, so it is unusable.
 	itemsSelector: ".seasonal-anime",
 	label: {
 		selector: ".js-title",

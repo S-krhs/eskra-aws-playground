@@ -1,5 +1,5 @@
-// In scope: gamble-check-disable の本人設定を削除し、deferred 応答の元メッセージを確定内容へ差し替える
-// Out of scope: ジョブの振り分け、SQS event の解釈、実行場所の検証(route で実施済み)
+// In scope: removing the caller's gamble-check-disable setting and swapping the deferred response's original message for the final content
+// Out of scope: job dispatch, interpreting the SQS event, checking where it was run (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
 import { applicationKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/application-key.js";
@@ -12,7 +12,7 @@ type GambleCheckDisableMessage = Extract<
 	{ job: typeof interactionJobNames.gambleCheckDisable }
 >;
 
-/** 実行者本人のリマインダー設定を削除し、deferred 応答を結果メッセージへ差し替える。 */
+/** Removes the caller's own reminder setting and swaps the deferred response for the result message. */
 export const gambleCheckDisableJob = async (
 	message: GambleCheckDisableMessage,
 ): Promise<void> => {

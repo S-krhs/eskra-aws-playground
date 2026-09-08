@@ -1,5 +1,5 @@
-// TODO: 別タスクで testcontainers の PostgreSQL に移行する。
-//       それまでは TEST_DATABASE_URL(ローカル用 Neon branch)が設定されている場合のみ実行される。
+// TODO: move to a testcontainers PostgreSQL in a separate task.
+//       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import { randomUUID } from "node:crypto";
 import {
 	afterAll,
@@ -16,12 +16,11 @@ import { mediaSyncRunRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 
-// 並行実行や共有 branch で行を取り合わないよう、実行ごとに一意な id を使う
+// A unique id per run, so parallel runs and a shared branch never fight over the same rows
 const ids = [randomUUID(), randomUUID()];
 const [runId, laterRunId] = ids as [string, string];
 
-// findLatest / findRunning は全件から探すため、実データより後ろの日時にして
-// テスト行が必ず最新になるようにする
+// findLatest / findRunning scan every row, so these sit after any real data to keep the test rows newest
 const startedAt = new Date("2099-09-07T00:00:00.000Z");
 const progress = {
 	scannedCount: 120,
@@ -51,7 +50,7 @@ describe.skipIf(!testDatabaseUrl)(
 			await getPrismaClient().$disconnect();
 		});
 
-		it("開始した実行を件数 0 で作る", async () => {
+		it("creates a started run with every count at 0", async () => {
 			const run = await mediaSyncRunRepository.start(runId, startedAt);
 
 			expect(run).toEqual({
@@ -66,14 +65,14 @@ describe.skipIf(!testDatabaseUrl)(
 			});
 		});
 
-		it("実行中の件数を書き戻す", async () => {
+		it("writes counts back while the run is in flight", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
 
 			expect(await mediaSyncRunRepository.findLatest()).toMatchObject(progress);
 		});
 
-		it("終了していない実行だけを実行中として返す", async () => {
+		it("reports only an unfinished run as running", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
 
@@ -85,7 +84,7 @@ describe.skipIf(!testDatabaseUrl)(
 			expect(await mediaSyncRunRepository.findRunning()).toBeUndefined();
 		});
 
-		it("失敗した実行に error を残す", async () => {
+		it("keeps the error on a failed run", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			await mediaSyncRunRepository.finish({
 				id: runId,
@@ -99,8 +98,8 @@ describe.skipIf(!testDatabaseUrl)(
 			});
 		});
 
-		// 後から始まった実行が「自分より先の実行がある」と判断できる必要がある
-		it("実行中が複数あれば古い方を返す", async () => {
+		// A later run has to be able to tell that an earlier one is already going
+		it("returns the older one when two runs are in flight", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			await mediaSyncRunRepository.start(
 				laterRunId,
@@ -110,9 +109,9 @@ describe.skipIf(!testDatabaseUrl)(
 			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
 		});
 
-		// startedAt は行を入れる前に採るため、2 つの実行で前後が入れ替わることがある。
-		// 先に入った方を返さないと、どちらの実行も自分が最古だと判断して二重に走る
-		it("startedAt が前後しても先に入った実行を返す", async () => {
+		// startedAt is taken before the row is inserted, so two runs can end up in the opposite order.
+		// Unless the row inserted first wins, both runs decide they are oldest and run twice
+		it("returns the run inserted first even when startedAt says otherwise", async () => {
 			await mediaSyncRunRepository.start(
 				runId,
 				new Date("2099-09-07T02:00:00.000Z"),
@@ -122,7 +121,7 @@ describe.skipIf(!testDatabaseUrl)(
 			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
 		});
 
-		it("開始が新しい実行を最新として返す", async () => {
+		it("reports the most recently started run as the latest", async () => {
 			await mediaSyncRunRepository.start(runId, startedAt);
 			await mediaSyncRunRepository.start(
 				laterRunId,

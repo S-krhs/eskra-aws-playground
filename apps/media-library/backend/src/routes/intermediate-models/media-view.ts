@@ -1,10 +1,10 @@
-// In scope: 一覧が返すメディア 1 件の表示用の形
-// Out of scope: DB の query、HTTP response の組み立て、サムネイルの取得
+// In scope: the display shape of one media object the listing returns
+// Out of scope: DB queries, assembling the HTTP response, fetching a thumbnail
 import type { MediaObject } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 
 /**
- * 画面が必要とする項目だけに絞ったメディア 1 件。
- * R2 の key は画面から使わないため載せず、サムネイルの有無だけを渡す。
+ * One media object narrowed to what the screen needs. The screen never uses an R2 key, so none is
+ * carried — only whether a thumbnail exists.
  */
 export interface MediaView {
 	id: string;
@@ -19,7 +19,7 @@ export interface MediaView {
 	uploadedAt: string;
 }
 
-/** repository のメディアを表示用の形へ移す。 */
+/** Moves a repository media object into the display shape. */
 export const toMediaView = (media: MediaObject): MediaView => {
 	return {
 		id: media.id,

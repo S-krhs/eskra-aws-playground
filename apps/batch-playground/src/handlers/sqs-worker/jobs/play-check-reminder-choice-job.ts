@@ -1,5 +1,5 @@
-// In scope: 遊技リマインダーのボタン選択に応じて、deferred update の元メッセージをボタンを外した結果へ差し替える
-// Out of scope: ジョブの振り分け、SQS event の解釈、押下ユーザーの照合(route で実施済み)
+// In scope: swapping the deferred update's original message for the result with its buttons stripped, per the reminder choice pressed
+// Out of scope: job dispatch, interpreting the SQS event, checking who pressed it (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
 import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
 import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
@@ -10,7 +10,7 @@ type PlayCheckReminderChoiceMessage = Extract<
 	{ job: typeof interactionJobNames.playCheckReminderChoice }
 >;
 
-/** 選択された回答の結果文へ元メッセージを差し替え、ボタンを取り除く。 */
+/** Swaps the original message for the chosen answer's result text and strips the buttons. */
 export const playCheckReminderChoiceJob = async (
 	message: PlayCheckReminderChoiceMessage,
 ): Promise<void> => {

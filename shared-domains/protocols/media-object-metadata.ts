@@ -1,5 +1,5 @@
-// In scope: R2 の object metadata とメディアの素性の相互変換
-// Out of scope: R2 への通信、key の組み立て、metadata の保存先の決定
+// In scope: converting between R2 object metadata and a media object's identity
+// Out of scope: talking to R2, key construction, deciding where metadata is stored
 import { z } from "zod";
 import {
 	MEDIA_ID_METADATA_KEY,
@@ -8,9 +8,8 @@ import {
 } from "../contracts/media-storage-layout.js";
 
 /**
- * メディアの素性を R2 へ渡す metadata へ変換する。
- * metadata は HTTP ヘッダとして送られ ASCII しか通らないため、
- * 日本語を含みうるファイル名は percent-encode する。
+ * Metadata travels as an HTTP header and only ASCII survives, so the file name —
+ * which may contain Japanese — is percent-encoded.
  */
 export const buildMediaObjectMetadata = (
 	metadata: MediaObjectMetadata,
@@ -24,9 +23,8 @@ export const buildMediaObjectMetadata = (
 const mediaIdSchema = z.uuid();
 
 /**
- * R2 から読んだ metadata をメディアの素性へ戻す。
- * metadata は誰でも書けるため、UUID として読めない media-id は
- * 無いものとして扱う(そのまま主キーへ入れると以降の登録が全て失敗する)。
+ * Anyone can write metadata, so a media-id that does not read as a UUID is treated as absent —
+ * feeding it straight into the primary key would fail every later insert.
  */
 export const parseMediaObjectMetadata = (
 	metadata: Record<string, string> | undefined,
@@ -41,7 +39,7 @@ export const parseMediaObjectMetadata = (
 
 	return {
 		mediaId,
-		// 手で置かれた metadata が percent-encode されていない場合に落とさない
+		// Don't drop hand-placed metadata that was never percent-encoded
 		originalName: originalName ? safeDecode(originalName) : "",
 	};
 };

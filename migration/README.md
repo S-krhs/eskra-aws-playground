@@ -1,8 +1,6 @@
 # Migration
 
-Prisma schema と migration history を管理する領域です。
 npm workspace ではなく、`prisma` CLI(root devDependency)を root の scripts から実行します。
-CLI の設定(schema / migrations の場所、接続先の解決)は root の `prisma.config.ts` にあります。
 
 ## コマンド(root で実行)
 

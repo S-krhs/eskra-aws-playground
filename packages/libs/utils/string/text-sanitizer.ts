@@ -1,13 +1,12 @@
-// In scope: 文字列に置換リストと最大長制限を適用する
-// Out of scope: 特定サービス固有の secret 判定やログ出力を行う
+// In scope: applying a replacement list and a max-length cap to a string
+// Out of scope: deciding what counts as a secret for a specific service, log output
 
-/** 文字列 sanitizer で適用する置換ルール。string pattern は全ての出現を置換し、RegExp は flag に従う。 */
+/** A string `pattern` replaces every occurrence (`replaceAll`); a `RegExp` pattern follows its own flags. */
 export interface TextReplacement {
 	pattern: string | RegExp;
 	replacement: string;
 }
 
-/** 文字列 sanitizer の設定。 */
 export interface SanitizeTextOptions {
 	replacements?: readonly TextReplacement[];
 	maxLength?: number;
@@ -15,7 +14,7 @@ export interface SanitizeTextOptions {
 
 const DEFAULT_MAX_LENGTH = 512;
 
-/** 置換リストを順に適用し、最大文字数で切り詰める。 */
+/** Applies `replacements` in order, then truncates to `maxLength`. */
 export const sanitizeText = (
 	text: string,
 	options: SanitizeTextOptions,

@@ -1,5 +1,5 @@
-// In scope: R2 のオブジェクト操作(一覧・メタデータ取得・取得・保存・複製・削除)
-// Out of scope: client の生成、key の組み立て、サムネイル生成、DB への反映
+// In scope: R2 object operations (list, head, get, upload, copy, delete)
+// Out of scope: client creation, key construction, thumbnail generation, DB writes
 import type { _Object } from "@aws-sdk/client-s3";
 import {
 	CopyObjectCommand,
@@ -22,7 +22,7 @@ import type {
 	UploadObjectInput,
 } from "./r2-object-types.js";
 
-// SDK は HeadObject の 404 を NotFound、GetObject の 404 を NoSuchKey として投げる
+// The SDK throws HeadObject's 404 as NotFound, GetObject's 404 as NoSuchKey
 const isNotFound = (error: unknown): boolean => {
 	return (
 		error instanceof Error &&
@@ -57,9 +57,9 @@ const toObjectSummary = (content: _Object): R2ObjectSummary => {
 };
 
 /**
- * CopyObject へ渡す複製元を組み立てる。
- * key の "/" は path 区切りとして残し、それ以外の記号だけを encode する
- * (日本語のフォルダ名がそのままでは通らないため)。
+ * Builds the `CopySource` value for `CopyObjectCommand`.
+ * Keeps a key's `/` as path separators and percent-encodes everything else —
+ * needed because a non-ASCII folder name doesn't survive as-is.
  */
 export const buildCopySource = (bucket: string, key: string): string => {
 	const encodedKey = key
@@ -72,9 +72,9 @@ export const buildCopySource = (bucket: string, key: string): string => {
 	return `${bucket}/${encodedKey}`;
 };
 
-/** R2 のオブジェクト操作。client は呼び出し側が生成して渡す。 */
+/** The caller creates and passes in `client`. */
 export const r2ObjectStore = {
-	/** prefix 配下のオブジェクトを 1 ページ分返す。 */
+	/** Returns one page of objects under `prefix`. */
 	list: async (
 		client: R2Client,
 		input: ListObjectsInput,
@@ -94,7 +94,7 @@ export const r2ObjectStore = {
 		};
 	},
 
-	/** オブジェクトのメタデータだけを読む。 */
+	/** Reads only an object's metadata. */
 	head: async (
 		client: R2Client,
 		input: ObjectLocation,
@@ -113,8 +113,8 @@ export const r2ObjectStore = {
 	},
 
 	/**
-	 * オブジェクトが無ければ undefined を返す HeadObject。
-	 * key の衝突判定に使うため、存在しないことをエラーにしない。
+	 * HeadObject that returns undefined instead of throwing when the object
+	 * doesn't exist — used for key-collision checks, where "not found" is expected.
 	 */
 	headIfExists: async (
 		client: R2Client,
@@ -131,7 +131,7 @@ export const r2ObjectStore = {
 		}
 	},
 
-	/** オブジェクトの本文を取得する。range を渡すと部分応答になる。 */
+	/** Fetches an object's body. Passing `range` gets a partial response. */
 	get: async (
 		client: R2Client,
 		input: GetObjectInput,
@@ -157,7 +157,7 @@ export const r2ObjectStore = {
 		};
 	},
 
-	/** オブジェクトを保存する。大きい本文は multipart へ自動で切り替わる。 */
+	/** Uploads an object. A large body switches to multipart automatically. */
 	upload: async (client: R2Client, input: UploadObjectInput): Promise<void> => {
 		const upload = new Upload({
 			client,
@@ -174,9 +174,10 @@ export const r2ObjectStore = {
 	},
 
 	/**
-	 * 同一 bucket 内でオブジェクトを複製する。
-	 * metadata を渡したときだけ REPLACE にし、省略時は複製元の metadata を引き継ぐ。
-	 * 単発の CopyObject は 5GB までで、それを超えるものは multipart copy が要る。
+	 * Copies an object within the same bucket.
+	 * `REPLACE` only when `metadata` is passed — omitting it carries over the
+	 * source's metadata. A single CopyObject tops out at 5GB; past that needs
+	 * multipart copy.
 	 */
 	copy: async (client: R2Client, input: CopyObjectInput): Promise<void> => {
 		await client.send(
@@ -191,7 +192,7 @@ export const r2ObjectStore = {
 		);
 	},
 
-	/** オブジェクトを削除する。存在しない key でもエラーにならない。 */
+	/** Deletes an object. A key that doesn't exist isn't an error. */
 	delete: async (client: R2Client, input: ObjectLocation): Promise<void> => {
 		await client.send(
 			new DeleteObjectCommand({ Bucket: input.bucket, Key: input.key }),

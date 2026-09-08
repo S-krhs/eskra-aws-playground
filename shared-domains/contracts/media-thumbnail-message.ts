@@ -1,14 +1,13 @@
-// In scope: sqs-worker が受け取るサムネイル生成 job message の外部入力 schema と型を提供する
-// Out of scope: SQS 送受信、サムネイルの生成、R2 と DB への反映
+// In scope: the external-input schema and type for a thumbnail-generation job message received by sqs-worker
+// Out of scope: SQS send/receive, generating the thumbnail, writing it to R2 and the DB
 import { z } from "zod";
 import { mediaJobNames } from "./media-job-names.js";
 
-/** サムネイル生成 1 件分の message。生成に要る所在だけを持つ。 */
+/** One thumbnail-generation request — carries only what's needed to locate the source. */
 export const mediaThumbnailMessageSchema = z.object({
 	job: z.literal(mediaJobNames.mediaThumbnail),
 	mediaId: z.uuid(),
 	objectKey: z.string().min(1),
 });
 
-/** サムネイル生成 1 件分の message。 */
 export type MediaThumbnailMessage = z.infer<typeof mediaThumbnailMessageSchema>;

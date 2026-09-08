@@ -1,5 +1,5 @@
-// In scope: R2 の全メディアを列挙する(ページングとメディアでない prefix の除外)
-// Out of scope: metadata の読み出し、DB との突き合わせ、サムネイル生成
+// In scope: enumerating every media object in R2, paging and excluding non-media prefixes
+// Out of scope: reading metadata, matching against the DB, thumbnail generation
 
 import { extname } from "node:path";
 import type { R2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
@@ -11,10 +11,9 @@ import type { ScannedObject } from "./sync-plan.js";
 const THUMBNAIL_KEY_PREFIX = `${THUMBNAIL_PREFIX}/`;
 
 /**
- * 取り込む対象の key かどうかを判定する。
- * サムネイルはメディアそのものではないため外し、対象外の拡張子も外す。
- * ここで除外しておかないと、テキストやフォルダの placeholder まで取り込まれ、
- * サムネイル生成が毎回失敗して DLQ が埋まり続ける。
+ * Decides whether a key is media to take in. Thumbnails aren't media themselves and are excluded,
+ * as are extensions off the list. Without that, text files and folder placeholders get taken in,
+ * and thumbnail generation fails on them forever and keeps backing up the DLQ.
  */
 export const isMediaKey = (key: string): boolean => {
 	if (key.startsWith(THUMBNAIL_KEY_PREFIX)) {
@@ -25,8 +24,8 @@ export const isMediaKey = (key: string): boolean => {
 };
 
 /**
- * bucket 内の全メディアを列挙する。
- * 1 応答 1000 件を continuationToken で辿り、10 万件でも 100 リクエスト程度で終わる。
+ * Enumerates every media object in the bucket, following continuationToken through 1000 keys per
+ * response — around 100 requests even at 100k objects.
  */
 export const scanMediaObjects = async (
 	client: R2Client,

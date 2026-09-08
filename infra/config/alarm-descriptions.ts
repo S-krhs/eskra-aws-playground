@@ -1,7 +1,7 @@
-// In scope: CloudWatch alarm の説明文言を一元管理する
-// Out of scope: alarm の閾値やメトリクスなどの構成定義
+// In scope: the one place holding CloudWatch alarm description text
+// Out of scope: alarm thresholds, metrics, and the rest of an alarm's configuration
 
-/** CloudWatch alarm の alarmDescription に使う文言。 */
+/** Text used as a CloudWatch alarm's alarmDescription. */
 export const alarmDescriptions = {
 	animeAnalysisDlqDepth:
 		"アニメ分析 worker が失敗し DLQ にメッセージが滞留しています",

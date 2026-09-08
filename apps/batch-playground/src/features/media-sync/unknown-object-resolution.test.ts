@@ -14,8 +14,8 @@ const known = (ids: {
 };
 
 describe("decideUnknownObject", () => {
-	// 元の key が消えていて同じ media-id が別の key に現れたら移動
-	it("元の key が消えていれば移動として扱う", () => {
+	// The original key gone and the same media-id on another key means a move
+	it("treats a gone original key as a move", () => {
 		expect(
 			decideUnknownObject(
 				{ mediaId, originalName: "a.png" },
@@ -24,9 +24,9 @@ describe("decideUnknownObject", () => {
 		).toEqual({ kind: "relocate", mediaId });
 	});
 
-	// metadata ごと複製されると同じ media-id が 2 つの key に載る。
-	// 移動として扱うと objectKey が実行のたびに入れ替わり続ける
-	it("元の key が残っていれば複製として扱う", () => {
+	// A copy carries the metadata along, putting the same media-id on two keys.
+	// Treating that as a move flips objectKey between them on every run
+	it("treats a surviving original key as a copy", () => {
 		expect(
 			decideUnknownObject(
 				{ mediaId, originalName: "a.png" },
@@ -35,14 +35,14 @@ describe("decideUnknownObject", () => {
 		).toEqual({ kind: "duplicate", mediaId });
 	});
 
-	it("未登録の UUID なら新規として扱う", () => {
+	it("treats an unregistered UUID as new", () => {
 		expect(
 			decideUnknownObject({ mediaId, originalName: "a.png" }, known({})),
 		).toEqual({ kind: "insert", mediaId, originalName: "a.png" });
 	});
 
-	// R2 のダッシュボードや rclone から直接置かれたものは metadata を持たない
-	it("metadata が無ければ取り込みとして扱う", () => {
+	// Anything placed straight from the R2 dashboard or rclone carries no metadata
+	it("treats a missing metadata as an adoption", () => {
 		expect(
 			decideUnknownObject(undefined, known({ knownIds: [mediaId] })),
 		).toEqual({ kind: "adopt" });

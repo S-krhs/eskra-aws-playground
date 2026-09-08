@@ -8,7 +8,7 @@ const here = (path: string): string => {
 	return fileURLToPath(new URL(path, import.meta.url));
 };
 
-// backend の待ち受けポート。dev サーバからの /api はここへ中継する
+// The backend's listening port; the dev server proxies /api here
 const BACKEND_ORIGIN = "http://127.0.0.1:7420";
 
 export default defineConfig({
@@ -50,7 +50,7 @@ export default defineConfig({
 				],
 			},
 			workbox: {
-				// 原本とサムネイルは backend が返す。ここで抱えると容量が読めなくなる
+				// Originals and thumbnails come from the backend; caching them here would make the size unpredictable
 				navigateFallbackDenylist: [/^\/api\//],
 				globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
 			},

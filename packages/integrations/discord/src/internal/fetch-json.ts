@@ -1,24 +1,23 @@
-// In scope: Discord API への JSON GET の timeout 制御・応答検査・エラー整形を共通化し、parse した body を返す
-// Out of scope: 各 API 固有の URL 組み立て、認証情報の解決、応答の意味解釈を行う
+// In scope: shared timeout handling, response checking, and error shaping for a JSON GET against a Discord API, returning the parsed body
+// Out of scope: a specific API's URL construction, resolving credentials, interpreting what the response means
 import {
 	sanitizeText,
 	type TextReplacement,
 } from "@eskra-aws-playground/libs/string/text-sanitizer.js";
 
-/** JSON GET の実行に必要な入力。 */
 export interface JsonFetchRequest {
 	url: string;
 	headers?: Record<string, string>;
 	timeoutMs: number;
-	/** エラーメッセージの主語に使う API 名(例: "Discord Command API")。 */
+	/** API name used as the subject of an error message, e.g. "Discord Command API". */
 	apiLabel: string;
-	/** 失敗応答 body へ適用する秘匿置換。 */
+	/** Redaction rules applied to a failure response's body. */
 	responseBodyReplacements?: readonly TextReplacement[];
-	/** この API 固有のエラー型を作る。 */
+	/** Builds this API's own error type. */
 	createError: (message: string, responseDetails?: unknown) => Error;
 }
 
-/** JSON を timeout 付きで GET し、parse した body を返す。失敗は API 固有のエラーにして投げる。 */
+/** Throws via `createError` on failure. */
 export const fetchJson = async <T>(request: JsonFetchRequest): Promise<T> => {
 	const {
 		url,

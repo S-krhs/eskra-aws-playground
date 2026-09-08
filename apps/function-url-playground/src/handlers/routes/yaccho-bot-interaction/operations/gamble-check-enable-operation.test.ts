@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 describe("gambleCheckEnableOperation", () => {
-	it("現在の Guild・channel と実行者本人で登録ジョブを enqueue し ephemeral deferred で ACK する", async () => {
+	it("enqueues the registration job for the current guild, channel and caller, and ACKs with an ephemeral deferred response", async () => {
 		const result = await gambleCheckEnableOperation(guildCommand(), callback);
 
 		expect(sqs.sendMessages).toHaveBeenCalledWith([
@@ -66,7 +66,7 @@ describe("gambleCheckEnableOperation", () => {
 		});
 	});
 
-	it("サーバー外からの実行は enqueue せず即時 ephemeral を返す", async () => {
+	it("enqueues nothing and answers immediately with an ephemeral response when run outside a server", async () => {
 		const result = await gambleCheckEnableOperation(
 			{
 				kind: "application-command",

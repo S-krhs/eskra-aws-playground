@@ -1,5 +1,5 @@
-// In scope: Discord interaction body から deferred 応答用の callback 情報を取り出す
-// Out of scope: interaction 本体の parse、署名検証、応答生成
+// In scope: extracting deferred-response callback info from a Discord interaction body
+// Out of scope: parsing the interaction itself, signature verification, building a response
 import { z } from "zod";
 import type { DiscordInteractionCallback } from "./discord-interaction.js";
 
@@ -8,10 +8,7 @@ const interactionCallbackSchema = z.object({
 	token: z.string().min(1),
 });
 
-/**
- * JSON body から deferred 応答用の callback 情報(application_id・token)を取り出す。
- * どちらかが欠けている場合は undefined を返す。
- */
+/** Returns undefined if the JSON is unparseable or either field is missing. */
 export const parseInteractionCallback = (
 	rawBody: string,
 ): DiscordInteractionCallback | undefined => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { dataSourceMessageSchema } from "./message.js";
 
 describe("dataSourceMessageSchema", () => {
-	it("worker message を検証して正規化する", () => {
+	it("validates and normalizes a worker message", () => {
 		expect(dataSourceMessageSchema.parse({ dataSourceId: "source-a" })).toEqual(
 			{
 				dataSourceId: "source-a",
@@ -10,13 +10,13 @@ describe("dataSourceMessageSchema", () => {
 		);
 	});
 
-	it("dataSourceId が欠けた message はエラーにする", () => {
+	it("errors on a message missing dataSourceId", () => {
 		expect(() => {
 			return dataSourceMessageSchema.parse({});
 		}).toThrow("dataSourceId");
 	});
 
-	it("dataSourceId が空または string でない message はエラーにする", () => {
+	it("errors on a message whose dataSourceId is empty or not a string", () => {
 		expect(() => {
 			return dataSourceMessageSchema.parse({ dataSourceId: "" });
 		}).toThrow("dataSourceId");

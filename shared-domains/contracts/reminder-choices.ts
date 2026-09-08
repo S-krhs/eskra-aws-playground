@@ -1,11 +1,9 @@
-// In scope: 遊技チェックリマインダーの質問文・選択肢・回答結果文を定義する
-// Out of scope: メッセージ生成、押下結果の判定、Discord payload 生成、外部送信を行う
+// In scope: defining the play-check reminder's question, choices, and response text
+// Out of scope: message assembly, judging which button was pressed, building a Discord payload, sending
 import type { ButtonTone } from "./button-tone.js";
 
-/** 遊技チェックリマインダーの質問文。 */
 export const REMINDER_QUESTION = "やおよろ～！今日は遊技した？";
 
-/** 遊技チェックリマインダーの選択肢。 */
 export interface ReminderChoice {
 	id: string;
 	label: string;
@@ -13,7 +11,6 @@ export interface ReminderChoice {
 	responseMessage: string;
 }
 
-/** 遊技チェックリマインダーの選択肢一覧。 */
 export const REMINDER_CHOICES: readonly ReminderChoice[] = [
 	{
 		id: "won",

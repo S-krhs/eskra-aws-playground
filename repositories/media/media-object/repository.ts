@@ -1,5 +1,5 @@
-// In scope: MediaObject の登録・key の付け替え・削除と、一覧および単体の取得
-// Out of scope: R2 への読み書き、key の組み立て、タグとフォルダの操作、サムネイル生成
+// In scope: registering, re-keying and deleting MediaObject rows, and reading them one at a time or by page
+// Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../db/client.js";
 import type {
 	FindMediaObjectPageInput,
@@ -51,7 +51,7 @@ const toMediaObject = (row: MediaObjectRow): MediaObject => {
 	};
 };
 
-// 10 万件規模の同期で 1 文が巨大にならないよう、一括操作はこの単位へ割る
+// Bulk operations are split at this size so a 100k-object sync never builds one enormous statement
 const BULK_CHUNK_SIZE = 1_000;
 
 const toChunks = <T>(items: T[]): T[][] => {
@@ -64,7 +64,7 @@ const toChunks = <T>(items: T[]): T[][] => {
 	return chunks;
 };
 
-// (uploadedAt, id) の組で位置を決める。Prisma は組での比較を書けないため OR に展開する
+// The position is the (uploadedAt, id) pair; Prisma can't express a tuple comparison, so it expands to an OR
 const toCursorFilter = (cursor: MediaObjectCursor) => {
 	return {
 		OR: [
@@ -74,12 +74,8 @@ const toCursorFilter = (cursor: MediaObjectCursor) => {
 	};
 };
 
-/** メディアの永続化操作。 */
 export const mediaObjectRepository = {
-	/**
-	 * 登録済みの id・key・etag を全件返す。
-	 * 同期が R2 の一覧と突き合わせるための射影で、本文の列は読まない。
-	 */
+	/** The projection a sync compares against an R2 listing — id, key and etag only, no content columns. */
 	findAllSummaries: async (): Promise<MediaObjectSummary[]> => {
 		const prisma = getPrismaClient();
 
@@ -88,7 +84,7 @@ export const mediaObjectRepository = {
 		});
 	},
 
-	/** id で 1 件取得する。ゴミ箱に入れたものも返す。 */
+	/** Returns trashed objects too. */
 	findById: async (id: string): Promise<MediaObject | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaObject.findUnique({ where: { id } });
@@ -96,7 +92,7 @@ export const mediaObjectRepository = {
 		return row ? toMediaObject(row) : undefined;
 	},
 
-	/** 新着順で 1 ページ取得する。ゴミ箱に入れたものは除外する。 */
+	/** One page, newest first, excluding trashed objects. */
 	findPage: async (
 		input: FindMediaObjectPageInput,
 	): Promise<MediaObjectPage> => {
@@ -111,7 +107,7 @@ export const mediaObjectRepository = {
 				...(input.cursor ? toCursorFilter(input.cursor) : {}),
 			},
 			orderBy: [{ uploadedAt: "desc" }, { id: "desc" }],
-			// 次ページの有無を追加の COUNT なしで判定するため 1 件多く読む
+			// Read one extra row so the next page can be detected without a separate COUNT
 			take: input.limit + 1,
 		});
 
@@ -127,10 +123,7 @@ export const mediaObjectRepository = {
 		};
 	},
 
-	/**
-	 * サムネイルが未生成のメディアを返す。
-	 * 処理中のものと、回数を使い切ったものは対象から外す。
-	 */
+	/** Returns objects with no thumbnail yet, skipping in-flight ones and those that used up their attempts. */
 	findWithoutThumbnail: async (
 		input: FindThumbnaillessInput,
 	): Promise<ThumbnaillessMediaObject[]> => {
@@ -152,7 +145,7 @@ export const mediaObjectRepository = {
 		});
 	},
 
-	/** サムネイル生成を queue へ投入したことを記録し、試行回数を進める。 */
+	/** Records that thumbnail generation was enqueued, and advances the attempt count. */
 	markThumbnailEnqueued: async (
 		ids: string[],
 		enqueuedAt: Date,
@@ -180,8 +173,8 @@ export const mediaObjectRepository = {
 	},
 
 	/**
-	 * 生成したサムネイルの所在と、併せて読めた寸法・尺を記録する。
-	 * 生成中に行が消えていても失敗にしないため、更新できた件数を返す。
+	 * Records where the thumbnail landed, along with any dimensions and duration read alongside it.
+	 * Returns the number of rows updated, so a row deleted mid-generation isn't treated as a failure.
 	 */
 	setThumbnail: async (input: SetMediaThumbnailInput): Promise<number> => {
 		const prisma = getPrismaClient();
@@ -194,7 +187,7 @@ export const mediaObjectRepository = {
 		return result.count;
 	},
 
-	/** 新規に見つかったメディアをまとめて登録する。既に登録済みの id は無視する。 */
+	/** Registers newly found media in bulk, ignoring ids that are already registered. */
 	insertMany: async (inputs: InsertMediaObjectInput[]): Promise<number> => {
 		if (inputs.length === 0) {
 			return 0;
@@ -217,7 +210,7 @@ export const mediaObjectRepository = {
 		return inserted;
 	},
 
-	/** 外部で移動されたメディアの key を付け替える。 */
+	/** Re-points the keys of media moved outside this app. */
 	relocateMany: async (inputs: RelocateMediaObjectInput[]): Promise<number> => {
 		if (inputs.length === 0) {
 			return 0;
@@ -245,8 +238,8 @@ export const mediaObjectRepository = {
 	},
 
 	/**
-	 * 同じ key のまま差し替わったメディアを作り直す。
-	 * サムネイルと寸法は元の中身に基づくため消し、次の同期で作り直させる。
+	 * Re-registers media replaced under an unchanged key. The thumbnail and dimensions describe the
+	 * old content, so they are cleared and the next sync rebuilds them.
 	 */
 	refreshMany: async (inputs: RefreshMediaObjectInput[]): Promise<number> => {
 		if (inputs.length === 0) {
@@ -279,7 +272,7 @@ export const mediaObjectRepository = {
 		return refreshed;
 	},
 
-	/** R2 に依然として存在していたメディアの確認時刻を更新する。 */
+	/** Updates the last-seen time of media still present in R2. */
 	touchMany: async (ids: string[], syncedAt: Date): Promise<number> => {
 		if (ids.length === 0) {
 			return 0;
@@ -300,7 +293,7 @@ export const mediaObjectRepository = {
 		return touched;
 	},
 
-	/** R2 から消えたメディアの行を削除する。タグの紐付けも併せて消える。 */
+	/** Deletes rows for media gone from R2; their tag links go with them. */
 	deleteByIds: async (ids: string[]): Promise<number> => {
 		if (ids.length === 0) {
 			return 0;

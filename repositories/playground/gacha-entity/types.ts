@@ -1,15 +1,14 @@
-// In scope: GachaEntity repository の入出力型
-// Out of scope: validation schema、DB 操作、抽選、メッセージ生成
+// In scope: the input/output types of the GachaEntity repository
+// Out of scope: validation schemas, DB access, drawing, message assembly
 import type { GachaPoolKey } from "../shared/literals/gacha-pool-key.js";
 import type { GachaRarity } from "../shared/literals/gacha-rarity.js";
 
-/** pool に属するガチャ候補。 */
+/** One gacha candidate belonging to a pool. */
 export interface GachaEntity {
 	rarity: GachaRarity;
 	name: string;
 }
 
-/** ガチャ候補の取得入力。 */
 export interface FindGachaEntitiesInput {
 	poolKey: GachaPoolKey;
 }

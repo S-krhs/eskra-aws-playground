@@ -1,5 +1,3 @@
-// In scope: Discord button を利用者へどう見せるかを表す意味的な tone の語彙
-// Out of scope: tone と Discord style 値の対応、button payload の生成
-
-/** Discord button を利用者へどう見せるかを表す意味的な tone。 */
+// In scope: the semantic vocabulary for how a Discord button should present to the user
+// Out of scope: mapping tone to a Discord style value, building a button payload
 export type ButtonTone = "primary" | "neutral" | "positive" | "negative";

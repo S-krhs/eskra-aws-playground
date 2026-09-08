@@ -19,27 +19,27 @@ afterEach(async () => {
 });
 
 describe("thumbnailCache", () => {
-	it("保存した内容をそのまま読み出す", async () => {
+	it("reads back exactly what was stored", async () => {
 		await writeCachedThumbnail(cacheDir, mediaId, new Uint8Array([1, 2, 3]));
 
 		const cached = await readCachedThumbnail(cacheDir, mediaId);
 		expect(cached && [...cached]).toEqual([1, 2, 3]);
 	});
 
-	// 初回は保存されていない。ここで落とすと R2 から取り直せなくなる
-	it("保存していない id は undefined を返す", async () => {
+	// Nothing is cached on the first request; throwing here would block the refetch from R2
+	it("returns undefined for an id that was never stored", async () => {
 		expect(await readCachedThumbnail(cacheDir, mediaId)).toBeUndefined();
 	});
 
-	it("キャッシュ先のディレクトリが無ければ作る", async () => {
+	it("creates the cache directory when it is missing", async () => {
 		const nested = join(cacheDir, "a", "b");
 		await writeCachedThumbnail(nested, mediaId, new Uint8Array([1]));
 
 		expect(await readdir(nested)).toEqual([`${mediaId}.webp`]);
 	});
 
-	// 書き込み途中のファイルを次の要求が読まないよう、別名で書いてから rename する
-	it("書き込みの後に一時ファイルを残さない", async () => {
+	// Written under a temp name and renamed into place, so a request mid-write never reads a partial file
+	it("leaves no temp file behind after a write", async () => {
 		await writeCachedThumbnail(cacheDir, mediaId, new Uint8Array([1]));
 
 		expect(await readdir(cacheDir)).toEqual([`${mediaId}.webp`]);

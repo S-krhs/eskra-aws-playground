@@ -1,5 +1,5 @@
-// In scope: Function URL handler が公開する request path の定義
-// Out of scope: path と route の対応付け、各 route の処理内容
+// In scope: the request paths the Function URL handler exposes
+// Out of scope: mapping a path to a route, what each route does
 export const paths = {
 	yacchoBotInteraction: "/discord/interactions/yaccho-bot",
 	kaguyaBotInteraction: "/discord/interactions/kaguya-bot",

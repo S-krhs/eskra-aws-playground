@@ -1,5 +1,5 @@
-// In scope: 投資・回収ボタンが 1 回で動かす額
-// Out of scope: ボタンの描画、収支の状態管理
+// In scope: how much one press of a spend/recover button moves the balance
+// Out of scope: rendering the buttons, holding the balance state
 
-/** 投資・回収ボタンの並び。単位の選択に関わらず、常に円で増減する */
+/** The order of the spend/recover buttons; always in yen, whichever unit is selected */
 export const expenseSteps = [-10000, -1000, 1000, 10000];

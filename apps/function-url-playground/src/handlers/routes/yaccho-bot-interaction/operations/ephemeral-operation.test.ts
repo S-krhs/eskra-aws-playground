@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ephemeralOperation } from "./ephemeral-operation.js";
 
 describe("ephemeralOperation", () => {
-	it("OK と呼び出し元だけに表示するメッセージ payload を返す", () => {
+	it("returns OK and a message payload visible only to the caller", () => {
 		expect(ephemeralOperation("自分で調べろｶｽ")).toEqual({
 			kind: "OK",
 			data: {

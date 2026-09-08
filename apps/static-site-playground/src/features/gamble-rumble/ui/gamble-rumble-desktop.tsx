@@ -1,10 +1,10 @@
-// In scope: gamble-rumble をアイコンとして置いたデスクトップ。ページが載せる island
-// Out of scope: デスクトップの枠組み、窓の中身
+// In scope: the desktop holding gamble-rumble as an icon — the island a page drops in
+// Out of scope: the desktop framework, a window's contents
 
 import { Desktop } from "@/shared/ui/win-forms";
 import { GambleRumble } from "./gamble-rumble.js";
 
-/** アイコンをダブルクリックするたび、収支を独立して持つ窓が増える */
+/** Every double click on the icon opens another window holding its own balance */
 export const GambleRumbleDesktop = () => {
 	return (
 		<Desktop

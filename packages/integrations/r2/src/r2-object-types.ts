@@ -1,8 +1,7 @@
-// In scope: R2 のオブジェクト操作の入出力型
-// Out of scope: client の生成、オブジェクト操作、key の組み立て
+// In scope: input/output types for R2 object operations
+// Out of scope: client creation, object operations, key construction
 import type { Readable } from "node:stream";
 
-/** 一覧で得られる 1 オブジェクトの要約。 */
 export interface R2ObjectSummary {
 	key: string;
 	byteSize: number;
@@ -10,7 +9,7 @@ export interface R2ObjectSummary {
 	lastModified: Date;
 }
 
-/** 1 オブジェクトのメタデータ。metadata は x-amz-meta-* の custom metadata。 */
+/** `metadata` is x-amz-meta-* custom metadata. */
 export interface R2ObjectMetadata {
 	contentType: string;
 	byteSize: number;
@@ -19,7 +18,7 @@ export interface R2ObjectMetadata {
 	metadata: Record<string, string>;
 }
 
-/** オブジェクトの本文。Range を渡した場合は部分応答になる。 */
+/** `isPartial`/`contentRange` reflect whether `range` was passed. */
 export interface R2ObjectBody {
 	body: ReadableStream<Uint8Array>;
 	contentType: string;
@@ -28,7 +27,7 @@ export interface R2ObjectBody {
 	isPartial: boolean;
 }
 
-/** 一覧の取得入力。1 回の応答は最大 1000 件で、続きは continuationToken で辿る。 */
+/** One response page holds at most 1000 objects; follow `continuationToken` for more. */
 export interface ListObjectsInput {
 	bucket: string;
 	prefix?: string;
@@ -36,34 +35,29 @@ export interface ListObjectsInput {
 	maxKeys?: number;
 }
 
-/** 一覧の取得結果。nextContinuationToken が undefined なら最後のページ。 */
+/** `nextContinuationToken` undefined means this was the last page. */
 export interface ListObjectsResult {
 	objects: R2ObjectSummary[];
 	nextContinuationToken: string | undefined;
 }
 
-/** key を指すオブジェクト操作の共通入力。 */
 export interface ObjectLocation {
 	bucket: string;
 	key: string;
 }
 
-/** オブジェクトの取得入力。range には HTTP の Range ヘッダをそのまま渡す。 */
+/** `range` is passed straight through as the HTTP `Range` header value. */
 export interface GetObjectInput extends ObjectLocation {
 	range?: string;
 }
 
-/** オブジェクトの保存入力。metadata は custom metadata として保存される。 */
 export interface UploadObjectInput extends ObjectLocation {
 	body: Readable | Uint8Array | string;
 	contentType: string;
 	metadata?: Record<string, string>;
 }
 
-/**
- * 同一 bucket 内での複製入力。
- * metadata を渡すと複製先の custom metadata を置き換える。省略すると複製元を引き継ぐ。
- */
+/** Same-bucket copy. Passing `metadata` replaces the destination's custom metadata; omitting it carries the source's over. */
 export interface CopyObjectInput {
 	bucket: string;
 	sourceKey: string;

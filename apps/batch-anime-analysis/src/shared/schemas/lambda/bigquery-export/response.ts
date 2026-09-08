@@ -1,7 +1,6 @@
-// In scope: BigQuery 連携 Lambda が返すレスポンスの型を提供する
-// Out of scope: 起動イベントの検証、metric の読み出し、BigQuery への書き込みを行う
+// In scope: the response type the BigQuery export Lambda returns
+// Out of scope: validating the launch event, reading metrics, writing to BigQuery
 
-/** BigQuery 連携 Lambda が返すレスポンス。 */
 export interface BigQueryExportResponse {
 	ok: true;
 	job: string;

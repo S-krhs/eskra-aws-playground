@@ -1,5 +1,5 @@
-// In scope: 同期の手動起動と進捗参照の HTTP route
-// Out of scope: 同期そのものの実行、Lambda 呼び出しの組み立て、実行記録の書き込み
+// In scope: the HTTP routes starting a sync by hand and reading its progress
+// Out of scope: running the sync itself, assembling the Lambda call, writing the run record
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
 import type { MediaSyncRun } from "@eskra-aws-playground/repositories/media/media-sync-run/types.js";
 import { Hono } from "hono";
@@ -19,7 +19,6 @@ const toRunView = (run: MediaSyncRun) => {
 	};
 };
 
-/** 同期の起動と進捗の route。 */
 export const syncRoutes = new Hono()
 	.post("/", async (c) => {
 		const settings = getLibrarySettings();
@@ -28,7 +27,7 @@ export const syncRoutes = new Hono()
 			region: settings.awsRegion,
 		});
 
-		// Lambda の完了は待たない。進捗は /status を読んで確かめる
+		// The Lambda isn't waited on; progress is read from /status
 		return c.json({ started: true });
 	})
 	.get("/status", async (c) => {
