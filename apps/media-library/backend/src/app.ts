@@ -4,8 +4,8 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import { mediaRoutes } from "./routes/media-routes.js";
-import { syncRoutes } from "./routes/sync-routes.js";
+import { mediaRoute } from "./routes/media/route.js";
+import { syncRoute } from "./routes/sync/route.js";
 
 // serveStatic only resolves root relative to cwd, so it is rebuilt into a value independent of where the process started
 const uiRoot = (): string => {
@@ -19,8 +19,8 @@ const uiRoot = (): string => {
 
 /** Request path to owning route; a new route gets registered here. */
 const apiRoutes = new Hono()
-	.route("/media", mediaRoutes)
-	.route("/sync", syncRoutes);
+	.route("/media", mediaRoute)
+	.route("/sync", syncRoute);
 
 /** The API type the frontend derives response types from via hc(). */
 export type ApiType = typeof apiRoutes;
