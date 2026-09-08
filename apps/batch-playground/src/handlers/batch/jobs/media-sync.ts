@@ -18,20 +18,20 @@ import type {
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import type { StoredObjectSummary } from "@eskra-aws-playground/repositories/media/media-storage/types.js";
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
-import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/content-type.js";
 import {
 	type MediaThumbnailMessage,
 	mediaJobNames,
-} from "@eskra-aws-playground/shared-domains/media/jobs.js";
+} from "@eskra-aws-playground/shared-domains/media/jobs/schema.js";
+import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/storage/content-type.js";
 import {
 	buildMediaObjectKey,
 	extractLogicalPath,
-} from "@eskra-aws-playground/shared-domains/media/object-key.js";
+} from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
 import {
 	buildMediaObjectMetadata,
-	type MediaObjectMetadata,
 	parseMediaObjectMetadata,
-} from "@eskra-aws-playground/shared-domains/media/object-metadata.js";
+} from "@eskra-aws-playground/shared-domains/media/storage/object-metadata.js";
+import type { MediaObjectMetadata } from "@eskra-aws-playground/shared-domains/media/storage/schema.js";
 import { Resource } from "sst/resource";
 import { z } from "zod";
 import { batchJobNames } from "@/handlers/batch/contracts/job-names.js";

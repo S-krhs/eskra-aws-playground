@@ -1,7 +1,8 @@
 // In scope: building an R2 key from a modified time and file name, and reading the logical path back out of a key
-// Out of scope: reading the modified time, detecting collisions, talking to R2, encoding metadata
+// Out of scope: the key's input shape, reading the modified time, detecting collisions, talking to R2, encoding metadata
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
+import type { MediaObjectKeyInput } from "./schema.js";
 
 dayjs.extend(utc);
 
@@ -9,14 +10,6 @@ dayjs.extend(utc);
 const JST_UTC_OFFSET_MINUTES = 9 * 60;
 
 const KEY_TIMESTAMP_FORMAT = "YYYYMMDD-HHmmssSSS";
-
-/** `sequence` is the counter appended when two files land on the same timestamp. */
-export interface MediaObjectKeyInput {
-	logicalPath: string;
-	modifiedAt: Date;
-	extension: string;
-	sequence?: number;
-}
 
 /** Formats the modified time as the JST string a key uses: 2026-09-07T04:30:45.123Z becomes 20260907-133045123. */
 export const formatKeyTimestamp = (modifiedAt: Date): string => {

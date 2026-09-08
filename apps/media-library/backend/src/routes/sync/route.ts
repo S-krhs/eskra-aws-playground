@@ -3,7 +3,7 @@
 import {
 	syncStartResponseSchema,
 	syncStatusResponseSchema,
-} from "@eskra-aws-playground/shared-domains/media/library-api.js";
+} from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import { createRoute, type RouteHandler } from "@hono/zod-openapi";
 import { readSyncStatusOperation } from "./operations/read-sync-status-operation.js";
 import { startSyncOperation } from "./operations/start-sync-operation.js";

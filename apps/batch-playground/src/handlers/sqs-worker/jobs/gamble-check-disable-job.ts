@@ -4,8 +4,10 @@ import { DiscordInteractionClient } from "@eskra-aws-playground/integration-disc
 import { applicationKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/application-key.js";
 import { settingKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/setting-key.js";
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-job-message.js";
-import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
+import type {
+	InteractionJobMessage,
+	interactionJobNames,
+} from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/schema.js";
 
 type GambleCheckDisableMessage = Extract<
 	InteractionJobMessage,

@@ -1,8 +1,8 @@
 // In scope: asking the sync Lambda to start, and resolving which function that is
 // Out of scope: running the sync, waiting for it, reading the run record
 import { LambdaInvoker } from "@eskra-aws-playground/integration-lambda/lambda-invoker.js";
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs.js";
-import type { SyncStartResponse } from "@eskra-aws-playground/shared-domains/media/library-api.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/schema.js";
+import type { SyncStartResponse } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 /**

@@ -1,9 +1,11 @@
 // In scope: swapping the deferred update's original message for the result with its buttons stripped, per the reminder choice pressed
 // Out of scope: job dispatch, interpreting the SQS event, checking who pressed it (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-job-message.js";
-import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
-import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/reminder-choices.js";
+import type {
+	InteractionJobMessage,
+	interactionJobNames,
+} from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/schema.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/schema.js";
 
 type PlayCheckReminderChoiceMessage = Extract<
 	InteractionJobMessage,

@@ -41,7 +41,7 @@ features -> repositories
 
 - Name it after what it does, not after its trigger or its schedule.
 - Register the name in that handler tree's `contracts/`, then in the handler's dispatch map.
-- Queue-triggered: add the message schema to the worker's schema union and its dispatch. If a different app produces the message, the name and schema live in `shared-domains/contracts` so both sides share one definition.
+- Queue-triggered: add the message schema to the worker's schema union and its dispatch. If a different app produces the message, the name and schema live in that domain's slice under `shared-domains/` so both sides share one definition.
 - Update the app README's job list and env vars.
 
 ## Rules

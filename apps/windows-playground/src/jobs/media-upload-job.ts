@@ -6,9 +6,9 @@ import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import { PENDING_PREFIX } from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
-import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/content-type.js";
-import { buildMediaObjectKey } from "@eskra-aws-playground/shared-domains/media/object-key.js";
-import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/media/object-metadata.js";
+import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/storage/content-type.js";
+import { buildMediaObjectKey } from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
+import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/media/storage/object-metadata.js";
 
 // Files sharing a modified millisecond are rare; going past this points at a misconfiguration
 const MAX_KEY_SEQUENCE = 100;

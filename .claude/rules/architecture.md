@@ -17,7 +17,13 @@ migration/
 repositories/
 shared-domains/
   discord/
+    custom-id/
+    interaction-jobs/
+    play-check-reminder/
   media/
+    jobs/
+    library-api/
+    storage/
 packages/
   integrations/
     discord/
@@ -38,7 +44,8 @@ docs/
 - `infra/`: SST definitions that deploy the apps.
 - `migration/`: Prisma schema and migration history. Not a workspace — used from the root `prisma` CLI via `prisma.config.ts`.
 - `repositories/`: data-access boundary shared across apps. Hides static data, DB, and external-storage details, including the clients that reach them. Clients and generated code (`client/`, `generated/`) are excluded from exports and unimportable from apps.
-- `shared-domains/`: top-level workspace for the contracts, domain data, and protocol logic shared across apps. Same reasoning as `repositories/` — it's domain-specific, so it can't live under the generic `packages/`. It splits **by domain** (`media/`, `discord/`), not by whether a file holds a type or a function: a vocabulary and the logic that reads it belong in the same file, and splitting them apart only made the boundary a judgment call. A domain directory is flat.
+- `shared-domains/`: top-level workspace for the contracts, domain data, and protocol logic shared across apps. Same reasoning as `repositories/` — it's domain-specific, so it can't live under the generic `packages/`. It splits **by domain** (`media/`, `discord/`) and then **by slice** — one coherent concern per directory (`media/storage/`, `discord/custom-id/`). A domain directory holds slices and nothing else.
+- Inside a slice, `schema.ts` holds that slice's vocabulary, types and zod schemas, and each operation reading them sits in a file named after what it does. A slice that is nothing but a contract is just its `schema.ts`. The cost is that a consumer has to know which of the two a name lives in — that is the price of being able to tell schema from logic at a glance, and it is paid deliberately.
 - `packages/integrations/*`: one package per external service. Owns both outbound calls and inbound wire parsing for that target.
 - `packages/libs/utils`: generic logic, can take light npm deps (e.g. dayjs).
 - `packages/libs/browser`: generic logic needing browser-execution deps (Playwright-core).
@@ -102,7 +109,8 @@ apps/* -> shared-domains -> packages/libs/utils
 | Deployment and CI | `infra-deploy` | `infra/`, `.github/workflows/`, `scripts/` |
 
 `shared-domains/` has no skill of its own: it holds domain vocabulary and pure protocol logic, and the
-rules that govern it are the always-loaded ones above (placement, dependency direction, no barrel files).
+rules that govern it are the always-loaded ones above (slice layout, placement, dependency direction,
+no barrel files).
 
 This table is the only place a kind and an app are linked — keep it out of the skills themselves. A workspace spanning two kinds appears twice. A new workspace picks its kind here, then copies the implementations already listed under it.
 - `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.

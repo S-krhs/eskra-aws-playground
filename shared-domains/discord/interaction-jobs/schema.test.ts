@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { interactionJobMessageSchema } from "./interaction-job-message.js";
+import { interactionJobMessageSchema } from "./schema.js";
 
 describe("interactionJobMessageSchema", () => {
 	it("validates gamble-check-enable's required fields", () => {

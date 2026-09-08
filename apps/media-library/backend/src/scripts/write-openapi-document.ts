@@ -8,7 +8,7 @@ import { buildOpenApiDocument } from "../app.js";
 // The repo root is five levels up from apps/media-library/backend/dist/scripts
 const outputPath = join(
 	dirname(fileURLToPath(import.meta.url)),
-	"../../../../../shared-domains/media/openapi.json",
+	"../../../../../shared-domains/media/library-api/openapi.json",
 );
 
 await writeFile(

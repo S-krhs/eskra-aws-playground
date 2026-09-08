@@ -20,8 +20,8 @@ import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media
 import {
 	MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
 	type MediaThumbnailMessage,
-} from "@eskra-aws-playground/shared-domains/media/jobs.js";
-import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/media/object-key.js";
+} from "@eskra-aws-playground/shared-domains/media/jobs/schema.js";
+import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
 
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 

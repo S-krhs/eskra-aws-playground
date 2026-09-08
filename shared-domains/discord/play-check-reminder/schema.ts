@@ -1,6 +1,8 @@
-// In scope: defining the play-check reminder's question, choices, and response text
-// Out of scope: message assembly, judging which button was pressed, building a Discord payload, sending
-import type { ButtonTone } from "./button-tone.js";
+// In scope: the play-check reminder's question, choices, and the tone each choice's button carries
+// Out of scope: message assembly, judging which button was pressed, mapping tone to a Discord style, sending
+
+/** How a button should present to the user; the Discord style it maps to is the sender's concern. */
+export type ButtonTone = "primary" | "neutral" | "positive" | "negative";
 
 export const REMINDER_QUESTION = "やおよろ～！今日は遊技した？";
 

@@ -12,11 +12,13 @@ import {
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import { parseCustomId } from "@eskra-aws-playground/shared-domains/discord/custom-id.js";
-import { prefixes } from "@eskra-aws-playground/shared-domains/discord/custom-id-prefixes.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-job-message.js";
-import { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
-import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/reminder-choices.js";
+import { parseCustomId } from "@eskra-aws-playground/shared-domains/discord/custom-id/custom-id.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/discord/custom-id/schema.js";
+import {
+	type InteractionJobMessage,
+	interactionJobNames,
+} from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/schema.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/schema.js";
 import { Resource } from "sst/resource";
 import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 
