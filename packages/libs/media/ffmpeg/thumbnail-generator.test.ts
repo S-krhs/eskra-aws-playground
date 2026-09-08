@@ -2,7 +2,7 @@
 // Build it with `npm run build:ffmpeg-layer` if it isn't.
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -106,28 +106,32 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 		expect(probe.durationMs).toBe(3000);
 	});
 
+	// probeMedia reads a path, so the returned bytes are put back on disk to be inspected
+	const probeThumbnail = async (thumbnail: Buffer, name: string) => {
+		const path = join(workDir, name);
+		await writeFile(path, thumbnail);
+
+		return probeMedia(path);
+	};
+
 	it("makes a 320-wide webp from an image", async () => {
-		const destinationPath = join(workDir, "image.webp");
-		await generateThumbnail({
+		const thumbnail = await generateThumbnail({
 			sourcePath: await buildImage(),
-			destinationPath,
 			durationMs: undefined,
 		});
 
-		const probe = await probeMedia(destinationPath);
+		const probe = await probeThumbnail(thumbnail, "image.webp");
 		expect(probe.width).toBe(320);
 		expect(probe.height).toBe(180);
 	});
 
 	it("makes a 320-wide webp from a video", async () => {
-		const destinationPath = join(workDir, "video.webp");
-		await generateThumbnail({
+		const thumbnail = await generateThumbnail({
 			sourcePath: await buildVideo(),
-			destinationPath,
 			durationMs: 3000,
 		});
 
-		const probe = await probeMedia(destinationPath);
+		const probe = await probeThumbnail(thumbnail, "video.webp");
 		expect(probe.width).toBe(320);
 		expect(probe.height).toBe(180);
 	});

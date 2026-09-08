@@ -13,6 +13,9 @@ const resolveFfmpegPath = (): string => {
 const THUMBNAIL_WIDTH = 320;
 const THUMBNAIL_QUALITY = 80;
 
+// A 320-wide webp is a few KB; this only has to be above anything an extreme aspect ratio could reach
+const MAX_THUMBNAIL_BYTES = 8 * 1024 * 1024;
+
 // A video usually opens on black, so the frame comes from slightly in; a short one comes from the start
 const POSTER_SECONDS = 1;
 const POSTER_MIN_DURATION_MS = 2_000;
@@ -20,7 +23,6 @@ const POSTER_MIN_DURATION_MS = 2_000;
 /** A durationMs means it is treated as a video. */
 export interface GenerateThumbnailInput {
 	sourcePath: string;
-	destinationPath: string;
 	durationMs: number | undefined;
 }
 
@@ -36,32 +38,40 @@ export const resolvePosterSeconds = (
 };
 
 /**
+ * Returns the webp bytes. ffmpeg writes them to stdout, so no temporary file is involved.
  * Height is matched with -2, keeping the dimensions off the odd numbers a codec can't handle.
  */
 export const generateThumbnail = async (
 	input: GenerateThumbnailInput,
-): Promise<void> => {
+): Promise<Buffer> => {
 	const seekArguments =
 		input.durationMs === undefined
 			? []
 			: ["-ss", String(resolvePosterSeconds(input.durationMs))];
 
-	await execFileAsync(resolveFfmpegPath(), [
-		"-hide_banner",
-		"-loglevel",
-		"error",
-		...seekArguments,
-		"-i",
-		input.sourcePath,
-		"-frames:v",
-		"1",
-		"-vf",
-		`scale=${THUMBNAIL_WIDTH}:-2`,
-		"-c:v",
-		"libwebp",
-		"-quality",
-		String(THUMBNAIL_QUALITY),
-		input.destinationPath,
-		"-y",
-	]);
+	const { stdout } = await execFileAsync(
+		resolveFfmpegPath(),
+		[
+			"-hide_banner",
+			"-loglevel",
+			"error",
+			...seekArguments,
+			"-i",
+			input.sourcePath,
+			"-frames:v",
+			"1",
+			"-vf",
+			`scale=${THUMBNAIL_WIDTH}:-2`,
+			"-c:v",
+			"libwebp",
+			"-quality",
+			String(THUMBNAIL_QUALITY),
+			"-f",
+			"webp",
+			"pipe:1",
+		],
+		{ encoding: "buffer", maxBuffer: MAX_THUMBNAIL_BYTES },
+	);
+
+	return stdout;
 };

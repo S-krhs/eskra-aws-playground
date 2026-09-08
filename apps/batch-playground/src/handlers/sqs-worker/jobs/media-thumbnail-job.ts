@@ -1,11 +1,8 @@
 // In scope: generating one message's thumbnail, and moving the media out of the pending area either way
 // Out of scope: how ffmpeg is called, validating the SQS event, sending messages, job dispatch
-import { createWriteStream } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import { probeMedia } from "@eskra-aws-playground/libs-media/ffmpeg/media-probe.js";
 import { generateThumbnail } from "@eskra-aws-playground/libs-media/ffmpeg/thumbnail-generator.js";
 import {
@@ -40,27 +37,23 @@ export const mediaThumbnailJob = async (
 
 	try {
 		const sourcePath = join(workDir, "source");
-		const thumbnailPath = join(workDir, "thumbnail.webp");
 		const object = await mediaStorageRepository.get({
 			key: message.objectKey,
 		});
 
-		await pipeline(
-			Readable.fromWeb(object.body),
-			createWriteStream(sourcePath),
-		);
+		// writeFile consumes the stream chunk by chunk, so a large video never lands in memory
+		await writeFile(sourcePath, object.body);
 
 		const probe = await probeMedia(sourcePath);
-		await generateThumbnail({
+		const thumbnail = await generateThumbnail({
 			sourcePath,
-			destinationPath: thumbnailPath,
 			durationMs: probe.durationMs,
 		});
 
 		const thumbnailKey = `${THUMBNAIL_PREFIX}/${message.mediaId}.webp`;
 		await mediaStorageRepository.upload({
 			key: thumbnailKey,
-			body: await readFile(thumbnailPath),
+			body: thumbnail,
 			contentType: THUMBNAIL_CONTENT_TYPE,
 		});
 
