@@ -72,7 +72,7 @@ export interface RelocateMediaObjectInput {
  * The result of generating a thumbnail. Dimensions and duration are passed only where readable.
  * `location` is passed only when the object was moved out of the pending area on the way.
  */
-export interface CompleteThumbnailInput {
+export interface UpdateThumbnailInput {
 	id: string;
 	thumbnailKey: string;
 	width?: number;

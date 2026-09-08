@@ -59,10 +59,10 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		deletedCount: 0,
 	};
 
-	if (!(await mediaSyncRunRepository.start(runId, startedAt))) {
+	if (!(await mediaSyncRunRepository.insert(runId, startedAt))) {
 		// 3. Someone holds the slot. Inside the threshold it is genuinely running, so stand down.
 		//    Past it the previous run died without recording its end: close it and claim once more.
-		const running = await mediaSyncRunRepository.findRunning();
+		const running = await mediaSyncRunRepository.findUnfinished();
 		const isStale =
 			running !== undefined &&
 			startedAt.getTime() - running.startedAt.getTime() >=
@@ -79,7 +79,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		}
 
 		if (running) {
-			await mediaSyncRunRepository.finish({
+			await mediaSyncRunRepository.updateFinished({
 				id: running.id,
 				scannedCount: running.scannedCount,
 				insertedCount: running.insertedCount,
@@ -90,7 +90,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			});
 		}
 
-		if (!(await mediaSyncRunRepository.start(runId, startedAt))) {
+		if (!(await mediaSyncRunRepository.insert(runId, startedAt))) {
 			logger.complete({ skipped: true });
 
 			return {
@@ -118,7 +118,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		const plan = buildMediaSyncPlan({ scanned, known });
 
 		progress.scannedCount = scanned.length;
-		await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
+		await mediaSyncRunRepository.updateCounts({ id: runId, ...progress });
 
 		// 5. HeadObject only the unknown keys and sort them into new / moved / adopted.
 		const registeredIds = {
@@ -145,7 +145,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 
 				notifiedAt = resolvedCount;
 				// insertedCount and updatedCount written here are unsettled progress; finish overwrites them with the final values
-				await mediaSyncRunRepository.updateProgress({
+				await mediaSyncRunRepository.updateCounts({
 					id: runId,
 					...progress,
 					insertedCount: partial.insertCount,
@@ -235,7 +235,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		});
 
 		// 11. Close the run record and put the result in the log and the response.
-		await mediaSyncRunRepository.finish({
+		await mediaSyncRunRepository.updateFinished({
 			id: runId,
 			...progress,
 			finishedAt: new Date(),
@@ -259,7 +259,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			},
 		};
 	} catch (error) {
-		await mediaSyncRunRepository.finish({
+		await mediaSyncRunRepository.updateFinished({
 			id: runId,
 			...progress,
 			finishedAt: new Date(),

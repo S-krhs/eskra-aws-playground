@@ -55,7 +55,7 @@ export const dataSourceJob = async (
 			const scrapedDate = getCurrentJstDateString();
 
 			// 4. Save the scrape result to the DB; a failure is left to the per-record retry.
-			await scrapingMetricRepository.saveScrapingResult({
+			await scrapingMetricRepository.insertMany({
 				dataSourceId: dataSource.id,
 				scrapedDate,
 				metrics,

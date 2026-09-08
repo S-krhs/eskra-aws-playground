@@ -96,7 +96,7 @@ export const mediaThumbnailJob = async (
 		const location = isPending
 			? await moveObject(message.objectKey, INBOX_PREFIX)
 			: undefined;
-		const recorded = await mediaObjectRepository.completeThumbnail({
+		const recorded = await mediaObjectRepository.updateThumbnail({
 			id: message.mediaId,
 			thumbnailKey,
 			width: probe.width,

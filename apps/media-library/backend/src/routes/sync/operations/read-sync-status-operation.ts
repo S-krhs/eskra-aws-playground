@@ -24,7 +24,7 @@ export const readSyncStatusOperation =
 	async (): Promise<SyncStatusResponse> => {
 		const [latest, running] = await Promise.all([
 			mediaSyncRunRepository.findLatest(),
-			mediaSyncRunRepository.findRunning(),
+			mediaSyncRunRepository.findUnfinished(),
 		]);
 
 		return {

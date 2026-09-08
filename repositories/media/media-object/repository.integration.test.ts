@@ -108,7 +108,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
 		]);
-		await mediaObjectRepository.completeThumbnail({
+		await mediaObjectRepository.updateThumbnail({
 			id: olderId,
 			thumbnailKey: "_thumb/a.webp",
 			width: 320,
@@ -136,7 +136,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 	// A row deleted mid-generation must not fail the worker
 	it("reports 0 rows when recording a thumbnail onto a deleted row", async () => {
 		expect(
-			await mediaObjectRepository.completeThumbnail({
+			await mediaObjectRepository.updateThumbnail({
 				id: trashedId,
 				thumbnailKey: "_thumb/gone.webp",
 			}),
@@ -272,7 +272,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		]);
 		const completedAt = new Date("2026-09-08T00:00:00.000Z");
 
-		await mediaObjectRepository.completeThumbnail({
+		await mediaObjectRepository.updateThumbnail({
 			id: olderId,
 			thumbnailKey: "_thumb/a.webp",
 			width: 320,

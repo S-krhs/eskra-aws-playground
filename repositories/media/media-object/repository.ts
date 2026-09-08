@@ -2,7 +2,6 @@
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
 import type {
-	CompleteThumbnailInput,
 	FindMediaObjectPageInput,
 	InsertMediaObjectInput,
 	MediaObject,
@@ -11,6 +10,7 @@ import type {
 	MediaObjectSummary,
 	RefreshMediaObjectInput,
 	RelocateMediaObjectInput,
+	UpdateThumbnailInput,
 } from "./types.js";
 
 interface MediaObjectRow {
@@ -126,7 +126,7 @@ export const mediaObjectRepository = {
 	 * and where the object itself came to rest when generation moved it.
 	 * Returns the number of rows updated, so a row deleted mid-generation isn't treated as a failure.
 	 */
-	completeThumbnail: async (input: CompleteThumbnailInput): Promise<number> => {
+	updateThumbnail: async (input: UpdateThumbnailInput): Promise<number> => {
 		const prisma = getPrismaClient();
 		const { id, location, ...values } = input;
 		const result = await prisma.mediaObject.updateMany({

@@ -8,7 +8,7 @@ export interface ScrapingResultMetric {
 	value: number;
 }
 
-export interface SaveScrapingResultInput {
+export interface InsertScrapingMetricsInput {
 	dataSourceId: string;
 	/** Scraped date in JST (YYYY-MM-DD). */
 	scrapedDate: string;
@@ -72,7 +72,7 @@ const toIdValue = (afterId: string): bigint => {
 
 export const scrapingMetricRepository = {
 	/** Appends one scrape's results as one row per metric; a validation failure throws without inserting anything. */
-	saveScrapingResult: async (input: SaveScrapingResultInput): Promise<void> => {
+	insertMany: async (input: InsertScrapingMetricsInput): Promise<void> => {
 		const rows = input.metrics.map((metric) => {
 			return ScrapingMetricCreateManyInputObjectZodSchema.parse({
 				dataSourceId: input.dataSourceId,
