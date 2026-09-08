@@ -1,6 +1,6 @@
 ---
 name: integrations
-description: Rules for the external-service integration packages (BigQuery, Discord, R2, EventBridge Scheduler, SQS). Touch this when editing packages/integrations/**.
+description: What each external-service package owns and the platform behavior its callers have to design around (BigQuery, Discord, R2, EventBridge Scheduler, SQS). Invoke this when editing packages/integrations/**, or when writing app code that talks to one of these services.
 ---
 
 One package per external service, each a thin transport boundary: target-specific types, outbound HTTP/auth, inbound wire parsing, error translation. Connection details (credentials, URLs, dataset/queue/table names) are always resolved by the caller and passed in — never read from an env var or config file inside a package. Never put a secret's contents in a log or error (see `architecture.md`'s Package policy and `coding.md`'s Principles — this applies repo-wide, not just here).
@@ -24,6 +24,13 @@ Both directions: outbound calls to Discord and inbound parsing of interaction re
 - Translate external API failures into an error class the caller can distinguish on (e.g. `DiscordWebhookError`).
 - Outbound operations are client classes holding auth/transport config, taking a pre-built payload. Inbound parsing/verification are dependency-free pure functions.
 - Internal HTTP helpers (`src/internal/` fetch-json / send-json) aren't public API. Boundary type/interface exports are fine.
+
+Discord's interaction protocol constrains how a caller is allowed to answer, so it shapes app code too:
+
+- **The endpoint has 3 seconds to respond.** Anything slower answers with a deferred type and delivers the real result later: an application command gets a deferred message (type 5, with `flags` only for ephemeral), a message component gets a deferred update (type 6).
+- PING and autocomplete have no deferred type — answer them immediately. So can an input-validation failure that touches no DB or network.
+- The follow-up edits the original message using the interaction's own `application_id` and `token`; no bot token is involved. **The token expires in 15 minutes** — keep every retry inside that window.
+- Slash command definitions are synced to Discord at global scope by an ops script (root `npm run discord:sync` / `discord:sync:dry`), not at deploy time. Changing a command means updating its definition and running the sync.
 
 ## R2 (`r2/`)
 

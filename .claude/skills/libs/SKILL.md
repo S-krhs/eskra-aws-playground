@@ -1,6 +1,6 @@
 ---
 name: libs
-description: Rules for the generic, app/domain-independent libs packages. Touch this when editing packages/libs/**.
+description: How generic, app- and domain-independent code is packaged here, and how it's split by dependency weight. Invoke this when editing packages/libs/**, or when deciding whether logic belongs there at all.
 ---
 
 App/domain-independent generic logic. Split by dependency weight: `utils` (pure, light npm deps only) vs `browser` (Playwright-core, other browser-execution deps).

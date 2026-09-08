@@ -6,7 +6,7 @@ TypeScript monorepo (npm workspaces + Turbo) running AWS Lambda batch jobs with 
 
 Find 2-3 existing files doing the same kind of thing (same layer, same app, same package) and match their shape exactly: how they read config, how they return values, how they're named, how they're organized. Don't invent a new pattern when one already exists nearby — copy it. If existing code and a rule/skill disagree, prefer existing code and flag the mismatch instead of silently picking one.
 
-`.claude/rules/coding.md` and `.claude/rules/architecture.md` are always loaded and cover the whole repo. A per-workspace Skill may exist for the area you're touching (`.claude/skills/`) — check the skill listing and invoke one if it matches. Skills are not auto-loaded by path; unlike the two always-on rule files above, you have to actively decide to use one.
+`.claude/rules/coding.md` and `.claude/rules/architecture.md` are always loaded and cover the whole repo. `.claude/skills/` covers the rest, split by **kind of code** rather than by app: `api`, `batch`, `frontend`, `local-tools`, `integrations`, `libs`, `repositories`, `db-migration`, `infra-deploy`. Decide what kind of thing you're about to write and invoke that skill — including for a new app or workspace no skill mentions by name, since every kind already has one and a new app is expected to follow the existing implementations that skill points at. Skills are not auto-loaded by path; unlike the two always-on rule files above, you have to actively decide to use one.
 
 ## Verify
 

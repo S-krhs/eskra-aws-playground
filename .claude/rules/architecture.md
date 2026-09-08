@@ -79,6 +79,6 @@ apps/* -> shared-domains -> packages/libs/utils
 ## Where things are documented
 
 - `.claude/rules/coding.md` and `architecture.md`: always loaded.
-- `.claude/skills/`: per-workspace architecture, layering, and process convention — invoked when relevant, not auto-loaded by path. What a specific job/feature/component does — its algorithm, its gotchas — belongs in that file's own header and comments, not here; a skill should read the same regardless of which feature under that workspace prompted the edit.
+- `.claude/skills/`: architecture, layering, and process convention, **one skill per kind of code, never one per app** (`api`, `batch`, `frontend`, `local-tools`, `integrations`, `libs`, `repositories`, `db-migration`, `infra-deploy`). A new app is covered by the kind it belongs to instead of falling through with nothing to read, and each skill names the existing implementations it should copy. Invoked when relevant, not auto-loaded by path. What a specific job/feature/component does — its algorithm, its gotchas — belongs in that file's own header and comments, not here; a skill should read the same regardless of which app or feature prompted the edit.
 - `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.
 - Each workspace's `README.md`: human-facing usage — commands and secrets. Japanese, same rule as `docs/`. A package's own API is documented in the code's doc-comments, not the README.

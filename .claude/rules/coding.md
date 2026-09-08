@@ -8,7 +8,7 @@ Repo-wide rules. See `architecture.md` for placement and dependency direction.
 - Stateless pure logic is a function, not a class.
 - TypeScript is `strict`. Narrow external input near where it's used, not everywhere.
 - ESM: `.js` extension on relative imports.
-- No `index.ts` barrel files — import paths should name the responsibility. Exception: `apps/static-site-playground` and `apps/media-library/frontend` use Feature-Sliced Design, where each slice (and each `shared` segment) has an `index.ts` as its public API — see their skills.
+- No `index.ts` barrel files — import paths should name the responsibility. Exception: a UI app uses Feature-Sliced Design, where each slice (and each `shared` segment) has an `index.ts` as its public API — see the `frontend` skill.
 - Never put secrets, webhook URLs, or unnecessarily detailed bodies in logs or responses.
 
 ## File header
