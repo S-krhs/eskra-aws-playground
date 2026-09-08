@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-	buildInboxKey,
 	buildMediaObjectKey,
-	buildThumbnailKey,
 	extractLogicalPath,
 	formatKeyTimestamp,
 } from "./media-object-key.js";
@@ -59,23 +57,6 @@ describe("buildMediaObjectKey", () => {
 				sequence: 2,
 			}),
 		).toBe("illust/20260907-133045123-2.png");
-	});
-});
-
-describe("buildInboxKey", () => {
-	it("prefixes the key with _inbox", () => {
-		expect(buildInboxKey({ modifiedAt, extension: "mp4" })).toBe(
-			"_inbox/20260907-133045123.mp4",
-		);
-	});
-});
-
-describe("buildThumbnailKey", () => {
-	// Carries no logical path, so the key stays the same after a move and without a DB lookup
-	it("derives one key per UUID", () => {
-		expect(buildThumbnailKey("018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40")).toBe(
-			"_thumb/018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40.webp",
-		);
 	});
 });
 

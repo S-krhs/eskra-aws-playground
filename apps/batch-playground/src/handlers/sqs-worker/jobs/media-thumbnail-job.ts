@@ -12,8 +12,8 @@ import {
 } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-thumbnail-message.js";
-import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
+import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import { Resource } from "sst/resource";
 import { probeMedia } from "@/features/media-thumbnail/media-probe.js";
 import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generator.js";
@@ -59,7 +59,7 @@ export const mediaThumbnailJob = async (
 			durationMs: probe.durationMs,
 		});
 
-		const thumbnailKey = buildThumbnailKey(message.mediaId);
+		const thumbnailKey = `${THUMBNAIL_PREFIX}/${message.mediaId}.webp`;
 		await r2ObjectStore.upload(client, {
 			bucket: bucket,
 			key: thumbnailKey,

@@ -1,11 +1,15 @@
-// In scope: converting between R2 object metadata and a media object's identity
+// In scope: the R2 object-metadata keys, and converting between that metadata and a media object's identity
 // Out of scope: talking to R2, key construction, deciding where metadata is stored
 import { z } from "zod";
-import {
-	MEDIA_ID_METADATA_KEY,
-	type MediaObjectMetadata,
-	ORIGINAL_NAME_METADATA_KEY,
-} from "../contracts/media-storage-layout.js";
+
+export const MEDIA_ID_METADATA_KEY = "media-id";
+
+export const ORIGINAL_NAME_METADATA_KEY = "original-name";
+
+export interface MediaObjectMetadata {
+	mediaId: string;
+	originalName: string;
+}
 
 /**
  * Metadata travels as an HTTP header and only ASCII survives, so the file name —
@@ -39,7 +43,6 @@ export const parseMediaObjectMetadata = (
 
 	return {
 		mediaId,
-		// Don't drop hand-placed metadata that was never percent-encoded
 		originalName: originalName ? safeDecode(originalName) : "",
 	};
 };

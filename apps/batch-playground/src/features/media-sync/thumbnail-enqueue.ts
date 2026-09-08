@@ -2,7 +2,7 @@
 // Out of scope: resolving the queue URL and job name, generating a thumbnail, the sync's diffing
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-thumbnail-message.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 
 // The most one sync enqueues at a time.
 // It keeps a large batch — a first run, say — from going out all at once; the rest waits for the next sync.

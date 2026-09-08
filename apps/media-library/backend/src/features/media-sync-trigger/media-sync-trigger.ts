@@ -1,7 +1,7 @@
 // In scope: kicking off the sync Lambda without waiting for it
 // Out of scope: running the sync itself, reading the run record, resolving the config file
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 
 /** Which sync Lambda to invoke. */
 export interface MediaSyncTarget {

@@ -8,13 +8,14 @@ import type {
 	InsertMediaObjectInput,
 	RelocateMediaObjectInput,
 } from "@eskra-aws-playground/repositories/media/media-object/types.js";
-import type { MediaObjectMetadata } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import { INBOX_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import {
-	buildInboxKey,
+	buildMediaObjectKey,
 	extractLogicalPath,
 } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import {
 	buildMediaObjectMetadata,
+	type MediaObjectMetadata,
 	parseMediaObjectMetadata,
 } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
 import type { ScannedObject } from "./sync-plan.js";
@@ -82,7 +83,8 @@ const resolveAvailableInboxKey = async (
 	extension: string,
 ): Promise<string> => {
 	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
-		const key = buildInboxKey({
+		const key = buildMediaObjectKey({
+			logicalPath: INBOX_PREFIX,
 			modifiedAt,
 			extension,
 			sequence: sequence === 0 ? undefined : sequence + 1,

@@ -9,8 +9,8 @@ import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-st
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
-import { buildThumbnailKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
+import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import { Resource } from "sst/resource";
 import { z } from "zod";
 import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";
@@ -206,7 +206,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		for (const id of deletableIds) {
 			await r2ObjectStore.delete(client, {
 				bucket: bucket,
-				key: buildThumbnailKey(id),
+				key: `${THUMBNAIL_PREFIX}/${id}.webp`,
 			});
 		}
 

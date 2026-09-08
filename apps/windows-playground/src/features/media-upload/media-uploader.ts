@@ -7,7 +7,8 @@ import { basename, extname } from "node:path";
 import type { R2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { resolveContentType } from "@eskra-aws-playground/shared-domains/contracts/media-content-type.js";
-import { buildInboxKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+import { INBOX_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import { buildMediaObjectKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
 
 // Files sharing a modified millisecond are rare; going past this points at a misconfiguration
@@ -32,7 +33,8 @@ const resolveAvailableKey = async (
 	extension: string,
 ): Promise<string> => {
 	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
-		const objectKey = buildInboxKey({
+		const objectKey = buildMediaObjectKey({
+			logicalPath: INBOX_PREFIX,
 			modifiedAt,
 			extension,
 			// The first key carries no counter; a collision starts numbering at -2
