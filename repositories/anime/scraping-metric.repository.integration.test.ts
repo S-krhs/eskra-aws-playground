@@ -2,7 +2,7 @@
 //       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { getPrismaClient } from "../db/client.js";
+import { getPrismaClient } from "../client/prisma.js";
 import {
 	type ScrapingMetricRecord,
 	scrapingMetricRepository,

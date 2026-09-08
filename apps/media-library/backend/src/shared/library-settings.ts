@@ -3,10 +3,6 @@
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import {
-	parseR2Credentials,
-	type R2Credentials,
-} from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
 import { z } from "zod";
 
@@ -30,9 +26,9 @@ const settingsSchema = z.object({
 	port: z.number().int().min(1).max(65535).optional(),
 });
 
-/** The connections and runtime settings this tool needs. */
+/** The connections and runtime settings this tool needs. `r2CredentialsJson` is handed to repositories through the environment, unread here. */
 export interface LibrarySettings {
-	credentials: R2Credentials;
+	r2CredentialsJson: string;
 	bucket: string;
 	databaseUrl: string;
 	syncFunctionName: string;
@@ -78,7 +74,7 @@ export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
 	}
 
 	settings = {
-		credentials: parseR2Credentials(result.data.r2),
+		r2CredentialsJson: JSON.stringify(result.data.r2),
 		bucket: result.data.bucket,
 		databaseUrl: result.data.databaseUrl,
 		syncFunctionName: result.data.syncFunctionName,

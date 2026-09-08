@@ -11,7 +11,7 @@ import {
 	it,
 } from "vitest";
 
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { mediaSyncRunRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;

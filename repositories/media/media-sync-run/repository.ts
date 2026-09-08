@@ -1,6 +1,6 @@
 // In scope: starting, updating and finishing a sync run record, plus reading the latest and the running one
 // Out of scope: running the sync itself, walking R2, invoking Lambda
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import type {
 	FinishMediaSyncRunInput,
 	MediaSyncRun,

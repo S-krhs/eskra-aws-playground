@@ -11,7 +11,7 @@ import {
 	it,
 } from "vitest";
 
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { mediaObjectRepository } from "./repository.js";
 import type {
 	FindThumbnaillessInput,

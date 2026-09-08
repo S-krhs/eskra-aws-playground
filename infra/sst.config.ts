@@ -392,11 +392,12 @@ export default $config({
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
 			memory: "1 GB",
-			link: [r2Credentials, mediaThumbnailQueue],
-			// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
-			// through environment rather than a link
+			link: [mediaThumbnailQueue],
+			// repositories contracts both connections as env vars, so they go through environment
+			// rather than a link
 			environment: {
 				DATABASE_URL: databaseUrl.value,
+				R2_CREDENTIALS: r2Credentials.value,
 				MEDIA_BUCKET: mediaBucketName,
 			},
 		});
@@ -411,9 +412,9 @@ export default $config({
 				timeout: "5 minutes",
 				memory: "2 GB",
 				storage: "10 GB",
-				link: [r2Credentials],
 				environment: {
 					DATABASE_URL: databaseUrl.value,
+					R2_CREDENTIALS: r2Credentials.value,
 					MEDIA_BUCKET: mediaBucketName,
 				},
 				layers: [ffmpegLayer.arn],

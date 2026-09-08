@@ -1,7 +1,7 @@
 // In scope: the HTTP routes for the media listing and for serving thumbnails
 // Out of scope: building DB queries, reading/writing cache files, R2 wire detail
-import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import { Hono } from "hono";
 import { z } from "zod";
 import {
@@ -9,7 +9,6 @@ import {
 	writeCachedThumbnail,
 } from "../features/thumbnail-cache/thumbnail-cache.js";
 import { getLibrarySettings } from "../shared/library-settings.js";
-import { getR2Client } from "../shared/r2-client.js";
 import { toInvalidQueryMessage } from "./intermediate-models/invalid-query.js";
 import { toMediaView } from "./intermediate-models/media-view.js";
 
@@ -99,8 +98,7 @@ export const mediaRoutes = new Hono()
 			return c.json({ message: "サムネイルがまだありません" }, 404);
 		}
 
-		const object = await r2ObjectStore.get(getR2Client(), {
-			bucket: settings.bucket,
+		const object = await mediaStorageRepository.get({
 			key: media.thumbnailKey,
 		});
 		const body = new Uint8Array(await new Response(object.body).arrayBuffer());

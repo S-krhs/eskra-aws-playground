@@ -1,6 +1,5 @@
 // In scope: the CLI entry point storing the files SendTo hands over into R2, one after another
 // Out of scope: the storing itself, key construction, the config file format, writing to the DB
-import { createR2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { uploadMediaFile } from "../features/media-upload/media-uploader.js";
 import { toWslPath } from "../features/media-upload/windows-path.js";
 import { loadUploadSettings } from "../shared/upload-settings.js";
@@ -23,7 +22,9 @@ const settings = await loadUploadSettings().catch((error: unknown) => {
 	console.error(toMessage(error));
 	process.exit(1);
 });
-const client = createR2Client(settings.credentials);
+// repositories contracts its connections as environment variables, so they are set before the first upload
+process.env.R2_CREDENTIALS = settings.r2CredentialsJson;
+process.env.MEDIA_BUCKET = settings.bucket;
 
 let uploaded = 0;
 const failures: string[] = [];
@@ -33,10 +34,7 @@ for (const [index, path] of paths.entries()) {
 	const progress = `[${index + 1}/${paths.length}]`;
 
 	try {
-		const media = await uploadMediaFile(client, {
-			bucket: settings.bucket,
-			filePath: toWslPath(path),
-		});
+		const media = await uploadMediaFile(toWslPath(path));
 
 		uploaded += 1;
 		console.log(`${progress} 保存しました: ${media.objectKey}`);

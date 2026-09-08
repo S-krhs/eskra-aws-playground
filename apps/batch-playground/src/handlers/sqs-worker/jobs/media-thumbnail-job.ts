@@ -6,15 +6,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import {
-	createR2Client,
-	parseR2CredentialsJson,
-} from "@eskra-aws-playground/integration-r2/r2-client.js";
-import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
-import { Resource } from "sst/resource";
 import { probeMedia } from "@/features/media-thumbnail/media-probe.js";
 import { generateThumbnail } from "@/features/media-thumbnail/thumbnail-generator.js";
 
@@ -27,23 +22,13 @@ const THUMBNAIL_CONTENT_TYPE = "image/webp";
 export const mediaThumbnailJob = async (
 	message: MediaThumbnailMessage,
 ): Promise<void> => {
-	const bucket = process.env.MEDIA_BUCKET;
-
-	if (!bucket) {
-		throw new Error("MEDIA_BUCKET が設定されていません。");
-	}
-
-	const client = createR2Client(
-		parseR2CredentialsJson(Resource.R2Credentials.value),
-	);
 	// Lambda's ephemeral storage is raised and /tmp is the work area, so even a large video fits
 	const workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
 
 	try {
 		const sourcePath = join(workDir, "source");
 		const thumbnailPath = join(workDir, "thumbnail.webp");
-		const object = await r2ObjectStore.get(client, {
-			bucket: bucket,
+		const object = await mediaStorageRepository.get({
 			key: message.objectKey,
 		});
 
@@ -60,8 +45,7 @@ export const mediaThumbnailJob = async (
 		});
 
 		const thumbnailKey = `${THUMBNAIL_PREFIX}/${message.mediaId}.webp`;
-		await r2ObjectStore.upload(client, {
-			bucket: bucket,
+		await mediaStorageRepository.upload({
 			key: thumbnailKey,
 			body: await readFile(thumbnailPath),
 			contentType: THUMBNAIL_CONTENT_TYPE,
@@ -77,10 +61,7 @@ export const mediaThumbnailJob = async (
 
 		// With the row gone mid-generation there is nowhere to record it, so the thumbnail is removed too
 		if (recorded === 0) {
-			await r2ObjectStore.delete(client, {
-				bucket: bucket,
-				key: thumbnailKey,
-			});
+			await mediaStorageRepository.delete(thumbnailKey);
 		}
 	} finally {
 		await rm(workDir, { recursive: true, force: true });

@@ -1,6 +1,6 @@
 // In scope: saving, deleting and reading a ChannelSetting keyed by applicationKey, settingKey, guildId and userId
 // Out of scope: discovering Discord IDs, permission checks, interpreting a settingKey, routing
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import {
 	channelSettingConfigurationSchema,

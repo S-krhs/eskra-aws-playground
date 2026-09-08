@@ -9,7 +9,7 @@
 
 同期は `batch` の `media-sync` job（15 分の専用 Function）、サムネイル生成は `sqs-worker` の `media-thumbnail` job（ffmpeg layer 付きの専用 Function）です。
 
-- 接続先は SST secret の `R2Credentials`(JSON)と、環境変数 `MEDIA_BUCKET` から解決します。
+- 接続先は環境変数 `R2_CREDENTIALS`(SST secret の `R2Credentials` を渡す JSON)と `MEDIA_BUCKET` から解決します。
 - R2 の一覧が空、または一度に削除される割合が大きすぎる場合は削除せずエラーにします。内容を確認したうえで手動起動する場合は `{"job": "media-sync", "allowBulkDelete": true}` を渡します。
 
 ## 実行できるジョブ

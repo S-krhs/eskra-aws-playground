@@ -1,6 +1,6 @@
 // In scope: persisting anime-metric scraping results (row validation before insert included) and reading them back by scraped date
 // Out of scope: running the scrape, sending notifications, owning data source definitions, external storage
-import { getPrismaClient } from "../db/client.js";
+import { getPrismaClient } from "../client/prisma.js";
 import { ScrapingMetricCreateManyInputObjectZodSchema } from "../generated/zod/schemas/objects/ScrapingMetricCreateManyInput.schema.js";
 
 export interface ScrapingResultMetric {

@@ -35,7 +35,7 @@ docs/
 - `apps/*`: deployable or runnable apps. `media-library` and `windows-playground` are never deployed — they run on the user's WSL.
 - `infra/`: SST definitions that deploy the apps.
 - `migration/`: Prisma schema and migration history. Not a workspace — used from the root `prisma` CLI via `prisma.config.ts`.
-- `repositories/`: data-access boundary shared across apps. Hides static data, DB, and external-storage details. DB client and generated code (`db/`, `generated/`) are excluded from exports and unimportable from apps.
+- `repositories/`: data-access boundary shared across apps. Hides static data, DB, and external-storage details, including the clients that reach them. Clients and generated code (`client/`, `generated/`) are excluded from exports and unimportable from apps.
 - `shared-domains/`: top-level workspace for contracts, domain data, and protocol logic shared across apps. Same reasoning as `repositories/` — it's domain-specific, so it can't live under the generic `packages/`. `contracts/` holds types/vocabulary/data, `protocols/` holds non-networked logic.
 - `packages/integrations/*`: one package per external service. Owns both outbound calls and inbound wire parsing for that target.
 - `packages/libs/utils`: generic logic, can take light npm deps (e.g. dayjs).
@@ -71,7 +71,7 @@ apps/* -> shared-domains -> packages/libs/utils
 
 ## Package policy
 
-- One integration package per target — heavy transport libs and auth SDKs accumulate per target.
+- One integration package per target — heavy transport libs and auth SDKs accumulate per target. External storage is the exception: its client and operations belong to `repositories`, which is what hides a data source from an app.
 - An integration owns: target-specific types, outbound HTTP/auth, inbound wire parsing/signature verification, error translation for failure responses. It does NOT own: URL/token resolution, target-agnostic convention parsing (e.g. custom_id), job decisions, message generation, or app-specific business types.
 - `libs` splits by dependency weight: `packages/libs/utils` (pure, light deps only) vs `packages/libs/browser` (browser-execution deps).
 - App-specific parsers or domain types don't belong in libs — put them in that app's `features/` (single app) or `shared-domains` (shared across apps).
@@ -92,7 +92,7 @@ apps/* -> shared-domains -> packages/libs/utils
 | External-service package | `integrations` | `packages/integrations/*` |
 | Generic library | `libs` | `packages/libs/*` |
 | Data access | `repositories` | `repositories/` |
-| Schema change | `db-migration` | `migration/`, `repositories/db/` |
+| Schema change | `db-migration` | `migration/`, `repositories/client/` |
 | Deployment and CI | `infra-deploy` | `infra/`, `.github/workflows/`, `scripts/` |
 
 This table is the only place a kind and an app are linked — keep it out of the skills themselves. A workspace spanning two kinds appears twice. A new workspace picks its kind here, then copies the implementations already listed under it.

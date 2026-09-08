@@ -1,5 +1,5 @@
-// In scope: R2 object operations (list, head, get, upload, copy, delete)
-// Out of scope: client creation, key construction, thumbnail generation, DB writes
+// In scope: listing, reading, uploading, copying and deleting the media objects held in storage
+// Out of scope: deciding keys, reading metadata's meaning, DB rows, thumbnail generation
 import type { _Object } from "@aws-sdk/client-s3";
 import {
 	CopyObjectCommand,
@@ -9,18 +9,15 @@ import {
 	ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import type { R2Client } from "./r2-client.js";
+import { getMediaBucket, getR2Client } from "../../client/r2.js";
 import type {
-	CopyObjectInput,
-	GetObjectInput,
-	ListObjectsInput,
-	ListObjectsResult,
-	ObjectLocation,
-	R2ObjectBody,
-	R2ObjectMetadata,
-	R2ObjectSummary,
-	UploadObjectInput,
-} from "./r2-object-types.js";
+	CopyStoredObjectInput,
+	GetStoredObjectInput,
+	StoredObjectBody,
+	StoredObjectMetadata,
+	StoredObjectSummary,
+	UploadStoredObjectInput,
+} from "./types.js";
 
 // The SDK throws HeadObject's 404 as NotFound, GetObject's 404 as NoSuchKey
 const isNotFound = (error: unknown): boolean => {
@@ -34,7 +31,7 @@ const unquoteEtag = (etag: string): string => {
 	return etag.replace(/^"|"$/g, "");
 };
 
-const toObjectSummary = (content: _Object): R2ObjectSummary => {
+const toObjectSummary = (content: _Object): StoredObjectSummary => {
 	const { Key, Size, ETag, LastModified } = content;
 
 	if (
@@ -72,35 +69,40 @@ export const buildCopySource = (bucket: string, key: string): string => {
 	return `${bucket}/${encodedKey}`;
 };
 
-/** The caller creates and passes in `client`. */
-export const r2ObjectStore = {
-	/** Returns one page of objects under `prefix`. */
-	list: async (
-		client: R2Client,
-		input: ListObjectsInput,
-	): Promise<ListObjectsResult> => {
-		const response = await client.send(
-			new ListObjectsV2Command({
-				Bucket: input.bucket,
-				Prefix: input.prefix,
-				ContinuationToken: input.continuationToken,
-				MaxKeys: input.maxKeys,
-			}),
-		);
+export const mediaStorageRepository = {
+	/**
+	 * Every object under `prefix`, or the whole bucket without one.
+	 * One response holds 1000 keys, so 100k objects take about 100 requests.
+	 */
+	listAll: async (prefix?: string): Promise<StoredObjectSummary[]> => {
+		const client = getR2Client();
+		const bucket = getMediaBucket();
+		const objects: StoredObjectSummary[] = [];
+		let continuationToken: string | undefined;
 
-		return {
-			objects: (response.Contents ?? []).map(toObjectSummary),
-			nextContinuationToken: response.NextContinuationToken,
-		};
+		do {
+			const response = await client.send(
+				new ListObjectsV2Command({
+					Bucket: bucket,
+					Prefix: prefix,
+					ContinuationToken: continuationToken,
+				}),
+			);
+
+			for (const content of response.Contents ?? []) {
+				objects.push(toObjectSummary(content));
+			}
+
+			continuationToken = response.NextContinuationToken;
+		} while (continuationToken);
+
+		return objects;
 	},
 
 	/** Reads only an object's metadata. */
-	head: async (
-		client: R2Client,
-		input: ObjectLocation,
-	): Promise<R2ObjectMetadata> => {
-		const response = await client.send(
-			new HeadObjectCommand({ Bucket: input.bucket, Key: input.key }),
+	head: async (key: string): Promise<StoredObjectMetadata> => {
+		const response = await getR2Client().send(
+			new HeadObjectCommand({ Bucket: getMediaBucket(), Key: key }),
 		);
 
 		return {
@@ -117,11 +119,10 @@ export const r2ObjectStore = {
 	 * doesn't exist — used for key-collision checks, where "not found" is expected.
 	 */
 	headIfExists: async (
-		client: R2Client,
-		input: ObjectLocation,
-	): Promise<R2ObjectMetadata | undefined> => {
+		key: string,
+	): Promise<StoredObjectMetadata | undefined> => {
 		try {
-			return await r2ObjectStore.head(client, input);
+			return await mediaStorageRepository.head(key);
 		} catch (error) {
 			if (isNotFound(error)) {
 				return undefined;
@@ -132,13 +133,10 @@ export const r2ObjectStore = {
 	},
 
 	/** Fetches an object's body. Passing `range` gets a partial response. */
-	get: async (
-		client: R2Client,
-		input: GetObjectInput,
-	): Promise<R2ObjectBody> => {
-		const response = await client.send(
+	get: async (input: GetStoredObjectInput): Promise<StoredObjectBody> => {
+		const response = await getR2Client().send(
 			new GetObjectCommand({
-				Bucket: input.bucket,
+				Bucket: getMediaBucket(),
 				Key: input.key,
 				Range: input.range,
 			}),
@@ -158,11 +156,11 @@ export const r2ObjectStore = {
 	},
 
 	/** Uploads an object. A large body switches to multipart automatically. */
-	upload: async (client: R2Client, input: UploadObjectInput): Promise<void> => {
+	upload: async (input: UploadStoredObjectInput): Promise<void> => {
 		const upload = new Upload({
-			client,
+			client: getR2Client(),
 			params: {
-				Bucket: input.bucket,
+				Bucket: getMediaBucket(),
 				Key: input.key,
 				Body: input.body,
 				ContentType: input.contentType,
@@ -174,17 +172,19 @@ export const r2ObjectStore = {
 	},
 
 	/**
-	 * Copies an object within the same bucket.
+	 * Copies an object within the bucket.
 	 * `REPLACE` only when `metadata` is passed — omitting it carries over the
 	 * source's metadata. A single CopyObject tops out at 5GB; past that needs
 	 * multipart copy.
 	 */
-	copy: async (client: R2Client, input: CopyObjectInput): Promise<void> => {
-		await client.send(
+	copy: async (input: CopyStoredObjectInput): Promise<void> => {
+		const bucket = getMediaBucket();
+
+		await getR2Client().send(
 			new CopyObjectCommand({
-				Bucket: input.bucket,
+				Bucket: bucket,
 				Key: input.destinationKey,
-				CopySource: buildCopySource(input.bucket, input.sourceKey),
+				CopySource: buildCopySource(bucket, input.sourceKey),
 				MetadataDirective: input.metadata ? "REPLACE" : undefined,
 				Metadata: input.metadata,
 				ContentType: input.contentType,
@@ -193,9 +193,9 @@ export const r2ObjectStore = {
 	},
 
 	/** Deletes an object. A key that doesn't exist isn't an error. */
-	delete: async (client: R2Client, input: ObjectLocation): Promise<void> => {
-		await client.send(
-			new DeleteObjectCommand({ Bucket: input.bucket, Key: input.key }),
+	delete: async (key: string): Promise<void> => {
+		await getR2Client().send(
+			new DeleteObjectCommand({ Bucket: getMediaBucket(), Key: key }),
 		);
 	},
 };

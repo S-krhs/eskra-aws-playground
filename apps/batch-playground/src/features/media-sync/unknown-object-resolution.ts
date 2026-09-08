@@ -2,12 +2,11 @@
 // Out of scope: walking R2, writing to the DB, thumbnail generation, recording progress
 import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
-import type { R2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
-import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import type {
 	InsertMediaObjectInput,
 	RelocateMediaObjectInput,
 } from "@eskra-aws-playground/repositories/media/media-object/types.js";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import { INBOX_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import {
 	buildMediaObjectKey,
@@ -77,8 +76,6 @@ export const decideUnknownObject = (
 };
 
 const resolveAvailableInboxKey = async (
-	client: R2Client,
-	bucket: string,
 	modifiedAt: Date,
 	extension: string,
 ): Promise<string> => {
@@ -90,7 +87,7 @@ const resolveAvailableInboxKey = async (
 			sequence: sequence === 0 ? undefined : sequence + 1,
 		});
 
-		if (!(await r2ObjectStore.headIfExists(client, { bucket, key }))) {
+		if (!(await mediaStorageRepository.headIfExists(key))) {
 			return key;
 		}
 	}
@@ -106,26 +103,19 @@ const resolveAvailableInboxKey = async (
  * deleted to undo it. Leaving the original in place means the next sync takes it in again, producing
  * two UUIDs and two rows for the same content.
  */
-const adoptObject = async (
-	client: R2Client,
-	input: {
-		bucket: string;
-		object: ScannedObject;
-		contentType: string;
-		syncedAt: Date;
-	},
-): Promise<InsertMediaObjectInput> => {
+const adoptObject = async (input: {
+	object: ScannedObject;
+	contentType: string;
+	syncedAt: Date;
+}): Promise<InsertMediaObjectInput> => {
 	const mediaId = randomUUID();
 	const originalName = basename(input.object.key);
 	const destinationKey = await resolveAvailableInboxKey(
-		client,
-		input.bucket,
 		input.object.lastModified,
 		extname(input.object.key),
 	);
 
-	await r2ObjectStore.copy(client, {
-		bucket: input.bucket,
+	await mediaStorageRepository.copy({
 		sourceKey: input.object.key,
 		destinationKey,
 		metadata: buildMediaObjectMetadata({ mediaId, originalName }),
@@ -134,21 +124,12 @@ const adoptObject = async (
 
 	// A copy's etag doesn't always match the original's (when the original went up as multipart).
 	// Registering the source's etag would make the next sync read it as a replacement and rebuild the thumbnail
-	const copied = await r2ObjectStore.head(client, {
-		bucket: input.bucket,
-		key: destinationKey,
-	});
+	const copied = await mediaStorageRepository.head(destinationKey);
 
 	try {
-		await r2ObjectStore.delete(client, {
-			bucket: input.bucket,
-			key: input.object.key,
-		});
+		await mediaStorageRepository.delete(input.object.key);
 	} catch (error) {
-		await r2ObjectStore.delete(client, {
-			bucket: input.bucket,
-			key: destinationKey,
-		});
+		await mediaStorageRepository.delete(destinationKey);
 
 		throw error;
 	}
@@ -170,17 +151,13 @@ const adoptObject = async (
  * HeadObjects each unknown key and sorts it. ListObjectsV2 returns no custom metadata, which is why
  * HeadObject is called here and nowhere else.
  */
-export const resolveUnknownObjects = async (
-	client: R2Client,
-	input: {
-		bucket: string;
-		objects: ScannedObject[];
-		known: KnownMediaIds;
-		syncedAt: Date;
-		/** A first run takes minutes, so progress is reported as it goes. */
-		onProgress?: (resolved: ResolvedUnknownObjects) => Promise<void>;
-	},
-): Promise<ResolvedUnknownObjects> => {
+export const resolveUnknownObjects = async (input: {
+	objects: ScannedObject[];
+	known: KnownMediaIds;
+	syncedAt: Date;
+	/** A first run takes minutes, so progress is reported as it goes. */
+	onProgress?: (resolved: ResolvedUnknownObjects) => Promise<void>;
+}): Promise<ResolvedUnknownObjects> => {
 	const inserts: InsertMediaObjectInput[] = [];
 	const relocations: RelocateMediaObjectInput[] = [];
 	let skippedCount = 0;
@@ -194,10 +171,7 @@ export const resolveUnknownObjects = async (
 		const resolved = await Promise.all(
 			chunk.map(async (object) => {
 				// An object gone since the listing must not fail the whole sync
-				const head = await r2ObjectStore.headIfExists(client, {
-					bucket: input.bucket,
-					key: object.key,
-				});
+				const head = await mediaStorageRepository.headIfExists(object.key);
 
 				return { object, head };
 			}),
@@ -248,8 +222,7 @@ export const resolveUnknownObjects = async (
 			// One failure doesn't fail the whole sync; it carries over to the next run
 			try {
 				inserts.push(
-					await adoptObject(client, {
-						bucket: input.bucket,
+					await adoptObject({
 						object,
 						contentType: head.contentType,
 						syncedAt: input.syncedAt,

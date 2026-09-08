@@ -11,7 +11,7 @@ import {
 } from "vitest";
 import { z } from "zod";
 
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { gachaPoolKeys } from "../shared/literals/gacha-pool-key.js";
 import { gachaRarities } from "../shared/literals/gacha-rarity.js";
 import { gachaEntityRepository } from "./repository.js";

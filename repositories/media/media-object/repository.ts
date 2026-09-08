@@ -1,6 +1,6 @@
 // In scope: registering, re-keying and deleting MediaObject rows, and reading them one at a time or by page
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import type {
 	FindMediaObjectPageInput,
 	FindThumbnaillessInput,

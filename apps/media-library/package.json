@@ -16,7 +16,6 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-lambda": "^3.1127.0",
-		"@eskra-aws-playground/integration-r2": "0.1.0",
 		"@eskra-aws-playground/repositories": "0.1.0",
 		"@eskra-aws-playground/shared-domains": "0.1.0",
 		"@hono/node-server": "^2.1.1",

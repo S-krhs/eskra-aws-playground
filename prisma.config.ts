@@ -1,6 +1,6 @@
 // In scope: Prisma CLI(generate / migrate)の設定。schema と migration の場所、
 //           migrate が使う direct 接続の解決、ローカル .env の読込。
-// Out of scope: runtime の DB 接続(repositories/db/client.ts が DATABASE_URL から解決する)。
+// Out of scope: runtime の DB 接続(repositories/client/prisma.ts が DATABASE_URL から解決する)。
 import { existsSync } from "node:fs";
 import { defineConfig } from "prisma/config";
 

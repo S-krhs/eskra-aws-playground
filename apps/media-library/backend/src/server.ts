@@ -10,8 +10,10 @@ const settings = await loadLibrarySettings().catch((error: unknown) => {
 	process.exit(1);
 });
 
-// repositories reads its connection from DATABASE_URL, so it's set before any route runs
+// repositories contracts its connections as environment variables, so they are set before any route runs
 process.env.DATABASE_URL = settings.databaseUrl;
+process.env.R2_CREDENTIALS = settings.r2CredentialsJson;
+process.env.MEDIA_BUCKET = settings.bucket;
 
 const app = createApp();
 

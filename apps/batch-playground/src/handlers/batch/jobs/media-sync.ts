@@ -1,13 +1,9 @@
 // In scope: writing an R2 scan into the DB and keeping the sync's run record and progress
 // Out of scope: classifying an unknown key, R2 wire detail, thumbnail generation, validating the launch envelope
 import { randomUUID } from "node:crypto";
-import {
-	createR2Client,
-	parseR2CredentialsJson,
-} from "@eskra-aws-playground/integration-r2/r2-client.js";
-import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
@@ -72,16 +68,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		});
 	}
 
-	// 3. Resolve the R2 connection settings and open this run's record.
-	const bucket = process.env.MEDIA_BUCKET;
-
-	if (!bucket) {
-		throw new Error("MEDIA_BUCKET が設定されていません。");
-	}
-
-	const client = createR2Client(
-		parseR2CredentialsJson(Resource.R2Credentials.value),
-	);
+	// 3. Open this run's record.
 	const runId = randomUUID();
 	const progress = {
 		scannedCount: 0,
@@ -116,7 +103,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 
 	try {
 		// 5. Walk R2 and match it against the DB's known list to build the sync plan.
-		const scanned = await scanMediaObjects(client, bucket);
+		const scanned = await scanMediaObjects();
 		const known = await mediaObjectRepository.findAllSummaries();
 
 		// An empty R2 listing while the DB still holds rows means a token without permission or a wrong bucket, and errors
@@ -133,8 +120,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 
 		// 6. HeadObject only the unknown keys and sort them into new / moved / adopted.
 		let notifiedAt = 0;
-		const resolved = await resolveUnknownObjects(client, {
-			bucket: bucket,
+		const resolved = await resolveUnknownObjects({
 			objects: plan.unknownObjects,
 			known: {
 				knownIds: new Set(
@@ -204,10 +190,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		//     found from a scan, so the thumbnail always goes first. A thumbnail key derives from the UUID,
 		//     so even a row with an empty thumbnailKey gets cleaned up.
 		for (const id of deletableIds) {
-			await r2ObjectStore.delete(client, {
-				bucket: bucket,
-				key: `${THUMBNAIL_PREFIX}/${id}.webp`,
-			});
+			await mediaStorageRepository.delete(`${THUMBNAIL_PREFIX}/${id}.webp`);
 		}
 
 		progress.deletedCount =

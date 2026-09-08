@@ -12,7 +12,7 @@ npm workspace ではなく、`prisma` CLI(root devDependency)を root の script
 
 ## 接続文字列の扱い
 
-- `DATABASE_URL`: pooled 接続。runtime(repositories/db)だけが使う。
+- `DATABASE_URL`: pooled 接続。runtime(repositories/client)だけが使う。
 - `DIRECT_DATABASE_URL`: direct 接続。migrate 系コマンドだけが使う(`prisma.config.ts` で解決)。CD では migration step の env にだけ渡し、他の step へ漏らさない。
 - ローカルは root `.env` に **ローカル用 Neon branch** の値を入れる(`.env.example` 参照)。develop 用の値を手元に置かない。
 

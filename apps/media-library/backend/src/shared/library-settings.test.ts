@@ -41,7 +41,7 @@ describe("loadLibrarySettings", () => {
 
 		const settings = await loadLibrarySettings();
 		expect(settings.bucket).toBe("eskra-media-library");
-		expect(settings.credentials.accountId).toBe("account");
+		expect(JSON.parse(settings.r2CredentialsJson).accountId).toBe("account");
 		expect(settings.syncFunctionName).toBe("media-sync");
 	});
 
@@ -70,13 +70,5 @@ describe("loadLibrarySettings", () => {
 		await writeConfig({ ...validConfig, databaseUrl: "" });
 
 		await expect(loadLibrarySettings()).rejects.toThrow(/databaseUrl/);
-	});
-
-	it("keeps the key's content off the error when the key is invalid", async () => {
-		await writeConfig({ ...validConfig, r2: { accountId: "account" } });
-
-		await expect(loadLibrarySettings()).rejects.toThrow(
-			/accessKeyId, secretAccessKey/,
-		);
 	});
 });

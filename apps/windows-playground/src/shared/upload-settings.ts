@@ -1,10 +1,6 @@
 // In scope: locating and validating the config file the uploader reads
 // Out of scope: talking to R2, key construction, creating the config file
 import { readFile } from "node:fs/promises";
-import {
-	parseR2Credentials,
-	type R2Credentials,
-} from "@eskra-aws-playground/integration-r2/r2-client.js";
 import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
 import { z } from "zod";
 
@@ -13,8 +9,9 @@ const settingsSchema = z.object({
 	r2: z.unknown(),
 });
 
+/** `r2CredentialsJson` is handed to repositories through the environment, unread here. */
 export interface UploadSettings {
-	credentials: R2Credentials;
+	r2CredentialsJson: string;
 	bucket: string;
 }
 
@@ -50,7 +47,7 @@ export const loadUploadSettings = async (): Promise<UploadSettings> => {
 	}
 
 	return {
-		credentials: parseR2Credentials(result.data.r2),
+		r2CredentialsJson: JSON.stringify(result.data.r2),
 		bucket: result.data.bucket,
 	};
 };
