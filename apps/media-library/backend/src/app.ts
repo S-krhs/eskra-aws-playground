@@ -23,9 +23,6 @@ const apiRoutes = new OpenAPIHono()
 	.route("/media", mediaRoute)
 	.route("/sync", syncRoute);
 
-/** The API type the frontend derives response types from via hc(), until orval replaces it. */
-export type ApiType = typeof apiRoutes;
-
 /** The document the frontend's client is generated from. Written to a file rather than served. */
 export const buildOpenApiDocument = () => {
 	return apiRoutes.getOpenAPI31Document({

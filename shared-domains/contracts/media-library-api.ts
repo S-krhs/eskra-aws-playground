@@ -8,10 +8,12 @@ export const MEDIA_PAGE_DEFAULT_LIMIT = 200;
 export const MEDIA_PAGE_MAX_LIMIT = 500;
 
 /** A position in the listing — the last item of the previous page. Both fields travel together or not at all. */
-export const mediaCursorSchema = z.object({
-	uploadedAt: z.iso.datetime(),
-	id: z.uuid(),
-});
+export const mediaCursorSchema = z
+	.object({
+		uploadedAt: z.iso.datetime(),
+		id: z.uuid(),
+	})
+	.openapi("MediaCursor");
 
 /** The cursor's two fields have to travel together; that pairing is checked in the route, since OpenAPI can't state it. */
 export const mediaListQuerySchema = z.object({
@@ -32,44 +34,54 @@ export const mediaIdParamSchema = z.object({
 });
 
 /** One media object as the screen sees it. The R2 key never leaves the server, so only the thumbnail's presence is reported. */
-export const mediaSchema = z.object({
-	id: z.uuid(),
-	fileName: z.string(),
-	logicalPath: z.string(),
-	contentType: z.string(),
-	byteSize: z.number(),
-	width: z.number().optional(),
-	height: z.number().optional(),
-	durationMs: z.number().optional(),
-	hasThumbnail: z.boolean(),
-	uploadedAt: z.iso.datetime(),
-});
+export const mediaSchema = z
+	.object({
+		id: z.uuid(),
+		fileName: z.string(),
+		logicalPath: z.string(),
+		contentType: z.string(),
+		byteSize: z.number(),
+		width: z.number().optional(),
+		height: z.number().optional(),
+		durationMs: z.number().optional(),
+		hasThumbnail: z.boolean(),
+		uploadedAt: z.iso.datetime(),
+	})
+	.openapi("Media");
 
-export const mediaListResponseSchema = z.object({
-	objects: z.array(mediaSchema),
-	nextCursor: mediaCursorSchema.nullable(),
-});
+export const mediaListResponseSchema = z
+	.object({
+		objects: z.array(mediaSchema),
+		nextCursor: mediaCursorSchema.nullable(),
+	})
+	.openapi("MediaListResponse");
 
 /** One sync run. A null finishedAt means it is still going. */
-export const syncRunSchema = z.object({
-	id: z.uuid(),
-	startedAt: z.iso.datetime(),
-	finishedAt: z.iso.datetime().nullable(),
-	scannedCount: z.number(),
-	insertedCount: z.number(),
-	updatedCount: z.number(),
-	deletedCount: z.number(),
-	error: z.string().nullable(),
-});
+export const syncRunSchema = z
+	.object({
+		id: z.uuid(),
+		startedAt: z.iso.datetime(),
+		finishedAt: z.iso.datetime().nullable(),
+		scannedCount: z.number(),
+		insertedCount: z.number(),
+		updatedCount: z.number(),
+		deletedCount: z.number(),
+		error: z.string().nullable(),
+	})
+	.openapi("SyncRun");
 
-export const syncStatusResponseSchema = z.object({
-	latest: syncRunSchema.nullable(),
-	running: syncRunSchema.nullable(),
-});
+export const syncStatusResponseSchema = z
+	.object({
+		latest: syncRunSchema.nullable(),
+		running: syncRunSchema.nullable(),
+	})
+	.openapi("SyncStatusResponse");
 
-export const syncStartResponseSchema = z.object({
-	started: z.boolean(),
-});
+export const syncStartResponseSchema = z
+	.object({
+		started: z.boolean(),
+	})
+	.openapi("SyncStartResponse");
 
 export type MediaCursor = z.infer<typeof mediaCursorSchema>;
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
@@ -77,3 +89,5 @@ export type Media = z.infer<typeof mediaSchema>;
 export type MediaListResponse = z.infer<typeof mediaListResponseSchema>;
 export type SyncRun = z.infer<typeof syncRunSchema>;
 export type SyncStatusResponse = z.infer<typeof syncStatusResponseSchema>;
+
+// pipe-test

@@ -3,23 +3,26 @@
 import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
 import { MediaFilterBar } from "@/features/media-filter";
-import { MediaGrid, useMediaPage } from "@/features/media-grid";
+import { MediaGrid, useMediaList } from "@/features/media-grid";
 import { SyncControl, useSyncStatus } from "@/features/sync-control";
 
 export const MediaLibraryPage = () => {
 	const [filter, setFilter] = useState<MediaFilter>({});
-	const page = useMediaPage(filter);
-	// Refetch the listing once the sync ends, so what it took in shows up
-	const status = useSyncStatus(page.reload);
+	const status = useSyncStatus();
+	// A finished sync changes this, which refetches the listing so what it took in shows up
+	const list = useMediaList({
+		filter,
+		syncedAt: status.latest?.finishedAt ?? null,
+	});
 
 	return (
-		<div className="flex h-dvh flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-			<header className="flex flex-wrap items-center justify-between gap-3 border-slate-200 border-b px-3 py-2 dark:border-slate-800">
+		<div className="flex h-dvh flex-col bg-base-200 text-base-content">
+			<header className="flex flex-wrap items-center justify-between gap-3 border-base-300 border-b bg-base-100 px-3 py-2">
 				<MediaFilterBar filter={filter} onChange={setFilter} />
 				<SyncControl status={status} />
 			</header>
 			<main className="min-h-0 flex-1">
-				<MediaGrid page={page} />
+				<MediaGrid list={list} />
 			</main>
 		</div>
 	);

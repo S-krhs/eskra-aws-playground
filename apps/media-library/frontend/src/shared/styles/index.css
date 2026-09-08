@@ -1,1 +1,43 @@
 @import "tailwindcss";
+@plugin "daisyui" {
+	themes: false;
+}
+
+/* 常駐ツールなので明暗の切り替えは持たず、この 1 テーマに固定する */
+@plugin "daisyui/theme" {
+	name: "umamusume";
+	default: true;
+	color-scheme: light;
+
+	--color-base-100: oklch(100% 0 0);
+	--color-base-200: oklch(97% 0.012 145);
+	--color-base-300: oklch(93% 0.024 145);
+	--color-base-content: oklch(28% 0.03 155);
+
+	--color-primary: oklch(66% 0.17 152);
+	--color-primary-content: oklch(100% 0 0);
+	--color-secondary: oklch(72% 0.16 12);
+	--color-secondary-content: oklch(100% 0 0);
+	--color-accent: oklch(86% 0.14 92);
+	--color-accent-content: oklch(30% 0.05 92);
+	--color-neutral: oklch(36% 0.03 155);
+	--color-neutral-content: oklch(98% 0 0);
+
+	--color-info: oklch(72% 0.12 230);
+	--color-info-content: oklch(100% 0 0);
+	--color-success: oklch(70% 0.16 152);
+	--color-success-content: oklch(100% 0 0);
+	--color-warning: oklch(80% 0.16 80);
+	--color-warning-content: oklch(28% 0.05 80);
+	--color-error: oklch(63% 0.21 25);
+	--color-error-content: oklch(100% 0 0);
+
+	--radius-selector: 2rem;
+	--radius-field: 0.75rem;
+	--radius-box: 1.25rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}

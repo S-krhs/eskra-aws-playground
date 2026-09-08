@@ -10,7 +10,169 @@
 		}
 	],
 	"components": {
-		"schemas": {},
+		"schemas": {
+			"MediaListResponse": {
+				"type": "object",
+				"properties": {
+					"objects": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Media"
+						}
+					},
+					"nextCursor": {
+						"$ref": "#/components/schemas/MediaCursor"
+					}
+				},
+				"required": [
+					"objects",
+					"nextCursor"
+				]
+			},
+			"Media": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"logicalPath": {
+						"type": "string"
+					},
+					"contentType": {
+						"type": "string"
+					},
+					"byteSize": {
+						"type": "number"
+					},
+					"width": {
+						"type": "number"
+					},
+					"height": {
+						"type": "number"
+					},
+					"durationMs": {
+						"type": "number"
+					},
+					"hasThumbnail": {
+						"type": "boolean"
+					},
+					"uploadedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"id",
+					"fileName",
+					"logicalPath",
+					"contentType",
+					"byteSize",
+					"hasThumbnail",
+					"uploadedAt"
+				]
+			},
+			"MediaCursor": {
+				"type": [
+					"object",
+					"null"
+				],
+				"properties": {
+					"uploadedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				},
+				"required": [
+					"uploadedAt",
+					"id"
+				]
+			},
+			"SyncStartResponse": {
+				"type": "object",
+				"properties": {
+					"started": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"started"
+				]
+			},
+			"SyncStatusResponse": {
+				"type": "object",
+				"properties": {
+					"latest": {
+						"$ref": "#/components/schemas/SyncRun"
+					},
+					"running": {
+						"$ref": "#/components/schemas/SyncRun"
+					}
+				},
+				"required": [
+					"latest",
+					"running"
+				]
+			},
+			"SyncRun": {
+				"type": [
+					"object",
+					"null"
+				],
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"startedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"finishedAt": {
+						"type": [
+							"string",
+							"null"
+						],
+						"format": "date-time"
+					},
+					"scannedCount": {
+						"type": "number"
+					},
+					"insertedCount": {
+						"type": "number"
+					},
+					"updatedCount": {
+						"type": "number"
+					},
+					"deletedCount": {
+						"type": "number"
+					},
+					"error": {
+						"type": [
+							"string",
+							"null"
+						]
+					}
+				},
+				"required": [
+					"id",
+					"startedAt",
+					"finishedAt",
+					"scannedCount",
+					"insertedCount",
+					"updatedCount",
+					"deletedCount",
+					"error"
+				]
+			}
+		},
 		"parameters": {}
 	},
 	"paths": {
@@ -73,82 +235,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"objects": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "string",
-														"format": "uuid"
-													},
-													"fileName": {
-														"type": "string"
-													},
-													"logicalPath": {
-														"type": "string"
-													},
-													"contentType": {
-														"type": "string"
-													},
-													"byteSize": {
-														"type": "number"
-													},
-													"width": {
-														"type": "number"
-													},
-													"height": {
-														"type": "number"
-													},
-													"durationMs": {
-														"type": "number"
-													},
-													"hasThumbnail": {
-														"type": "boolean"
-													},
-													"uploadedAt": {
-														"type": "string",
-														"format": "date-time"
-													}
-												},
-												"required": [
-													"id",
-													"fileName",
-													"logicalPath",
-													"contentType",
-													"byteSize",
-													"hasThumbnail",
-													"uploadedAt"
-												]
-											}
-										},
-										"nextCursor": {
-											"type": [
-												"object",
-												"null"
-											],
-											"properties": {
-												"uploadedAt": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"id": {
-													"type": "string",
-													"format": "uuid"
-												}
-											},
-											"required": [
-												"uploadedAt",
-												"id"
-											]
-										}
-									},
-									"required": [
-										"objects",
-										"nextCursor"
-									]
+									"$ref": "#/components/schemas/MediaListResponse"
 								}
 							}
 						}
@@ -184,15 +271,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"started": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"started"
-									]
+									"$ref": "#/components/schemas/SyncStartResponse"
 								}
 							}
 						}
@@ -210,115 +289,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"latest": {
-											"type": [
-												"object",
-												"null"
-											],
-											"properties": {
-												"id": {
-													"type": "string",
-													"format": "uuid"
-												},
-												"startedAt": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"finishedAt": {
-													"type": [
-														"string",
-														"null"
-													],
-													"format": "date-time"
-												},
-												"scannedCount": {
-													"type": "number"
-												},
-												"insertedCount": {
-													"type": "number"
-												},
-												"updatedCount": {
-													"type": "number"
-												},
-												"deletedCount": {
-													"type": "number"
-												},
-												"error": {
-													"type": [
-														"string",
-														"null"
-													]
-												}
-											},
-											"required": [
-												"id",
-												"startedAt",
-												"finishedAt",
-												"scannedCount",
-												"insertedCount",
-												"updatedCount",
-												"deletedCount",
-												"error"
-											]
-										},
-										"running": {
-											"type": [
-												"object",
-												"null"
-											],
-											"properties": {
-												"id": {
-													"type": "string",
-													"format": "uuid"
-												},
-												"startedAt": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"finishedAt": {
-													"type": [
-														"string",
-														"null"
-													],
-													"format": "date-time"
-												},
-												"scannedCount": {
-													"type": "number"
-												},
-												"insertedCount": {
-													"type": "number"
-												},
-												"updatedCount": {
-													"type": "number"
-												},
-												"deletedCount": {
-													"type": "number"
-												},
-												"error": {
-													"type": [
-														"string",
-														"null"
-													]
-												}
-											},
-											"required": [
-												"id",
-												"startedAt",
-												"finishedAt",
-												"scannedCount",
-												"insertedCount",
-												"updatedCount",
-												"deletedCount",
-												"error"
-											]
-										}
-									},
-									"required": [
-										"latest",
-										"running"
-									]
+									"$ref": "#/components/schemas/SyncStatusResponse"
 								}
 							}
 						}

@@ -1,7 +1,7 @@
 // In scope: the sync button, the in-flight progress, and the last run's result
 // Out of scope: starting the sync, fetching the status, showing the listing
 import { formatUploadedAt } from "@/shared/lib/format.js";
-import type { SyncStatus } from "../model/use-sync-status.js";
+import type { SyncStatus } from "../api/use-sync-status.js";
 
 const toProgressText = (status: SyncStatus): string => {
 	if (status.running) {
@@ -24,7 +24,7 @@ const toProgressText = (status: SyncStatus): string => {
 
 /** The start button and its progress; the button is disabled while a sync runs. */
 export const SyncControl = ({ status }: { status: SyncStatus }) => {
-	const isRunning = status.running !== undefined;
+	const isRunning = status.running !== null;
 
 	return (
 		<div className="flex flex-wrap items-center gap-3">
@@ -32,15 +32,18 @@ export const SyncControl = ({ status }: { status: SyncStatus }) => {
 				type="button"
 				disabled={isRunning || status.isStarting}
 				onClick={status.start}
-				className="rounded bg-teal-700 px-3 py-1 text-sm text-white disabled:bg-slate-400"
+				className="btn btn-primary btn-sm"
 			>
+				{isRunning ? (
+					<span className="loading loading-spinner loading-xs" />
+				) : null}
 				{isRunning ? "同期中…" : "同期する"}
 			</button>
-			<p className="font-mono text-slate-500 text-xs">
+			<p className="font-mono text-base-content/60 text-xs">
 				{toProgressText(status)}
 			</p>
 			{status.error ? (
-				<p className="text-red-700 text-xs dark:text-red-300">{status.error}</p>
+				<p className="text-error text-xs">{status.error}</p>
 			) : null}
 		</div>
 	);
