@@ -1,6 +1,7 @@
 // In scope: registering, re-keying and deleting MediaObject rows, and reading them one at a time or by page
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
+import type { MediaObjectRow } from "../_shared/virtual/media-object-row.js";
 import type {
 	FindMediaObjectPageInput,
 	InsertMediaObjectInput,
@@ -12,23 +13,6 @@ import type {
 	RelocateMediaObjectInput,
 	UpdateThumbnailInput,
 } from "./types.js";
-
-interface MediaObjectRow {
-	id: string;
-	objectKey: string;
-	logicalPath: string;
-	fileName: string;
-	contentType: string;
-	byteSize: bigint;
-	etag: string;
-	width: number | null;
-	height: number | null;
-	durationMs: number | null;
-	thumbnailKey: string | null;
-	uploadedAt: Date;
-	syncedAt: Date;
-	trashedAt: Date | null;
-}
 
 const toMediaObject = (row: MediaObjectRow): MediaObject => {
 	return {

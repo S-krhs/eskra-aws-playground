@@ -1,22 +1,12 @@
 // In scope: inserting a MediaSyncRun row, updating its counts and its finished columns, and reading it back
 // Out of scope: running the sync itself, deciding when a run may start, walking R2, invoking Lambda
 import { getPrismaClient } from "../../client/prisma.js";
+import type { MediaSyncRunRow } from "../_shared/virtual/media-sync-run-row.js";
 import type {
 	MediaSyncRun,
 	UpdateMediaSyncRunCountsInput,
 	UpdateMediaSyncRunFinishedInput,
 } from "./types.js";
-
-interface MediaSyncRunRow {
-	id: string;
-	startedAt: Date;
-	finishedAt: Date | null;
-	scannedCount: number;
-	insertedCount: number;
-	updatedCount: number;
-	deletedCount: number;
-	error: string | null;
-}
 
 const toMediaSyncRun = (row: MediaSyncRunRow): MediaSyncRun => {
 	return {
