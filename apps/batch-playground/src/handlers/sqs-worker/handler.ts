@@ -1,8 +1,8 @@
 // In scope: validating the SQS event and delegating each message to its owning job
 // Out of scope: what each job does, Discord API calls, building a deferred ack
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs.js";
 import { gambleCheckDisableJob } from "./jobs/gamble-check-disable-job.js";
 import { gambleCheckEnableJob } from "./jobs/gamble-check-enable-job.js";
 import { kaguyaInuihiroshiReplyJob } from "./jobs/kaguya-inuihiroshi-reply-job.js";

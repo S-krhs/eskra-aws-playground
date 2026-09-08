@@ -3,7 +3,7 @@ import {
 	buildMediaObjectKey,
 	extractLogicalPath,
 	formatKeyTimestamp,
-} from "./media-object-key.js";
+} from "./object-key.js";
 
 const modifiedAt = new Date("2026-09-07T04:30:45.123Z");
 

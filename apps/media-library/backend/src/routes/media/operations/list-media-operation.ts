@@ -6,7 +6,7 @@ import type {
 	Media,
 	MediaListQuery,
 	MediaListResponse,
-} from "@eskra-aws-playground/shared-domains/contracts/media-library-api.js";
+} from "@eskra-aws-playground/shared-domains/media/library-api.js";
 
 /** The object key never leaves the server, so only the thumbnail's presence is carried out. */
 const toMedia = (media: MediaObject): Media => {

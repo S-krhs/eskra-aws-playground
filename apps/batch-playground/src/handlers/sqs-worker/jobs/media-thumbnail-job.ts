@@ -8,20 +8,20 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { probeMedia } from "@eskra-aws-playground/libs-media/ffmpeg/media-probe.js";
 import { generateThumbnail } from "@eskra-aws-playground/libs-media/ffmpeg/thumbnail-generator.js";
+import {
+	FAILED_PREFIX,
+	INBOX_PREFIX,
+	PENDING_PREFIX,
+	THUMBNAIL_PREFIX,
+} from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import type { RelocateMediaObjectInput } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import {
 	MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
 	type MediaThumbnailMessage,
-} from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
-import {
-	FAILED_PREFIX,
-	INBOX_PREFIX,
-	PENDING_PREFIX,
-	THUMBNAIL_PREFIX,
-} from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
-import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+} from "@eskra-aws-playground/shared-domains/media/jobs.js";
+import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/media/object-key.js";
 
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 

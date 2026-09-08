@@ -1,7 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { MEDIA_LIBRARY_CONFIG_ENV } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
+import { MEDIA_LIBRARY_CONFIG_ENV } from "@eskra-aws-playground/shared-domains/media/library-config.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadConfigFile } from "./config-file.js";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveContentType } from "./media-content-type.js";
+import { resolveContentType } from "./content-type.js";
 
 describe("resolveContentType", () => {
 	it("resolves an image extension", () => {

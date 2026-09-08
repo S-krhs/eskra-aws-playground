@@ -5,10 +5,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildOpenApiDocument } from "../app.js";
 
-// The app root, two levels up from backend/dist/scripts
+// The repo root is five levels up from apps/media-library/backend/dist/scripts
 const outputPath = join(
 	dirname(fileURLToPath(import.meta.url)),
-	"../../../openapi.json",
+	"../../../../../shared-domains/media/openapi.json",
 );
 
 await writeFile(

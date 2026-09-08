@@ -1,7 +1,7 @@
 // In scope: locating the config file this tool reads, and validating its fields
 // Out of scope: deciding what the values are used for, connecting anywhere, creating the file
 import { readFile } from "node:fs/promises";
-import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
+import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/media/library-config.js";
 import { z } from "zod";
 
 /** The listening port; failing to take it means an instance is already running. */

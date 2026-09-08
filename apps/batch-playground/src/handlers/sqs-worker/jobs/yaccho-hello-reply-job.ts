@@ -1,8 +1,8 @@
 // In scope: swapping /hello's deferred response for the public greeting
 // Out of scope: job dispatch, interpreting the SQS event, validating the interaction (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
-import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-job-message.js";
+import type { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
 
 type YacchoHelloReplyMessage = Extract<
 	InteractionJobMessage,

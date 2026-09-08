@@ -4,8 +4,8 @@
 import type { DiscordInteractionResponsePayload } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import { verifyInteractionSignature } from "@eskra-aws-playground/integration-discord/verify-interaction-signature.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import { prefixes } from "@eskra-aws-playground/shared-domains/contracts/custom-id-prefixes.js";
-import { parseCustomId } from "@eskra-aws-playground/shared-domains/protocols/custom-id.js";
+import { parseCustomId } from "@eskra-aws-playground/shared-domains/discord/custom-id.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/discord/custom-id-prefixes.js";
 import { Resource } from "sst/resource";
 import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
 import type {

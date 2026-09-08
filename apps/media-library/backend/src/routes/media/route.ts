@@ -1,7 +1,7 @@
 // In scope: dispatching the media routes and turning each operation's result into a response
 // Out of scope: reading the DB or storage, the shape of what comes back, generating a thumbnail
 
-import { mediaIdParamSchema } from "@eskra-aws-playground/shared-domains/contracts/media-library-api.js";
+import { mediaIdParamSchema } from "@eskra-aws-playground/shared-domains/media/library-api.js";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { toInvalidRequestResponse } from "../_shared/responses/error-response.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";

@@ -7,7 +7,7 @@ import { defineConfig } from "orval";
 
 export default defineConfig({
 	mediaLibrary: {
-		input: "./openapi.json",
+		input: "../../shared-domains/media/openapi.json",
 		output: {
 			target: "./frontend/src/shared/api/generated/media-library.ts",
 			client: "react-query",

@@ -1,7 +1,7 @@
 // In scope: putting thumbnail-generation requests on the queue
 // Out of scope: deciding which media still needs one, generating a thumbnail, the sync's diffing
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/media/jobs.js";
 
 // The most one sync sends at a time.
 // It keeps a large batch — a first run, say — from going out all at once; whatever is left over is

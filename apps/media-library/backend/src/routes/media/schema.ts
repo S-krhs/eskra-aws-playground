@@ -4,7 +4,7 @@
 import {
 	mediaListQuerySchema,
 	mediaListResponseSchema,
-} from "@eskra-aws-playground/shared-domains/contracts/media-library-api.js";
+} from "@eskra-aws-playground/shared-domains/media/library-api.js";
 import { createRoute } from "@hono/zod-openapi";
 import { errorResponseSchema } from "../_shared/responses/error-response.js";
 

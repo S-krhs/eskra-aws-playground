@@ -2,14 +2,14 @@
 // Out of scope: classifying an unknown key, R2 wire detail, thumbnail generation, validating the launch envelope
 import { randomUUID } from "node:crypto";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
-import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 import {
 	PENDING_PREFIX,
 	THUMBNAIL_PREFIX,
-} from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+} from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
+import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
+import { mediaSyncRunRepository } from "@eskra-aws-playground/repositories/media/media-sync-run/repository.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs.js";
 import { Resource } from "sst/resource";
 import { z } from "zod";
 import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";

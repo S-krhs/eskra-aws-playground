@@ -1,7 +1,7 @@
 // In scope: locating the config file this tool reads, and validating the fields it needs
 // Out of scope: deciding what the values are used for, talking to R2, creating the file
 import { readFile } from "node:fs/promises";
-import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
+import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/media/library-config.js";
 import { z } from "zod";
 
 // r2 is left unvalidated here — repositories owns what a credential has to look like

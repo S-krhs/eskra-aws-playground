@@ -2,21 +2,21 @@
 // Out of scope: walking R2, writing to the DB, thumbnail generation, recording progress
 import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
+import { INBOX_PREFIX } from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import type {
 	InsertMediaObjectInput,
 	RelocateMediaObjectInput,
 } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
-import { INBOX_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import {
 	buildMediaObjectKey,
 	extractLogicalPath,
-} from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+} from "@eskra-aws-playground/shared-domains/media/object-key.js";
 import {
 	buildMediaObjectMetadata,
 	type MediaObjectMetadata,
 	parseMediaObjectMetadata,
-} from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
+} from "@eskra-aws-playground/shared-domains/media/object-metadata.js";
 import type { ScannedObject } from "./sync-plan.js";
 
 // Awaiting HeadObject one at a time would never finish a first run of 100k objects, so they go out in batches

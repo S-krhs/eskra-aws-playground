@@ -2,9 +2,9 @@
 // Out of scope: paging the listing, reading metadata, matching against the DB, thumbnail generation
 
 import { extname } from "node:path";
+import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
-import { resolveContentType } from "@eskra-aws-playground/shared-domains/contracts/media-content-type.js";
-import { THUMBNAIL_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/content-type.js";
 import type { ScannedObject } from "./sync-plan.js";
 
 const THUMBNAIL_KEY_PREFIX = `${THUMBNAIL_PREFIX}/`;

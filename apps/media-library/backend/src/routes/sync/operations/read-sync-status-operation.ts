@@ -5,7 +5,7 @@ import type { MediaSyncRun } from "@eskra-aws-playground/repositories/media/medi
 import type {
 	SyncRun,
 	SyncStatusResponse,
-} from "@eskra-aws-playground/shared-domains/contracts/media-library-api.js";
+} from "@eskra-aws-playground/shared-domains/media/library-api.js";
 
 const toSyncRun = (run: MediaSyncRun): SyncRun => {
 	return {

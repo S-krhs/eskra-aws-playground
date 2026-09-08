@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	buildMediaObjectMetadata,
 	parseMediaObjectMetadata,
-} from "./media-object-metadata.js";
+} from "./object-metadata.js";
 
 const mediaId = "018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40";
 

@@ -4,7 +4,7 @@
 import {
 	syncStartResponseSchema,
 	syncStatusResponseSchema,
-} from "@eskra-aws-playground/shared-domains/contracts/media-library-api.js";
+} from "@eskra-aws-playground/shared-domains/media/library-api.js";
 import { createRoute } from "@hono/zod-openapi";
 
 export const startSyncRoute = createRoute({
