@@ -23,6 +23,7 @@ Two layouts are in use. When one handler dispatches several jobs by name, `jobs/
 - **A job whose timeout or layer needs don't fit the shared config gets its own Lambda Function, not its own handler.** Add a Function in `infra/sst.config.ts` pointing at the existing handler and deliver the job through a cron event or a queue.
 - Don't import across handler trees. Shared logic goes to `features/`, `shared-domains` (cross-app contracts and domain data), or `packages/*`.
 - Combining features, or ordering repository and integration calls, belongs in a job. Don't create a feature that's only a passthrough to a repository call.
+- **Logic only one job uses stays in that job's file, constants included.** `features/` is for what more than one job shares. Splitting a single job across feature files buys nothing and costs the reader the order things happen in — they have to open five files to find out what the job does. A long job file is easier to follow than a scattered one; keep the pure, separately-tested parts as named functions at the top of it.
 - Don't put implementation files directly under `features/<feature>/` — split by concern (settings vs. message building, and so on).
 - Before sharing logic across features, check whether the duplication is actually fine. Cross-app contracts and domain data go to `shared-domains`; don't grow a within-app `shared/domains` holding business logic.
 - Converting a repository's shape into a feature's input happens in a job; a feature receives the converted input and doesn't depend on the repository's shape.

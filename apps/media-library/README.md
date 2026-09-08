@@ -8,7 +8,7 @@
 | --- | --- |
 | `npm run media:library` | backend と画面をビルドして起動する(root で実行) |
 | `npm run dev:ui -w @eskra-aws-playground/media-library` | 画面だけを Vite の dev サーバ(7421)で動かす。`/api` は 7420 へ中継する |
-| `npm run generate:api -w @eskra-aws-playground/media-library` | route を変えた後に実行する。`openapi.json` を書き出し、画面の client を再生成する |
+| `npm run generate:api -w @eskra-aws-playground/media-library` | route を変えた後に実行する。`shared-domains/media/openapi.json` を書き出し、画面の client を再生成する |
 
 ## API
 
@@ -26,7 +26,7 @@
 - 一覧は仮想スクロールで、末尾に近づくと次のページを継ぎ足す(1 ページ 200 件)。
 - フォルダ(論理パス)と種別(画像 / 動画)で絞り込める。条件を変えると先頭から取り直す。
 - 同期ボタンで `POST /api/sync` を叩き、実行中は 2 秒ごとに進捗を読む。終わった時点で一覧を取り直す。
-- 画面の API client は `openapi.json` から生成します。route を変えたら `generate:api` を実行してください。
+- 画面の API client は `shared-domains/media/openapi.json` から生成します。route を変えたら `generate:api` を実行してください。
 
 ## 設定
 

@@ -16,11 +16,12 @@ infra/
 migration/
 repositories/
 shared-domains/
-  contracts/
-  protocols/
+  discord/
+  media/
 packages/
   integrations/
     discord/
+    lambda/
     scheduler/
     sqs/
   libs/
@@ -37,7 +38,7 @@ docs/
 - `infra/`: SST definitions that deploy the apps.
 - `migration/`: Prisma schema and migration history. Not a workspace — used from the root `prisma` CLI via `prisma.config.ts`.
 - `repositories/`: data-access boundary shared across apps. Hides static data, DB, and external-storage details, including the clients that reach them. Clients and generated code (`client/`, `generated/`) are excluded from exports and unimportable from apps.
-- `shared-domains/`: top-level workspace for contracts, domain data, and protocol logic shared across apps. Same reasoning as `repositories/` — it's domain-specific, so it can't live under the generic `packages/`. `contracts/` holds types/vocabulary/data, `protocols/` holds non-networked logic.
+- `shared-domains/`: top-level workspace for the contracts, domain data, and protocol logic shared across apps. Same reasoning as `repositories/` — it's domain-specific, so it can't live under the generic `packages/`. It splits **by domain** (`media/`, `discord/`), not by whether a file holds a type or a function: a vocabulary and the logic that reads it belong in the same file, and splitting them apart only made the boundary a judgment call. A domain directory is flat.
 - `packages/integrations/*`: one package per external service. Owns both outbound calls and inbound wire parsing for that target.
 - `packages/libs/utils`: generic logic, can take light npm deps (e.g. dayjs).
 - `packages/libs/browser`: generic logic needing browser-execution deps (Playwright-core).
@@ -63,7 +64,7 @@ apps/* -> shared-domains -> packages/libs/utils
 - DB client, SQL, and row shapes stay inside the repository package — never leak to an app.
 - `packages/libs/*` never imports `apps/*`, `shared-domains`, or `packages/integrations/*`.
 - `shared-domains` never imports `apps/*` or `packages/integrations/*`. Target-agnostic conventions (e.g. a custom_id format) belong in `shared-domains`; target-specific wire types/transport/parsing belong in the integration — keep the two independent.
-- An HTTP API's request and response schemas are the exception: when a backend in this repo generates its browser client from them, they live in `shared-domains` and may carry the metadata the route definitions need. They stay schema definitions — no client, no transport code — and only the app serving that API imports them.
+- An HTTP API's request and response schemas are the exception: when a backend in this repo generates its browser client from them, they live in `shared-domains` and may carry the metadata the route definitions need. They stay schema definitions — no client, no transport code — and only the app serving that API imports them. The OpenAPI document generated out of those schemas sits beside them, so the definition and its generated form stay together.
 - `packages/integrations/*` never imports `apps/*`, `shared-domains`, or another `packages/integrations/*`.
 - Split out a dedicated package for anything needing an external integration or a heavy dependency.
 
@@ -95,13 +96,13 @@ apps/* -> shared-domains -> packages/libs/utils
 | Runs on the user's WSL, never deployed | `local-tools` | `apps/media-library`, `apps/windows-playground` |
 | External-service package | `integrations` | `packages/integrations/*` |
 | Generic library | `libs` | `packages/libs/*` |
-| Cross-app contract and protocol | — | `shared-domains/` |
+| Cross-app domain contract and protocol | — | `shared-domains/` |
 | Data access | `repositories` | `repositories/` |
 | Schema change | `db-migration` | `migration/`, `repositories/client/` |
 | Deployment and CI | `infra-deploy` | `infra/`, `.github/workflows/`, `scripts/` |
 
-`shared-domains/` has no skill of its own: it holds contracts and pure protocol logic, and the rules
-that govern it are the always-loaded ones above (placement, dependency direction, no barrel files).
+`shared-domains/` has no skill of its own: it holds domain vocabulary and pure protocol logic, and the
+rules that govern it are the always-loaded ones above (placement, dependency direction, no barrel files).
 
 This table is the only place a kind and an app are linked — keep it out of the skills themselves. A workspace spanning two kinds appears twice. A new workspace picks its kind here, then copies the implementations already listed under it.
 - `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.

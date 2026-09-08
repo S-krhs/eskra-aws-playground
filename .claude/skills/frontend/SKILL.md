@@ -58,7 +58,7 @@ Nearly all visual styling lives in a component's `className`; a value with no th
 
 `lint` is `biome ci .` then `steiger` over the FSD root, so an FSD violation fails CI.
 
-- steiger's config must be `steiger.config.js` — cosmiconfig's TypeScript loader doesn't support this repo's TypeScript 7. Each config's own comments say why its overrides exist; read them before assuming.
+- steiger's config must be `steiger.config.js` — cosmiconfig's TypeScript loader doesn't support this repo's TypeScript 7. It sits in the directory holding the FSD root it governs, not at the app root when the app is only partly a frontend; steiger has no `--config` flag and finds it by searching up from the working directory, so the lint script runs from there. Each config's own comments say why its overrides exist; read them before assuming.
 - `biome.json` enables `useSortedClasses` and `useTailwindShorthandClasses` only for the UI apps. Both are nursery rules, so an upgrade can change what they flag. `useSortedClasses`'s fix is unsafe: run `biome check --write --unsafe` scoped to `.tsx` files. Including `.astro` strips template-only imports and breaks the build.
 - `noTailwindArbitraryValue` stays off. Turning it on flags intentional arbitrary values that could only go away by moving slice-specific values into `shared`'s `@theme`, which contradicts the style policy above.
 - Biome reads a `.astro` frontmatter as a standalone script and flags template-only imports and `Props` as unused, so `noUnusedImports`/`noUnusedVariables` are off for `**/*.astro`. Without that, `biome check --write --unsafe` strips the import and breaks the build.
