@@ -1,14 +1,7 @@
-// In scope: the interaction job names sqs-worker accepts, and the external-input schema for one job's message
-// Out of scope: job implementation, SQS send/receive, routing, Discord API calls, building a deferred ack
+// In scope: the external-input schema and type for an interaction job message received by sqs-worker
+// Out of scope: the job names themselves, job implementation, SQS send/receive, Discord API calls, building a deferred ack
 import { z } from "zod";
-
-export const interactionJobNames = {
-	yacchoHelloReply: "yaccho-hello-reply",
-	kaguyaInuihiroshiReply: "kaguya-inuihiroshi-reply",
-	gambleCheckEnable: "gamble-check-enable",
-	gambleCheckDisable: "gamble-check-disable",
-	playCheckReminderChoice: "play-check-reminder-choice",
-} as const;
+import { interactionJobNames } from "./names.js";
 
 const snowflakeSchema = z.string().regex(/^\d{1,20}$/);
 

@@ -5,7 +5,7 @@ import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logge
 import { applicationKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/application-key.js";
 import { settingKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/setting-key.js";
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
-import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/schema.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/choices.js";
 import { Resource } from "sst/resource";
 import {
 	buildReminderChoicesMessage,

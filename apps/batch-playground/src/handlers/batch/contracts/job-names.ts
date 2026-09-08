@@ -1,6 +1,6 @@
 // In scope: the one place listing job names the batch handler accepts
 // Out of scope: job implementations, interpreting the Lambda event, schedules
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/schema.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/names.js";
 
 export const batchJobNames = {
 	umaOneDrawTopic: "uma-one-draw-topic",

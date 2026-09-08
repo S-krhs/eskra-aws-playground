@@ -2,11 +2,11 @@
 // Out of scope: Discord API calls, the interaction response, judging which button was pressed
 import type { DiscordChannelMessagePayload } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
 import { buildCustomId } from "@eskra-aws-playground/shared-domains/discord/custom-id/custom-id.js";
-import { prefixes } from "@eskra-aws-playground/shared-domains/discord/custom-id/schema.js";
+import { prefixes } from "@eskra-aws-playground/shared-domains/discord/custom-id/prefixes.js";
 import {
 	REMINDER_CHOICES,
 	REMINDER_QUESTION,
-} from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/schema.js";
+} from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/choices.js";
 import { buttonStyles } from "./button-styles.js";
 
 /** Writes the play-check reminder asking its target user the question. */

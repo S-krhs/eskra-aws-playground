@@ -1,7 +1,7 @@
 // In scope: the schemas for the sqs-worker Lambda's launch event and message body, plus the partial batch response type it returns
 // Out of scope: interpreting a message body's meaning, resolving a job, controlling per-record execution
-import { interactionJobMessageSchema } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/schema.js";
-import { mediaThumbnailMessageSchema } from "@eskra-aws-playground/shared-domains/media/jobs/schema.js";
+import { interactionJobMessageSchema } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/message.js";
+import { mediaThumbnailMessageSchema } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
 import { z } from "zod";
 
 /** The launch event this Lambda receives; SQS delivers records in a batch. */

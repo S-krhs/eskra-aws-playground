@@ -1,11 +1,15 @@
-// In scope: converting between R2 object metadata and a media object's identity
-// Out of scope: the metadata keys and their types, talking to R2, key construction, deciding where metadata is stored
-import {
-	MEDIA_ID_METADATA_KEY,
-	type MediaObjectMetadata,
-	mediaIdSchema,
-	ORIGINAL_NAME_METADATA_KEY,
-} from "./schema.js";
+// In scope: the R2 object-metadata keys, and converting between that metadata and a media object's identity
+// Out of scope: talking to R2, key construction, deciding where metadata is stored
+import { z } from "zod";
+
+export const MEDIA_ID_METADATA_KEY = "media-id";
+
+export const ORIGINAL_NAME_METADATA_KEY = "original-name";
+
+export interface MediaObjectMetadata {
+	mediaId: string;
+	originalName: string;
+}
 
 /**
  * Metadata travels as an HTTP header and only ASCII survives, so the file name —
@@ -19,6 +23,8 @@ export const buildMediaObjectMetadata = (
 		[ORIGINAL_NAME_METADATA_KEY]: encodeURIComponent(metadata.originalName),
 	};
 };
+
+const mediaIdSchema = z.uuid();
 
 /**
  * Anyone can write metadata, so a media-id that does not read as a UUID is treated as absent —

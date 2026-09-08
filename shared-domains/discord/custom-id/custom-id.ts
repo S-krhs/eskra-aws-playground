@@ -1,6 +1,12 @@
-// In scope: converting between a custom_id and the wire string
-// Out of scope: its shape and the registered prefixes, what a prefix, target, or action means to a feature
-import type { DiscordCustomId } from "./schema.js";
+// In scope: the shape of a Discord custom_id, and converting between it and the wire string
+// Out of scope: the registered prefixes, what a prefix, target, or action means to a feature
+
+/** Interpreted per this app's own convention; Discord itself only sees the joined string. */
+export interface DiscordCustomId {
+	prefix: string;
+	target?: string;
+	action: string;
+}
 
 const CUSTOM_ID_SEPARATOR = ":";
 

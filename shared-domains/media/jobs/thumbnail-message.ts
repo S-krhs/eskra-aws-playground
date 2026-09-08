@@ -1,12 +1,7 @@
-// In scope: the media library's job names, and the wire schema for the thumbnail job's message
-// Out of scope: job implementation, SQS send/receive, routing
+// In scope: the wire schema for a thumbnail job's message, and how many deliveries it gets
+// Out of scope: the job names themselves, job implementation, SQS send/receive, routing
 import { z } from "zod";
-
-/** The trigger side (scheduler / media-library) and the receiving side (batch / sqs-worker) are separate apps, so the name is decided only here. */
-export const mediaJobNames = {
-	mediaSync: "media-sync",
-	mediaThumbnail: "media-thumbnail",
-} as const;
+import { mediaJobNames } from "./names.js";
 
 /** One thumbnail-generation request — carries only what's needed to locate the source. */
 export const mediaThumbnailMessageSchema = z.object({
