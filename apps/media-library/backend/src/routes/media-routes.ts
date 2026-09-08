@@ -1,14 +1,9 @@
 // In scope: the HTTP routes for the media listing and for serving thumbnails
-// Out of scope: building DB queries, reading/writing cache files, R2 wire detail
+// Out of scope: building DB queries, R2 wire detail
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import { Hono } from "hono";
 import { z } from "zod";
-import {
-	readCachedThumbnail,
-	writeCachedThumbnail,
-} from "../features/thumbnail-cache/thumbnail-cache.js";
-import { getLibrarySettings } from "../shared/library-settings.js";
 import { toInvalidQueryMessage } from "./intermediate-models/invalid-query.js";
 import { toMediaView } from "./intermediate-models/media-view.js";
 
@@ -78,19 +73,6 @@ export const mediaRoutes = new Hono()
 			return c.json({ message: "id が UUID ではありません" }, 400);
 		}
 
-		const settings = getLibrarySettings();
-		const cached = await readCachedThumbnail(
-			settings.thumbnailCacheDir,
-			id.data,
-		);
-
-		if (cached) {
-			return c.body(new Uint8Array(cached), 200, {
-				"content-type": "image/webp",
-				"cache-control": THUMBNAIL_CACHE_CONTROL,
-			});
-		}
-
 		const media = await mediaObjectRepository.findById(id.data);
 
 		if (!media?.thumbnailKey) {
@@ -102,8 +84,6 @@ export const mediaRoutes = new Hono()
 			key: media.thumbnailKey,
 		});
 		const body = new Uint8Array(await new Response(object.body).arrayBuffer());
-
-		await writeCachedThumbnail(settings.thumbnailCacheDir, id.data, body);
 
 		return c.body(body, 200, {
 			"content-type": object.contentType,

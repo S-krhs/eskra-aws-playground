@@ -50,7 +50,6 @@ describe("loadLibrarySettings", () => {
 
 		const settings = await loadLibrarySettings();
 		expect(settings.port).toBe(DEFAULT_PORT);
-		expect(settings.thumbnailCacheDir).toMatch(/eskra-media-library/);
 	});
 
 	it("fails naming the location when the config file is missing", async () => {

@@ -1,20 +1,11 @@
 // In scope: validating the config file this tool reads and assembling its connections and runtime settings
 // Out of scope: talking to R2 or Lambda, connecting to the DB, creating the config file
 import { readFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/contracts/media-library-config.js";
 import { z } from "zod";
 
 /** The listening port; failing to take it means an instance is already running. */
 export const DEFAULT_PORT = 7420;
-
-const DEFAULT_THUMBNAIL_CACHE_DIR = join(
-	homedir(),
-	".cache",
-	"eskra-media-library",
-	"thumbnails",
-);
 
 const settingsSchema = z.object({
 	bucket: z.string().min(1),
@@ -22,7 +13,6 @@ const settingsSchema = z.object({
 	databaseUrl: z.string().min(1),
 	syncFunctionName: z.string().min(1),
 	awsRegion: z.string().min(1),
-	thumbnailCacheDir: z.string().min(1).optional(),
 	port: z.number().int().min(1).max(65535).optional(),
 });
 
@@ -33,7 +23,6 @@ export interface LibrarySettings {
 	databaseUrl: string;
 	syncFunctionName: string;
 	awsRegion: string;
-	thumbnailCacheDir: string;
 	port: number;
 }
 
@@ -79,8 +68,6 @@ export const loadLibrarySettings = async (): Promise<LibrarySettings> => {
 		databaseUrl: result.data.databaseUrl,
 		syncFunctionName: result.data.syncFunctionName,
 		awsRegion: result.data.awsRegion,
-		thumbnailCacheDir:
-			result.data.thumbnailCacheDir ?? DEFAULT_THUMBNAIL_CACHE_DIR,
 		port: result.data.port ?? DEFAULT_PORT,
 	};
 

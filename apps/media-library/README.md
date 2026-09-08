@@ -16,7 +16,7 @@
 | 経路 | 用途 |
 | --- | --- |
 | `GET /api/media` | 一覧。`logicalPath`・`contentTypePrefix`・`limit` で絞り、`cursorUploadedAt` と `cursorId` で続きを取る |
-| `GET /api/media/:id/thumbnail` | サムネイル。初回は R2 から取ってローカルへ保存し、2 回目以降はそこから返す |
+| `GET /api/media/:id/thumbnail` | サムネイル。R2 から取って返す |
 | `POST /api/sync` | 同期 Lambda を非同期で起動する。完了は待たない |
 | `GET /api/sync/status` | 直近の実行と、実行中の実行を返す |
 
@@ -41,7 +41,6 @@
   "databaseUrl": "postgresql://...",
   "syncFunctionName": "eskra-aws-playground-develop-media-sync",
   "awsRegion": "ap-southeast-1",
-  "thumbnailCacheDir": "~/.cache/eskra-media-library/thumbnails",
   "port": 7420
 }
 ```
@@ -52,7 +51,6 @@
 | `databaseUrl` | 必須 | Neon の pooled 接続文字列。develop の DB を読む |
 | `syncFunctionName` | 必須 | 同期 Lambda の関数名。`POST /api/sync` の起動先 |
 | `awsRegion` | 必須 | 同期 Lambda が居る region |
-| `thumbnailCacheDir` | 任意 | 既定は `~/.cache/eskra-media-library/thumbnails` |
 | `port` | 任意 | 既定は 7420 |
 
 `POST /api/sync` は AWS の認証情報を使います。`~/.aws/credentials` か環境変数で、対象 Lambda への `lambda:InvokeFunction` を持つ資格情報を用意してください。
