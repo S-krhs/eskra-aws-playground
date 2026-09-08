@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | `media-sync` | Scheduler / 手動 invoke | R2 の一覧と DB の突き合わせ、DB への書き込み、下 2 つの依頼 |
 | `media-thumbnail` | `MediaThumbnailQueue` | サムネイル生成（ffmpeg layer 付きの専用 Function） |
-| `media-adopt` | `MediaAdoptQueue` | 外部から置かれたオブジェクトに UUID を付けて `_inbox/` へ移し登録する |
+| `media-adopt` | `MediaAdoptQueue` | 外部から置かれたオブジェクトに UUID を付けて `_inbox/` へ移し、登録してサムネイルを依頼する |
 
 - 接続先は環境変数 `R2_CREDENTIALS`(SST secret の `R2Credentials` を渡す JSON)と `MEDIA_BUCKET` から解決します。
 - R2 の一覧が空、または一度に削除される割合が大きすぎる場合は削除せずエラーにします。内容を確認したうえで手動起動する場合は `{"job": "media-sync", "allowBulkDelete": true}` を渡します。

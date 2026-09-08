@@ -1,16 +1,20 @@
-// In scope: giving one object placed from outside this app a UUID, moving it to an _inbox key and registering it
-// Out of scope: deciding that a key needs taking in, scanning storage, thumbnail generation, job dispatch
+// In scope: giving one object placed from outside this app a UUID, moving it to an _inbox key, registering it and asking for its thumbnail
+// Out of scope: deciding that a key needs taking in, scanning storage, generating the thumbnail itself, job dispatch
 import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
+import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
 import { INBOX_PREFIX } from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import type { MediaAdoptMessage } from "@eskra-aws-playground/shared-domains/media/jobs/adopt-message.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/names.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
 import {
 	buildMediaObjectKey,
 	extractLogicalPath,
 } from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
 import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/media/storage/object-metadata.js";
+import { Resource } from "sst/resource";
 
 // Files sharing a modified time are rare; going past this points at a skew in what is being taken in
 const MAX_KEY_SEQUENCE = 100;
@@ -42,6 +46,10 @@ const resolveAvailableInboxKey = async (
  * A Copy attaches the metadata, then a Delete removes the original; if the Delete fails, the copy is
  * deleted to undo it. Leaving the original in place means the next sync takes it in again, producing
  * two UUIDs and two rows for the same content.
+ *
+ * The thumbnail is asked for here rather than left to the next sync. A sync only asks for keys under
+ * the pending prefix, and this lands the object under _inbox with its content unchanged, so no later
+ * sync would ever see a reason to ask.
  */
 export const mediaAdoptJob = async (
 	message: MediaAdoptMessage,
@@ -93,6 +101,21 @@ export const mediaAdoptJob = async (
 			etag: copied.etag,
 			uploadedAt: source.lastModified,
 			syncedAt,
+		},
+	]);
+
+	// The row is in place before this, so a redelivery after a failed send finds the source gone and
+	// stops above — the object keeps its row and goes without a thumbnail rather than being taken in twice
+	const sender = new SqsMessageSender(Resource.MediaThumbnailQueue.url);
+
+	await sender.sendMessages([
+		{
+			id: mediaId,
+			body: {
+				job: mediaJobNames.mediaThumbnail,
+				mediaId,
+				objectKey: destinationKey,
+			} satisfies MediaThumbnailMessage,
 		},
 	]);
 };

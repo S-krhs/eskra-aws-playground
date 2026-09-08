@@ -456,6 +456,8 @@ export default $config({
 					"../apps/batch-playground/src/handlers/sqs-worker/handler.handler",
 				runtime: "nodejs22.x",
 				timeout: "2 minutes",
+				// It asks for the thumbnail of what it just took in
+				link: [mediaThumbnailQueue],
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 					R2_CREDENTIALS: r2Credentials.value,
