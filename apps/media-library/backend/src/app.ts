@@ -8,8 +8,12 @@ import { Hono } from "hono";
 import { toInvalidRequestResponse } from "./routes/_shared/responses/error-response.js";
 import { getThumbnail, listMedia } from "./routes/media/route.js";
 import { getThumbnailRoute, listMediaRoute } from "./routes/media/schema.js";
-import { readSyncStatus, startSync } from "./routes/sync/route.js";
-import { readSyncStatusRoute, startSyncRoute } from "./routes/sync/schema.js";
+import {
+	readSyncStatus,
+	readSyncStatusRoute,
+	startSync,
+	startSyncRoute,
+} from "./routes/sync/route.js";
 
 // serveStatic only resolves root relative to cwd, so it is rebuilt into a value independent of where the process started
 const uiRoot = (): string => {
