@@ -1,6 +1,7 @@
 // In scope: the schemas for the sqs-worker Lambda's launch event and message body, plus the partial batch response type it returns
 // Out of scope: interpreting a message body's meaning, resolving a job, controlling per-record execution
 import { interactionJobMessageSchema } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/message.js";
+import { mediaAdoptMessageSchema } from "@eskra-aws-playground/shared-domains/media/jobs/adopt-message.js";
 import { mediaThumbnailMessageSchema } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
 import { z } from "zod";
 
@@ -30,6 +31,7 @@ export type SqsWorkerEvent = z.infer<typeof sqsWorkerEventSchema>;
 export const sqsJobMessageSchema = z.union([
 	interactionJobMessageSchema,
 	mediaThumbnailMessageSchema,
+	mediaAdoptMessageSchema,
 ]);
 
 export type SqsJobMessage = z.infer<typeof sqsJobMessageSchema>;

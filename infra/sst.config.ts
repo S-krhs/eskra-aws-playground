@@ -362,6 +362,20 @@ export default $config({
 			},
 		});
 
+		// Carries requests to take in an object placed from outside this app, one at a time.
+		// It rewrites R2 per object, so it gets its own queue rather than riding on the thumbnail one:
+		// a pile-up here means media is not being registered, which is a different failure to report
+		const mediaAdoptDeadLetterQueue = new sst.aws.Queue(
+			"MediaAdoptDeadLetterQueue",
+		);
+		const mediaAdoptQueue = new sst.aws.Queue("MediaAdoptQueue", {
+			visibilityTimeout: "3 minutes",
+			dlq: {
+				queue: mediaAdoptDeadLetterQueue.arn,
+				retry: 3,
+			},
+		});
+
 		// The layer placing ffmpeg / ffprobe under /opt/bin.
 		// Its archive reuses the same bucket as the browser-runtime layer
 		const ffmpegLayerObject = new aws.s3.BucketObjectv2(
@@ -399,7 +413,7 @@ export default $config({
 			// The job itself takes the one run slot the DB allows; this stops a second invocation
 			// from even reaching that check when the cron and a manual start overlap
 			concurrency: { reserved: 1 },
-			link: [mediaThumbnailQueue],
+			link: [mediaThumbnailQueue, mediaAdoptQueue],
 			// repositories contracts both connections as env vars, so they go through environment
 			// rather than a link
 			environment: {
@@ -425,6 +439,28 @@ export default $config({
 					MEDIA_BUCKET: mediaBucketName,
 				},
 				layers: [ffmpegLayer.arn],
+			},
+			{
+				batch: {
+					size: 1,
+					partialResponses: true,
+				},
+			},
+		);
+
+		// The adoption worker. It shares the sqs-worker router and needs neither ffmpeg nor a large /tmp —
+		// the copy happens inside R2 — so it takes the default Function size
+		mediaAdoptQueue.subscribe(
+			{
+				handler:
+					"../apps/batch-playground/src/handlers/sqs-worker/handler.handler",
+				runtime: "nodejs22.x",
+				timeout: "2 minutes",
+				environment: {
+					DATABASE_URL: databaseUrl.value,
+					R2_CREDENTIALS: r2Credentials.value,
+					MEDIA_BUCKET: mediaBucketName,
+				},
 			},
 			{
 				batch: {
@@ -605,6 +641,27 @@ export default $config({
 			metricName: "ApproximateNumberOfMessagesVisible",
 			dimensions: {
 				QueueName: mediaThumbnailDeadLetterQueue.arn.apply((arn) => {
+					return arn.split(":").pop() ?? "";
+				}),
+			},
+			statistic: "Maximum",
+			period: 300,
+			evaluationPeriods: 1,
+			threshold: 1,
+			comparisonOperator: "GreaterThanOrEqualToThreshold",
+			treatMissingData: "notBreaching",
+			alarmActions: [alertTopic.arn],
+		});
+
+		// Notifies when taking in an outside object exhausts its retries and piles up in the DLQ.
+		// Left alone, that media stays unregistered and never appears in the listing
+		new aws.cloudwatch.MetricAlarm("MediaAdoptDlqDepthAlarm", {
+			name: `${appName}-${$app.stage}-media-adopt-dlq-depth`,
+			alarmDescription: alarmDescriptions.mediaAdoptDlqDepth,
+			namespace: "AWS/SQS",
+			metricName: "ApproximateNumberOfMessagesVisible",
+			dimensions: {
+				QueueName: mediaAdoptDeadLetterQueue.arn.apply((arn) => {
 					return arn.split(":").pop() ?? "";
 				}),
 			},

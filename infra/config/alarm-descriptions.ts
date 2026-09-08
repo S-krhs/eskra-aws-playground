@@ -11,6 +11,8 @@ export const alarmDescriptions = {
 	mediaSyncError: "メディアライブラリの同期が失敗しました",
 	mediaThumbnailDlqDepth:
 		"サムネイル生成が失敗し DLQ にメッセージが滞留しています",
+	mediaAdoptDlqDepth:
+		"外部から置かれたメディアの取り込みが失敗し DLQ にメッセージが滞留しています",
 	playgroundBatchError: "batch playground の実行が失敗しました",
 	functionUrlError: "公開エンドポイント(Function URL)の実行が失敗しました",
 	playgroundInteractionDlqDepth:

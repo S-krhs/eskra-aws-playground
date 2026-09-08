@@ -5,4 +5,5 @@
 export const mediaJobNames = {
 	mediaSync: "media-sync",
 	mediaThumbnail: "media-thumbnail",
+	mediaAdopt: "media-adopt",
 } as const;
