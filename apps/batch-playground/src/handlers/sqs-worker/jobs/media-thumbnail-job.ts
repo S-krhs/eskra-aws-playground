@@ -26,35 +26,6 @@ import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/media/o
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 
 /**
- * Copies the object under `prefix`, drops the original, and reports where it landed.
- * A copy can come back with a different etag than the original had (a multipart upload does), so the
- * destination is re-read — registering the source's etag would make the next sync see replaced content.
- */
-const moveObject = async (
-	sourceKey: string,
-	prefix: string,
-): Promise<Omit<RelocateMediaObjectInput, "id">> => {
-	const destinationKey = `${prefix}/${basename(sourceKey)}`;
-
-	if (await mediaStorageRepository.headIfExists(destinationKey)) {
-		throw new Error(`移動先の key が既に埋まっています: ${destinationKey}`);
-	}
-
-	await mediaStorageRepository.copy({ sourceKey, destinationKey });
-	await mediaStorageRepository.delete(sourceKey);
-
-	const moved = await mediaStorageRepository.head(destinationKey);
-
-	return {
-		objectKey: destinationKey,
-		logicalPath: extractLogicalPath(destinationKey),
-		byteSize: moved.byteSize,
-		etag: moved.etag,
-		syncedAt: new Date(),
-	};
-};
-
-/**
  * Makes a webp thumbnail from the original, puts it in R2, and records it in the DB.
  * Media waiting under the pending prefix moves on once it has a thumbnail; media already filed into a
  * folder is only ever regenerated in place, so a replaced file is never pulled out of its folder.
@@ -93,9 +64,35 @@ export const mediaThumbnailJob = async (
 			contentType: THUMBNAIL_CONTENT_TYPE,
 		});
 
-		const location = isPending
-			? await moveObject(message.objectKey, INBOX_PREFIX)
-			: undefined;
+		let location: Omit<RelocateMediaObjectInput, "id"> | undefined;
+
+		if (isPending) {
+			const destinationKey = `${INBOX_PREFIX}/${basename(message.objectKey)}`;
+
+			if (await mediaStorageRepository.headIfExists(destinationKey)) {
+				throw new Error(`移動先の key が既に埋まっています: ${destinationKey}`);
+			}
+
+			await mediaStorageRepository.copy({
+				sourceKey: message.objectKey,
+				destinationKey,
+			});
+			await mediaStorageRepository.delete(message.objectKey);
+
+			// A copy can come back with a different etag than the original had (a multipart upload does),
+			// so the destination is re-read — registering the source's etag would make the next sync see
+			// replaced content
+			const moved = await mediaStorageRepository.head(destinationKey);
+
+			location = {
+				objectKey: destinationKey,
+				logicalPath: extractLogicalPath(destinationKey),
+				byteSize: moved.byteSize,
+				etag: moved.etag,
+				syncedAt: new Date(),
+			};
+		}
+
 		const recorded = await mediaObjectRepository.updateThumbnail({
 			id: message.mediaId,
 			thumbnailKey,
@@ -114,18 +111,35 @@ export const mediaThumbnailJob = async (
 		// sync would ask for generation again, so it moves aside — and a failure moving it must not
 		// replace the error that got us here
 		if (isPending && receiveCount >= MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT) {
-			const location = await moveObject(message.objectKey, FAILED_PREFIX).catch(
-				() => {
-					return undefined;
-				},
-			);
+			try {
+				const destinationKey = `${FAILED_PREFIX}/${basename(message.objectKey)}`;
 
-			if (location) {
-				await mediaObjectRepository
-					.relocateMany([{ id: message.mediaId, ...location }])
-					.catch(() => {
-						return undefined;
-					});
+				if (await mediaStorageRepository.headIfExists(destinationKey)) {
+					throw new Error(
+						`移動先の key が既に埋まっています: ${destinationKey}`,
+					);
+				}
+
+				await mediaStorageRepository.copy({
+					sourceKey: message.objectKey,
+					destinationKey,
+				});
+				await mediaStorageRepository.delete(message.objectKey);
+
+				const moved = await mediaStorageRepository.head(destinationKey);
+
+				await mediaObjectRepository.relocateMany([
+					{
+						id: message.mediaId,
+						objectKey: destinationKey,
+						logicalPath: extractLogicalPath(destinationKey),
+						byteSize: moved.byteSize,
+						etag: moved.etag,
+						syncedAt: new Date(),
+					},
+				]);
+			} catch {
+				// Best effort — the next sync finds it under the pending prefix again either way
 			}
 		}
 
