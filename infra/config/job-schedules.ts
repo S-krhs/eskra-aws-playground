@@ -1,7 +1,7 @@
 // In scope: the one place holding when each schedule-triggered batch job runs
 // Out of scope: the Lambda function itself and event routing
 
-import { batchNames as animeBatchNames } from "../../apps/batch-anime-analysis/src/shared/routes/batch-names.js";
+import { batchNames as animeBatchNames } from "../../apps/batch-anime-analysis/src/_shared/routes/batch-names.js";
 import { batchJobNames as playgroundBatchJobNames } from "../../apps/batch-playground/src/handlers/batch/contracts/job-names.js";
 
 /** One schedule-triggered batch job's timing, spread into a CronV2. */
