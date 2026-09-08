@@ -2,7 +2,7 @@
 // Out of scope: how a file gets stored, key construction, the config file's format, converting the path
 import { toWslPath } from "@eskra-aws-playground/libs/path/windows-path.js";
 import { mediaUploadJob } from "../jobs/media-upload-job.js";
-import { loadUploadSettings } from "../shared/upload-settings.js";
+import { loadConfigFile } from "../shared/config-file.js";
 
 const toMessage = (error: unknown): string => {
 	return error instanceof Error ? error.message : String(error);
@@ -20,13 +20,13 @@ if (paths.length === 0) {
 
 // 2. Load the config and put the connections where repositories reads them, before the first upload.
 //    A startup failure prints no stack, only text the user can act on
-const settings = await loadUploadSettings().catch((error: unknown) => {
+const config = await loadConfigFile().catch((error: unknown) => {
 	console.error(toMessage(error));
 	process.exit(1);
 });
 
-process.env.R2_CREDENTIALS = settings.r2CredentialsJson;
-process.env.MEDIA_BUCKET = settings.bucket;
+process.env.R2_CREDENTIALS = JSON.stringify(config.r2);
+process.env.MEDIA_BUCKET = config.bucket;
 
 // 3. Dispatch one file at a time — in parallel, a run of large videos would eat bandwidth and memory.
 //    One file's failure doesn't stop the rest
