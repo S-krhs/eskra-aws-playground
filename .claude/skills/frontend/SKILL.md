@@ -3,7 +3,7 @@ name: frontend
 description: How browser UI is built here — Feature-Sliced Design layering, React conventions, Tailwind policy, and the Astro/Vite/steiger/biome toolchain. Invoke this whenever adding or editing anything that renders UI, in an existing app or a new one.
 ---
 
-Every UI app uses Feature-Sliced Design and Tailwind, and differs only in renderer. Two exist today; a new UI app picks the closer one and copies its layout, alias setup, and lint config rather than starting from the framework's defaults: `apps/static-site-playground` (Astro, static output, React islands) and `apps/media-library/frontend` (React SPA on Vite, served by that app's backend).
+Every UI app uses Feature-Sliced Design and Tailwind, and differs only in renderer: Astro with static output and React islands, or a React SPA on Vite. Copy an existing app's layout, alias setup, and lint config rather than starting from a framework's defaults.
 
 ## Feature-Sliced Design
 
@@ -12,7 +12,7 @@ Every UI app uses Feature-Sliced Design and Tailwind, and differs only in render
 - A slice splits into `ui/` (rendering), `model/` (business-relevant types, data, copy, hooks), `lib/` (business-agnostic transforms) — only the segments actually needed. "You lost" / "you won" phrasing is `model`; number formatting or URL building is `lib`.
 - **Don't build layers top-down.** Add a layer only once something is actually shared at that level. A widget exists once it's a self-contained block on more than one page; an entity exists once more than one feature deals with it. An `insignificant-slice` warning usually means the layer isn't needed yet — fix the structure before disabling the rule.
 - **A type used by more than one feature moves to `entities`.** Skipping this becomes a feature-to-feature import, which is banned repo-wide.
-- A slice, and each `shared` segment, has an `index.ts` as its public API — the only thing importable from outside (`@/features/media-grid`, `@/shared/ui/win-forms`). This is the exception to the repo-wide no-barrel-file rule.
+- A slice, and each `shared` segment, has an `index.ts` as its public API — the only thing importable from outside (`@/features/<slice>`, `@/shared/ui/<kit>`). This is the exception to the repo-wide no-barrel-file rule.
 - Inside a slice use relative imports; cross a slice boundary only through its public-API alias. The import itself should say whether you're inside or outside the slice.
 - Import a `.ts`/`.tsx` file by name with a `.js` extension — the bundler resolves it. Only a public-API import skips the extension, resolving to the directory's `index.ts`. A `.astro` file is imported as `.astro`.
 - Which layers exist depends on the renderer. An Astro app has no FSD `pages` layer, because Astro's routing owns `src/pages/`. A single-screen SPA has no router: the screen is assembled in `pages/<screen>` and `app/` only bootstraps React.
@@ -35,7 +35,7 @@ Every UI app uses Feature-Sliced Design and Tailwind, and differs only in render
 - Every page's `<html>` gets `lang="ja"`.
 - Static generation (`output: "static"`) is the baseline. SSR means reconsidering the adapter and the deploy target together.
 - Check Astro's built-ins (content collections, `astro:assets`) before adding an npm dependency.
-- No catch-all page for unknown paths — CloudFront forwards to S3 and returns the origin's standard error. Don't add an `errorPage`/`indexPage` fallback.
+- A statically deployed site has no catch-all page for unknown paths: the CDN returns the origin's standard error. Don't add an `errorPage`/`indexPage` fallback.
 - **After `npm run dev`, always stop it with `npm run dev:stop`.** The dev server runs as a daemon; killing the parent leaves it running and the next start fails with `Another astro dev server is already running.`
 - Astro 7 resolves `cookie` from the app root and needs `cookie@2`, while the repo root has `cookie@0.7` hoisted through `prisma-zod-generator` → `express`. The app-local `cookie` dependency exists only for that — remove it once the root's moves to 2.x.
 

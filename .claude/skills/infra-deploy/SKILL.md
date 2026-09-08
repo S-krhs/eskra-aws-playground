@@ -7,7 +7,7 @@ Human-facing ops runbook and manual-setup records: `docs/ci-cd.md`.
 
 ## What `infra/sst.config.ts` manages
 
-Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic + CloudWatch alarms for failure detection (DLQ backlog, orchestrator errors, BigQuery export errors), the browser-runtime Lambda layer and its S3 asset bucket, the IAM resources those need, and the static-site CloudFront/S3/ACM/Route53 setup (`StaticSitePlayground`). Per-job scheduler payloads and secrets are documented in that app's README, not here.
+Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic and CloudWatch alarms for failure detection, the browser-runtime Lambda layer and its S3 asset bucket, the IAM resources those need, and the static-site CloudFront/S3/ACM/Route53 setup. Per-job scheduler payloads and secrets are documented in that app's README, not here.
 
 ## Constraints that aren't obvious from the code
 

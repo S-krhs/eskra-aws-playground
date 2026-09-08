@@ -3,7 +3,7 @@ name: api
 description: How an HTTP endpoint is built here — route/operation layering, request validation, what may leave in a response, deferring slow work to a queue. Invoke this whenever adding or editing anything serving HTTP, in an existing app or a new one.
 ---
 
-Covers anything serving HTTP, whatever the runtime. Two exist today and a new endpoint app copies whichever is closer: `apps/function-url-playground` (a Lambda Function URL routing raw events by `rawPath`) and `apps/media-library/backend` (a Hono server, also serving a UI build).
+Covers anything serving HTTP, whatever the runtime — a Lambda Function URL routing raw events by path, a Hono server, whatever comes next.
 
 ## Layering
 
@@ -30,7 +30,7 @@ features/<feature>/     logic that's more than an operation, or needs an externa
 - Exception detail stays in the local log; the response body is a fixed generic message.
 - **Work that can't finish inside the platform's response deadline is acknowledged and enqueued, never awaited.** The endpoint returns the protocol's "accepted" response and a queue worker in a batch app does the real work and delivers the result. An enqueue failure can't return that "accepted" response — fall back to an immediate error response the caller actually sees.
 - Annotate an outbound message with its shared contract type before handing it to the sender. `SqsMessageInput.body` is `unknown`, so a contract mismatch goes uncaught otherwise.
-- Connection settings and clients live at module scope behind a getter (`getLibrarySettings`, `getR2Client`, `getPrismaClient`). Don't turn a route into a factory taking a context object. A route is exported as a value and wired in by the app's route table.
+- Connection settings and clients live at module scope behind a getter. Don't turn a route into a factory taking a context object. A route is exported as a value and wired in by the app's route table.
 - Namespace API routes under `/api` when the same process also serves a UI, so they can't collide with the UI's own paths.
 - Keep `details` and logs to safe, debugging-relevant values; distinguish config-missing / bad-input / external-API-failure by the error message.
 - Adding a route means updating the app README's path table and secrets.

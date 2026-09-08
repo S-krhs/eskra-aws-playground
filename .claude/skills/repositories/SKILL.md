@@ -3,7 +3,7 @@ name: repositories
 description: How data access is written here — the boundary that hides the DB and static data from apps. Invoke this when adding or editing anything under repositories/, a new repository included.
 ---
 
-Before adding anything, look at a sibling repository (e.g. `repositories/media/`) and match its file split and shape rather than inventing a new one. Static data and DB coexist inside a repository — the public API hides which one backs it.
+Before adding anything, look at a sibling repository and match its file split and shape rather than inventing a new one. Static data and DB coexist inside a repository — the public API hides which one backs it.
 
 - Never expose the DB client, connection string, raw SQL, or table-row shapes to an app. `db/` and `generated/` are excluded from `package.json` exports on purpose — a broken import there is the boundary doing its job, not a bug to route around.
 - Runtime reads only `DATABASE_URL` (pooled). Don't take a dependency on SST or an app-side resolver here.

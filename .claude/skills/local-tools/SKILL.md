@@ -3,7 +3,7 @@ name: local-tools
 description: How an app that runs on the user's WSL instead of AWS is built — never deployed, shared config file, single-instance behavior, Windows-launched entry points. Invoke this whenever adding or editing a local-only tool, in an existing app or a new one.
 ---
 
-Some apps never deploy — they run on the user's WSL. Two exist today: `apps/media-library` (a resident server plus browser UI) and `apps/windows-playground` (one-shot tools launched from Windows Explorer through `wsl.exe`). Their HTTP and UI layers follow the `api` and `frontend` skills; this covers only what's different because it runs locally.
+Some apps never deploy — they run on the user's WSL, either as a resident server with a browser UI or as one-shot tools launched from Windows Explorer through `wsl.exe`. Their HTTP and UI layers follow the `api` and `frontend` skills; this covers only what's different because it runs locally.
 
 - **Never deployed.** A local tool doesn't appear in `infra/sst.config.ts`. Heavy or long-running work belongs in a deployed batch app — the local tool asks it to start and reads progress.
 - Nothing is ever installed on the Windows side: no Windows-only binaries, no bundled Node. Execution stays inside WSL's Node.

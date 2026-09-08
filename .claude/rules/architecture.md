@@ -79,6 +79,22 @@ apps/* -> shared-domains -> packages/libs/utils
 ## Where things are documented
 
 - `.claude/rules/coding.md` and `architecture.md`: always loaded.
-- `.claude/skills/`: architecture, layering, and process convention, **one skill per kind of code, never one per app** (`api`, `batch`, `frontend`, `local-tools`, `integrations`, `libs`, `repositories`, `db-migration`, `infra-deploy`). A new app is covered by the kind it belongs to instead of falling through with nothing to read, and each skill names the existing implementations it should copy. Invoked when relevant, not auto-loaded by path. What a specific job/feature/component does — its algorithm, its gotchas — belongs in that file's own header and comments, not here; a skill should read the same regardless of which app or feature prompted the edit.
+- `.claude/skills/`: architecture, layering, and process convention, **one skill per kind of code, never one per app**. A new app is covered by the kind it belongs to instead of falling through with nothing to read. Invoked when relevant, not auto-loaded by path. A skill names no app and no feature: what a specific job/component does — its algorithm, its gotchas, the platform limits it runs into — belongs in that file's own header and comments, so a skill reads the same regardless of what prompted the edit.
+
+## Which skill covers which workspace
+
+| Kind | Skill | Workspaces |
+| --- | --- | --- |
+| HTTP endpoint | `api` | `apps/function-url-playground`, `apps/media-library/backend` |
+| Scheduled or queue-driven Lambda | `batch` | `apps/batch-playground`, `apps/batch-anime-analysis` |
+| Browser UI | `frontend` | `apps/static-site-playground`, `apps/media-library/frontend` |
+| Runs on the user's WSL, never deployed | `local-tools` | `apps/media-library`, `apps/windows-playground` |
+| External-service package | `integrations` | `packages/integrations/*` |
+| Generic library | `libs` | `packages/libs/*` |
+| Data access | `repositories` | `repositories/` |
+| Schema change | `db-migration` | `migration/`, `repositories/db/` |
+| Deployment and CI | `infra-deploy` | `infra/`, `.github/workflows/`, `scripts/` |
+
+This table is the only place a kind and an app are linked — keep it out of the skills themselves. A workspace spanning two kinds appears twice. A new workspace picks its kind here, then copies the implementations already listed under it.
 - `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.
 - Each workspace's `README.md`: human-facing usage — commands and secrets. Japanese, same rule as `docs/`. A package's own API is documented in the code's doc-comments, not the README.
