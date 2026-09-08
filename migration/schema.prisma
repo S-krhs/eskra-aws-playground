@@ -136,7 +136,7 @@ model MediaObjectTag {
 /// 同期の実行単位。進捗表示と、実行中の二重起動判定に使う
 model MediaSyncRun {
   id            String    @id @db.Uuid
-  /// 行が入った順。startedAt は挿入前に採るため、二重起動の判定はこちらで行う
+  /// 行が入った順。startedAt は挿入前に採るため、未終了の行を選ぶ順序はこちらで決める
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   startedAt     DateTime  @map("started_at") @db.Timestamptz
   finishedAt    DateTime? @map("finished_at") @db.Timestamptz
@@ -145,7 +145,11 @@ model MediaSyncRun {
   updatedCount  Int       @default(0) @map("updated_count")
   deletedCount  Int       @default(0) @map("deleted_count")
   error         String?
+  /// 実行中の行だけ true が入り、終了時に NULL へ戻す。UNIQUE は NULL 同士を重複と見なさないため、
+  /// この 1 列で「未終了の実行は 1 つまで」を DB 側で保証できる
+  running       Boolean?
 
+  @@unique([running])
   @@index([startedAt])
   @@index([finishedAt, createdAt])
   @@map("media_sync_runs")

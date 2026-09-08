@@ -31,12 +31,41 @@ const toMediaSyncRun = (row: MediaSyncRunRow): MediaSyncRun => {
 	};
 };
 
-export const mediaSyncRunRepository = {
-	start: async (id: string, startedAt: Date): Promise<MediaSyncRun> => {
-		const prisma = getPrismaClient();
-		const row = await prisma.mediaSyncRun.create({ data: { id, startedAt } });
+// Prisma reports a unique-constraint violation as P2002; matching on the code keeps its error type out of here
+const isUniqueViolation = (error: unknown): boolean => {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		error.code === "P2002"
+	);
+};
 
-		return toMediaSyncRun(row);
+export const mediaSyncRunRepository = {
+	/**
+	 * Opens a run, taking the one slot an unfinished run may hold.
+	 * Returns undefined when another run already holds it — the table allows a single unfinished row,
+	 * so two invocations racing here settle in the DB rather than by reading first and writing after.
+	 */
+	start: async (
+		id: string,
+		startedAt: Date,
+	): Promise<MediaSyncRun | undefined> => {
+		const prisma = getPrismaClient();
+
+		try {
+			const row = await prisma.mediaSyncRun.create({
+				data: { id, startedAt, running: true },
+			});
+
+			return toMediaSyncRun(row);
+		} catch (error) {
+			if (isUniqueViolation(error)) {
+				return undefined;
+			}
+
+			throw error;
+		}
 	},
 
 	updateProgress: async (
@@ -48,14 +77,14 @@ export const mediaSyncRunRepository = {
 		await prisma.mediaSyncRun.update({ where: { id }, data: progress });
 	},
 
-	/** Passing an `error` records the run as failed. */
+	/** Passing an `error` records the run as failed. Either way the slot is released. */
 	finish: async (input: FinishMediaSyncRunInput): Promise<void> => {
 		const prisma = getPrismaClient();
 		const { id, error, ...rest } = input;
 
 		await prisma.mediaSyncRun.update({
 			where: { id },
-			data: { ...rest, error: error ?? null },
+			data: { ...rest, error: error ?? null, running: null },
 		});
 	},
 
@@ -69,11 +98,7 @@ export const mediaSyncRunRepository = {
 		return row ? toMediaSyncRun(row) : undefined;
 	},
 
-	/**
-	 * Returns the oldest unfinished run. startedAt is taken before the row is inserted, so two runs
-	 * starting at once could each see themselves as oldest. Ordering by the DB-assigned createdAt and
-	 * breaking ties on id makes both of them pick the same row.
-	 */
+	/** The unfinished run holding the slot, if there is one. */
 	findRunning: async (): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaSyncRun.findFirst({

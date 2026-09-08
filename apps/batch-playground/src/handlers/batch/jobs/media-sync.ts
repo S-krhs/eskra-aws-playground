@@ -42,15 +42,27 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 	// 1. Validate the launch event and read whether the bulk-delete guard is waived.
 	const { allowBulkDelete } = mediaSyncEventSchema.parse(event ?? {});
 
-	// 2. Check for a running sync record. Inside the threshold, stop here; past it, close the previous
-	//    record as abandoned and carry on.
+	// 2. Claim the run slot. Only one unfinished run may exist, so an invocation racing this one
+	//    loses in the DB rather than in a read-then-write here.
 	const startedAt = new Date();
-	const running = await mediaSyncRunRepository.findRunning();
+	const runId = randomUUID();
+	const progress = {
+		scannedCount: 0,
+		insertedCount: 0,
+		updatedCount: 0,
+		deletedCount: 0,
+	};
 
-	if (running) {
-		const elapsedMs = startedAt.getTime() - running.startedAt.getTime();
+	if (!(await mediaSyncRunRepository.start(runId, startedAt))) {
+		// 3. Someone holds the slot. Inside the threshold it is genuinely running, so stand down.
+		//    Past it the previous run died without recording its end: close it and claim once more.
+		const running = await mediaSyncRunRepository.findRunning();
+		const isStale =
+			running !== undefined &&
+			startedAt.getTime() - running.startedAt.getTime() >=
+				STALE_RUN_THRESHOLD_MS;
 
-		if (elapsedMs < STALE_RUN_THRESHOLD_MS) {
+		if (running && !isStale) {
 			logger.complete({ skipped: true, runningId: running.id });
 
 			return {
@@ -60,52 +72,33 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			};
 		}
 
-		await mediaSyncRunRepository.finish({
-			id: running.id,
-			scannedCount: running.scannedCount,
-			insertedCount: running.insertedCount,
-			updatedCount: running.updatedCount,
-			deletedCount: running.deletedCount,
-			finishedAt: startedAt,
-			error: "終了を記録しないまま打ち切られました",
-		});
-	}
+		if (running) {
+			await mediaSyncRunRepository.finish({
+				id: running.id,
+				scannedCount: running.scannedCount,
+				insertedCount: running.insertedCount,
+				updatedCount: running.updatedCount,
+				deletedCount: running.deletedCount,
+				finishedAt: startedAt,
+				error: "終了を記録しないまま打ち切られました",
+			});
+		}
 
-	// 3. Open this run's record.
-	const runId = randomUUID();
-	const progress = {
-		scannedCount: 0,
-		insertedCount: 0,
-		updatedCount: 0,
-		deletedCount: 0,
-	};
+		if (!(await mediaSyncRunRepository.start(runId, startedAt))) {
+			logger.complete({ skipped: true });
 
-	await mediaSyncRunRepository.start(runId, startedAt);
-
-	// 4. Check again right after inserting the record and stand down if another run started at the same
-	//    time. A run can begin between findRunning and start, so this is what stops a double registration.
-	const earliestRunning = await mediaSyncRunRepository.findRunning();
-
-	if (earliestRunning && earliestRunning.id !== runId) {
-		await mediaSyncRunRepository.finish({
-			id: runId,
-			...progress,
-			finishedAt: new Date(),
-			error: "同時に始まった実行があるため取りやめました",
-		});
-		logger.complete({ skipped: true, runningId: earliestRunning.id });
-
-		return {
-			ok: true,
-			job: batchJobNames.mediaSync,
-			details: { skipped: true, runningId: earliestRunning.id },
-		};
+			return {
+				ok: true,
+				job: batchJobNames.mediaSync,
+				details: { skipped: true },
+			};
+		}
 	}
 
 	logger.start({ runId });
 
 	try {
-		// 5. Walk R2 and match it against the DB's known list to build the sync plan.
+		// 4. Walk R2 and match it against the DB's known list to build the sync plan.
 		const scanned = await scanMediaObjects();
 		const known = await mediaObjectRepository.findAllSummaries();
 
@@ -121,7 +114,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		progress.scannedCount = scanned.length;
 		await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
 
-		// 6. HeadObject only the unknown keys and sort them into new / moved / adopted.
+		// 5. HeadObject only the unknown keys and sort them into new / moved / adopted.
 		const registeredIds = {
 			all: new Set(
 				known.map((media) => {
@@ -155,7 +148,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			},
 		);
 
-		// 7. Take anything already moved out of the delete set.
+		// 6. Take anything already moved out of the delete set.
 		//    A move shows up as its old key going missing, so it is treated as a move, not a delete.
 		const relocatedIds = new Set(
 			resolved.relocations.map((relocation) => {
@@ -166,7 +159,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			return !relocatedIds.has(id);
 		});
 
-		// 8. Write the inserts and updates to the DB first, so a stop at the delete guard doesn't lose
+		// 7. Write the inserts and updates to the DB first, so a stop at the delete guard doesn't lose
 		//    what was newly taken in or updated.
 		progress.insertedCount = await mediaObjectRepository.insertMany(
 			resolved.inserts,
@@ -186,14 +179,14 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 			));
 		await mediaObjectRepository.touchMany(plan.unchangedIds, startedAt);
 
-		// 9. Run the bulk-delete guard, skipped when allowBulkDelete is true.
+		// 8. Run the bulk-delete guard, skipped when allowBulkDelete is true.
 		if (!allowBulkDelete) {
 			assertDeletableSize(deletableIds.length, known.length);
 		}
 
-		// 10. Delete the thumbnails from R2, then the DB rows. Once a row is gone its thumbnail can't be
-		//     found from a scan, so the thumbnail always goes first. A thumbnail key derives from the UUID,
-		//     so even a row with an empty thumbnailKey gets cleaned up.
+		// 9. Delete the thumbnails from R2, then the DB rows. Once a row is gone its thumbnail can't be
+		//    found from a scan, so the thumbnail always goes first. A thumbnail key derives from the UUID,
+		//    so even a row with an empty thumbnailKey gets cleaned up.
 		for (const id of deletableIds) {
 			await mediaStorageRepository.delete(`${THUMBNAIL_PREFIX}/${id}.webp`);
 		}
@@ -201,15 +194,15 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		progress.deletedCount =
 			await mediaObjectRepository.deleteByIds(deletableIds);
 
-		// 11. Enqueue the media with no thumbnail yet. This comes after the delete — enqueuing first would
-		//     ask for thumbnails on media that is about to disappear.
+		// 10. Enqueue the media with no thumbnail yet. This comes after the delete — enqueuing first would
+		//    ask for thumbnails on media that is about to disappear.
 		const enqueuedCount = await enqueueMissingThumbnails({
 			queueUrl: Resource.MediaThumbnailQueue.url,
 			job: mediaJobNames.mediaThumbnail,
 			enqueuedAt: new Date(),
 		});
 
-		// 12. Close the run record and put the result in the log and the response.
+		// 11. Close the run record and put the result in the log and the response.
 		await mediaSyncRunRepository.finish({
 			id: runId,
 			...progress,

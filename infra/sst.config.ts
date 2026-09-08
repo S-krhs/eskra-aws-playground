@@ -392,6 +392,9 @@ export default $config({
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
 			memory: "1 GB",
+			// The job itself takes the one run slot the DB allows; this stops a second invocation
+			// from even reaching that check when the cron and a manual start overlap
+			concurrency: { reserved: 1 },
 			link: [mediaThumbnailQueue],
 			// repositories contracts both connections as env vars, so they go through environment
 			// rather than a link
