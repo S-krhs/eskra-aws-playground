@@ -6,6 +6,7 @@
 	"scripts": {
 		"clean": "rm -rf backend/dist frontend/dist",
 		"build": "rm -rf backend/dist && tsc -p backend/tsconfig.json",
+		"generate:openapi": "npm run build && node backend/dist/scripts/write-openapi-document.js",
 		"build:ui": "vite build --config frontend/vite.config.ts",
 		"start": "npm run build && npm run build:ui && node backend/dist/server.js",
 		"dev:ui": "vite --config frontend/vite.config.ts",
@@ -19,6 +20,7 @@
 		"@eskra-aws-playground/repositories": "0.1.0",
 		"@eskra-aws-playground/shared-domains": "0.1.0",
 		"@hono/node-server": "^2.1.1",
+		"@hono/zod-openapi": "^1.6.3",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/react-virtual": "^3.14.10",
 		"hono": "^4.13.7",

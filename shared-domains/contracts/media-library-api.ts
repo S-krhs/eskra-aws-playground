@@ -1,6 +1,7 @@
 // In scope: the request and response schemas of the media library's HTTP API
 // Out of scope: routing, DB access, generating the client, how the screen uses them
-import { z } from "zod";
+// The route definitions built from these need zod carrying OpenAPI metadata, so z comes from there
+import { z } from "@hono/zod-openapi";
 
 // What the virtual scroll appends at a time: larger makes the first paint heavier, smaller makes the appending visible
 export const MEDIA_PAGE_DEFAULT_LIMIT = 200;

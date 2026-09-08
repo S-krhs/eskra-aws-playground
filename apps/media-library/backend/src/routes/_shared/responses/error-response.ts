@@ -1,6 +1,7 @@
 // In scope: the error response every route shares, and turning a failed validation into one
 // Out of scope: deciding the status code, the validation itself, route implementation
-import { type ZodError, z } from "zod";
+import { z } from "@hono/zod-openapi";
+import type { ZodError } from "zod";
 
 /** Every failure comes back in this shape, so the screen has one thing to read. */
 export const errorResponseSchema = z.object({

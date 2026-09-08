@@ -24,6 +24,7 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
+		"@hono/zod-openapi": "^1.6.3",
 		"dayjs": "^1.11.23",
 		"zod": "^4.5.3"
 	}
