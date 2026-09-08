@@ -31,6 +31,7 @@
 		"test:ci": "turbo run test --continue -- --exclude '**/dist/**' --reporter=default --reporter=json --outputFile.json=vitest-report.json",
 		"test:summary": "node scripts/ci-test-summary.js",
 		"typecheck": "turbo run typecheck",
+		"typecheck:capped": "systemd-run --user --scope -q -p MemoryMax=6G -p MemorySwapMax=0 npm run typecheck",
 		"lint": "biome ci . && turbo run lint",
 		"format": "biome format .",
 		"format:fix": "biome format --write .",
@@ -44,6 +45,7 @@
 		"sst": "^4.17.1",
 		"turbo": "^2.10.12",
 		"typescript": "^7.0.2",
-		"vitest": "^4.1.11"
+		"vitest": "^4.1.11",
+		"zod": "^4.5.4"
 	}
 }
