@@ -5,7 +5,7 @@ import {
 	messageFlags,
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 
 /** Builds a Discord interaction callback payload visible only to the caller. */
 export const ephemeralOperation = (

@@ -2,7 +2,7 @@
 // Out of scope: validating the id, HTTP status codes, generating a thumbnail
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
-import type { OperationResult } from "../../intermediate-models/operation-result.js";
+import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 export interface Thumbnail {
 	body: Uint8Array<ArrayBuffer>;

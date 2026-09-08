@@ -9,8 +9,9 @@ Covers anything serving HTTP, whatever the runtime — a Lambda Function URL rou
 
 ```text
 handler / server        entry point: routing, signature or auth check, error handling
-routes/_shared/         what every route in this app shares (the error response, and so on)
-routes/intermediate-models/  shapes every route passes around (an operation's result, and so on)
+routes/_shared/         what every route in this app shares
+  responses/            the shared error response, and so on
+  intermediate-models/  shapes every route passes around (an operation's result, and so on)
 routes/<route>/         one route's dispatch. No business logic.
   contracts/            the public paths and commands this route exposes
   schema.ts             this route's request validation, or its OpenAPI route definitions

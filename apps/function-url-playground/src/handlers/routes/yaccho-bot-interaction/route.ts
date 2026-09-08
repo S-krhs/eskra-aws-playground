@@ -7,7 +7,7 @@ import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logge
 import { parseCustomId } from "@eskra-aws-playground/shared-domains/discord/custom-id.js";
 import { prefixes } from "@eskra-aws-playground/shared-domains/discord/custom-id-prefixes.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,

@@ -4,7 +4,7 @@ import {
 	type DiscordEmptyAutocompleteResponsePayload,
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 
 export const autocompleteOperation =
 	(): OperationResult<DiscordEmptyAutocompleteResponsePayload> => {

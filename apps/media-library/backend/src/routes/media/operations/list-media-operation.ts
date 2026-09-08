@@ -9,7 +9,7 @@ import type {
 	Media,
 	MediaListResponse,
 } from "@eskra-aws-playground/shared-domains/media/library-api.js";
-import type { OperationResult } from "../../intermediate-models/operation-result.js";
+import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 /** The object key never leaves the server, so only the thumbnail's presence is carried out. */
 const toMedia = (media: MediaObject): Media => {

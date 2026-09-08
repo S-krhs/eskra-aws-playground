@@ -15,7 +15,7 @@ import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-mess
 import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-job-message.js";
 import { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 import { ephemeralOperation } from "./ephemeral-operation.js";
 
 /** Checks where it was run, ACKs with an ephemeral deferred response, and enqueues the removal job. */

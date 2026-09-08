@@ -6,7 +6,7 @@ import type {
 	SyncRun,
 	SyncStatusResponse,
 } from "@eskra-aws-playground/shared-domains/media/library-api.js";
-import type { OperationResult } from "../../intermediate-models/operation-result.js";
+import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 const toSyncRun = (run: MediaSyncRun): SyncRun => {
 	return {

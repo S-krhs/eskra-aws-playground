@@ -3,7 +3,7 @@
 import { LambdaInvoker } from "@eskra-aws-playground/integration-lambda/lambda-invoker.js";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs.js";
 import type { SyncStartResponse } from "@eskra-aws-playground/shared-domains/media/library-api.js";
-import type { OperationResult } from "../../intermediate-models/operation-result.js";
+import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 /**
  * Starts the sync without waiting for it — a sync takes minutes, so progress is read from the run

@@ -5,7 +5,7 @@ import type { DiscordInteractionResponsePayload } from "@eskra-aws-playground/in
 import { verifyInteractionSignature } from "@eskra-aws-playground/integration-discord/verify-interaction-signature.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 import type {
 	FunctionUrlEvent,
 	FunctionUrlResponse,

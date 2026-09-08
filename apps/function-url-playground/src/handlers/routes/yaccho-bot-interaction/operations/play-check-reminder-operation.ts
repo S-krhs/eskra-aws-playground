@@ -18,7 +18,7 @@ import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains
 import { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-job-names.js";
 import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/reminder-choices.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 
 /**
  * Validates a play-reminder button press, ACKs the person who pressed it with a deferred update, and
