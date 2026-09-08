@@ -9,7 +9,6 @@
 		"generate:openapi": "npm run build && node backend/dist/scripts/write-openapi-document.js",
 		"generate:api": "npm run generate:openapi && orval --config orval.config.ts",
 		"build:ui": "vite build --config frontend/vite.config.ts",
-		"start": "npm run build && npm run build:ui && node backend/dist/server.js",
 		"dev:ui": "vite --config frontend/vite.config.ts",
 		"test": "vitest run",
 		"typecheck": "tsc -p backend/tsconfig.json --noEmit && tsc -p frontend/tsconfig.json --noEmit",

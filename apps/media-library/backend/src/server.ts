@@ -1,7 +1,6 @@
 // In scope: reading the config file into the environment and starting the process listening on 127.0.0.1
 // Out of scope: route handling, building the UI, how it stays resident (systemd's job)
 import { readFile } from "node:fs/promises";
-import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/media/library-config.js";
 import { serve } from "@hono/node-server";
 import { z } from "zod";
 import { createApp } from "./app.js";
@@ -19,10 +18,18 @@ const configSchema = z.object({
 	port: z.number().int().min(1).max(65535).optional(),
 });
 
-// 1. Read and validate the config file. Every failure names the field and the file's location and
-//    never the content — the file holds a key and a connection string, and this goes to the console.
-const configPath = resolveMediaLibraryConfigPath();
+// 1. Read and validate the config file. Its location comes from infra/local/ — the launcher and the
+//    systemd unit both put it here — so there is no default path to fall back to. Every failure names
+//    the field and the file's location and never the content: the file holds a key and a connection
+//    string, and this goes to the console.
+const configPath = process.env.MEDIA_LIBRARY_CONFIG;
 const config = await (async () => {
+	if (!configPath) {
+		throw new Error(
+			"MEDIA_LIBRARY_CONFIG が設定されていません。infra/local/run.mjs 経由で起動してください",
+		);
+	}
+
 	let raw: string;
 
 	try {

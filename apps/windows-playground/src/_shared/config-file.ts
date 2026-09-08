@@ -1,7 +1,6 @@
 // In scope: locating the config file this tool reads, and validating the fields it needs
 // Out of scope: deciding what the values are used for, talking to R2, creating the file
 import { readFile } from "node:fs/promises";
-import { resolveMediaLibraryConfigPath } from "@eskra-aws-playground/shared-domains/media/library-config.js";
 import { z } from "zod";
 
 // r2 is left unvalidated here — repositories owns what a credential has to look like
@@ -13,12 +12,20 @@ const configSchema = z.object({
 export type MediaUploadConfig = z.infer<typeof configSchema>;
 
 /**
- * Reads and validates the fields the uploader needs out of the shared config file.
+ * Reads and validates the fields the uploader needs out of the shared config file. The file's
+ * location comes from infra/local/, which every launch route sets, so there is no default here.
  * A failure names the field and the file's location, and never the content — the file holds a key,
  * and this error goes straight to the console the user is looking at.
  */
 export const loadConfigFile = async (): Promise<MediaUploadConfig> => {
-	const configPath = resolveMediaLibraryConfigPath();
+	const configPath = process.env.MEDIA_LIBRARY_CONFIG;
+
+	if (!configPath) {
+		throw new Error(
+			"MEDIA_LIBRARY_CONFIG が設定されていません。infra/local/run.mjs 経由で起動してください",
+		);
+	}
+
 	let raw: string;
 
 	try {

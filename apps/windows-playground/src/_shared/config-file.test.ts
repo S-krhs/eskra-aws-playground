@@ -1,9 +1,10 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { MEDIA_LIBRARY_CONFIG_ENV } from "@eskra-aws-playground/shared-domains/media/library-config.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadConfigFile } from "./config-file.js";
+
+const MEDIA_LIBRARY_CONFIG_ENV = "MEDIA_LIBRARY_CONFIG";
 
 const validConfig = {
 	bucket: "eskra-media-library",
@@ -40,6 +41,16 @@ describe("loadConfigFile", () => {
 		const config = await loadConfigFile();
 		expect(config.bucket).toBe("eskra-media-library");
 		expect(config.r2).toEqual(validConfig.r2);
+	});
+
+	// Nothing carries a default path any more, so an unset variable has to say so rather than
+	// silently reading some other file
+	it("fails when the config file's location is not in the environment", async () => {
+		delete process.env[MEDIA_LIBRARY_CONFIG_ENV];
+
+		await expect(loadConfigFile()).rejects.toThrow(
+			/MEDIA_LIBRARY_CONFIG が設定されていません/,
+		);
 	});
 
 	it("fails naming the location when the config file is missing", async () => {
