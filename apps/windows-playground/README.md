@@ -10,7 +10,9 @@
 
 ## 設定
 
-`~/.config/eskra-media-library/config.json` を読みます。`MEDIA_LIBRARY_CONFIG` で場所を変えられます。
+設定ファイルの場所は `MEDIA_LIBRARY_CONFIG` で渡されます。`npm run media:upload` と「送る」のどちらも
+`infra/local/` が決めた既定値（`~/.config/eskra-media-library/config.json`）を入れます。雛形は
+`npm run build:local-launchers` が `.tmp/local/config.template.json` に書き出します。
 
 ```json
 {
@@ -23,4 +25,4 @@
 }
 ```
 
-`bucket` は同期 Lambda が読む bucket(`infra/sst.config.ts` の `mediaBucketName`)と同じ名前にします。
+`bucket` は雛形に `infra/sst.config.ts` の `mediaBucketName` と揃った値が入っています。

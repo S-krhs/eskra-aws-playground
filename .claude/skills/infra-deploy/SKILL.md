@@ -9,6 +9,15 @@ Human-facing ops runbook and manual-setup records: `docs/ci-cd.md`.
 
 Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic and CloudWatch alarms for failure detection, the browser-runtime Lambda layer and its S3 asset bucket, the IAM resources those need, and the static-site CloudFront/S3/ACM/Route53 setup. Per-job scheduler payloads and secrets are documented in that app's README, not here.
 
+## The WSL-local run
+
+`infra/` owns how the never-deployed local tools start, for the same reason it owns the AWS side: it decides where a running app's settings come from. The tools themselves only read the environment.
+
+- Settings live in one JSON under `infra/local/`. A launcher puts the config path into the environment and execs the tool, passing the exit code straight through; a generator writes the machine-specific artifacts — a systemd unit, a Windows SendTo command line, a config-file template — into `.tmp/`.
+- Machine-specific values (repository location, home directory, WSL distro) are derived when the artifacts are generated, never committed.
+- **Anything the deploy also decides — a bucket name, a Lambda's name — is pinned to `sst.config.ts` by a test.** The generated template gets copied into place by hand, so drift wouldn't surface until the tool quietly read the wrong bucket.
+- A generated artifact never carries a credential. The template ships the non-secret fields filled and the rest blank.
+
 ## Constraints that aren't obvious from the code
 
 - `sst.config.ts` depends on types SST generates under `.sst/platform`, which don't exist in CI — so typecheck is scoped to `infra/config/` (settings) and `infra/layers/` (layer-definition tests) via `infra/tsconfig.json`'s `include`. Lint still covers `sst.config.ts`.
@@ -30,5 +39,6 @@ Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic and Clou
 - `DIRECT_DATABASE_URL` not leaking past the migration step?
 - Scheduler event payload matches the target app's job-routing name and carries no secret values?
 - An ops workflow's Lambda name matches `sst.config.ts`'s `name`?
+- Changed where a local tool's settings come from → regenerated the launch artifacts and updated that app's runbook in `docs/`?
 - `npm run validate` passes?
 - `npx sst diff --stage develop --config infra/sst.config.ts` shows no surprise diff?

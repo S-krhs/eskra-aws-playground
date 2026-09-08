@@ -5,10 +5,11 @@ description: How an app that runs on the user's WSL instead of AWS is built — 
 
 Some apps never deploy — they run on the user's WSL, either as a resident server with a browser UI or as one-shot tools launched from Windows Explorer through `wsl.exe`. Their HTTP and UI layers follow the `api` and `frontend` skills; this covers only what's different because it runs locally.
 
-- **Never deployed.** A local tool doesn't appear in `infra/sst.config.ts`. Heavy or long-running work belongs in a deployed batch app — the local tool asks it to start and reads progress.
+- **Never deployed.** A local tool doesn't appear in `infra/sst.config.ts` — but how it starts is still infra's, and lives under `infra/`. Heavy or long-running work belongs in a deployed batch app: the local tool asks it to start and reads progress.
 - Nothing is ever installed on the Windows side: no Windows-only binaries, no bundled Node. Execution stays inside WSL's Node.
 - **Relative imports don't use the `@/` alias in code run directly by `node`.** Nothing resolves `tsconfig`'s `paths` at runtime, unlike an app whose bundler rewrites them. Only bundled code (a Vite frontend, a Lambda bundle) can use the alias.
-- Config comes from a file under `~/.config/`, and its location is decided once in `shared-domains` so every tool reading it agrees. Each tool validates only the fields it needs.
+- **Where config comes from is decided in `infra/` and handed over as an environment variable**, the same way a Lambda gets its settings from `sst.config.ts`. A local tool carries no default path of its own — an unset variable is an error that says so, not a silent fall back to some other file. Each tool validates only the fields it needs.
+- **Every launch route goes through the same launcher**, so the config path is decided once rather than repeated per entry point. A generated artifact (a systemd unit, a Windows shortcut) either invokes that launcher or is written from the same settings — see the `infra-deploy` skill.
 - **Reading the file is a startup concern, not a module the rest of the app asks.** The entry point reads it once and puts the values where each consumer already looks for them — the environment variables a repository or a client contracts. Nothing downstream then has to know a config file exists.
 - **Never put a config file's contents in a log or an error.** A validation failure names the field and the file path, nothing else.
 - Bind a server to `127.0.0.1` only. Don't open it to other devices without an explicit decision to.

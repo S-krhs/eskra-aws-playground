@@ -30,7 +30,9 @@
 
 ## 設定
 
-アップローダと同じ `~/.config/eskra-media-library/config.json` を読みます。`MEDIA_LIBRARY_CONFIG` で場所を変えられます。
+アップローダと同じ設定ファイルを読みます。場所は `MEDIA_LIBRARY_CONFIG` で渡され、`npm run media:library` と systemd unit の
+どちらも `infra/local/` が決めた既定値（`~/.config/eskra-media-library/config.json`）を入れます。雛形は
+`npm run build:local-launchers` が `.tmp/local/config.template.json` に書き出します。
 
 ```json
 {
@@ -49,9 +51,9 @@
 
 | 項目 | 必須 | 内容 |
 | --- | --- | --- |
-| `bucket` / `r2` | 必須 | アップローダと共通。同期 Lambda が読む bucket と同じ名前にする |
+| `bucket` / `r2` | 必須 | アップローダと共通。`bucket` は雛形に deploy と揃った値が入っている |
 | `databaseUrl` | 必須 | Neon の pooled 接続文字列。develop の DB を読む |
-| `syncFunctionName` | 必須 | 同期 Lambda の関数名。`POST /api/sync` の起動先 |
+| `syncFunctionName` | 必須 | 同期 Lambda の関数名。`POST /api/sync` の起動先。雛形に入っている |
 | `awsRegion` | 必須 | 同期 Lambda が居る region |
 | `port` | 任意 | 既定は 7420 |
 
