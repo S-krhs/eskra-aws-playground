@@ -6,6 +6,7 @@ import type {
 	SyncRun,
 	SyncStatusResponse,
 } from "@eskra-aws-playground/shared-domains/media/library-api.js";
+import type { OperationResult } from "../../intermediate-models/operation-result.js";
 
 const toSyncRun = (run: MediaSyncRun): SyncRun => {
 	return {
@@ -20,15 +21,19 @@ const toSyncRun = (run: MediaSyncRun): SyncRun => {
 	};
 };
 
-export const readSyncStatusOperation =
-	async (): Promise<SyncStatusResponse> => {
-		const [latest, running] = await Promise.all([
-			mediaSyncRunRepository.findLatest(),
-			mediaSyncRunRepository.findUnfinished(),
-		]);
+export const readSyncStatusOperation = async (): Promise<
+	OperationResult<SyncStatusResponse>
+> => {
+	const [latest, running] = await Promise.all([
+		mediaSyncRunRepository.findLatest(),
+		mediaSyncRunRepository.findUnfinished(),
+	]);
 
-		return {
+	return {
+		kind: "OK",
+		data: {
 			latest: latest ? toSyncRun(latest) : null,
 			running: running ? toSyncRun(running) : null,
-		};
+		},
 	};
+};

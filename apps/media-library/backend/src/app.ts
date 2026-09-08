@@ -1,12 +1,15 @@
 // In scope: composing the API routes and the UI's static files into one Hono app
-// Out of scope: individual route implementations, starting the server, loading the config
+// Out of scope: individual route handling, starting the server, loading the config
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Hono } from "hono";
-import { mediaRoute } from "./routes/media/route.js";
-import { syncRoute } from "./routes/sync/route.js";
+import { toInvalidRequestResponse } from "./routes/_shared/responses/error-response.js";
+import { getThumbnail, listMedia } from "./routes/media/route.js";
+import { getThumbnailRoute, listMediaRoute } from "./routes/media/schema.js";
+import { readSyncStatus, startSync } from "./routes/sync/route.js";
+import { readSyncStatusRoute, startSyncRoute } from "./routes/sync/schema.js";
 
 // serveStatic only resolves root relative to cwd, so it is rebuilt into a value independent of where the process started
 const uiRoot = (): string => {
@@ -18,10 +21,19 @@ const uiRoot = (): string => {
 	return relative(process.cwd(), uiDir) || ".";
 };
 
-/** Request path to owning route; a new route gets registered here. */
-const apiRoutes = new OpenAPIHono()
-	.route("/media", mediaRoute)
-	.route("/sync", syncRoute);
+/** Route definition to its handler; a new route gets registered here. */
+const apiRoutes = new OpenAPIHono({
+	// Without this, a request that fails a route's own schema comes back in zod's shape rather than ours
+	defaultHook: (result, c) => {
+		if (!result.success) {
+			return c.json(toInvalidRequestResponse(result.error), 400);
+		}
+	},
+})
+	.openapi(listMediaRoute, listMedia)
+	.openapi(getThumbnailRoute, getThumbnail)
+	.openapi(startSyncRoute, startSync)
+	.openapi(readSyncStatusRoute, readSyncStatus);
 
 /** The document the frontend's client is generated from. Written to a file rather than served. */
 export const buildOpenApiDocument = () => {

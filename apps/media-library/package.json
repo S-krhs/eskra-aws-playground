@@ -13,11 +13,11 @@
 		"dev:ui": "vite --config frontend/vite.config.ts",
 		"test": "vitest run",
 		"typecheck": "tsc -p backend/tsconfig.json --noEmit && tsc -p frontend/tsconfig.json --noEmit",
-		"lint": "biome ci . && steiger ./frontend/src",
+		"lint": "biome ci . && cd frontend && steiger ./src",
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"@aws-sdk/client-lambda": "^3.1127.0",
+		"@eskra-aws-playground/integration-lambda": "0.1.0",
 		"@eskra-aws-playground/repositories": "0.1.0",
 		"@eskra-aws-playground/shared-domains": "0.1.0",
 		"@hono/node-server": "^2.1.1",

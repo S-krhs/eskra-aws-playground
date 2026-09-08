@@ -236,13 +236,75 @@
 				}
 			}
 		},
+		"/media/{id}/thumbnail": {
+			"get": {
+				"operationId": "getThumbnail",
+				"summary": "メディア 1 件のサムネイル画像を返す",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": true,
+						"name": "id",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "サムネイルの webp 画像",
+						"content": {
+							"image/webp": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "id が UUID ではない",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": ["message"]
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "サムネイルがまだ生成されていない",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": ["message"]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 		"/sync": {
 			"post": {
 				"operationId": "startSync",
 				"summary": "同期の起動を依頼する",
 				"responses": {
 					"202": {
-						"description": "起動を受け付けた。完了は /status を読んで確かめる",
+						"description": "起動を受け付けた。完了は /sync/status を読んで確かめる",
 						"content": {
 							"application/json": {
 								"schema": {
