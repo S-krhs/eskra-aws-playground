@@ -8,6 +8,7 @@
 		"date/**/*.ts",
 		"gacha/**/*.ts",
 		"logger/**/*.ts",
+		"path/**/*.ts",
 		"string/**/*.ts"
 	],
 	"exclude": ["dist", "node_modules"]

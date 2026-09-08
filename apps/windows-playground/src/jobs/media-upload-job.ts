@@ -1,5 +1,5 @@
-// In scope: storing one file into R2's _inbox, key-collision avoidance and metadata included
-// Out of scope: reading arguments, loading config, writing to the DB, thumbnail generation
+// In scope: storing one file into the inbox, key-collision avoidance and metadata included
+// Out of scope: reading arguments, loading config, converting the path, deciding what to do on failure
 import { randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
@@ -47,7 +47,7 @@ const resolveAvailableKey = async (
  * nothing is written to the DB, which the sync job takes care of later.
  */
 /** `filePath` is the path as WSL sees it. */
-export const uploadMediaFile = async (
+export const mediaUploadJob = async (
 	filePath: string,
 ): Promise<UploadedMedia> => {
 	const stats = await stat(filePath);
