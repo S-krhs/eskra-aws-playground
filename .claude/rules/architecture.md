@@ -63,6 +63,7 @@ apps/* -> shared-domains -> packages/libs/utils
 - DB client, SQL, and row shapes stay inside the repository package — never leak to an app.
 - `packages/libs/*` never imports `apps/*`, `shared-domains`, or `packages/integrations/*`.
 - `shared-domains` never imports `apps/*` or `packages/integrations/*`. Target-agnostic conventions (e.g. a custom_id format) belong in `shared-domains`; target-specific wire types/transport/parsing belong in the integration — keep the two independent.
+- An HTTP API's request and response schemas are the exception: when a backend in this repo generates its browser client from them, they live in `shared-domains` and may carry the metadata the route definitions need. They stay schema definitions — no client, no transport code — and only the app serving that API imports them.
 - `packages/integrations/*` never imports `apps/*`, `shared-domains`, or another `packages/integrations/*`.
 - Split out a dedicated package for anything needing an external integration or a heavy dependency.
 
