@@ -1,0 +1,27 @@
+{
+	"name": "@eskra-aws-playground/libs-media",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./ffmpeg/media-probe.js": {
+			"types": "./dist/ffmpeg/media-probe.d.ts",
+			"default": "./dist/ffmpeg/media-probe.js"
+		},
+		"./ffmpeg/thumbnail-generator.js": {
+			"types": "./dist/ffmpeg/thumbnail-generator.d.ts",
+			"default": "./dist/ffmpeg/thumbnail-generator.js"
+		}
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc -p tsconfig.json",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"dependencies": {
+		"zod": "^4.5.3"
+	}
+}

@@ -36,6 +36,9 @@ export default $config({
 		}
 
 		const { jobSchedules } = await import("./config/job-schedules.js");
+		const { MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT } = await import(
+			"@eskra-aws-playground/shared-domains/contracts/media-jobs.js"
+		);
 		const { alarmDescriptions } = await import(
 			"./config/alarm-descriptions.js"
 		);
@@ -354,7 +357,8 @@ export default $config({
 			visibilityTimeout: "6 minutes",
 			dlq: {
 				queue: mediaThumbnailDeadLetterQueue.arn,
-				retry: 3,
+				// The job gives up and moves the media aside on this delivery, so both sides read one value
+				retry: MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
 			},
 		});
 
@@ -392,11 +396,15 @@ export default $config({
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
 			memory: "1 GB",
-			link: [r2Credentials, mediaThumbnailQueue],
-			// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
-			// through environment rather than a link
+			// The job itself takes the one run slot the DB allows; this stops a second invocation
+			// from even reaching that check when the cron and a manual start overlap
+			concurrency: { reserved: 1 },
+			link: [mediaThumbnailQueue],
+			// repositories contracts both connections as env vars, so they go through environment
+			// rather than a link
 			environment: {
 				DATABASE_URL: databaseUrl.value,
+				R2_CREDENTIALS: r2Credentials.value,
 				MEDIA_BUCKET: mediaBucketName,
 			},
 		});
@@ -411,9 +419,9 @@ export default $config({
 				timeout: "5 minutes",
 				memory: "2 GB",
 				storage: "10 GB",
-				link: [r2Credentials],
 				environment: {
 					DATABASE_URL: databaseUrl.value,
+					R2_CREDENTIALS: r2Credentials.value,
 					MEDIA_BUCKET: mediaBucketName,
 				},
 				layers: [ffmpegLayer.arn],

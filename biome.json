@@ -5,7 +5,13 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**/*", "!**/package-lock.json", "!repositories/generated"]
+		"includes": [
+			"**/*",
+			"!**/package-lock.json",
+			"!repositories/generated",
+			"!apps/media-library/openapi.json",
+			"!apps/media-library/frontend/src/shared/api/generated"
+		]
 	},
 	"css": {
 		"parser": {

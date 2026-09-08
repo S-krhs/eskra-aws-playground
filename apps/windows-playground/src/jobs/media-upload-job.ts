@@ -1,0 +1,81 @@
+// In scope: storing one file where it waits for its thumbnail, key-collision avoidance and metadata included
+// Out of scope: reading arguments, loading config, converting the path, deciding what to do on failure
+import { randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
+import { basename, extname } from "node:path";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
+import { resolveContentType } from "@eskra-aws-playground/shared-domains/contracts/media-content-type.js";
+import { PENDING_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import { buildMediaObjectKey } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
+import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
+
+// Files sharing a modified millisecond are rare; going past this points at a misconfiguration
+const MAX_KEY_SEQUENCE = 100;
+
+export interface UploadedMedia {
+	objectKey: string;
+	mediaId: string;
+	byteSize: number;
+}
+
+const resolveAvailableKey = async (
+	modifiedAt: Date,
+	extension: string,
+): Promise<string> => {
+	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
+		const objectKey = buildMediaObjectKey({
+			logicalPath: PENDING_PREFIX,
+			modifiedAt,
+			extension,
+			// The first key carries no counter; a collision starts numbering at -2
+			sequence: sequence === 0 ? undefined : sequence + 1,
+		});
+
+		if (!(await mediaStorageRepository.headIfExists(objectKey))) {
+			return objectKey;
+		}
+	}
+
+	throw new Error(
+		`同じ更新日時の key が ${MAX_KEY_SEQUENCE} 件を超えて埋まっています`,
+	);
+};
+
+/**
+ * Stores a file into R2's _inbox. The UUID and original file name only go into object metadata —
+ * nothing is written to the DB, which the sync job takes care of later.
+ */
+/** `filePath` is the path as WSL sees it. */
+export const mediaUploadJob = async (
+	filePath: string,
+): Promise<UploadedMedia> => {
+	const stats = await stat(filePath);
+
+	if (!stats.isFile()) {
+		throw new Error("ファイルではありません");
+	}
+
+	const extension = extname(filePath);
+	const contentType = resolveContentType(extension);
+
+	if (!contentType) {
+		throw new Error(`対象外の拡張子です: ${extension || "(拡張子なし)"}`);
+	}
+
+	const objectKey = await resolveAvailableKey(stats.mtime, extension);
+	const mediaId = randomUUID();
+
+	await mediaStorageRepository.upload({
+		key: objectKey,
+		// Streamed, so a large video never sits in memory
+		body: createReadStream(filePath),
+		contentType,
+		metadata: buildMediaObjectMetadata({
+			mediaId,
+			originalName: basename(filePath),
+		}),
+	});
+
+	return { objectKey, mediaId, byteSize: stats.size };
+};

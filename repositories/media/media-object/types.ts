@@ -54,35 +54,31 @@ export interface RefreshMediaObjectInput {
 	syncedAt: Date;
 }
 
-/** Re-points one object's key after it was moved outside this app. */
+/**
+ * Re-points one object's key after it was moved.
+ * A move is carried out as a copy, which can hand the destination a different etag, so the etag and
+ * size are re-registered too — otherwise the next sync reads the object as replaced content.
+ */
 export interface RelocateMediaObjectInput {
 	id: string;
 	objectKey: string;
 	logicalPath: string;
+	byteSize: number;
+	etag: string;
 	syncedAt: Date;
 }
 
-/** A media object with no thumbnail yet — the minimum the generation job needs. */
-export interface ThumbnaillessMediaObject {
-	id: string;
-	objectKey: string;
-}
-
-export interface FindThumbnaillessInput {
-	limit: number;
-	/** Generation is retried up to this many times; past that the object drops out. */
-	maxAttempts: number;
-	/** Only objects enqueued before this time are re-enqueued — the boundary that keeps an in-flight message from being sent twice. */
-	retryBefore: Date;
-}
-
-/** The result of generating a thumbnail; dimensions and duration are passed only where readable. */
-export interface SetMediaThumbnailInput {
+/**
+ * The result of generating a thumbnail. Dimensions and duration are passed only where readable.
+ * `location` is passed only when the object was moved out of the pending area on the way.
+ */
+export interface UpdateThumbnailInput {
 	id: string;
 	thumbnailKey: string;
 	width?: number;
 	height?: number;
 	durationMs?: number;
+	location?: Omit<RelocateMediaObjectInput, "id">;
 }
 
 /** A position in the listing — the last item of the previous page. */

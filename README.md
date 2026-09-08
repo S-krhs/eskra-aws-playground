@@ -9,6 +9,7 @@ AWS Lambda と SST でバッチジョブを運用する TypeScript モノレポ�
 - `npm run db:migrate:dev`（migration の作成とローカル用 Neon branch への適用）
 - `npm run db:migrate`（commit 済み migration の適用。CD が実行）
 - `npm run typecheck`
+- `npm run typecheck:capped`（型チェックを cgroup で 6GB に制限して実行。型が爆発したときに WSL ごと巻き込まれるのを防ぐ。TypeScript 7 の型チェッカは Go のネイティブバイナリなので `--max-old-space-size` は効かない）
 - `npm run lint`
 - `npm run format`
 - `npm run format:fix`

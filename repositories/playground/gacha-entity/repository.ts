@@ -1,6 +1,6 @@
 // In scope: reading GachaEntity rows keyed by poolKey
 // Out of scope: drawing, interpreting draw weights, message assembly, outbound sending
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { gachaRaritySchema } from "./schema.js";
 import type { FindGachaEntitiesInput, GachaEntity } from "./types.js";
 

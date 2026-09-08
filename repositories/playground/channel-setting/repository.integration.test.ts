@@ -11,7 +11,7 @@ import {
 } from "vitest";
 import { z } from "zod";
 
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { applicationKeys } from "../shared/literals/application-key.js";
 import { settingKeys } from "../shared/literals/setting-key.js";
 import { channelSettingRepository } from "./repository.js";

@@ -2,7 +2,7 @@
 // Out of scope: what each job does, Discord API calls, building a deferred ack
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
-import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-job-names.js";
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 import { gambleCheckDisableJob } from "./jobs/gamble-check-disable-job.js";
 import { gambleCheckEnableJob } from "./jobs/gamble-check-enable-job.js";
 import { kaguyaInuihiroshiReplyJob } from "./jobs/kaguya-inuihiroshi-reply-job.js";
@@ -18,7 +18,10 @@ import {
 
 const logger = createBatchLogger("sqs-job-worker");
 
-const runJob = (message: SqsJobMessage): Promise<void> => {
+const runJob = (
+	message: SqsJobMessage,
+	receiveCount: number,
+): Promise<void> => {
 	switch (message.job) {
 		case interactionJobNames.yacchoHelloReply:
 			return yacchoHelloReplyJob(message);
@@ -31,7 +34,7 @@ const runJob = (message: SqsJobMessage): Promise<void> => {
 		case interactionJobNames.playCheckReminderChoice:
 			return playCheckReminderChoiceJob(message);
 		case mediaJobNames.mediaThumbnail:
-			return mediaThumbnailJob(message);
+			return mediaThumbnailJob(message, receiveCount);
 	}
 };
 
@@ -51,7 +54,7 @@ export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
 			const message = sqsJobMessageSchema.parse(JSON.parse(record.body));
 			logger.start({ messageId, job: message.job });
 
-			await runJob(message);
+			await runJob(message, record.attributes?.ApproximateReceiveCount ?? 1);
 
 			logger.complete({ messageId, job: message.job });
 		} catch (error) {

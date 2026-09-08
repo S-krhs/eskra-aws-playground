@@ -3,9 +3,10 @@
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { Hono } from "hono";
-import { mediaRoutes } from "./routes/media-routes.js";
-import { syncRoutes } from "./routes/sync-routes.js";
+import { mediaRoute } from "./routes/media/route.js";
+import { syncRoute } from "./routes/sync/route.js";
 
 // serveStatic only resolves root relative to cwd, so it is rebuilt into a value independent of where the process started
 const uiRoot = (): string => {
@@ -18,12 +19,18 @@ const uiRoot = (): string => {
 };
 
 /** Request path to owning route; a new route gets registered here. */
-const apiRoutes = new Hono()
-	.route("/media", mediaRoutes)
-	.route("/sync", syncRoutes);
+const apiRoutes = new OpenAPIHono()
+	.route("/media", mediaRoute)
+	.route("/sync", syncRoute);
 
-/** The API type the frontend derives response types from via hc(). */
-export type ApiType = typeof apiRoutes;
+/** The document the frontend's client is generated from. Written to a file rather than served. */
+export const buildOpenApiDocument = () => {
+	return apiRoutes.getOpenAPI31Document({
+		openapi: "3.1.0",
+		info: { title: "media-library API", version: "1.0.0" },
+		servers: [{ url: "/api" }],
+	});
+};
 
 export const createApp = (): Hono => {
 	const app = new Hono();

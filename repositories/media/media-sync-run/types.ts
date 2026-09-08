@@ -13,20 +13,21 @@ export interface MediaSyncRun {
 	error: string | undefined;
 }
 
-/** The counts written back while a run is in flight. */
-export interface MediaSyncProgress {
+/** The four count columns a run accumulates. */
+export interface MediaSyncRunCounts {
 	scannedCount: number;
 	insertedCount: number;
 	updatedCount: number;
 	deletedCount: number;
 }
 
-export interface UpdateMediaSyncProgressInput extends MediaSyncProgress {
+export interface UpdateMediaSyncRunCountsInput extends MediaSyncRunCounts {
 	id: string;
 }
 
-/** Records the end of a run; an `error` marks it as failed. */
-export interface FinishMediaSyncRunInput extends UpdateMediaSyncProgressInput {
+/** Writes the columns that close a row out; an `error` marks the run as failed. */
+export interface UpdateMediaSyncRunFinishedInput
+	extends UpdateMediaSyncRunCountsInput {
 	finishedAt: Date;
 	error?: string;
 }

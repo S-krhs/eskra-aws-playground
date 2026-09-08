@@ -1,0 +1,302 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "media-library API",
+		"version": "1.0.0"
+	},
+	"servers": [
+		{
+			"url": "/api"
+		}
+	],
+	"components": {
+		"schemas": {
+			"MediaListResponse": {
+				"type": "object",
+				"properties": {
+					"objects": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Media"
+						}
+					},
+					"nextCursor": {
+						"$ref": "#/components/schemas/MediaCursor"
+					}
+				},
+				"required": [
+					"objects",
+					"nextCursor"
+				]
+			},
+			"Media": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"logicalPath": {
+						"type": "string"
+					},
+					"contentType": {
+						"type": "string"
+					},
+					"byteSize": {
+						"type": "number"
+					},
+					"width": {
+						"type": "number"
+					},
+					"height": {
+						"type": "number"
+					},
+					"durationMs": {
+						"type": "number"
+					},
+					"hasThumbnail": {
+						"type": "boolean"
+					},
+					"uploadedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"id",
+					"fileName",
+					"logicalPath",
+					"contentType",
+					"byteSize",
+					"hasThumbnail",
+					"uploadedAt"
+				]
+			},
+			"MediaCursor": {
+				"type": [
+					"object",
+					"null"
+				],
+				"properties": {
+					"uploadedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				},
+				"required": [
+					"uploadedAt",
+					"id"
+				]
+			},
+			"SyncStartResponse": {
+				"type": "object",
+				"properties": {
+					"started": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"started"
+				]
+			},
+			"SyncStatusResponse": {
+				"type": "object",
+				"properties": {
+					"latest": {
+						"$ref": "#/components/schemas/SyncRun"
+					},
+					"running": {
+						"$ref": "#/components/schemas/SyncRun"
+					}
+				},
+				"required": [
+					"latest",
+					"running"
+				]
+			},
+			"SyncRun": {
+				"type": [
+					"object",
+					"null"
+				],
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"startedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"finishedAt": {
+						"type": [
+							"string",
+							"null"
+						],
+						"format": "date-time"
+					},
+					"scannedCount": {
+						"type": "number"
+					},
+					"insertedCount": {
+						"type": "number"
+					},
+					"updatedCount": {
+						"type": "number"
+					},
+					"deletedCount": {
+						"type": "number"
+					},
+					"error": {
+						"type": [
+							"string",
+							"null"
+						]
+					}
+				},
+				"required": [
+					"id",
+					"startedAt",
+					"finishedAt",
+					"scannedCount",
+					"insertedCount",
+					"updatedCount",
+					"deletedCount",
+					"error"
+				]
+			}
+		},
+		"parameters": {}
+	},
+	"paths": {
+		"/media": {
+			"get": {
+				"operationId": "listMedia",
+				"summary": "メディアを絞り込んで 1 ページ分返す",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1
+						},
+						"required": false,
+						"name": "logicalPath",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1
+						},
+						"required": false,
+						"name": "contentTypePrefix",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 500,
+							"default": 200
+						},
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"required": false,
+						"name": "cursorUploadedAt",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": false,
+						"name": "cursorId",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "絞り込み条件に合うメディアの 1 ページ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MediaListResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "query の項目が不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/sync": {
+			"post": {
+				"operationId": "startSync",
+				"summary": "同期の起動を依頼する",
+				"responses": {
+					"202": {
+						"description": "起動を受け付けた。完了は /status を読んで確かめる",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SyncStartResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/sync/status": {
+			"get": {
+				"operationId": "readSyncStatus",
+				"summary": "直近の実行と、実行中があればその進捗を返す",
+				"responses": {
+					"200": {
+						"description": "直近の実行と、実行中があればその進捗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SyncStatusResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"webhooks": {}
+}

@@ -34,7 +34,11 @@ Same bar for doc-comments: skip them when the name and types already say everyth
 - Before adding an npm dependency, check its purpose, alternatives, and impact on Lambda bundle size.
 - Integration-specific deps go in that `packages/integrations/<target>/package.json`.
 - App-specific deps go in that `apps/<app>/package.json`.
-- Only repo-wide dev tooling goes in the root `package.json`.
+- Only repo-wide dev tooling goes in the root `package.json`, with one exception: a package whose
+  **types cross a workspace boundary** is declared there too, to pin the single copy every workspace
+  resolves. npm gives the root's `node_modules` one version of a name; if a conflicting major elsewhere
+  in the tree takes that slot, every workspace nests its own copy and the same type coming from two
+  workspaces stops being the same type. `zod` is there for that reason and no other.
 
 ## Before you're done
 

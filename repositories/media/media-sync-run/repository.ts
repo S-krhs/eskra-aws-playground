@@ -1,10 +1,10 @@
-// In scope: starting, updating and finishing a sync run record, plus reading the latest and the running one
-// Out of scope: running the sync itself, walking R2, invoking Lambda
-import { getPrismaClient } from "../../db/client.js";
+// In scope: inserting a MediaSyncRun row, updating its counts and its finished columns, and reading it back
+// Out of scope: running the sync itself, deciding when a run may start, walking R2, invoking Lambda
+import { getPrismaClient } from "../../client/prisma.js";
 import type {
-	FinishMediaSyncRunInput,
 	MediaSyncRun,
-	UpdateMediaSyncProgressInput,
+	UpdateMediaSyncRunCountsInput,
+	UpdateMediaSyncRunFinishedInput,
 } from "./types.js";
 
 interface MediaSyncRunRow {
@@ -31,31 +31,60 @@ const toMediaSyncRun = (row: MediaSyncRunRow): MediaSyncRun => {
 	};
 };
 
+// Prisma reports a unique-constraint violation as P2002; matching on the code keeps its error type out of here
+const isUniqueViolation = (error: unknown): boolean => {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		error.code === "P2002"
+	);
+};
+
 export const mediaSyncRunRepository = {
-	start: async (id: string, startedAt: Date): Promise<MediaSyncRun> => {
+	/**
+	 * Inserts a row, which takes the one slot an unfinished run may hold.
+	 * Returns undefined when another row already holds it — the table allows a single unfinished row,
+	 * so two callers racing here settle in the DB rather than by reading first and writing after.
+	 */
+	insert: async (
+		id: string,
+		startedAt: Date,
+	): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();
-		const row = await prisma.mediaSyncRun.create({ data: { id, startedAt } });
 
-		return toMediaSyncRun(row);
+		try {
+			const row = await prisma.mediaSyncRun.create({
+				data: { id, startedAt, running: true },
+			});
+
+			return toMediaSyncRun(row);
+		} catch (error) {
+			if (isUniqueViolation(error)) {
+				return undefined;
+			}
+
+			throw error;
+		}
 	},
 
-	updateProgress: async (
-		input: UpdateMediaSyncProgressInput,
+	updateCounts: async (input: UpdateMediaSyncRunCountsInput): Promise<void> => {
+		const prisma = getPrismaClient();
+		const { id, ...counts } = input;
+
+		await prisma.mediaSyncRun.update({ where: { id }, data: counts });
+	},
+
+	/** Passing an `error` records the run as failed. Either way the slot is released. */
+	updateFinished: async (
+		input: UpdateMediaSyncRunFinishedInput,
 	): Promise<void> => {
-		const prisma = getPrismaClient();
-		const { id, ...progress } = input;
-
-		await prisma.mediaSyncRun.update({ where: { id }, data: progress });
-	},
-
-	/** Passing an `error` records the run as failed. */
-	finish: async (input: FinishMediaSyncRunInput): Promise<void> => {
 		const prisma = getPrismaClient();
 		const { id, error, ...rest } = input;
 
 		await prisma.mediaSyncRun.update({
 			where: { id },
-			data: { ...rest, error: error ?? null },
+			data: { ...rest, error: error ?? null, running: null },
 		});
 	},
 
@@ -69,12 +98,8 @@ export const mediaSyncRunRepository = {
 		return row ? toMediaSyncRun(row) : undefined;
 	},
 
-	/**
-	 * Returns the oldest unfinished run. startedAt is taken before the row is inserted, so two runs
-	 * starting at once could each see themselves as oldest. Ordering by the DB-assigned createdAt and
-	 * breaking ties on id makes both of them pick the same row.
-	 */
-	findRunning: async (): Promise<MediaSyncRun | undefined> => {
+	/** The row holding the slot, if there is one. */
+	findUnfinished: async (): Promise<MediaSyncRun | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaSyncRun.findFirst({
 			where: { finishedAt: null },

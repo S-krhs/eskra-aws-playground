@@ -2,19 +2,19 @@
 // Out of scope: walking R2, writing to the DB, thumbnail generation, recording progress
 import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
-import type { R2Client } from "@eskra-aws-playground/integration-r2/r2-client.js";
-import { r2ObjectStore } from "@eskra-aws-playground/integration-r2/r2-object-store.js";
 import type {
 	InsertMediaObjectInput,
 	RelocateMediaObjectInput,
 } from "@eskra-aws-playground/repositories/media/media-object/types.js";
-import type { MediaObjectMetadata } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
+import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
+import { INBOX_PREFIX } from "@eskra-aws-playground/shared-domains/contracts/media-storage-layout.js";
 import {
-	buildInboxKey,
+	buildMediaObjectKey,
 	extractLogicalPath,
 } from "@eskra-aws-playground/shared-domains/protocols/media-object-key.js";
 import {
 	buildMediaObjectMetadata,
+	type MediaObjectMetadata,
 	parseMediaObjectMetadata,
 } from "@eskra-aws-playground/shared-domains/protocols/media-object-metadata.js";
 import type { ScannedObject } from "./sync-plan.js";
@@ -31,11 +31,25 @@ export type UnknownObjectDecision =
 	| { kind: "duplicate"; mediaId: string }
 	| { kind: "adopt" };
 
-/** The state of the registered ids; missingIds is a subset of known. */
-export interface KnownMediaIds {
-	knownIds: ReadonlySet<string>;
-	/** Registered ids that the R2 listing didn't turn up. */
-	missingIds: ReadonlySet<string>;
+/** The registered ids an unknown key is judged against; `missing` is a subset of `all`. */
+export interface RegisteredMediaIds {
+	all: ReadonlySet<string>;
+	/** Registered ids that the storage listing didn't turn up. */
+	missing: ReadonlySet<string>;
+}
+
+/** One pass's data. Everything here is a value; the progress hook is a separate argument. */
+export interface UnknownObjectResolutionInput {
+	objects: ScannedObject[];
+	registeredIds: RegisteredMediaIds;
+	/** Stamped on every row this pass produces, so one sync's rows share a time. */
+	syncedAt: Date;
+}
+
+/** How far a pass has got. The counts keep rising until it returns, so they aren't a result. */
+export interface UnknownObjectResolutionProgress {
+	insertCount: number;
+	relocationCount: number;
 }
 
 /** The resolution of the unknown keys: the inputs to write to the DB, plus how many couldn't be handled. */
@@ -53,18 +67,18 @@ export interface ResolvedUnknownObjects {
  */
 export const decideUnknownObject = (
 	metadata: MediaObjectMetadata | undefined,
-	known: KnownMediaIds,
+	registeredIds: RegisteredMediaIds,
 ): UnknownObjectDecision => {
 	if (!metadata) {
 		return { kind: "adopt" };
 	}
 
-	if (known.missingIds.has(metadata.mediaId)) {
+	if (registeredIds.missing.has(metadata.mediaId)) {
 		return { kind: "relocate", mediaId: metadata.mediaId };
 	}
 
 	// The same media-id appearing while the original key is still there means it was copied
-	if (known.knownIds.has(metadata.mediaId)) {
+	if (registeredIds.all.has(metadata.mediaId)) {
 		return { kind: "duplicate", mediaId: metadata.mediaId };
 	}
 
@@ -76,19 +90,18 @@ export const decideUnknownObject = (
 };
 
 const resolveAvailableInboxKey = async (
-	client: R2Client,
-	bucket: string,
 	modifiedAt: Date,
 	extension: string,
 ): Promise<string> => {
 	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
-		const key = buildInboxKey({
+		const key = buildMediaObjectKey({
+			logicalPath: INBOX_PREFIX,
 			modifiedAt,
 			extension,
 			sequence: sequence === 0 ? undefined : sequence + 1,
 		});
 
-		if (!(await r2ObjectStore.headIfExists(client, { bucket, key }))) {
+		if (!(await mediaStorageRepository.headIfExists(key))) {
 			return key;
 		}
 	}
@@ -104,26 +117,19 @@ const resolveAvailableInboxKey = async (
  * deleted to undo it. Leaving the original in place means the next sync takes it in again, producing
  * two UUIDs and two rows for the same content.
  */
-const adoptObject = async (
-	client: R2Client,
-	input: {
-		bucket: string;
-		object: ScannedObject;
-		contentType: string;
-		syncedAt: Date;
-	},
-): Promise<InsertMediaObjectInput> => {
+const adoptObject = async (input: {
+	object: ScannedObject;
+	contentType: string;
+	syncedAt: Date;
+}): Promise<InsertMediaObjectInput> => {
 	const mediaId = randomUUID();
 	const originalName = basename(input.object.key);
 	const destinationKey = await resolveAvailableInboxKey(
-		client,
-		input.bucket,
 		input.object.lastModified,
 		extname(input.object.key),
 	);
 
-	await r2ObjectStore.copy(client, {
-		bucket: input.bucket,
+	await mediaStorageRepository.copy({
 		sourceKey: input.object.key,
 		destinationKey,
 		metadata: buildMediaObjectMetadata({ mediaId, originalName }),
@@ -132,21 +138,12 @@ const adoptObject = async (
 
 	// A copy's etag doesn't always match the original's (when the original went up as multipart).
 	// Registering the source's etag would make the next sync read it as a replacement and rebuild the thumbnail
-	const copied = await r2ObjectStore.head(client, {
-		bucket: input.bucket,
-		key: destinationKey,
-	});
+	const copied = await mediaStorageRepository.head(destinationKey);
 
 	try {
-		await r2ObjectStore.delete(client, {
-			bucket: input.bucket,
-			key: input.object.key,
-		});
+		await mediaStorageRepository.delete(input.object.key);
 	} catch (error) {
-		await r2ObjectStore.delete(client, {
-			bucket: input.bucket,
-			key: destinationKey,
-		});
+		await mediaStorageRepository.delete(destinationKey);
 
 		throw error;
 	}
@@ -169,15 +166,9 @@ const adoptObject = async (
  * HeadObject is called here and nowhere else.
  */
 export const resolveUnknownObjects = async (
-	client: R2Client,
-	input: {
-		bucket: string;
-		objects: ScannedObject[];
-		known: KnownMediaIds;
-		syncedAt: Date;
-		/** A first run takes minutes, so progress is reported as it goes. */
-		onProgress?: (resolved: ResolvedUnknownObjects) => Promise<void>;
-	},
+	input: UnknownObjectResolutionInput,
+	/** Called once per batch, since a first run takes minutes to get through. */
+	onProgress?: (progress: UnknownObjectResolutionProgress) => Promise<void>,
 ): Promise<ResolvedUnknownObjects> => {
 	const inserts: InsertMediaObjectInput[] = [];
 	const relocations: RelocateMediaObjectInput[] = [];
@@ -192,10 +183,7 @@ export const resolveUnknownObjects = async (
 		const resolved = await Promise.all(
 			chunk.map(async (object) => {
 				// An object gone since the listing must not fail the whole sync
-				const head = await r2ObjectStore.headIfExists(client, {
-					bucket: input.bucket,
-					key: object.key,
-				});
+				const head = await mediaStorageRepository.headIfExists(object.key);
 
 				return { object, head };
 			}),
@@ -208,7 +196,7 @@ export const resolveUnknownObjects = async (
 
 			const decision = decideUnknownObject(
 				parseMediaObjectMetadata(head.metadata),
-				input.known,
+				input.registeredIds,
 			);
 
 			if (decision.kind === "relocate") {
@@ -216,6 +204,8 @@ export const resolveUnknownObjects = async (
 					id: decision.mediaId,
 					objectKey: object.key,
 					logicalPath: extractLogicalPath(object.key),
+					byteSize: object.byteSize,
+					etag: object.etag,
 					syncedAt: input.syncedAt,
 				});
 				continue;
@@ -246,8 +236,7 @@ export const resolveUnknownObjects = async (
 			// One failure doesn't fail the whole sync; it carries over to the next run
 			try {
 				inserts.push(
-					await adoptObject(client, {
-						bucket: input.bucket,
+					await adoptObject({
 						object,
 						contentType: head.contentType,
 						syncedAt: input.syncedAt,
@@ -258,7 +247,10 @@ export const resolveUnknownObjects = async (
 			}
 		}
 
-		await input.onProgress?.({ inserts, relocations, skippedCount });
+		await onProgress?.({
+			insertCount: inserts.length,
+			relocationCount: relocations.length,
+		});
 	}
 
 	return { inserts, relocations, skippedCount };

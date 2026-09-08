@@ -1,8 +1,8 @@
 // In scope: the listing's virtual scroll and asking for more as the end comes into view
 // Out of scope: fetching the listing, how a tile looks, deciding the filter conditions
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { MediaPage } from "../model/use-media-page.js";
+import { useCallback, useRef, useState } from "react";
+import type { MediaList } from "../api/use-media-list.js";
 import { MediaTile } from "./media-tile.js";
 
 // A tile's minimum width and its height; the column count comes from the width, so only the width is a floor
@@ -13,13 +13,15 @@ const GAP = 12;
 // Getting within this many rows of the end fetches the next page
 const PREFETCH_ROWS = 2;
 
-const useColumnCount = (
-	container: React.RefObject<HTMLDivElement | null>,
-): number => {
+/** Lays the fetched media out in a grid and appends more as the user scrolls. */
+export const MediaGrid = ({ list }: { list: MediaList }) => {
+	const container = useRef<HTMLDivElement | null>(null);
 	const [columns, setColumns] = useState(1);
 
-	useLayoutEffect(() => {
-		const element = container.current;
+	// The ref callback both keeps the scroll element and watches its width, so no effect has to
+	// re-run on mount. React calls the returned cleanup when the element goes away
+	const measure = useCallback((element: HTMLDivElement | null) => {
+		container.current = element;
 
 		if (!element) {
 			return;
@@ -38,17 +40,9 @@ const useColumnCount = (
 		return () => {
 			observer.disconnect();
 		};
-	}, [container]);
+	}, []);
 
-	return columns;
-};
-
-/** Lays the fetched media out in a grid and appends more as the user scrolls. */
-export const MediaGrid = ({ page }: { page: MediaPage }) => {
-	const container = useRef<HTMLDivElement>(null);
-	const columns = useColumnCount(container);
-	const rowCount = Math.ceil(page.items.length / columns);
-
+	const rowCount = Math.ceil(list.items.length / columns);
 	const virtualizer = useVirtualizer({
 		count: rowCount,
 		getScrollElement: () => {
@@ -58,27 +52,26 @@ export const MediaGrid = ({ page }: { page: MediaPage }) => {
 			return ROW_HEIGHT + GAP;
 		},
 		overscan: 2,
+		// Scrolling is an event, so the next page is asked for here rather than from an effect
+		onChange: (instance) => {
+			const lastVisibleRow = instance.getVirtualItems().at(-1)?.index ?? 0;
+
+			if (list.hasMore && lastVisibleRow >= rowCount - PREFETCH_ROWS) {
+				list.loadMore();
+			}
+		},
 	});
 
-	const virtualRows = virtualizer.getVirtualItems();
-	const lastVisibleRow = virtualRows.at(-1)?.index ?? 0;
-
-	useEffect(() => {
-		if (page.hasMore && lastVisibleRow >= rowCount - PREFETCH_ROWS) {
-			page.loadMore();
-		}
-	}, [page, lastVisibleRow, rowCount]);
-
 	return (
-		<div ref={container} className="h-full overflow-y-auto p-3">
-			{page.error ? (
-				<p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-red-800 text-sm dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-					{page.error}
+		<div ref={measure} className="h-full overflow-y-auto p-3">
+			{list.error ? (
+				<p role="alert" className="alert alert-error mb-3">
+					{list.error}
 				</p>
 			) : null}
 
-			{page.items.length === 0 && !page.isLoading && !page.error ? (
-				<p className="py-8 text-center text-slate-500 text-sm">
+			{list.items.length === 0 && !list.isLoading && !list.error ? (
+				<p className="py-8 text-center text-base-content/60 text-sm">
 					表示するメディアがありません。同期を実行すると R2
 					の中身を取り込みます。
 				</p>
@@ -88,7 +81,7 @@ export const MediaGrid = ({ page }: { page: MediaPage }) => {
 				className="relative w-full"
 				style={{ height: `${virtualizer.getTotalSize()}px` }}
 			>
-				{virtualRows.map((row) => {
+				{virtualizer.getVirtualItems().map((row) => {
 					const from = row.index * columns;
 
 					return (
@@ -102,7 +95,7 @@ export const MediaGrid = ({ page }: { page: MediaPage }) => {
 								transform: `translateY(${row.start}px)`,
 							}}
 						>
-							{page.items.slice(from, from + columns).map((media) => {
+							{list.items.slice(from, from + columns).map((media) => {
 								return <MediaTile key={media.id} media={media} />;
 							})}
 						</div>
@@ -110,8 +103,10 @@ export const MediaGrid = ({ page }: { page: MediaPage }) => {
 				})}
 			</div>
 
-			{page.isLoading ? (
-				<p className="py-3 text-center text-slate-500 text-sm">読み込み中…</p>
+			{list.isLoading ? (
+				<p className="py-3 text-center text-base-content/60 text-sm">
+					<span className="loading loading-dots loading-sm" />
+				</p>
 			) : null}
 		</div>
 	);

@@ -2,10 +2,6 @@
 // Out of scope: reading the modified time, detecting collisions, talking to R2, encoding metadata
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
-import {
-	INBOX_PREFIX,
-	THUMBNAIL_PREFIX,
-} from "../contracts/media-storage-layout.js";
 
 dayjs.extend(utc);
 
@@ -36,17 +32,6 @@ export const buildMediaObjectKey = (input: MediaObjectKeyInput): string => {
 	const fileName = `${formatKeyTimestamp(input.modifiedAt)}${suffix}`;
 
 	return `${input.logicalPath}/${fileName}${extension ? `.${extension}` : ""}`;
-};
-
-export const buildInboxKey = (
-	input: Omit<MediaObjectKeyInput, "logicalPath">,
-): string => {
-	return buildMediaObjectKey({ ...input, logicalPath: INBOX_PREFIX });
-};
-
-/** Holds no logical path, so a move never changes it and it can be derived without a DB lookup. */
-export const buildThumbnailKey = (mediaId: string): string => {
-	return `${THUMBNAIL_PREFIX}/${mediaId}.webp`;
 };
 
 /** A key with no directory part has no logical path, and returns an empty string. */

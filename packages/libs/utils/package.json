@@ -20,6 +20,10 @@
 			"types": "./dist/logger/batch-logger.d.ts",
 			"default": "./dist/logger/batch-logger.js"
 		},
+		"./path/windows-path.js": {
+			"types": "./dist/path/windows-path.d.ts",
+			"default": "./dist/path/windows-path.js"
+		},
 		"./string/text-sanitizer.js": {
 			"types": "./dist/string/text-sanitizer.d.ts",
 			"default": "./dist/string/text-sanitizer.js"

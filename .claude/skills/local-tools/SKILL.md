@@ -9,6 +9,7 @@ Some apps never deploy — they run on the user's WSL, either as a resident serv
 - Nothing is ever installed on the Windows side: no Windows-only binaries, no bundled Node. Execution stays inside WSL's Node.
 - **Relative imports don't use the `@/` alias in code run directly by `node`.** Nothing resolves `tsconfig`'s `paths` at runtime, unlike an app whose bundler rewrites them. Only bundled code (a Vite frontend, a Lambda bundle) can use the alias.
 - Config comes from a file under `~/.config/`, and its location is decided once in `shared-domains` so every tool reading it agrees. Each tool validates only the fields it needs.
+- **Reading the file is a startup concern, not a module the rest of the app asks.** The entry point reads it once and puts the values where each consumer already looks for them — the environment variables a repository or a client contracts. Nothing downstream then has to know a config file exists.
 - **Never put a config file's contents in a log or an error.** A validation failure names the field and the file path, nothing else.
 - Bind a server to `127.0.0.1` only. Don't open it to other devices without an explicit decision to.
 - If the port is already taken, assume another instance is running and exit 0. A resident restart must never end up running two instances.

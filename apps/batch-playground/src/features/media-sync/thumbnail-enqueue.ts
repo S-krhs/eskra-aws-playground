@@ -1,61 +1,44 @@
-// In scope: enqueuing media with no thumbnail yet onto the generation job's queue
-// Out of scope: resolving the queue URL and job name, generating a thumbnail, the sync's diffing
+// In scope: putting thumbnail-generation requests on the queue
+// Out of scope: deciding which media still needs one, generating a thumbnail, the sync's diffing
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-thumbnail-message.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 
-// The most one sync enqueues at a time.
-// It keeps a large batch — a first run, say — from going out all at once; the rest waits for the next sync.
+// The most one sync sends at a time.
+// It keeps a large batch — a first run, say — from going out all at once; whatever is left over is
+// still sitting under the pending prefix, so the next sync picks it up
 const ENQUEUE_LIMIT = 10_000;
 
-// How many times thumbnail generation is attempted.
-// Without a cap, media that keeps failing gets re-enqueued forever and leaves the DLQ full.
-const MAX_ATTEMPTS = 3;
+/** One media object to have a thumbnail made for. */
+export interface ThumbnailRequest {
+	mediaId: string;
+	objectKey: string;
+}
 
-// How long after the last enqueue before the same media may go out again.
-// It is set longer than SQS's own retries (a 6-minute visibility timeout, 3 times), so an in-flight message is never enqueued twice.
-const RETRY_INTERVAL_MS = 60 * 60 * 1000;
-
-/**
- * Enqueues media with no thumbnail yet. The attempt count advances at enqueue time, which keeps
- * in-flight media and media that can't be generated from going out twice.
- */
-export const enqueueMissingThumbnails = async (input: {
+/** Returns how many requests went out, which is capped well below a first run's backlog. */
+export const enqueueThumbnailRequests = async (input: {
 	queueUrl: string;
 	job: MediaThumbnailMessage["job"];
-	enqueuedAt: Date;
+	requests: ThumbnailRequest[];
 }): Promise<number> => {
-	const targets = await mediaObjectRepository.findWithoutThumbnail({
-		limit: ENQUEUE_LIMIT,
-		maxAttempts: MAX_ATTEMPTS,
-		retryBefore: new Date(input.enqueuedAt.getTime() - RETRY_INTERVAL_MS),
-	});
+	const requests = input.requests.slice(0, ENQUEUE_LIMIT);
 
-	if (targets.length === 0) {
+	if (requests.length === 0) {
 		return 0;
 	}
 
 	const sender = new SqsMessageSender(input.queueUrl);
 	await sender.sendMessages(
-		targets.map((target) => {
+		requests.map((request) => {
 			return {
-				id: target.id,
+				id: request.mediaId,
 				body: {
 					job: input.job,
-					mediaId: target.id,
-					objectKey: target.objectKey,
+					mediaId: request.mediaId,
+					objectKey: request.objectKey,
 				} satisfies MediaThumbnailMessage,
 			};
 		}),
 	);
 
-	// Only what actually sent advances its attempt count; advancing first would burn retries on messages that never went out
-	await mediaObjectRepository.markThumbnailEnqueued(
-		targets.map((target) => {
-			return target.id;
-		}),
-		input.enqueuedAt,
-	);
-
-	return targets.length;
+	return requests.length;
 };

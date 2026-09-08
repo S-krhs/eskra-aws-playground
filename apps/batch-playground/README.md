@@ -9,7 +9,7 @@
 
 同期は `batch` の `media-sync` job（15 分の専用 Function）、サムネイル生成は `sqs-worker` の `media-thumbnail` job（ffmpeg layer 付きの専用 Function）です。
 
-- 接続先は SST secret の `R2Credentials`(JSON)と、環境変数 `MEDIA_BUCKET` から解決します。
+- 接続先は環境変数 `R2_CREDENTIALS`(SST secret の `R2Credentials` を渡す JSON)と `MEDIA_BUCKET` から解決します。
 - R2 の一覧が空、または一度に削除される割合が大きすぎる場合は削除せずエラーにします。内容を確認したうえで手動起動する場合は `{"job": "media-sync", "allowBulkDelete": true}` を渡します。
 
 ## 実行できるジョブ
@@ -58,6 +58,10 @@ cron は JST 00:00 起動です。デプロイや障害で当日分が未登録�
 | `UMA_ONE_DRAW_TOPIC_DISCORD_WEBHOOK_URL` | `SST_SECRET_UmaOneDrawTopicDiscordWebhook` | batch: お題通知 |
 | `YACCHO_DISCORD_BOT_TOKEN` | `SST_SECRET_YacchoDiscordBotToken` | batch: リマインダー投稿 |
 | `DATABASE_URL` | `SST_SECRET_DatabaseUrl` | batch / sqs-worker: DB 接続 |
+| `R2_CREDENTIALS` | `SST_SECRET_R2Credentials` | media-sync / media-thumbnail: R2 接続 |
+
+secret ではない環境変数として、`MEDIA_BUCKET`(R2 の bucket 名)を media-sync と media-thumbnail の
+Function へ渡します。値は `infra/sst.config.ts` が持ちます。
 
 Discord interaction / command 同期用の secret は `apps/function-url-playground/README.md` を参照。
 
@@ -70,7 +74,10 @@ Discord interaction / command 同期用の secret は `apps/function-url-playgro
    npx sst secret set UmaOneDrawTopicDiscordWebhook <webhook-url> --config infra/sst.config.ts --stage <your-stage>
    npx sst secret set DatabaseUrl <pooled-database-url> --config infra/sst.config.ts --stage <your-stage>
    npx sst secret set YacchoDiscordBotToken <bot-token> --config infra/sst.config.ts --stage <your-stage>
+   npx sst secret set R2Credentials '<r2-credentials-json>' --config infra/sst.config.ts --stage <your-stage>
    ```
+
+   `R2Credentials` は media-sync と media-thumbnail を動かすときだけ必要です。
 
 3. リポジトリルートで `npm run dev` を実行する。
 4. 別ターミナルから personal stage の batch Lambda を起動する。

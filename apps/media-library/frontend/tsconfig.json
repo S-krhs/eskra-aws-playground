@@ -8,8 +8,7 @@
 		"declaration": false,
 		"noEmit": true,
 		"paths": {
-			"@/*": ["./src/*"],
-			"@backend/*": ["../backend/src/*"]
+			"@/*": ["./src/*"]
 		}
 	},
 	"include": ["src", "vite.config.ts"],

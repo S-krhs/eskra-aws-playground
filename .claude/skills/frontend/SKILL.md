@@ -22,9 +22,11 @@ Every UI app uses Feature-Sliced Design and Tailwind, and differs only in render
 - State lives in the top-level component of the tree that owns it — a page, or an island. Lower components receive values and callbacks as props. No state-management library.
 - Reach for Context only when threading a value through props would force an unrelated component to carry a cross-cutting concern it has no other reason to know about. Apply that bar before adding another one.
 - Whether and how something displays is the caller's decision; a component renders what it's given. Don't have a component return `null` based on `props` or compare against a threshold — keep the threshold in the one place that decides.
-- Fetching and subscription live in a hook under the slice's `model/`, not inline in a component.
+- Fetching and subscription live in a hook under the slice's `api/`, not inline in a component. `model/` is for the slice's own types and state.
+- **Avoid `useEffect`.** Fetching and polling belong to the query library (`useQuery` / `useInfiniteQuery` / `refetchInterval`); measuring an element goes in a ref callback that returns its own cleanup; reacting to something finishing is expressed by putting the value in the query key rather than watching for the transition. Reach for an effect only when none of those fit, and say why in a comment.
 - A UI app takes no runtime dependency on the Lambda-side workspaces (`packages/*`, `shared-domains`, `repositories`) — its runtime and build stay separate. Revisit that placement itself before working around it.
-- When the backend is in this repo, never hand-write response types — derive them from the backend's route definitions (`hc<ApiType>()`, `InferResponseType`) through a `@backend/` alias registered in both the Vite and vitest configs. **Types only**, never a backend value; that's the one allowed crossing.
+- When the backend is in this repo, never hand-write the client or its response types — generate them from the backend's OpenAPI document into `shared/api/generated/`, and export what the slices need from `shared/api`'s public API under readable names. The generated directory is excluded from lint and is never edited by hand; regenerate instead.
+- An endpoint that returns a file rather than JSON stays out of the generated client — the screen reaches it through an `<img>`/`<a>` and there is nothing to type.
 
 ## Astro
 

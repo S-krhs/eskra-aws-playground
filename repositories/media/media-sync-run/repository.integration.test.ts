@@ -11,7 +11,7 @@ import {
 	it,
 } from "vitest";
 
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import { mediaSyncRunRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -20,7 +20,7 @@ const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const ids = [randomUUID(), randomUUID()];
 const [runId, laterRunId] = ids as [string, string];
 
-// findLatest / findRunning scan every row, so these sit after any real data to keep the test rows newest
+// findLatest / findUnfinished scan every row, so these sit after any real data to keep the test rows newest
 const startedAt = new Date("2099-09-07T00:00:00.000Z");
 const progress = {
 	scannedCount: 120,
@@ -51,7 +51,7 @@ describe.skipIf(!testDatabaseUrl)(
 		});
 
 		it("creates a started run with every count at 0", async () => {
-			const run = await mediaSyncRunRepository.start(runId, startedAt);
+			const run = await mediaSyncRunRepository.insert(runId, startedAt);
 
 			expect(run).toEqual({
 				id: runId,
@@ -66,27 +66,27 @@ describe.skipIf(!testDatabaseUrl)(
 		});
 
 		it("writes counts back while the run is in flight", async () => {
-			await mediaSyncRunRepository.start(runId, startedAt);
-			await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
+			await mediaSyncRunRepository.insert(runId, startedAt);
+			await mediaSyncRunRepository.updateCounts({ id: runId, ...progress });
 
 			expect(await mediaSyncRunRepository.findLatest()).toMatchObject(progress);
 		});
 
 		it("reports only an unfinished run as running", async () => {
-			await mediaSyncRunRepository.start(runId, startedAt);
-			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
+			await mediaSyncRunRepository.insert(runId, startedAt);
+			expect((await mediaSyncRunRepository.findUnfinished())?.id).toBe(runId);
 
-			await mediaSyncRunRepository.finish({
+			await mediaSyncRunRepository.updateFinished({
 				id: runId,
 				...progress,
 				finishedAt: new Date("2099-09-07T00:05:00.000Z"),
 			});
-			expect(await mediaSyncRunRepository.findRunning()).toBeUndefined();
+			expect(await mediaSyncRunRepository.findUnfinished()).toBeUndefined();
 		});
 
 		it("keeps the error on a failed run", async () => {
-			await mediaSyncRunRepository.start(runId, startedAt);
-			await mediaSyncRunRepository.finish({
+			await mediaSyncRunRepository.insert(runId, startedAt);
+			await mediaSyncRunRepository.updateFinished({
 				id: runId,
 				...progress,
 				finishedAt: new Date("2099-09-07T00:05:00.000Z"),
@@ -100,30 +100,30 @@ describe.skipIf(!testDatabaseUrl)(
 
 		// A later run has to be able to tell that an earlier one is already going
 		it("returns the older one when two runs are in flight", async () => {
-			await mediaSyncRunRepository.start(runId, startedAt);
-			await mediaSyncRunRepository.start(
+			await mediaSyncRunRepository.insert(runId, startedAt);
+			await mediaSyncRunRepository.insert(
 				laterRunId,
 				new Date("2099-09-07T02:00:00.000Z"),
 			);
 
-			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
+			expect((await mediaSyncRunRepository.findUnfinished())?.id).toBe(runId);
 		});
 
 		// startedAt is taken before the row is inserted, so two runs can end up in the opposite order.
 		// Unless the row inserted first wins, both runs decide they are oldest and run twice
 		it("returns the run inserted first even when startedAt says otherwise", async () => {
-			await mediaSyncRunRepository.start(
+			await mediaSyncRunRepository.insert(
 				runId,
 				new Date("2099-09-07T02:00:00.000Z"),
 			);
-			await mediaSyncRunRepository.start(laterRunId, startedAt);
+			await mediaSyncRunRepository.insert(laterRunId, startedAt);
 
-			expect((await mediaSyncRunRepository.findRunning())?.id).toBe(runId);
+			expect((await mediaSyncRunRepository.findUnfinished())?.id).toBe(runId);
 		});
 
 		it("reports the most recently started run as the latest", async () => {
-			await mediaSyncRunRepository.start(runId, startedAt);
-			await mediaSyncRunRepository.start(
+			await mediaSyncRunRepository.insert(runId, startedAt);
+			await mediaSyncRunRepository.insert(
 				laterRunId,
 				new Date("2099-09-07T02:00:00.000Z"),
 			);

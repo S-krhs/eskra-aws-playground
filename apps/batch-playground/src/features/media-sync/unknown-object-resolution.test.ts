@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { decideUnknownObject } from "./unknown-object-resolution.js";
+import {
+	decideUnknownObject,
+	type RegisteredMediaIds,
+} from "./unknown-object-resolution.js";
 
 const mediaId = "018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40";
 
-const known = (ids: {
-	knownIds?: string[];
-	missingIds?: string[];
-}): { knownIds: Set<string>; missingIds: Set<string> } => {
+const registered = (ids: {
+	all?: string[];
+	missing?: string[];
+}): RegisteredMediaIds => {
 	return {
-		knownIds: new Set(ids.knownIds ?? []),
-		missingIds: new Set(ids.missingIds ?? []),
+		all: new Set(ids.all ?? []),
+		missing: new Set(ids.missing ?? []),
 	};
 };
 
@@ -19,7 +22,7 @@ describe("decideUnknownObject", () => {
 		expect(
 			decideUnknownObject(
 				{ mediaId, originalName: "a.png" },
-				known({ knownIds: [mediaId], missingIds: [mediaId] }),
+				registered({ all: [mediaId], missing: [mediaId] }),
 			),
 		).toEqual({ kind: "relocate", mediaId });
 	});
@@ -30,21 +33,21 @@ describe("decideUnknownObject", () => {
 		expect(
 			decideUnknownObject(
 				{ mediaId, originalName: "a.png" },
-				known({ knownIds: [mediaId] }),
+				registered({ all: [mediaId] }),
 			),
 		).toEqual({ kind: "duplicate", mediaId });
 	});
 
 	it("treats an unregistered UUID as new", () => {
 		expect(
-			decideUnknownObject({ mediaId, originalName: "a.png" }, known({})),
+			decideUnknownObject({ mediaId, originalName: "a.png" }, registered({})),
 		).toEqual({ kind: "insert", mediaId, originalName: "a.png" });
 	});
 
 	// Anything placed straight from the R2 dashboard or rclone carries no metadata
 	it("treats a missing metadata as an adoption", () => {
 		expect(
-			decideUnknownObject(undefined, known({ knownIds: [mediaId] })),
+			decideUnknownObject(undefined, registered({ all: [mediaId] })),
 		).toEqual({ kind: "adopt" });
 	});
 });

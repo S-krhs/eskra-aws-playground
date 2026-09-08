@@ -2,7 +2,7 @@
 //       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { getPrismaClient } from "../db/client.js";
+import { getPrismaClient } from "../client/prisma.js";
 import {
 	type ScrapingMetricRecord,
 	scrapingMetricRepository,
@@ -29,7 +29,7 @@ describe.skipIf(!testDatabaseUrl)(
 		});
 
 		it("inserts a scrape as one row per metric and reads it back", async () => {
-			await scrapingMetricRepository.saveScrapingResult({
+			await scrapingMetricRepository.insertMany({
 				dataSourceId: testDataSourceId,
 				scrapedDate: testScrapedDate,
 				metrics: [
@@ -59,7 +59,7 @@ describe.skipIf(!testDatabaseUrl)(
 
 		it("rejects an empty label at validation and inserts nothing", async () => {
 			await expect(
-				scrapingMetricRepository.saveScrapingResult({
+				scrapingMetricRepository.insertMany({
 					dataSourceId: testDataSourceId,
 					scrapedDate: testScrapedDate,
 					metrics: [{ label: "", value: 1 }],
@@ -74,7 +74,7 @@ describe.skipIf(!testDatabaseUrl)(
 		});
 
 		it("returns only the dates holding a metric, oldest first", async () => {
-			await scrapingMetricRepository.saveScrapingResult({
+			await scrapingMetricRepository.insertMany({
 				dataSourceId: testDataSourceId,
 				scrapedDate: testNextScrapedDate,
 				metrics: [{ label: "作品C", value: 3 }],

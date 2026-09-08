@@ -9,13 +9,17 @@ Covers anything serving HTTP, whatever the runtime — a Lambda Function URL rou
 
 ```text
 handler / server        entry point: routing, signature or auth check, error handling
+routes/_shared/         what every route in this app shares (the error response, and so on)
 routes/<route>/         one route's dispatch. No business logic.
   contracts/            the public paths and commands this route exposes
-  schema.ts             request validation for this route
+  schema.ts             this route's request validation, or its OpenAPI route definitions
   operations/           one operation per file, one method each
   intermediate-models/  the shapes the route layer passes around
 features/<feature>/     logic that's more than an operation, or needs an external dependency
 ```
+
+A route's directory is named after its path in kebab-case, and an operation's file is named after what
+it does rather than its method (`list-media-operation.ts`, not `get-operation.ts`).
 
 - A route dispatches; it never reaches into a repository or an integration itself. Direction is always `route -> operation` (or `route -> feature`).
 - Don't add a thin operation that only returns a constant — inline it into the route's dispatch.
@@ -24,7 +28,8 @@ features/<feature>/     logic that's more than an operation, or needs an externa
 ## Rules
 
 - A public path is declared in `contracts/` and registered in the entry point's route table. An unmatched path is 404.
-- Validate every request body and query at the route boundary with a zod schema (`safeParse`) and fail with 4xx. **The error message names only the field, never the value that was passed.**
+- Validate every request body and query at the route boundary with a zod schema and fail with 4xx. **The error message names only the field, never the value that was passed.**
+- When a browser client is generated from this API, the request and response schemas live in `shared-domains` and the route is declared from them, so one definition drives validation, the OpenAPI document and the generated client. A cross-field rule OpenAPI can't state is checked in the route, next to the schema that couldn't say it.
 - Verify the caller before doing any work when the endpoint is public — reject with 401 rather than falling through.
 - Never put credentials, connection strings, storage keys, or an internal id in a response. Return an explicit view type listing what's allowed out, not a passthrough of the internal shape.
 - Exception detail stays in the local log; the response body is a fixed generic message.

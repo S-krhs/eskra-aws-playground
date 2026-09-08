@@ -1,9 +1,8 @@
 // In scope: registering, re-keying and deleting MediaObject rows, and reading them one at a time or by page
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
-import { getPrismaClient } from "../../db/client.js";
+import { getPrismaClient } from "../../client/prisma.js";
 import type {
 	FindMediaObjectPageInput,
-	FindThumbnaillessInput,
 	InsertMediaObjectInput,
 	MediaObject,
 	MediaObjectCursor,
@@ -11,8 +10,7 @@ import type {
 	MediaObjectSummary,
 	RefreshMediaObjectInput,
 	RelocateMediaObjectInput,
-	SetMediaThumbnailInput,
-	ThumbnaillessMediaObject,
+	UpdateThumbnailInput,
 } from "./types.js";
 
 interface MediaObjectRow {
@@ -123,65 +121,22 @@ export const mediaObjectRepository = {
 		};
 	},
 
-	/** Returns objects with no thumbnail yet, skipping in-flight ones and those that used up their attempts. */
-	findWithoutThumbnail: async (
-		input: FindThumbnaillessInput,
-	): Promise<ThumbnaillessMediaObject[]> => {
-		const prisma = getPrismaClient();
-
-		return await prisma.mediaObject.findMany({
-			where: {
-				thumbnailKey: null,
-				trashedAt: null,
-				thumbnailAttempts: { lt: input.maxAttempts },
-				OR: [
-					{ thumbnailEnqueuedAt: null },
-					{ thumbnailEnqueuedAt: { lt: input.retryBefore } },
-				],
-			},
-			orderBy: [{ uploadedAt: "desc" }],
-			take: input.limit,
-			select: { id: true, objectKey: true },
-		});
-	},
-
-	/** Records that thumbnail generation was enqueued, and advances the attempt count. */
-	markThumbnailEnqueued: async (
-		ids: string[],
-		enqueuedAt: Date,
-	): Promise<number> => {
-		if (ids.length === 0) {
-			return 0;
-		}
-
-		const prisma = getPrismaClient();
-		let marked = 0;
-
-		for (const chunk of toChunks(ids)) {
-			const result = await prisma.mediaObject.updateMany({
-				where: { id: { in: chunk } },
-				data: {
-					thumbnailEnqueuedAt: enqueuedAt,
-					thumbnailAttempts: { increment: 1 },
-				},
-			});
-
-			marked += result.count;
-		}
-
-		return marked;
-	},
-
 	/**
-	 * Records where the thumbnail landed, along with any dimensions and duration read alongside it.
+	 * Records where the thumbnail landed, along with any dimensions and duration read alongside it,
+	 * and where the object itself came to rest when generation moved it.
 	 * Returns the number of rows updated, so a row deleted mid-generation isn't treated as a failure.
 	 */
-	setThumbnail: async (input: SetMediaThumbnailInput): Promise<number> => {
+	updateThumbnail: async (input: UpdateThumbnailInput): Promise<number> => {
 		const prisma = getPrismaClient();
-		const { id, ...values } = input;
+		const { id, location, ...values } = input;
 		const result = await prisma.mediaObject.updateMany({
 			where: { id },
-			data: values,
+			data: {
+				...values,
+				...(location
+					? { ...location, byteSize: BigInt(location.byteSize) }
+					: {}),
+			},
 		});
 
 		return result.count;
@@ -226,6 +181,8 @@ export const mediaObjectRepository = {
 					data: {
 						objectKey: input.objectKey,
 						logicalPath: input.logicalPath,
+						byteSize: BigInt(input.byteSize),
+						etag: input.etag,
 						syncedAt: input.syncedAt,
 					},
 				});

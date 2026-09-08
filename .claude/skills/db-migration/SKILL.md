@@ -1,6 +1,6 @@
 ---
 name: db-migration
-description: How a schema change is made here — Prisma migrations, forward-only, and what must never go in one. Invoke this when changing the DB schema, migration/**, prisma.config.ts, or repositories/db/**.
+description: How a schema change is made here — Prisma migrations, forward-only, and what must never go in one. Invoke this when changing the DB schema, migration/**, prisma.config.ts, or repositories/client/**.
 ---
 
 Commands and connection strings: `migration/README.md`.

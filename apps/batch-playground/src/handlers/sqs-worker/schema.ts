@@ -1,7 +1,7 @@
 // In scope: the schemas for the sqs-worker Lambda's launch event and message body, plus the partial batch response type it returns
 // Out of scope: interpreting a message body's meaning, resolving a job, controlling per-record execution
 import { interactionJobMessageSchema } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
-import { mediaThumbnailMessageSchema } from "@eskra-aws-playground/shared-domains/contracts/media-thumbnail-message.js";
+import { mediaThumbnailMessageSchema } from "@eskra-aws-playground/shared-domains/contracts/media-jobs.js";
 import { z } from "zod";
 
 /** The launch event this Lambda receives; SQS delivers records in a batch. */
@@ -10,6 +10,13 @@ export const sqsWorkerEventSchema = z.object({
 		z.object({
 			messageId: z.string().min(1),
 			body: z.string(),
+			// SQS counts deliveries per message. A job that has to give up before the DLQ takes over
+			// reads how many times it has been handed this message from here
+			attributes: z
+				.object({
+					ApproximateReceiveCount: z.coerce.number().int().min(1).catch(1),
+				})
+				.optional(),
 		}),
 	),
 });
