@@ -17,7 +17,6 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@": here("src"),
-			"@backend": here("../backend/src"),
 		},
 	},
 	server: {

@@ -94,9 +94,13 @@ apps/* -> shared-domains -> packages/libs/utils
 | Runs on the user's WSL, never deployed | `local-tools` | `apps/media-library`, `apps/windows-playground` |
 | External-service package | `integrations` | `packages/integrations/*` |
 | Generic library | `libs` | `packages/libs/*` |
+| Cross-app contract and protocol | — | `shared-domains/` |
 | Data access | `repositories` | `repositories/` |
 | Schema change | `db-migration` | `migration/`, `repositories/client/` |
 | Deployment and CI | `infra-deploy` | `infra/`, `.github/workflows/`, `scripts/` |
+
+`shared-domains/` has no skill of its own: it holds contracts and pure protocol logic, and the rules
+that govern it are the always-loaded ones above (placement, dependency direction, no barrel files).
 
 This table is the only place a kind and an app are linked — keep it out of the skills themselves. A workspace spanning two kinds appears twice. A new workspace picks its kind here, then copies the implementations already listed under it.
 - `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.
