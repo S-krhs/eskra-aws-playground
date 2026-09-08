@@ -13,7 +13,10 @@ import { assertDeletableSize } from "@/features/media-sync/delete-guard.js";
 import { scanMediaObjects } from "@/features/media-sync/media-object-scan.js";
 import { buildMediaSyncPlan } from "@/features/media-sync/sync-plan.js";
 import { enqueueMissingThumbnails } from "@/features/media-sync/thumbnail-enqueue.js";
-import { resolveUnknownObjects } from "@/features/media-sync/unknown-object-resolution.js";
+import {
+	type RegisteredMediaIds,
+	resolveUnknownObjects,
+} from "@/features/media-sync/unknown-object-resolution.js";
 import { batchJobNames } from "@/handlers/batch/contracts/job-names.js";
 import type { BatchResponse } from "@/handlers/batch/schema.js";
 
@@ -119,21 +122,23 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		await mediaSyncRunRepository.updateProgress({ id: runId, ...progress });
 
 		// 6. HeadObject only the unknown keys and sort them into new / moved / adopted.
+		const registeredIds = {
+			all: new Set(
+				known.map((media) => {
+					return media.id;
+				}),
+			),
+			missing: new Set(plan.missingIds),
+		} satisfies RegisteredMediaIds;
 		let notifiedAt = 0;
-		const resolved = await resolveUnknownObjects({
-			objects: plan.unknownObjects,
-			known: {
-				knownIds: new Set(
-					known.map((media) => {
-						return media.id;
-					}),
-				),
-				missingIds: new Set(plan.missingIds),
+		const resolved = await resolveUnknownObjects(
+			{
+				objects: plan.unknownObjects,
+				registeredIds,
+				syncedAt: startedAt,
 			},
-			syncedAt: startedAt,
-			onProgress: async (partial) => {
-				const resolvedCount =
-					partial.inserts.length + partial.relocations.length;
+			async (partial) => {
+				const resolvedCount = partial.insertCount + partial.relocationCount;
 
 				if (resolvedCount - notifiedAt < PROGRESS_INTERVAL) {
 					return;
@@ -144,11 +149,11 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 				await mediaSyncRunRepository.updateProgress({
 					id: runId,
 					...progress,
-					insertedCount: partial.inserts.length,
-					updatedCount: partial.relocations.length,
+					insertedCount: partial.insertCount,
+					updatedCount: partial.relocationCount,
 				});
 			},
-		});
+		);
 
 		// 7. Take anything already moved out of the delete set.
 		//    A move shows up as its old key going missing, so it is treated as a move, not a delete.

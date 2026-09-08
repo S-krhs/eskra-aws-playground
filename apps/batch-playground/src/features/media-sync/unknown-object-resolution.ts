@@ -31,11 +31,25 @@ export type UnknownObjectDecision =
 	| { kind: "duplicate"; mediaId: string }
 	| { kind: "adopt" };
 
-/** The state of the registered ids; missingIds is a subset of known. */
-export interface KnownMediaIds {
-	knownIds: ReadonlySet<string>;
-	/** Registered ids that the R2 listing didn't turn up. */
-	missingIds: ReadonlySet<string>;
+/** The registered ids an unknown key is judged against; `missing` is a subset of `all`. */
+export interface RegisteredMediaIds {
+	all: ReadonlySet<string>;
+	/** Registered ids that the storage listing didn't turn up. */
+	missing: ReadonlySet<string>;
+}
+
+/** One pass's data. Everything here is a value; the progress hook is a separate argument. */
+export interface UnknownObjectResolutionInput {
+	objects: ScannedObject[];
+	registeredIds: RegisteredMediaIds;
+	/** Stamped on every row this pass produces, so one sync's rows share a time. */
+	syncedAt: Date;
+}
+
+/** How far a pass has got. The counts keep rising until it returns, so they aren't a result. */
+export interface UnknownObjectResolutionProgress {
+	insertCount: number;
+	relocationCount: number;
 }
 
 /** The resolution of the unknown keys: the inputs to write to the DB, plus how many couldn't be handled. */
@@ -53,18 +67,18 @@ export interface ResolvedUnknownObjects {
  */
 export const decideUnknownObject = (
 	metadata: MediaObjectMetadata | undefined,
-	known: KnownMediaIds,
+	registeredIds: RegisteredMediaIds,
 ): UnknownObjectDecision => {
 	if (!metadata) {
 		return { kind: "adopt" };
 	}
 
-	if (known.missingIds.has(metadata.mediaId)) {
+	if (registeredIds.missing.has(metadata.mediaId)) {
 		return { kind: "relocate", mediaId: metadata.mediaId };
 	}
 
 	// The same media-id appearing while the original key is still there means it was copied
-	if (known.knownIds.has(metadata.mediaId)) {
+	if (registeredIds.all.has(metadata.mediaId)) {
 		return { kind: "duplicate", mediaId: metadata.mediaId };
 	}
 
@@ -151,13 +165,11 @@ const adoptObject = async (input: {
  * HeadObjects each unknown key and sorts it. ListObjectsV2 returns no custom metadata, which is why
  * HeadObject is called here and nowhere else.
  */
-export const resolveUnknownObjects = async (input: {
-	objects: ScannedObject[];
-	known: KnownMediaIds;
-	syncedAt: Date;
-	/** A first run takes minutes, so progress is reported as it goes. */
-	onProgress?: (resolved: ResolvedUnknownObjects) => Promise<void>;
-}): Promise<ResolvedUnknownObjects> => {
+export const resolveUnknownObjects = async (
+	input: UnknownObjectResolutionInput,
+	/** Called once per batch, since a first run takes minutes to get through. */
+	onProgress?: (progress: UnknownObjectResolutionProgress) => Promise<void>,
+): Promise<ResolvedUnknownObjects> => {
 	const inserts: InsertMediaObjectInput[] = [];
 	const relocations: RelocateMediaObjectInput[] = [];
 	let skippedCount = 0;
@@ -184,7 +196,7 @@ export const resolveUnknownObjects = async (input: {
 
 			const decision = decideUnknownObject(
 				parseMediaObjectMetadata(head.metadata),
-				input.known,
+				input.registeredIds,
 			);
 
 			if (decision.kind === "relocate") {
@@ -233,7 +245,10 @@ export const resolveUnknownObjects = async (input: {
 			}
 		}
 
-		await input.onProgress?.({ inserts, relocations, skippedCount });
+		await onProgress?.({
+			insertCount: inserts.length,
+			relocationCount: relocations.length,
+		});
 	}
 
 	return { inserts, relocations, skippedCount };
