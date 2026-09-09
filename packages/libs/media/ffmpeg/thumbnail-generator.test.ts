@@ -4,7 +4,7 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { probeMedia } from "./media-probe.js";
@@ -15,11 +15,25 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-const layerBinDir = resolve(
-	import.meta.dirname,
-	"../../../../.tmp/layers/ffmpeg/bin",
-);
+// The layer is built into the repo root, found by walking up so that where this file sits or runs
+// from does not decide whether the checks below are skipped
+const findRepoRoot = (): string => {
+	let directory = import.meta.dirname;
+
+	while (!existsSync(join(directory, "package-lock.json"))) {
+		const parent = dirname(directory);
+		if (parent === directory) {
+			throw new Error("リポジトリルートが見つかりませんでした");
+		}
+		directory = parent;
+	}
+
+	return directory;
+};
+
+const layerBinDir = join(findRepoRoot(), ".tmp", "layers", "ffmpeg", "bin");
 const ffmpegPath = join(layerBinDir, "ffmpeg");
+const ffprobePath = join(layerBinDir, "ffprobe");
 const hasFfmpeg = existsSync(ffmpegPath);
 
 describe("resolvePosterSeconds", () => {
@@ -37,12 +51,85 @@ describe("resolvePosterSeconds", () => {
 	});
 });
 
-describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
+describe("generateThumbnail against a stubbed ffmpeg", () => {
+	let workDir: string;
+	let stubCount = 0;
+
+	beforeAll(async () => {
+		workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-stub-"));
+	});
+
+	afterAll(async () => {
+		await rm(workDir, { recursive: true, force: true });
+	});
+
+	// A script standing in for ffmpeg, so what gets run is checked without the layer being built
+	const buildStub = async (body: string): Promise<string> => {
+		stubCount += 1;
+		const path = join(workDir, `ffmpeg-stub-${stubCount}`);
+		await writeFile(path, `#!${process.execPath}\n${body}\n`, { mode: 0o755 });
+
+		return path;
+	};
+
+	it("seeks to the poster position even when the duration is unreadable", async () => {
+		const stubPath = await buildStub(
+			'process.stdout.write(process.argv.slice(2).join(" "));',
+		);
+
+		const thumbnail = await generateThumbnail(
+			{ sourcePath: "/any/source.mp4", durationMs: undefined },
+			{ ffmpegPath: stubPath },
+		);
+
+		expect(thumbnail.toString()).toContain("-ss 1");
+	});
+
+	// How ffmpeg behaves on an image: seeking past the only frame writes nothing and still exits 0
+	it("takes the frame from the start when the poster position holds none", async () => {
+		const stubPath = await buildStub(`
+			const args = process.argv.slice(2);
+			if (args[args.indexOf("-ss") + 1] !== "0") {
+				process.exit(0);
+			}
+			process.stdout.write("webp-bytes");
+		`);
+
+		const thumbnail = await generateThumbnail(
+			{ sourcePath: "/any/source.png", durationMs: undefined },
+			{ ffmpegPath: stubPath },
+		);
+
+		expect(thumbnail).toEqual(Buffer.from("webp-bytes"));
+	});
+
+	it("fails when no position yields a frame", async () => {
+		const stubPath = await buildStub("process.exit(0);");
+
+		await expect(
+			generateThumbnail(
+				{ sourcePath: "/any/source.mp4", durationMs: undefined },
+				{ ffmpegPath: stubPath },
+			),
+		).rejects.toThrow(/フレームを取得できませんでした/);
+	});
+
+	it("fails once ffmpeg runs past the timeout", async () => {
+		const stubPath = await buildStub("setTimeout(() => {}, 10_000);");
+
+		await expect(
+			generateThumbnail(
+				{ sourcePath: "/any/source.mp4", durationMs: 3000 },
+				{ ffmpegPath: stubPath, timeoutMs: 100 },
+			),
+		).rejects.toThrow(/タイムアウトしました: 100ms/);
+	});
+});
+
+describe.skipIf(!hasFfmpeg)("generateThumbnail against the real ffmpeg", () => {
 	let workDir: string;
 
 	beforeAll(async () => {
-		process.env.FFMPEG_PATH = ffmpegPath;
-		process.env.FFPROBE_PATH = join(layerBinDir, "ffprobe");
 		workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
 	});
 
@@ -90,35 +177,19 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 		return path;
 	};
 
-	it("reads an image's dimensions and leaves the duration empty", async () => {
-		const probe = await probeMedia(await buildImage());
-
-		expect(probe.width).toBe(1920);
-		expect(probe.height).toBe(1080);
-		expect(probe.durationMs).toBeUndefined();
-	});
-
-	it("reads a video's dimensions and duration", async () => {
-		const probe = await probeMedia(await buildVideo());
-
-		expect(probe.width).toBe(1280);
-		expect(probe.height).toBe(720);
-		expect(probe.durationMs).toBe(3000);
-	});
-
 	// probeMedia reads a path, so the returned bytes are put back on disk to be inspected
 	const probeThumbnail = async (thumbnail: Buffer, name: string) => {
 		const path = join(workDir, name);
 		await writeFile(path, thumbnail);
 
-		return probeMedia(path);
+		return probeMedia(path, { ffprobePath });
 	};
 
 	it("makes a 320-wide webp from an image", async () => {
-		const thumbnail = await generateThumbnail({
-			sourcePath: await buildImage(),
-			durationMs: undefined,
-		});
+		const thumbnail = await generateThumbnail(
+			{ sourcePath: await buildImage(), durationMs: undefined },
+			{ ffmpegPath },
+		);
 
 		const probe = await probeThumbnail(thumbnail, "image.webp");
 		expect(probe.width).toBe(320);
@@ -126,10 +197,10 @@ describe.skipIf(!hasFfmpeg)("ffmpeg を使う生成", () => {
 	});
 
 	it("makes a 320-wide webp from a video", async () => {
-		const thumbnail = await generateThumbnail({
-			sourcePath: await buildVideo(),
-			durationMs: 3000,
-		});
+		const thumbnail = await generateThumbnail(
+			{ sourcePath: await buildVideo(), durationMs: 3000 },
+			{ ffmpegPath },
+		);
 
 		const probe = await probeThumbnail(thumbnail, "video.webp");
 		expect(probe.width).toBe(320);

@@ -196,7 +196,6 @@ export class DiscordBotClient {
 		}
 	}
 
-	/** Read-only. */
 	public async getGuildCommands(
 		applicationId: string,
 		guildId: string,

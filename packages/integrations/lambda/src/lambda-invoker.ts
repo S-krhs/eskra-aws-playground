@@ -2,11 +2,16 @@
 // Out of scope: resolving the function name or region, building the payload, what the invoked function does
 import { InvokeCommand, LambdaClient } from "@aws-sdk/client-lambda";
 
-// Shared across instances: a long-lived caller invoking per request would otherwise build a new
-// connection pool every time. The SDK reads the region from the environment, as it does elsewhere here
-let client: LambdaClient | undefined;
+export class LambdaInvokeError extends Error {
+	constructor(message: string, cause: unknown = null) {
+		super(message, { cause });
+		this.name = "LambdaInvokeError";
+	}
+}
 
 export class LambdaInvoker {
+	private readonly client = new LambdaClient({});
+
 	public constructor(private readonly functionName: string) {}
 
 	/**
@@ -15,14 +20,19 @@ export class LambdaInvoker {
 	 * way to observe the outcome.
 	 */
 	public async invokeEvent(payload: unknown): Promise<void> {
-		client ??= new LambdaClient({});
-
-		await client.send(
-			new InvokeCommand({
-				FunctionName: this.functionName,
-				InvocationType: "Event",
-				Payload: Buffer.from(JSON.stringify(payload), "utf8"),
-			}),
-		);
+		try {
+			await this.client.send(
+				new InvokeCommand({
+					FunctionName: this.functionName,
+					InvocationType: "Event",
+					Payload: Buffer.from(JSON.stringify(payload), "utf8"),
+				}),
+			);
+		} catch (error) {
+			throw new LambdaInvokeError(
+				`Lambda 関数の非同期呼び出しに失敗しました: ${this.functionName}`,
+				error,
+			);
+		}
 	}
 }

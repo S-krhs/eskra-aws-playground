@@ -6,10 +6,12 @@ import { z } from "zod";
 
 const execFileAsync = promisify(execFile);
 
-// The Lambda layer puts this under /opt/bin; the path resolves at call time so a local test can swap it
-const resolveFfprobePath = (): string => {
-	return process.env.FFPROBE_PATH ?? "/opt/bin/ffprobe";
-};
+// Where the Lambda layer puts the binary
+const DEFAULT_FFPROBE_PATH = "/opt/bin/ffprobe";
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+// The json for one file is a few KB; the cap is only here to bound what a broken binary can print
+const MAX_PROBE_OUTPUT_BYTES = 1024 * 1024;
 
 const probeOutputSchema = z.object({
 	streams: z
@@ -28,20 +30,21 @@ export interface MediaProbe {
 	durationMs: number | undefined;
 }
 
-export const probeMedia = async (filePath: string): Promise<MediaProbe> => {
-	const { stdout } = await execFileAsync(resolveFfprobePath(), [
-		"-v",
-		"error",
-		"-select_streams",
-		"v:0",
-		"-show_entries",
-		"stream=width,height",
-		"-show_entries",
-		"format=duration",
-		"-of",
-		"json",
+export interface ProbeMediaOptions {
+	/** Defaults to `FFPROBE_PATH`, then to the Lambda layer's path. */
+	ffprobePath?: string;
+	timeoutMs?: number;
+}
+
+export const probeMedia = async (
+	filePath: string,
+	options: ProbeMediaOptions = {},
+): Promise<MediaProbe> => {
+	const stdout = await runFfprobe(
+		options.ffprobePath ?? process.env.FFPROBE_PATH ?? DEFAULT_FFPROBE_PATH,
 		filePath,
-	]);
+		options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+	);
 
 	const parsed = probeOutputSchema.parse(JSON.parse(stdout));
 	const stream = parsed.streams[0];
@@ -54,4 +57,50 @@ export const probeMedia = async (filePath: string): Promise<MediaProbe> => {
 			? Math.round(durationSeconds * 1000)
 			: undefined,
 	};
+};
+
+const runFfprobe = async (
+	executablePath: string,
+	filePath: string,
+	timeoutMs: number,
+): Promise<string> => {
+	try {
+		const { stdout } = await execFileAsync(
+			executablePath,
+			[
+				"-v",
+				"error",
+				"-select_streams",
+				"v:0",
+				"-show_entries",
+				"stream=width,height",
+				"-show_entries",
+				"format=duration",
+				"-of",
+				"json",
+				filePath,
+			],
+			{ maxBuffer: MAX_PROBE_OUTPUT_BYTES, timeout: timeoutMs },
+		);
+
+		return stdout;
+	} catch (error) {
+		// A file ffprobe cannot make sense of can keep it running until the Lambda itself times out
+		if (isTimedOutError(error)) {
+			throw new Error(`ffprobe がタイムアウトしました: ${timeoutMs}ms`);
+		}
+
+		throw error;
+	}
+};
+
+// execFile reports the kill it sends at the timeout only as this pair
+const isTimedOutError = (error: unknown): boolean => {
+	return (
+		error instanceof Error &&
+		"killed" in error &&
+		error.killed === true &&
+		"signal" in error &&
+		error.signal === "SIGTERM"
+	);
 };

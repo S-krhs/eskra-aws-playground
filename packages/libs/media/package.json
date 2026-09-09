@@ -16,7 +16,7 @@
 	"scripts": {
 		"clean": "rm -rf dist",
 		"build": "npm run clean && tsc -p tsconfig.json",
-		"test": "vitest run",
+		"test": "vitest run --exclude '**/dist/**'",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"lint": "biome ci .",
 		"validate": "npm run typecheck && npm run lint && npm run test"

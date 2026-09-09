@@ -15,7 +15,7 @@ vi.mock("@aws-sdk/client-lambda", () => {
 	};
 });
 
-import { LambdaInvoker } from "./lambda-invoker.js";
+import { LambdaInvokeError, LambdaInvoker } from "./lambda-invoker.js";
 
 describe("LambdaInvoker", () => {
 	afterEach(() => {
@@ -35,11 +35,20 @@ describe("LambdaInvoker", () => {
 		});
 	});
 
-	it("surfaces a failure to hand the request over", async () => {
-		send.mockRejectedValue(new Error("AccessDeniedException"));
+	it("turns a failure to hand the request over into its own error", async () => {
+		const sdkError = new Error("AccessDeniedException");
+		send.mockRejectedValue(sdkError);
 
-		await expect(
-			new LambdaInvoker("media-sync").invokeEvent({}),
-		).rejects.toThrow("AccessDeniedException");
+		const error = await new LambdaInvoker("media-sync")
+			.invokeEvent({})
+			.catch((error: unknown) => {
+				return error;
+			});
+
+		expect(error).toBeInstanceOf(LambdaInvokeError);
+		expect((error as LambdaInvokeError).message).toBe(
+			"Lambda 関数の非同期呼び出しに失敗しました: media-sync",
+		);
+		expect((error as LambdaInvokeError).cause).toBe(sdkError);
 	});
 });

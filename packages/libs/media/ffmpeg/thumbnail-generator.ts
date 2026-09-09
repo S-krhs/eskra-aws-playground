@@ -5,10 +5,10 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-// The Lambda layer puts these under /opt/bin; the path resolves at call time so a local test can swap it
-const resolveFfmpegPath = (): string => {
-	return process.env.FFMPEG_PATH ?? "/opt/bin/ffmpeg";
-};
+// Where the Lambda layer puts the binary
+const DEFAULT_FFMPEG_PATH = "/opt/bin/ffmpeg";
+// Only one frame is decoded however long the video is, so nothing legitimate comes near this
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 const THUMBNAIL_WIDTH = 320;
 const THUMBNAIL_QUALITY = 80;
@@ -20,10 +20,16 @@ const MAX_THUMBNAIL_BYTES = 8 * 1024 * 1024;
 const POSTER_SECONDS = 1;
 const POSTER_MIN_DURATION_MS = 2_000;
 
-/** A durationMs means it is treated as a video. */
 export interface GenerateThumbnailInput {
 	sourcePath: string;
+	/** undefined for an image, and for a video whose duration ffprobe could not read. */
 	durationMs: number | undefined;
+}
+
+export interface GenerateThumbnailOptions {
+	/** Defaults to `FFMPEG_PATH`, then to the Lambda layer's path. */
+	ffmpegPath?: string;
+	timeoutMs?: number;
 }
 
 /** Picks where in a video the single frame comes from. */
@@ -43,35 +49,89 @@ export const resolvePosterSeconds = (
  */
 export const generateThumbnail = async (
 	input: GenerateThumbnailInput,
+	options: GenerateThumbnailOptions = {},
 ): Promise<Buffer> => {
-	const seekArguments =
-		input.durationMs === undefined
-			? []
-			: ["-ss", String(resolvePosterSeconds(input.durationMs))];
+	const executablePath =
+		options.ffmpegPath ?? process.env.FFMPEG_PATH ?? DEFAULT_FFMPEG_PATH;
+	const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+	const posterSeconds = resolvePosterSeconds(input.durationMs);
 
-	const { stdout } = await execFileAsync(
-		resolveFfmpegPath(),
-		[
-			"-hide_banner",
-			"-loglevel",
-			"error",
-			...seekArguments,
-			"-i",
-			input.sourcePath,
-			"-frames:v",
-			"1",
-			"-vf",
-			`scale=${THUMBNAIL_WIDTH}:-2`,
-			"-c:v",
-			"libwebp",
-			"-quality",
-			String(THUMBNAIL_QUALITY),
-			"-f",
-			"webp",
-			"pipe:1",
-		],
-		{ encoding: "buffer", maxBuffer: MAX_THUMBNAIL_BYTES },
+	const poster = await runFfmpeg(
+		executablePath,
+		input.sourcePath,
+		posterSeconds,
+		timeoutMs,
 	);
 
-	return stdout;
+	// ffmpeg exits 0 having written nothing when the poster position is past the end — an image, or a
+	// video whose duration was unreadable and turned out to be shorter than the position. The start
+	// is the only frame left to take
+	const thumbnail =
+		poster.length === 0 && posterSeconds > 0
+			? await runFfmpeg(executablePath, input.sourcePath, 0, timeoutMs)
+			: poster;
+
+	if (thumbnail.length === 0) {
+		throw new Error("ffmpeg がサムネイルのフレームを取得できませんでした");
+	}
+
+	return thumbnail;
+};
+
+const runFfmpeg = async (
+	executablePath: string,
+	sourcePath: string,
+	seekSeconds: number,
+	timeoutMs: number,
+): Promise<Buffer> => {
+	try {
+		const { stdout } = await execFileAsync(
+			executablePath,
+			[
+				"-hide_banner",
+				"-loglevel",
+				"error",
+				"-ss",
+				String(seekSeconds),
+				"-i",
+				sourcePath,
+				"-frames:v",
+				"1",
+				"-vf",
+				`scale=${THUMBNAIL_WIDTH}:-2`,
+				"-c:v",
+				"libwebp",
+				"-quality",
+				String(THUMBNAIL_QUALITY),
+				"-f",
+				"webp",
+				"pipe:1",
+			],
+			{
+				encoding: "buffer",
+				maxBuffer: MAX_THUMBNAIL_BYTES,
+				timeout: timeoutMs,
+			},
+		);
+
+		return stdout;
+	} catch (error) {
+		// A file ffmpeg cannot make sense of can keep it running until the Lambda itself times out
+		if (isTimedOutError(error)) {
+			throw new Error(`ffmpeg がタイムアウトしました: ${timeoutMs}ms`);
+		}
+
+		throw error;
+	}
+};
+
+// execFile reports the kill it sends at the timeout only as this pair
+const isTimedOutError = (error: unknown): boolean => {
+	return (
+		error instanceof Error &&
+		"killed" in error &&
+		error.killed === true &&
+		"signal" in error &&
+		error.signal === "SIGTERM"
+	);
 };

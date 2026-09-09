@@ -1,5 +1,5 @@
 // In scope: converting the Windows path Explorer hands over into a WSL path
-// Out of scope: reading the file, key construction, talking to R2
+// Out of scope: reading the file, key construction, sending it to external storage
 
 // Accepts either separator: C:\Users\foo\a.png or C:/Users/foo/a.png
 const WINDOWS_DRIVE_PATTERN = /^([A-Za-z]):[\\/](.*)$/s;
@@ -21,7 +21,7 @@ export const toWslPath = (path: string): string => {
 		);
 	}
 
-	const [, driveLetter, rest] = matched as unknown as [string, string, string];
+	const [, driveLetter, rest] = matched;
 
 	return `/mnt/${driveLetter.toLowerCase()}/${rest.replaceAll("\\", "/")}`;
 };

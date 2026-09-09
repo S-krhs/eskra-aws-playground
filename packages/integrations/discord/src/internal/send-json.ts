@@ -5,7 +5,7 @@ import {
 	type TextReplacement,
 } from "@eskra-aws-playground/libs/string/text-sanitizer.js";
 
-/** Sanitized. */
+/** A failed response's status and its body, sanitized by `responseBodyReplacements`. */
 export interface JsonResponseDetails {
 	status: number;
 	body: string;
