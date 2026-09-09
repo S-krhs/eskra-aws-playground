@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const currentDir = fileURLToPath(new URL(".", import.meta.url));
 
 const settings: unknown = JSON.parse(
-	readFileSync(new URL("media-library.json", `file://${currentDir}`), "utf8"),
+	readFileSync(new URL("settings.json", `file://${currentDir}`), "utf8"),
 );
 
 const settingsSchema = settings as {
@@ -19,7 +19,7 @@ const settingsSchema = settings as {
 };
 
 const sstConfigSource = readFileSync(
-	new URL("../sst.config.ts", `file://${currentDir}`),
+	new URL("../../sst.config.ts", `file://${currentDir}`),
 	"utf8",
 );
 

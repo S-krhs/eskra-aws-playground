@@ -6,8 +6,8 @@ import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const localDir = dirname(fileURLToPath(import.meta.url));
-const repositoryRootDir = resolve(localDir, "../..");
+const toolDir = dirname(fileURLToPath(import.meta.url));
+const repositoryRootDir = resolve(toolDir, "../../..");
 const temporaryRootDir = resolve(repositoryRootDir, ".tmp");
 const outputDir = resolve(temporaryRootDir, "local");
 
@@ -16,11 +16,11 @@ if (!outputDir.startsWith(`${temporaryRootDir}/`)) {
 }
 
 const settings = JSON.parse(
-	readFileSync(resolve(localDir, "media-library.json"), "utf8"),
+	readFileSync(resolve(toolDir, "settings.json"), "utf8"),
 );
 
 const configPath = resolve(homedir(), settings.configPath);
-const launcherPath = resolve(localDir, "run.mjs");
+const launcherPath = resolve(toolDir, "run.mjs");
 
 // Only readable from inside WSL, which is the only place these artifacts are ever generated
 const distroName = process.env.WSL_DISTRO_NAME;

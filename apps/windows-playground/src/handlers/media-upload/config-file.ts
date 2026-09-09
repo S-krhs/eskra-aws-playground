@@ -1,4 +1,4 @@
-// In scope: locating the config file this tool reads, and validating the fields it needs
+// In scope: locating the config file this entry point reads at startup, and validating the fields it needs
 // Out of scope: deciding what the values are used for, talking to R2, creating the file
 import { readFile } from "node:fs/promises";
 import { z } from "zod";

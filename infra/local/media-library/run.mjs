@@ -7,11 +7,11 @@ import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const localDir = dirname(fileURLToPath(import.meta.url));
-const repositoryRootDir = resolve(localDir, "../..");
+const toolDir = dirname(fileURLToPath(import.meta.url));
+const repositoryRootDir = resolve(toolDir, "../../..");
 
 const settings = JSON.parse(
-	readFileSync(resolve(localDir, "media-library.json"), "utf8"),
+	readFileSync(resolve(toolDir, "settings.json"), "utf8"),
 );
 
 const [targetName, ...targetArgs] = process.argv.slice(2);

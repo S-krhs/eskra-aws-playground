@@ -35,7 +35,7 @@ R2 の API トークンは Cloudflare のダッシュボードで作り、対象
 npm run build
 ```
 
-`apps/windows-playground/dist/scripts/media-upload.js` ができる。
+`apps/windows-playground/dist/handlers/media-upload/handler.js` ができる。
 
 ## 4. 動作を確かめる
 
