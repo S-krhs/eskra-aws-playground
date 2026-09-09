@@ -15,11 +15,11 @@ export const getThumbnailOperation = async (
 ): Promise<OperationResult<Thumbnail, { kind: "NOT_GENERATED" }>> => {
 	const media = await mediaObjectRepository.findById(mediaId);
 
-	if (!media?.thumbnailKey) {
+	if (!media?.hasThumbnail) {
 		return { kind: "NOT_GENERATED" };
 	}
 
-	const object = await mediaStorageRepository.get({ key: media.thumbnailKey });
+	const object = await mediaStorageRepository.getThumbnail(mediaId);
 
 	return {
 		kind: "OK",

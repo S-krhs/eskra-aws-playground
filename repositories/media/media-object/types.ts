@@ -13,7 +13,8 @@ export interface MediaObject {
 	width: number | undefined;
 	height: number | undefined;
 	durationMs: number | undefined;
-	thumbnailKey: string | undefined;
+	/** The key itself stays inside this package — read the thumbnail through the storage repository. */
+	hasThumbnail: boolean;
 	uploadedAt: Date;
 	syncedAt: Date;
 	trashedAt: Date | undefined;

@@ -11,7 +11,7 @@ import type {
 } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
-/** The object key never leaves the server, so only the thumbnail's presence is carried out. */
+/** The object key never leaves the server, and the repository reports the thumbnail's presence rather than its key. */
 const toMedia = (media: MediaObject): Media => {
 	return {
 		id: media.id,
@@ -22,7 +22,7 @@ const toMedia = (media: MediaObject): Media => {
 		width: media.width,
 		height: media.height,
 		durationMs: media.durationMs,
-		hasThumbnail: media.thumbnailKey !== undefined,
+		hasThumbnail: media.hasThumbnail,
 		uploadedAt: media.uploadedAt.toISOString(),
 	};
 };

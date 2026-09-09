@@ -26,7 +26,7 @@ const toMediaObject = (row: MediaObjectRow): MediaObject => {
 		width: row.width ?? undefined,
 		height: row.height ?? undefined,
 		durationMs: row.durationMs ?? undefined,
-		thumbnailKey: row.thumbnailKey ?? undefined,
+		hasThumbnail: row.thumbnailKey !== null,
 		uploadedAt: row.uploadedAt,
 		syncedAt: row.syncedAt,
 		trashedAt: row.trashedAt ?? undefined,

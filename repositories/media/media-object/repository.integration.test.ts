@@ -129,7 +129,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		const found = await mediaObjectRepository.findById(olderId);
 		expect(found?.etag).toBe("etag-2");
 		expect(found?.byteSize).toBe(5678);
-		expect(found?.thumbnailKey).toBeUndefined();
+		expect(found?.hasThumbnail).toBe(false);
 		expect(found?.width).toBeUndefined();
 	});
 
@@ -287,7 +287,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		});
 
 		const found = await mediaObjectRepository.findById(olderId);
-		expect(found?.thumbnailKey).toBe("_thumb/a.webp");
+		expect(found?.hasThumbnail).toBe(true);
 		expect(found?.objectKey).toBe(`${keyPrefix}_inbox/a.png`);
 		expect(found?.etag).toBe("etag-moved");
 	});

@@ -281,6 +281,13 @@ export const mediaStorageRepository = {
 		return key;
 	},
 
+	/** Reads a media object's thumbnail; the key comes from the media's id. */
+	getThumbnail: async (mediaId: string): Promise<StoredObjectBody> => {
+		return await mediaStorageRepository.get({
+			key: buildThumbnailKey(mediaId),
+		});
+	},
+
 	/** Removes a media object's thumbnail. One that was never generated isn't an error. */
 	deleteThumbnail: async (mediaId: string): Promise<void> => {
 		await mediaStorageRepository.delete(buildThumbnailKey(mediaId));
