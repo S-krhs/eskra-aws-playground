@@ -1,19 +1,12 @@
 // In scope: assembling the filter, listing and sync features into one screen
 // Out of scope: each feature's implementation, calling the API, formatting
-import { useState } from "react";
-import type { MediaFilter } from "@/entities/media";
 import { MediaFilterBar } from "@/features/media-filter";
-import { MediaGrid, useMediaList } from "@/features/media-grid";
-import { SyncControl, useSyncStatus } from "@/features/sync-control";
+import { MediaGrid } from "@/features/media-grid";
+import { SyncControl } from "@/features/sync-control";
+import { useMediaLibrary } from "../model/use-media-library.js";
 
 export const MediaLibraryPage = () => {
-	const [filter, setFilter] = useState<MediaFilter>({});
-	const status = useSyncStatus();
-	// A finished sync changes this, which refetches the listing so what it took in shows up
-	const list = useMediaList({
-		filter,
-		syncedAt: status.latest?.finishedAt ?? null,
-	});
+	const { filter, setFilter, list, status } = useMediaLibrary();
 
 	return (
 		<div className="flex h-dvh flex-col bg-base-200 text-base-content">
