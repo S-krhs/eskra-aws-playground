@@ -10,6 +10,7 @@
 			"default": "./dist/anime/*.js"
 		},
 		"./media/_shared/virtual/*.js": null,
+		"./media/media-storage/internal/*.js": null,
 		"./media/*.test.js": null,
 		"./media/*/*/*.test.js": null,
 		"./media/*/*.test.js": null,

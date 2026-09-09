@@ -3,43 +3,13 @@
 import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import { INBOX_PREFIX } from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
 import type { MediaAdoptMessage } from "@eskra-aws-playground/shared-domains/media/jobs/adopt-message.js";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/names.js";
 import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
-import {
-	buildMediaObjectKey,
-	extractLogicalPath,
-} from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
 import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/media/storage/object-metadata.js";
 import { Resource } from "sst/resource";
-
-// Files sharing a modified time are rare; going past this points at a skew in what is being taken in
-const MAX_KEY_SEQUENCE = 100;
-
-const resolveAvailableInboxKey = async (
-	modifiedAt: Date,
-	extension: string,
-): Promise<string> => {
-	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
-		const key = buildMediaObjectKey({
-			logicalPath: INBOX_PREFIX,
-			modifiedAt,
-			extension,
-			sequence: sequence === 0 ? undefined : sequence + 1,
-		});
-
-		if (!(await mediaStorageRepository.headIfExists(key))) {
-			return key;
-		}
-	}
-
-	throw new Error(
-		`同じ更新日時の key が ${MAX_KEY_SEQUENCE} 件を超えて埋まっています`,
-	);
-};
 
 /**
  * Assigns a UUID to an object placed from outside this app and moves it to an _inbox key.
@@ -64,26 +34,19 @@ export const mediaAdoptJob = async (
 
 	const mediaId = randomUUID();
 	const originalName = basename(message.objectKey);
-	const destinationKey = await resolveAvailableInboxKey(
-		source.lastModified,
-		extname(message.objectKey),
-	);
-
-	await mediaStorageRepository.copy({
+	const copied = await mediaStorageRepository.copyIntoArea({
 		sourceKey: message.objectKey,
-		destinationKey,
+		area: "inbox",
+		modifiedAt: source.lastModified,
+		extension: extname(message.objectKey),
 		metadata: buildMediaObjectMetadata({ mediaId, originalName }),
 		contentType: source.contentType,
 	});
 
-	// A copy's etag doesn't always match the original's (when the original went up as multipart).
-	// Registering the source's etag would make the next sync read it as a replacement and rebuild the thumbnail
-	const copied = await mediaStorageRepository.head(destinationKey);
-
 	try {
 		await mediaStorageRepository.delete(message.objectKey);
 	} catch (error) {
-		await mediaStorageRepository.delete(destinationKey);
+		await mediaStorageRepository.delete(copied.key);
 
 		throw error;
 	}
@@ -93,8 +56,8 @@ export const mediaAdoptJob = async (
 	await mediaObjectRepository.insertMany([
 		{
 			id: mediaId,
-			objectKey: destinationKey,
-			logicalPath: extractLogicalPath(destinationKey),
+			objectKey: copied.key,
+			logicalPath: copied.logicalPath,
 			fileName: originalName,
 			contentType: source.contentType,
 			byteSize: copied.byteSize,
@@ -114,7 +77,7 @@ export const mediaAdoptJob = async (
 			body: {
 				job: mediaJobNames.mediaThumbnail,
 				mediaId,
-				objectKey: destinationKey,
+				objectKey: copied.key,
 			} satisfies MediaThumbnailMessage,
 		},
 	]);

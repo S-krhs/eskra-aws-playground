@@ -2,15 +2,9 @@
 // Out of scope: how ffmpeg is called, validating the SQS event, sending messages, job dispatch
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { probeMedia } from "@eskra-aws-playground/libs-media/ffmpeg/media-probe.js";
 import { generateThumbnail } from "@eskra-aws-playground/libs-media/ffmpeg/thumbnail-generator.js";
-import {
-	FAILED_PREFIX,
-	INBOX_PREFIX,
-	PENDING_PREFIX,
-	THUMBNAIL_PREFIX,
-} from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import type { RelocateMediaObjectInput } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
@@ -18,9 +12,6 @@ import {
 	MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
 	type MediaThumbnailMessage,
 } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
-import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
-
-const THUMBNAIL_CONTENT_TYPE = "image/webp";
 
 /**
  * Makes a webp thumbnail from the original, puts it in R2, and records it in the DB.
@@ -31,7 +22,8 @@ export const mediaThumbnailJob = async (
 	message: MediaThumbnailMessage,
 	receiveCount: number,
 ): Promise<void> => {
-	const isPending = message.objectKey.startsWith(`${PENDING_PREFIX}/`);
+	const isPending =
+		mediaStorageRepository.resolveArea(message.objectKey) === "pending";
 	// Lambda's ephemeral storage is raised and /tmp is the work area, so even a large video fits
 	const workDir = await mkdtemp(join(tmpdir(), "media-thumbnail-"));
 
@@ -50,36 +42,22 @@ export const mediaThumbnailJob = async (
 			durationMs: probe.durationMs,
 		});
 
-		const thumbnailKey = `${THUMBNAIL_PREFIX}/${message.mediaId}.webp`;
-		await mediaStorageRepository.upload({
-			key: thumbnailKey,
+		const thumbnailKey = await mediaStorageRepository.uploadThumbnail({
+			mediaId: message.mediaId,
 			body: thumbnail,
-			contentType: THUMBNAIL_CONTENT_TYPE,
 		});
 
 		let location: Omit<RelocateMediaObjectInput, "id"> | undefined;
 
 		if (isPending) {
-			const destinationKey = `${INBOX_PREFIX}/${basename(message.objectKey)}`;
-
-			if (await mediaStorageRepository.headIfExists(destinationKey)) {
-				throw new Error(`移動先の key が既に埋まっています: ${destinationKey}`);
-			}
-
-			await mediaStorageRepository.copy({
-				sourceKey: message.objectKey,
-				destinationKey,
+			const moved = await mediaStorageRepository.moveIntoArea({
+				key: message.objectKey,
+				area: "inbox",
 			});
-			await mediaStorageRepository.delete(message.objectKey);
-
-			// A copy can come back with a different etag than the original had (a multipart upload does),
-			// so the destination is re-read — registering the source's etag would make the next sync see
-			// replaced content
-			const moved = await mediaStorageRepository.head(destinationKey);
 
 			location = {
-				objectKey: destinationKey,
-				logicalPath: extractLogicalPath(destinationKey),
+				objectKey: moved.key,
+				logicalPath: moved.logicalPath,
 				byteSize: moved.byteSize,
 				etag: moved.etag,
 				syncedAt: new Date(),
@@ -97,7 +75,7 @@ export const mediaThumbnailJob = async (
 
 		// With the row gone mid-generation there is nowhere to record it, so the thumbnail is removed too
 		if (recorded === 0) {
-			await mediaStorageRepository.delete(thumbnailKey);
+			await mediaStorageRepository.deleteThumbnail(message.mediaId);
 		}
 	} catch (error) {
 		// The DLQ takes this message after the last delivery. Left under the pending prefix, every later
@@ -105,27 +83,16 @@ export const mediaThumbnailJob = async (
 		// replace the error that got us here
 		if (isPending && receiveCount >= MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT) {
 			try {
-				const destinationKey = `${FAILED_PREFIX}/${basename(message.objectKey)}`;
-
-				if (await mediaStorageRepository.headIfExists(destinationKey)) {
-					throw new Error(
-						`移動先の key が既に埋まっています: ${destinationKey}`,
-					);
-				}
-
-				await mediaStorageRepository.copy({
-					sourceKey: message.objectKey,
-					destinationKey,
+				const moved = await mediaStorageRepository.moveIntoArea({
+					key: message.objectKey,
+					area: "failed",
 				});
-				await mediaStorageRepository.delete(message.objectKey);
-
-				const moved = await mediaStorageRepository.head(destinationKey);
 
 				await mediaObjectRepository.relocateMany([
 					{
 						id: message.mediaId,
-						objectKey: destinationKey,
-						logicalPath: extractLogicalPath(destinationKey),
+						objectKey: moved.key,
+						logicalPath: moved.logicalPath,
 						byteSize: moved.byteSize,
 						etag: moved.etag,
 						syncedAt: new Date(),

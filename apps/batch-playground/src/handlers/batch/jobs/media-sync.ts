@@ -4,10 +4,6 @@ import { randomUUID } from "node:crypto";
 import { basename, extname } from "node:path";
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
-import {
-	PENDING_PREFIX,
-	THUMBNAIL_PREFIX,
-} from "@eskra-aws-playground/repositories/media/_shared/literals/storage-prefix.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import type {
 	InsertMediaObjectInput,
@@ -20,7 +16,6 @@ import type { MediaAdoptMessage } from "@eskra-aws-playground/shared-domains/med
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/names.js";
 import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
 import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/storage/content-type.js";
-import { extractLogicalPath } from "@eskra-aws-playground/shared-domains/media/storage/object-key.js";
 import { parseMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/media/storage/object-metadata.js";
 import { Resource } from "sst/resource";
 import { z } from "zod";
@@ -139,7 +134,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		const scanned = (await mediaStorageRepository.listAll()).filter(
 			(object) => {
 				return (
-					!object.key.startsWith(`${THUMBNAIL_PREFIX}/`) &&
+					object.area !== "thumbnail" &&
 					resolveContentType(extname(object.key)) !== undefined
 				);
 			},
@@ -250,7 +245,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 					relocations.push({
 						id: metadata.mediaId,
 						objectKey: object.key,
-						logicalPath: extractLogicalPath(object.key),
+						logicalPath: object.logicalPath,
 						byteSize: object.byteSize,
 						etag: object.etag,
 						syncedAt: startedAt,
@@ -268,7 +263,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 				inserts.push({
 					id: metadata.mediaId,
 					objectKey: object.key,
-					logicalPath: extractLogicalPath(object.key),
+					logicalPath: object.logicalPath,
 					fileName: metadata.originalName || basename(object.key),
 					contentType: head.contentType,
 					byteSize: object.byteSize,
@@ -340,7 +335,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		//     found from a scan, so the thumbnail always goes first. A thumbnail key derives from the UUID,
 		//     so even a row with an empty thumbnailKey gets cleaned up.
 		for (const id of deletableIds) {
-			await mediaStorageRepository.delete(`${THUMBNAIL_PREFIX}/${id}.webp`);
+			await mediaStorageRepository.deleteThumbnail(id);
 		}
 
 		progress.deletedCount =
@@ -364,7 +359,7 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		const thumbnailRequests = [
 			...scanned
 				.filter((object) => {
-					return object.key.startsWith(`${PENDING_PREFIX}/`);
+					return object.area === "pending";
 				})
 				.flatMap((object): ThumbnailRequest[] => {
 					const mediaId = mediaIdByKey.get(object.key);
