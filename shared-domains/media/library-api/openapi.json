@@ -24,7 +24,10 @@
 						"$ref": "#/components/schemas/MediaCursor"
 					}
 				},
-				"required": ["objects", "nextCursor"]
+				"required": [
+					"objects",
+					"nextCursor"
+				]
 			},
 			"Media": {
 				"type": "object",
@@ -73,7 +76,10 @@
 				]
 			},
 			"MediaCursor": {
-				"type": ["object", "null"],
+				"type": [
+					"object",
+					"null"
+				],
 				"properties": {
 					"uploadedAt": {
 						"type": "string",
@@ -84,7 +90,10 @@
 						"format": "uuid"
 					}
 				},
-				"required": ["uploadedAt", "id"]
+				"required": [
+					"uploadedAt",
+					"id"
+				]
 			},
 			"SyncStartResponse": {
 				"type": "object",
@@ -93,7 +102,9 @@
 						"type": "boolean"
 					}
 				},
-				"required": ["started"]
+				"required": [
+					"started"
+				]
 			},
 			"SyncStatusResponse": {
 				"type": "object",
@@ -105,10 +116,16 @@
 						"$ref": "#/components/schemas/SyncRun"
 					}
 				},
-				"required": ["latest", "running"]
+				"required": [
+					"latest",
+					"running"
+				]
 			},
 			"SyncRun": {
-				"type": ["object", "null"],
+				"type": [
+					"object",
+					"null"
+				],
 				"properties": {
 					"id": {
 						"type": "string",
@@ -119,7 +136,10 @@
 						"format": "date-time"
 					},
 					"finishedAt": {
-						"type": ["string", "null"],
+						"type": [
+							"string",
+							"null"
+						],
 						"format": "date-time"
 					},
 					"scannedCount": {
@@ -135,7 +155,10 @@
 						"type": "number"
 					},
 					"error": {
-						"type": ["string", "null"]
+						"type": [
+							"string",
+							"null"
+						]
 					}
 				},
 				"required": [
@@ -228,7 +251,9 @@
 											"type": "string"
 										}
 									},
-									"required": ["message"]
+									"required": [
+										"message"
+									]
 								}
 							}
 						}
@@ -274,7 +299,9 @@
 											"type": "string"
 										}
 									},
-									"required": ["message"]
+									"required": [
+										"message"
+									]
 								}
 							}
 						}
@@ -290,7 +317,9 @@
 											"type": "string"
 										}
 									},
-									"required": ["message"]
+									"required": [
+										"message"
+									]
 								}
 							}
 						}

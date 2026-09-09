@@ -9,7 +9,7 @@
 			"**/*",
 			"!**/package-lock.json",
 			"!repositories/generated",
-			"!apps/media-library/openapi.json",
+			"!shared-domains/media/library-api/openapi.json",
 			"!apps/media-library/frontend/src/shared/api/generated"
 		]
 	},
