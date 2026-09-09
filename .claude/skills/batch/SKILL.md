@@ -17,7 +17,7 @@ features/    the actual logic, one concern per directory
 _shared/     app-wide schemas and intermediate models
 ```
 
-Two layouts are in use. When one handler dispatches several jobs by name, `jobs/` and `contracts/` nest under that handler (`handlers/<trigger>/jobs/`); when each handler is a single-purpose Lambda, they sit at `src/` level. Follow whichever the app already does.
+Two layouts are in use, and the split is whether a handler owns anything beyond its entry file. A handler with its own jobs, contracts or startup config nests them under itself (`handlers/<trigger>/handler.ts`, `handlers/<trigger>/jobs/`); handlers that are each a single file sit flat in `handlers/`, with `jobs/` at `src/` level. Follow whichever the app already does, and don't mix them — an entry point in a directory of its own with its jobs somewhere else is neither.
 
 - One handler per **trigger**, never one per job. A job is an entry in a dispatch map, not a new entry point.
 - **A job whose timeout or layer needs don't fit the shared config gets its own Lambda Function, not its own handler.** Add a Function in `infra/sst.config.ts` pointing at the existing handler and deliver the job through a cron event or a queue.
