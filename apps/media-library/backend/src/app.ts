@@ -60,6 +60,12 @@ export const createApp = (): Hono => {
 
 	app.route("/api", apiRoutes);
 
+	// Without this, a path under /api that matched no route falls through to the UI below and the
+	// caller gets index.html with a 200 instead of a failure it can read
+	app.all("/api/*", (c) => {
+		return c.json({ message: "その API はありません" }, 404);
+	});
+
 	const root = uiRoot();
 
 	app.use("*", serveStatic({ root }));
