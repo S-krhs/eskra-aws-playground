@@ -12,12 +12,12 @@ const toMediaSyncRun = (row: MediaSyncRunRow): MediaSyncRun => {
 	return {
 		id: row.id,
 		startedAt: row.startedAt,
-		finishedAt: row.finishedAt ?? undefined,
+		finishedAt: row.finishedAt,
 		scannedCount: row.scannedCount,
 		insertedCount: row.insertedCount,
 		updatedCount: row.updatedCount,
 		deletedCount: row.deletedCount,
-		error: row.error ?? undefined,
+		error: row.error,
 	};
 };
 

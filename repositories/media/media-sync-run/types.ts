@@ -1,16 +1,16 @@
 // In scope: the input/output types of the MediaSyncRun repository
 // Out of scope: validation schemas, DB access, running the sync itself
 
-/** One sync run; an undefined finishedAt means it is still running. */
+/** One sync run; a null finishedAt means it is still running. Nullable columns come back as null, so a caller shaping them for the wire has nothing to convert. */
 export interface MediaSyncRun {
 	id: string;
 	startedAt: Date;
-	finishedAt: Date | undefined;
+	finishedAt: Date | null;
 	scannedCount: number;
 	insertedCount: number;
 	updatedCount: number;
 	deletedCount: number;
-	error: string | undefined;
+	error: string | null;
 }
 
 /** The four count columns a run accumulates. */
