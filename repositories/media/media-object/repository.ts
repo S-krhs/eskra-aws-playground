@@ -1,6 +1,7 @@
 // In scope: registering, re-keying and deleting MediaObject rows, and reading them one at a time or by page
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
+import { buildThumbnailKey } from "../_shared/formatter/object-key.js";
 import type { MediaObjectRow } from "../_shared/virtual/media-object-row.js";
 import type {
 	FindMediaObjectPageInput,
@@ -117,6 +118,9 @@ export const mediaObjectRepository = {
 			where: { id },
 			data: {
 				...values,
+				// Built from the id here rather than taken from the caller, so where a thumbnail
+				// lands stays this package's business
+				thumbnailKey: buildThumbnailKey(id),
 				...(location
 					? { ...location, byteSize: BigInt(location.byteSize) }
 					: {}),

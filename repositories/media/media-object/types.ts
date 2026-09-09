@@ -75,7 +75,6 @@ export interface RelocateMediaObjectInput {
  */
 export interface UpdateThumbnailInput {
 	id: string;
-	thumbnailKey: string;
 	width?: number;
 	height?: number;
 	durationMs?: number;

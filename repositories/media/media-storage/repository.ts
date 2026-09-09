@@ -16,7 +16,7 @@ import {
 	buildThumbnailKey,
 	extractLogicalPath,
 	resolveArea,
-} from "./internal/object-key.js";
+} from "../_shared/formatter/object-key.js";
 import type {
 	CopyIntoAreaInput,
 	GetStoredObjectInput,
@@ -263,22 +263,19 @@ export const mediaStorageRepository = {
 		return location;
 	},
 
-	/** Stores a media object's thumbnail and returns the key it took, which is built from the media's id. */
-	uploadThumbnail: async (input: UploadThumbnailInput): Promise<string> => {
-		const key = buildThumbnailKey(input.mediaId);
+	/** Stores a media object's thumbnail; the key is built from the media's id and stays in here. */
+	uploadThumbnail: async (input: UploadThumbnailInput): Promise<void> => {
 		const upload = new Upload({
 			client: getR2Client(),
 			params: {
 				Bucket: getMediaBucket(),
-				Key: key,
+				Key: buildThumbnailKey(input.mediaId),
 				Body: input.body,
 				ContentType: THUMBNAIL_CONTENT_TYPE,
 			},
 		});
 
 		await upload.done();
-
-		return key;
 	},
 
 	/** Reads a media object's thumbnail; the key comes from the media's id. */

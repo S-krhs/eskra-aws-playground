@@ -110,7 +110,6 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		]);
 		await mediaObjectRepository.updateThumbnail({
 			id: olderId,
-			thumbnailKey: "_thumb/a.webp",
 			width: 320,
 			height: 180,
 		});
@@ -138,7 +137,6 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(
 			await mediaObjectRepository.updateThumbnail({
 				id: trashedId,
-				thumbnailKey: "_thumb/gone.webp",
 			}),
 		).toBe(0);
 	});
@@ -274,7 +272,6 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 
 		await mediaObjectRepository.updateThumbnail({
 			id: olderId,
-			thumbnailKey: "_thumb/a.webp",
 			width: 320,
 			height: 180,
 			location: {

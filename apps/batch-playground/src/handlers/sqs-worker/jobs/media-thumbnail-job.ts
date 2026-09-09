@@ -42,7 +42,7 @@ export const mediaThumbnailJob = async (
 			durationMs: probe.durationMs,
 		});
 
-		const thumbnailKey = await mediaStorageRepository.uploadThumbnail({
+		await mediaStorageRepository.uploadThumbnail({
 			mediaId: message.mediaId,
 			body: thumbnail,
 		});
@@ -66,7 +66,6 @@ export const mediaThumbnailJob = async (
 
 		const recorded = await mediaObjectRepository.updateThumbnail({
 			id: message.mediaId,
-			thumbnailKey,
 			width: probe.width,
 			height: probe.height,
 			durationMs: probe.durationMs,

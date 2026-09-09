@@ -1,8 +1,12 @@
-// In scope: the media bucket's layout — the prefix each area sits under, the key an object gets there, and reading an area or logical path back out of a key
-// Out of scope: talking to storage, DB rows, what object metadata means, thumbnail generation
+// In scope: the key an object takes in the media bucket, and reading an area or logical path back out of one
+// Out of scope: what the areas are, talking to storage, DB rows, what object metadata means, thumbnail generation
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
-import type { MediaStorageArea, NamedMediaStorageArea } from "../types.js";
+import {
+	AREA_PREFIXES,
+	type MediaStorageArea,
+	type NamedMediaStorageArea,
+} from "../literals/storage-area.js";
 
 dayjs.extend(utc);
 
@@ -12,14 +16,6 @@ const JST_UTC_OFFSET_MINUTES = 9 * 60;
 const KEY_TIMESTAMP_FORMAT = "YYYYMMDD-HHmmssSSS";
 
 const THUMBNAIL_EXTENSION = "webp";
-
-/** The prefix each area is laid out under. This never leaves the package — an app names the area instead. */
-const AREA_PREFIXES = {
-	pending: "_pending",
-	inbox: "_inbox",
-	failed: "_failed",
-	thumbnail: "_thumb",
-} as const satisfies Record<NamedMediaStorageArea, string>;
 
 /** Anything outside the named areas reads as "other" — media filed into a folder by hand lands there. */
 export const resolveArea = (key: string): MediaStorageArea => {
