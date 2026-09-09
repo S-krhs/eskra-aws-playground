@@ -4,7 +4,6 @@ import { z } from "zod";
 import { mediaJobNames } from "./names.js";
 
 /**
- * One object placed into storage from outside this app, named by the key the sync found it at.
  * The key is all that travels — the worker re-reads the object, so a message delivered after the
  * object has already been taken in finds nothing there and stops.
  */

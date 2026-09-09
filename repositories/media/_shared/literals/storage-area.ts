@@ -15,7 +15,7 @@ export type NamedMediaStorageArea =
 /** `other` is media filed into a folder of its own, which is where everything sorted ends up. */
 export type MediaStorageArea = NamedMediaStorageArea | "other";
 
-/** The prefix each area is laid out under. This never leaves the package — a caller names the area. */
+/** Never leaves the package — a caller names the area instead. */
 export const AREA_PREFIXES = {
 	pending: "_pending",
 	inbox: "_inbox",

@@ -1,20 +1,16 @@
 // In scope: input/output types for the stored media objects
 // Out of scope: talking to the storage, key construction, DB row shapes
 import type { Readable } from "node:stream";
+import type {
+	MediaStorageArea,
+	NamedMediaStorageArea,
+} from "../_shared/literals/storage-area.js";
 
-/**
- * The areas the media bucket is laid out in. A caller names one instead of building a key:
- * `pending` is where an upload waits for its thumbnail, `inbox` is where media goes once it has one,
- * `failed` is where thumbnail generation gave up on it, and `thumbnail` holds the thumbnails.
- */
-export type NamedMediaStorageArea =
-	| "pending"
-	| "inbox"
-	| "failed"
-	| "thumbnail";
-
-/** `other` is media filed into a folder of its own, which is where everything sorted ends up. */
-export type MediaStorageArea = NamedMediaStorageArea | "other";
+// Re-exported so a caller has one import path, next to the types that carry an area
+export type {
+	MediaStorageArea,
+	NamedMediaStorageArea,
+} from "../_shared/literals/storage-area.js";
 
 export interface StoredObjectSummary {
 	key: string;
@@ -26,7 +22,6 @@ export interface StoredObjectSummary {
 	lastModified: Date;
 }
 
-/** Where an object ended up after being stored or moved. */
 export interface StoredObjectLocation {
 	key: string;
 	logicalPath: string;
@@ -34,7 +29,6 @@ export interface StoredObjectLocation {
 	etag: string;
 }
 
-/** Stores a new object under a key built from `modifiedAt`, stepping past a key already taken. */
 export interface UploadIntoAreaInput {
 	area: Exclude<NamedMediaStorageArea, "thumbnail">;
 	modifiedAt: Date;
@@ -44,7 +38,6 @@ export interface UploadIntoAreaInput {
 	metadata?: Record<string, string>;
 }
 
-/** Copies an existing object into an area under a newly built key; the source is left in place. */
 export interface CopyIntoAreaInput {
 	sourceKey: string;
 	area: Exclude<NamedMediaStorageArea, "thumbnail">;
@@ -54,13 +47,11 @@ export interface CopyIntoAreaInput {
 	contentType?: string;
 }
 
-/** Moves an object into an area keeping its file name; fails when that name is already taken there. */
 export interface MoveIntoAreaInput {
 	key: string;
 	area: Exclude<NamedMediaStorageArea, "thumbnail">;
 }
 
-/** `metadata` is the object's custom metadata. */
 export interface StoredObjectMetadata {
 	contentType: string;
 	byteSize: number;

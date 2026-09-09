@@ -12,7 +12,6 @@ import { buildMediaObjectMetadata } from "@eskra-aws-playground/shared-domains/m
 import { Resource } from "sst/resource";
 
 /**
- * Assigns a UUID to an object placed from outside this app and moves it to an _inbox key.
  * A Copy attaches the metadata, then a Delete removes the original; if the Delete fails, the copy is
  * deleted to undo it. Leaving the original in place means the next sync takes it in again, producing
  * two UUIDs and two rows for the same content.
