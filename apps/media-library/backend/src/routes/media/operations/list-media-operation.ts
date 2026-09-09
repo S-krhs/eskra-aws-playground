@@ -1,31 +1,9 @@
 // In scope: reading one page of the listing and shaping it for the screen
 // Out of scope: validating the query, HTTP status codes, DB query construction
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import type {
-	MediaObject,
-	MediaObjectCursor,
-} from "@eskra-aws-playground/repositories/media/media-object/types.js";
-import type {
-	Media,
-	MediaListResponse,
-} from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
+import type { MediaObjectCursor } from "@eskra-aws-playground/repositories/media/media-object/types.js";
+import type { MediaListResponse } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
-
-/** The object key never leaves the server, and the repository reports the thumbnail's presence rather than its key. */
-const toMedia = (media: MediaObject): Media => {
-	return {
-		id: media.id,
-		fileName: media.fileName,
-		logicalPath: media.logicalPath,
-		contentType: media.contentType,
-		byteSize: media.byteSize,
-		width: media.width,
-		height: media.height,
-		durationMs: media.durationMs,
-		hasThumbnail: media.hasThumbnail,
-		uploadedAt: media.uploadedAt.toISOString(),
-	};
-};
 
 export const listMediaOperation = async (input: {
 	logicalPath?: string;
@@ -38,7 +16,22 @@ export const listMediaOperation = async (input: {
 	return {
 		kind: "OK",
 		data: {
-			objects: page.objects.map(toMedia),
+			// The object key never leaves the server, and the repository reports the thumbnail's
+			// presence rather than its key
+			objects: page.objects.map((media) => {
+				return {
+					id: media.id,
+					fileName: media.fileName,
+					logicalPath: media.logicalPath,
+					contentType: media.contentType,
+					byteSize: media.byteSize,
+					width: media.width,
+					height: media.height,
+					durationMs: media.durationMs,
+					hasThumbnail: media.hasThumbnail,
+					uploadedAt: media.uploadedAt.toISOString(),
+				};
+			}),
 			nextCursor: page.nextCursor
 				? {
 						uploadedAt: page.nextCursor.uploadedAt.toISOString(),
