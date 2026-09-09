@@ -25,7 +25,6 @@
 	},
 	"dependencies": {
 		"@hono/zod-openapi": "^1.6.3",
-		"dayjs": "^1.11.23",
 		"zod": "^4.5.3"
 	}
 }
