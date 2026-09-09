@@ -13,31 +13,11 @@
 		"./media/_shared/literals/*.js": null,
 		"./media/_shared/formatter/*.js": null,
 		"./media/*.test.js": null,
-		"./media/*/*/*.test.js": null,
-		"./media/*/*.test.js": null,
-		"./media/*/*/*.js": {
-			"types": "./dist/media/*/*/*.d.ts",
-			"default": "./dist/media/*/*/*.js"
-		},
-		"./media/*/*.js": {
-			"types": "./dist/media/*/*.d.ts",
-			"default": "./dist/media/*/*.js"
-		},
 		"./media/*.js": {
 			"types": "./dist/media/*.d.ts",
 			"default": "./dist/media/*.js"
 		},
 		"./playground/*.test.js": null,
-		"./playground/*/*.test.js": null,
-		"./playground/*/*/*.test.js": null,
-		"./playground/*/*/*.js": {
-			"types": "./dist/playground/*/*/*.d.ts",
-			"default": "./dist/playground/*/*/*.js"
-		},
-		"./playground/*/*.js": {
-			"types": "./dist/playground/*/*.d.ts",
-			"default": "./dist/playground/*/*.js"
-		},
 		"./playground/*.js": {
 			"types": "./dist/playground/*.d.ts",
 			"default": "./dist/playground/*.js"

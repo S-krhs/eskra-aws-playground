@@ -15,7 +15,7 @@ export type {
 export interface StoredObjectSummary {
 	key: string;
 	area: MediaStorageArea;
-	/** The key's directory part; empty for a key sitting at the bucket root. */
+	/** Where the object sits inside its area; empty when it sits directly in one, or at the bucket root. */
 	logicalPath: string;
 	byteSize: number;
 	etag: string;

@@ -8,6 +8,7 @@ import type {
 	InsertMediaObjectInput,
 	MediaObject,
 	MediaObjectCursor,
+	MediaObjectIdentity,
 	MediaObjectPage,
 	MediaObjectSummary,
 	RefreshMediaObjectInput,
@@ -47,6 +48,12 @@ const toChunks = <T>(items: T[]): T[][] => {
 	return chunks;
 };
 
+const sumCounts = (results: { count: number }[]): number => {
+	return results.reduce((total, result) => {
+		return total + result.count;
+	}, 0);
+};
+
 // The position is the (uploadedAt, id) pair; Prisma can't express a tuple comparison, so it expands to an OR
 const toCursorFilter = (cursor: MediaObjectCursor) => {
 	return {
@@ -67,10 +74,34 @@ export const mediaObjectRepository = {
 		});
 	},
 
+	/**
+	 * The objects with no thumbnail recorded, trashed rows excluded.
+	 * Every one of them comes back at once: a caller that can't get through them all leaves the rest
+	 * to its next run rather than paging.
+	 */
+	findAllWithoutThumbnail: async (): Promise<MediaObjectIdentity[]> => {
+		const prisma = getPrismaClient();
+
+		return await prisma.mediaObject.findMany({
+			where: { thumbnailKey: null, trashedAt: null },
+			select: { id: true, objectKey: true },
+		});
+	},
+
 	/** Returns trashed objects too. */
 	findById: async (id: string): Promise<MediaObject | undefined> => {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaObject.findUnique({ where: { id } });
+
+		return row ? toMediaObject(row) : undefined;
+	},
+
+	/** The same row `findById` reads, under the exclusion `findPage` applies. */
+	findUntrashedById: async (id: string): Promise<MediaObject | undefined> => {
+		const prisma = getPrismaClient();
+		const row = await prisma.mediaObject.findFirst({
+			where: { id, trashedAt: null },
+		});
 
 		return row ? toMediaObject(row) : undefined;
 	},
@@ -153,7 +184,11 @@ export const mediaObjectRepository = {
 		return inserted;
 	},
 
-	/** Re-points the keys of media moved outside this app. */
+	/**
+	 * Re-points the keys of media moved outside this app.
+	 * Returns the number of rows updated, so a row deleted since the listing was taken drops out of
+	 * the count instead of failing the rest of its chunk.
+	 */
 	relocateMany: async (inputs: RelocateMediaObjectInput[]): Promise<number> => {
 		if (inputs.length === 0) {
 			return 0;
@@ -164,7 +199,7 @@ export const mediaObjectRepository = {
 
 		for (const chunk of toChunks(inputs)) {
 			const updates = chunk.map((input) => {
-				return prisma.mediaObject.update({
+				return prisma.mediaObject.updateMany({
 					where: { id: input.id },
 					data: {
 						objectKey: input.objectKey,
@@ -176,7 +211,7 @@ export const mediaObjectRepository = {
 				});
 			});
 
-			updated += (await prisma.$transaction(updates)).length;
+			updated += sumCounts(await prisma.$transaction(updates));
 		}
 
 		return updated;
@@ -185,6 +220,7 @@ export const mediaObjectRepository = {
 	/**
 	 * Re-registers media replaced under an unchanged key. The thumbnail and dimensions describe the
 	 * old content, so they are cleared and the next sync rebuilds them.
+	 * Returns the number of rows updated, on the same terms as `relocateMany`.
 	 */
 	refreshMany: async (inputs: RefreshMediaObjectInput[]): Promise<number> => {
 		if (inputs.length === 0) {
@@ -196,7 +232,7 @@ export const mediaObjectRepository = {
 
 		for (const chunk of toChunks(inputs)) {
 			const updates = chunk.map((input) => {
-				return prisma.mediaObject.update({
+				return prisma.mediaObject.updateMany({
 					where: { id: input.id },
 					data: {
 						byteSize: BigInt(input.byteSize),
@@ -211,7 +247,7 @@ export const mediaObjectRepository = {
 				});
 			});
 
-			refreshed += (await prisma.$transaction(updates)).length;
+			refreshed += sumCounts(await prisma.$transaction(updates));
 		}
 
 		return refreshed;

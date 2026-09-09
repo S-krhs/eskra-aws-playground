@@ -56,12 +56,12 @@ describe.skipIf(!testDatabaseUrl)(
 			expect(run).toEqual({
 				id: runId,
 				startedAt,
-				finishedAt: undefined,
+				finishedAt: null,
 				scannedCount: 0,
 				insertedCount: 0,
 				updatedCount: 0,
 				deletedCount: 0,
-				error: undefined,
+				error: null,
 			});
 		});
 

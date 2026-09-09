@@ -82,6 +82,26 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(found?.trashedAt).toBeUndefined();
 	});
 
+	it("skips a trashed row when reading one by id", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(trashedId, "c.png", "2026-09-03T00:00:00.000Z"),
+		]);
+		expect(
+			await mediaObjectRepository.findUntrashedById(trashedId),
+		).toBeDefined();
+
+		await getPrismaClient().mediaObject.update({
+			where: { id: trashedId },
+			data: { trashedAt: syncedAt },
+		});
+
+		expect(
+			await mediaObjectRepository.findUntrashedById(trashedId),
+		).toBeUndefined();
+		// findById is the one that still reaches it
+		expect(await mediaObjectRepository.findById(trashedId)).toBeDefined();
+	});
+
 	it("ignores re-registering the same id", async () => {
 		const input = buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z");
 		await mediaObjectRepository.insertMany([input]);
@@ -101,6 +121,30 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 			objectKey: `${keyPrefix}a.png`,
 			etag: "etag-1",
 		});
+	});
+
+	it("returns the objects still missing a thumbnail, trashed ones aside", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z"),
+			buildInput(trashedId, "c.png", "2026-09-03T00:00:00.000Z"),
+		]);
+		await mediaObjectRepository.updateThumbnail({ id: newerId });
+		await getPrismaClient().mediaObject.update({
+			where: { id: trashedId },
+			data: { trashedAt: syncedAt },
+		});
+
+		const found = await mediaObjectRepository.findAllWithoutThumbnail();
+		expect(found).toContainEqual({
+			id: olderId,
+			objectKey: `${keyPrefix}a.png`,
+		});
+		const foundIds = found.map((object) => {
+			return object.id;
+		});
+		expect(foundIds).not.toContain(newerId);
+		expect(foundIds).not.toContain(trashedId);
 	});
 
 	// When content is replaced under an unchanged key, the thumbnail and dimensions have to be rebuilt

@@ -106,4 +106,21 @@ describe("extractLogicalPath", () => {
 	it("returns an empty string when there is no directory part", () => {
 		expect(extractLogicalPath("a.png")).toBe("");
 	});
+
+	// The prefix is this package's own layout, and a caller reads the area instead
+	it("drops the area prefix of a named area", () => {
+		expect(extractLogicalPath("_inbox/a.png")).toBe("");
+		expect(extractLogicalPath("_pending/a.png")).toBe("");
+		expect(extractLogicalPath("_thumb/018f3a2c.webp")).toBe("");
+	});
+
+	it("keeps the path an object sits at inside a named area", () => {
+		expect(extractLogicalPath("_inbox/sub/a.png")).toBe("sub");
+		expect(extractLogicalPath("_inbox/sub/deep/a.png")).toBe("sub/deep");
+	});
+
+	// A folder only named like an area is a folder, so its own name stays in the path
+	it("keeps the whole path of a similarly named folder", () => {
+		expect(extractLogicalPath("_inboxes/a.png")).toBe("_inboxes");
+	});
 });

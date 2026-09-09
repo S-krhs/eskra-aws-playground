@@ -28,6 +28,13 @@ describe("parseR2Credentials", () => {
 		}).toThrow(/accessKeyId/);
 	});
 
+	// A non-object leaves zod with no field to name, and the message has to stand on its own
+	it("fails with a message of its own when the JSON is not an object", () => {
+		expect(() => {
+			return parseR2Credentials('"just-a-string"');
+		}).toThrow("R2 の認証情報が JSON の object になっていません。");
+	});
+
 	// Guards against the key itself leaking into a log or error notification
 	it("never puts a key value in the error message", () => {
 		expect(() => {

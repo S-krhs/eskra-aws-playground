@@ -6,9 +6,9 @@
 
 | column | 用途 |
 | --- | --- |
-| `pool_key` | 候補が属する pool(`shared/literals/gacha-pool-key.ts` の enum) |
+| `pool_key` | 候補が属する pool(`_shared/literals/gacha-pool-key.ts` の enum) |
 | `name` | 候補名。`pool_key` との複合主キー |
-| `rarity` | 候補のレアリティ(`shared/literals/gacha-rarity.ts` の enum) |
+| `rarity` | 候補のレアリティ(`_shared/literals/gacha-rarity.ts` の enum) |
 
 抽選の重みやメッセージ文面は含めません（feature 側の設定）。UMA ワンドロのお題は `pool_key = uma-one-draw-topic` を使います。
 

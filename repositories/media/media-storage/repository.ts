@@ -10,6 +10,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getMediaBucket, getR2Client } from "../../client/r2.js";
+import { buildCopySource } from "../_shared/formatter/copy-source.js";
 import {
 	buildAreaKeyKeepingName,
 	buildAreaObjectKey,
@@ -48,6 +49,18 @@ const unquoteEtag = (etag: string): string => {
 	return etag.replace(/^"|"$/g, "");
 };
 
+/** Names the fields R2 left out, so a response short of one says which rather than only where. */
+const listMissingFields = (fields: Record<string, unknown>): string => {
+	return Object.entries(fields)
+		.filter(([, value]) => {
+			return value === undefined;
+		})
+		.map(([name]) => {
+			return name;
+		})
+		.join(", ");
+};
+
 const toObjectSummary = (content: _Object): StoredObjectSummary => {
 	const { Key, Size, ETag, LastModified } = content;
 
@@ -58,7 +71,7 @@ const toObjectSummary = (content: _Object): StoredObjectSummary => {
 		LastModified === undefined
 	) {
 		throw new Error(
-			`R2 の一覧応答に欠けた項目があります: ${Key ?? "(key が取れませんでした)"}`,
+			`R2 の一覧応答に項目が欠けています。key: ${Key ?? "(取得できませんでした)"}、欠けている項目: ${listMissingFields({ Key, Size, ETag, LastModified })}`,
 		);
 	}
 
@@ -70,22 +83,6 @@ const toObjectSummary = (content: _Object): StoredObjectSummary => {
 		etag: unquoteEtag(ETag),
 		lastModified: LastModified,
 	};
-};
-
-/**
- * Builds the `CopySource` value for `CopyObjectCommand`.
- * Keeps a key's `/` as path separators and percent-encodes everything else —
- * needed because a non-ASCII folder name doesn't survive as-is.
- */
-export const buildCopySource = (bucket: string, key: string): string => {
-	const encodedKey = key
-		.split("/")
-		.map((segment) => {
-			return encodeURIComponent(segment);
-		})
-		.join("/");
-
-	return `${bucket}/${encodedKey}`;
 };
 
 export const mediaStorageRepository = {
@@ -118,17 +115,31 @@ export const mediaStorageRepository = {
 		return objects;
 	},
 
-	/** Reads only an object's metadata. */
+	/**
+	 * Reads only an object's metadata. A response short of a field is an error rather than a default —
+	 * an empty etag registered against a row makes every later sync read the content as replaced.
+	 */
 	head: async (key: string): Promise<StoredObjectMetadata> => {
 		const response = await getR2Client().send(
 			new HeadObjectCommand({ Bucket: getMediaBucket(), Key: key }),
 		);
+		const { ContentLength, ETag, LastModified } = response;
+
+		if (
+			ContentLength === undefined ||
+			ETag === undefined ||
+			LastModified === undefined
+		) {
+			throw new Error(
+				`R2 のメタデータ応答に項目が欠けています。key: ${key}、欠けている項目: ${listMissingFields({ ContentLength, ETag, LastModified })}`,
+			);
+		}
 
 		return {
 			contentType: response.ContentType ?? "application/octet-stream",
-			byteSize: response.ContentLength ?? 0,
-			etag: unquoteEtag(response.ETag ?? ""),
-			lastModified: response.LastModified ?? new Date(0),
+			byteSize: ContentLength,
+			etag: unquoteEtag(ETag),
+			lastModified: LastModified,
 			metadata: response.Metadata ?? {},
 		};
 	},

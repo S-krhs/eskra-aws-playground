@@ -8,6 +8,10 @@
 			"types": "./dist/date/current-jst-date.d.ts",
 			"default": "./dist/date/current-jst-date.js"
 		},
+		"./date/jst-date-time-parts.js": {
+			"types": "./dist/date/jst-date-time-parts.d.ts",
+			"default": "./dist/date/jst-date-time-parts.js"
+		},
 		"./date/previous-jst-date.js": {
 			"types": "./dist/date/previous-jst-date.d.ts",
 			"default": "./dist/date/previous-jst-date.js"

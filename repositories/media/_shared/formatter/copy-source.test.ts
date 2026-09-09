@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCopySource } from "./repository.js";
+import { buildCopySource } from "./copy-source.js";
 
 describe("buildCopySource", () => {
 	it("builds a path prefixed with the bucket name", () => {

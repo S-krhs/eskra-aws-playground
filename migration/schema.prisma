@@ -90,9 +90,10 @@ model MediaObject {
 
   tags MediaObjectTag[]
 
-  @@index([logicalPath])
   // 一覧の既定順(ゴミ箱を除いた新着順)を index だけで引く
   @@index([trashedAt, uploadedAt])
+  // フォルダを指定した一覧は、絞り込みと並び替えをこの 1 本で賄う
+  @@index([logicalPath, trashedAt, uploadedAt, id])
   @@map("media_objects")
   @@schema("media")
 }

@@ -1,10 +1,15 @@
 // In scope: the input/output types of the MediaObject repository
 // Out of scope: validation schemas, DB access, key construction, thumbnail generation
 
-/** One media object under management. */
+/**
+ * One media object under management.
+ * The id is the UUID the object carries in its own storage metadata, and this table is the only place
+ * the pairing between it and `objectKey` is held.
+ */
 export interface MediaObject {
 	id: string;
 	objectKey: string;
+	/** Where the object sits inside its area, as the storage repository reports it. */
 	logicalPath: string;
 	fileName: string;
 	contentType: string;
@@ -17,6 +22,7 @@ export interface MediaObject {
 	hasThumbnail: boolean;
 	uploadedAt: Date;
 	syncedAt: Date;
+	/** Only ever read here — a listing skips a trashed row, and no method in this package writes it. */
 	trashedAt: Date | undefined;
 }
 
@@ -28,6 +34,12 @@ export interface MediaObjectSummary {
 	id: string;
 	objectKey: string;
 	etag: string;
+}
+
+/** How one object is identified on either side — its row id, and the key it sits under in storage. */
+export interface MediaObjectIdentity {
+	id: string;
+	objectKey: string;
 }
 
 /** One newly discovered object a sync registers. */

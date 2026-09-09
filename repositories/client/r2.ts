@@ -31,13 +31,20 @@ export const parseR2Credentials = (
 	const result = credentialsSchema.safeParse(parsed);
 
 	if (!result.success) {
+		// A value that isn't an object fails at the root, where zod leaves the path empty
 		const fields = result.error.issues
 			.map((issue) => {
 				return issue.path.join(".");
 			})
-			.join(", ");
+			.filter((path) => {
+				return path !== "";
+			});
 
-		throw new Error(`R2 の認証情報が不正です: ${fields}`);
+		throw new Error(
+			fields.length === 0
+				? "R2 の認証情報が JSON の object になっていません。"
+				: `R2 の認証情報が不正です: ${fields.join(", ")}`,
+		);
 	}
 
 	return result.data;
