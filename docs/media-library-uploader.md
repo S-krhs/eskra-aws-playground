@@ -43,7 +43,7 @@ npm run build
 npm run media:upload -- /mnt/c/Users/<ユーザー名>/Pictures/test.png
 ```
 
-`保存しました: _inbox/20260907-133045123.png` のように出れば成功。
+`[1/1] 保存しました: _pending/20260907-133045123.png` のように出れば成功。サムネイル生成後に `_inbox/` へ移ります。
 
 ## 5. 「送る」に登録する
 
