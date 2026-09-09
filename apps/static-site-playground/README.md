@@ -1,5 +1,9 @@
 # Static Site Playground
 
+Astro で `sasahara.uk` の静的サイトを生成する app です。`dist/` への生成物は `infra/sst.config.ts` の `StaticSitePlayground` が配信します。
+
+ページの追加と配信の設定は [docs/sasahara-uk-site.md](../../docs/sasahara-uk-site.md)。
+
 ## コマンド
 
 いずれも repo root から実行します。

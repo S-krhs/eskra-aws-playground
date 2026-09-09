@@ -30,6 +30,8 @@ Comments are for you (Claude), not for a human maintainer — write only what yo
 
 Same bar for doc-comments: skip them when the name and types already say everything (`getPrismaClient`, an obvious getter). Write one when there's a real invariant, a non-obvious return shape, or a public API another workspace imports.
 
+Comments and doc-comments are written in English, together with the rules and skills under `.claude/`. What a person reads at runtime or in a document is Japanese: log lines, error messages, `docs/`, and every `README.md`.
+
 ## Adding a dependency
 
 - Reach for a standard API or an existing dependency first.
@@ -40,7 +42,8 @@ Same bar for doc-comments: skip them when the name and types already say everyth
   **types cross a workspace boundary** is declared there too, to pin the single copy every workspace
   resolves. npm gives the root's `node_modules` one version of a name; if a conflicting major elsewhere
   in the tree takes that slot, every workspace nests its own copy and the same type coming from two
-  workspaces stops being the same type. `zod` is there for that reason and no other.
+  workspaces stops being the same type. `zod` and `@hono/zod-openapi` are there for that reason and no
+  other — a schema built with one workspace's `z` is handed to a route definition in another.
 
 ## Before you're done
 

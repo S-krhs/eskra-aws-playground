@@ -25,4 +25,5 @@
 }
 ```
 
-`bucket` は雛形に `infra/sst.config.ts` の `mediaBucketName` と揃った値が入っています。
+雛形の `bucket` には、`infra/sst.config.ts` の `mediaBucketName` が develop stage で決める値が入っています。バケットの作成手順は
+[docs/ci-cd.md](../../docs/ci-cd.md) の「R2 の手動セットアップ」。

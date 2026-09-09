@@ -41,10 +41,12 @@ describe("media library local run settings", () => {
 
 	// The user copies the generated template into place by hand, so a bucket name that drifted from
 	// the deploy would only surface as an empty library much later
-	it("matches the bucket name sst.config.ts deploys", () => {
-		expect(sstConfigSource).toContain(
-			`const mediaBucketName = "${settingsSchema.bucketName}"`,
-		);
+	it("matches the bucket name sst.config.ts deploys for develop", () => {
+		const developBucketName = sstConfigSource.match(
+			/const mediaBucketName =\s*\$app\.stage === "develop"\s*\? "(.+?)"/,
+		)?.[1];
+
+		expect(developBucketName).toBe(settingsSchema.bucketName);
 	});
 
 	// The management tool invokes this Lambda by name, and the name is composed in sst.config.ts

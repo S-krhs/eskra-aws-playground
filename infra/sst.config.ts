@@ -5,9 +5,6 @@ const appName = "eskra-aws-playground";
 
 const siteDomain = "sasahara.uk";
 
-// The R2 bucket lives outside SST (created on the Cloudflare side), so only its name is held here
-const mediaBucketName = "eskra-media-library";
-
 export default $config({
 	// Base SST app settings; the deploy target is fixed to the develop stage.
 	app(input) {
@@ -348,6 +345,14 @@ export default $config({
 		// The R2 API token (JSON), held as a Secret
 		const r2Credentials = new sst.Secret("R2Credentials");
 
+		// The bucket lives outside SST (created by hand on the Cloudflare side), so only its per-stage
+		// name is decided here. A stage other than develop names a bucket nobody created, which is what
+		// stops a personal stage from moving the real objects. R2 takes only lowercase and hyphens
+		const mediaBucketName =
+			$app.stage === "develop"
+				? "eskra-media-library"
+				: `eskra-media-library-${$app.stage.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+
 		// Carries thumbnail-generation requests, one at a time.
 		// visibilityTimeout is kept at or above the worker's timeout to stop redelivery mid-processing
 		const mediaThumbnailDeadLetterQueue = new sst.aws.Queue(
@@ -410,8 +415,8 @@ export default $config({
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
 			memory: "1 GB",
-			// The job itself takes the one run slot the DB allows; this stops a second invocation
-			// from even reaching that check when the cron and a manual start overlap
+			// A throttled async invoke isn't dropped, just retried from Lambda's event queue for up to
+			// 6 hours, so this only spaces overlapping starts out — the DB's one run slot rejects them
 			concurrency: { reserved: 1 },
 			link: [mediaThumbnailQueue, mediaAdoptQueue],
 			// repositories contracts both connections as env vars, so they go through environment
@@ -433,6 +438,8 @@ export default $config({
 				timeout: "5 minutes",
 				memory: "2 GB",
 				storage: "10 GB",
+				// Caps the burst from a sync's 10,000 messages, leaving the unreserved pool to the endpoint
+				concurrency: { reserved: 10 },
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 					R2_CREDENTIALS: r2Credentials.value,
@@ -456,6 +463,8 @@ export default $config({
 					"../apps/batch-playground/src/handlers/sqs-worker/handler.handler",
 				runtime: "nodejs22.x",
 				timeout: "2 minutes",
+				// Same cap as the thumbnail worker; a copy inside R2 needs fewer slots to keep up
+				concurrency: { reserved: 5 },
 				// It asks for the thumbnail of what it just took in
 				link: [mediaThumbnailQueue],
 				environment: {

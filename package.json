@@ -40,6 +40,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.11",
+		"@hono/zod-openapi": "^1.6.3",
 		"@types/node": "^26.4.0",
 		"prisma": "^7.10.0",
 		"prisma-zod-generator": "^3.3.1",

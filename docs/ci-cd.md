@@ -14,7 +14,16 @@ deploy の流れ:
 5. `npm run deploy`（`sst deploy --stage develop`）
 6. `sst shell --stage develop ... npm run discord:sync:run`
 
-deploy 前に `npm run build:browser-runtime-layer` で `.tmp/layers/browser-runtime` を作成する。
+## Lambda Layer のビルド
+
+`sst deploy` / `sst dev` / `sst diff` はどれも `.tmp/layers/` 配下の成果物を読む。
+
+```bash
+npm run build:browser-runtime-layer   # .tmp/layers/browser-runtime
+npm run build:ffmpeg-layer            # .tmp/layers/ffmpeg
+```
+
+`npm run deploy` と `npm run dev` は両方を先に実行する。`sst diff` を直接実行する場合は、先に手で実行しておく。
 
 ## GitHub Actions Secrets
 
@@ -42,6 +51,8 @@ app/job 固有の secret は該当 app の README を参照。
 
 `Backfill anime metrics to BigQuery` workflow に取得日の開始・終了を渡すと、`scripts/backfill-anime-bigquery.js` が暦月ごとに区切って連携 Lambda を invoke する。
 
+deploy 用の OIDC role には、連携 Lambda への `lambda:GetFunction` と `lambda:InvokeFunction` が必要。無い場合、スクリプトが関数の存在を確認する時点で AccessDenied になる。
+
 ## DB migration
 
 CD が deploy 直前に `npm run db:migrate`（`prisma migrate deploy`）を実行する。commit 済みの `migration/migrations/` だけが適用される。手順は [migration/README.md](../migration/README.md)。
@@ -58,6 +69,13 @@ CD が deploy 直前に `npm run db:migrate`（`prisma migrate deploy`）を実�
 2. default branch を develop 用にし、ローカル用の child branch `local` を作成する。
 3. 接続文字列を取得する: develop pooled（`DATABASE_URL`）、develop direct（`DIRECT_DATABASE_URL`）、local direct（手元の `.env`）。
 4. schema / table は console で作らず、`CREATE SCHEMA` も含めてすべて Prisma migration で行う。
+
+## R2 の手動セットアップ
+
+1. Cloudflare dashboard の R2 でバケットを作成する。名前は `infra/sst.config.ts` の `mediaBucketName` が develop stage で決める値に揃える。develop 以外の stage を動かす場合は、stage 名が付いたバケットも同じ手順で作る。
+2. R2 の API token を作成する。権限は **Object Read & Write**、適用範囲は 1 で作ったバケットだけにする。
+3. Account ID・Access Key ID・Secret Access Key を `{"accountId":"...","accessKeyId":"...","secretAccessKey":"..."}` の JSON にまとめ、GitHub Secrets の `R2_CREDENTIALS` へ登録する。
+4. personal stage を動かす場合は、その stage のバケット向けに作った token の JSON を SST secret `R2Credentials` へ登録する（「初回セットアップ」参照）。
 
 ## Discord スラッシュコマンドの同期
 

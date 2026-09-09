@@ -26,6 +26,7 @@ shared-domains/
     storage/
 packages/
   integrations/
+    bigquery/
     discord/
     lambda/
     scheduler/
@@ -93,6 +94,8 @@ apps/* -> shared-domains -> packages/libs/utils
 
 - `.claude/rules/coding.md` and `architecture.md`: always loaded.
 - `.claude/skills/`: architecture, layering, and process convention, **one skill per kind of code, never one per app**. A new app is covered by the kind it belongs to instead of falling through with nothing to read. Invoked when relevant, not auto-loaded by path. A skill names no app and no feature: what a specific job/component does — its algorithm, its gotchas, the platform limits it runs into — belongs in that file's own header and comments, so a skill reads the same regardless of what prompted the edit.
+- `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.
+- Each workspace's `README.md`: human-facing usage — commands and secrets. Japanese, same rule as `docs/`. A package's own API is documented in the code's doc-comments, not the README.
 
 ## Which skill covers which workspace
 
@@ -114,5 +117,3 @@ rules that govern it are the always-loaded ones above (slice layout, placement, 
 no barrel files).
 
 This table is the only place a kind and an app are linked — keep it out of the skills themselves. A workspace spanning two kinds appears twice. A new workspace picks its kind here, then copies the implementations already listed under it.
-- `docs/`: human-facing operational commands and procedures (CI/CD, manual setup steps). Japanese, and nothing but the commands/steps — no rationale, no one-time historical records.
-- Each workspace's `README.md`: human-facing usage — commands and secrets. Japanese, same rule as `docs/`. A package's own API is documented in the code's doc-comments, not the README.

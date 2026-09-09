@@ -14,7 +14,7 @@ Some apps never deploy — they run on the user's WSL, either as a resident serv
 - **Never put a config file's contents in a log or an error.** A validation failure names the field and the file path, nothing else.
 - Bind a server to `127.0.0.1` only. Don't open it to other devices without an explicit decision to.
 - If the port is already taken, assume another instance is running and exit 0. A resident restart must never end up running two instances.
-- Key and metadata conventions for external storage come from `shared-domains` — don't rebuild them in the tool.
+- External storage: the object metadata a tool attaches comes from `shared-domains`, and where an object lands is `repositories`' call — the tool names the area it means and never assembles a key. Don't rebuild either convention in the tool.
 - `repositories` reads its connection from `DATABASE_URL`, and there's no Lambda environment to supply it — set it at startup before any route or command runs.
 
 ## Launched from Windows

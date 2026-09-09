@@ -20,14 +20,14 @@ Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic and Clou
 
 ## Constraints that aren't obvious from the code
 
-- `sst.config.ts` depends on types SST generates under `.sst/platform`, which don't exist in CI — so typecheck is scoped to `infra/config/` (settings) and `infra/layers/` (layer-definition tests) via `infra/tsconfig.json`'s `include`. Lint still covers `sst.config.ts`.
+- `sst.config.ts` depends on types SST generates under `.sst/platform`, which don't exist in CI — so typecheck is scoped to `infra/config/` (settings), `infra/layers/` (layer-definition tests) and `infra/local/` (the WSL-local run's settings) via `infra/tsconfig.json`'s `include`. Lint still covers `sst.config.ts`.
 - `develop` stage is CD-only, protected two ways: a guard at the top of `run()` rejects every `run()`-evaluating command (`deploy`/`dev`/`refresh`) except `diff` (checked via `GITHUB_ACTIONS` env first, then SST's internal `$cli.command` — env check has to come first to keep `$cli` out of the CD path), and `app()`'s `protect` rejects `sst remove`, which doesn't evaluate `run()`. Neither `sst secret set` nor `sst secret list` goes through either guard, so `develop` secrets are set from CD only — never run those locally against `--stage develop`.
 - Scheduled Scheduler crons aren't created under `sst dev` — that's meant for local iteration, and a stray cron left firing after the dev session ends would be bad.
 - Secrets have exactly one source: the stage's SST secret. CD writes it as `SST_SECRET_*` env during deploy; runtime code reads it via `sst shell` (scripts) or `Resource` (Lambda). Never pass a secret as a plain env var. An ops script needing a stage's secrets lives in that app's `src/scripts/` and runs under `sst shell`, never from a Lambda.
 - The browser-runtime layer archive goes through a versioned `sst-asset-*` S3 bucket before publish, to avoid Lambda's direct-upload size limit.
 - An Actions-invoked operational Lambda gets an explicit `name: "${appName}-${$app.stage}-<purpose>"` on `sst.aws.Function` — the generated name can't be referenced, and renaming means recreating the function.
 - Manual-run ops workflows are `workflow_dispatch`, with the actual logic in a `scripts/` Node script. Break external-write operations into idempotent chunks and have failures print where to resume from.
-- GCP resources (project/dataset/service account) are outside SST's management — manual setup gets recorded in `docs/ci-cd.md` and the relevant app's README. Stage-varying values (dataset name) are decided in `sst.config.ts` and passed to Lambda as env.
+- Resources on another cloud (a dataset, a bucket, the service account or API token reaching them) are outside SST's management — manual setup gets recorded in `docs/ci-cd.md` and the relevant app's README. Their names are still decided per stage in `sst.config.ts` and passed to Lambda as env, so a stage nobody created the resource for fails on the first call instead of writing into the shared one.
 
 ## Before you're done
 

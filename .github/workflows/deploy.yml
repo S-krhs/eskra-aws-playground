@@ -34,6 +34,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-actions
+      # npm run deploy が layer をビルドする。アーカイブは 40MB 超を配布元から取るため、
+      # release 定義が変わるまで使い回す(CI job と同じ key)
+      - name: Restore ffmpeg archive
+        uses: actions/cache@v4
+        with:
+          path: .tmp/layers/ffmpeg-download
+          key: ffmpeg-archive-${{ hashFiles('infra/layers/ffmpeg/ffmpeg-release.json') }}
       # DIRECT_DATABASE_URL はこの step にだけ渡す(他の step へ漏らさない)
       - name: Run DB migration
         run: npm run db:migrate
