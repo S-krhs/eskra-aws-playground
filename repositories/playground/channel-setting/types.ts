@@ -3,7 +3,11 @@
 import type { ApplicationKey } from "../_shared/literals/application-key.js";
 import type { SettingKey } from "../_shared/literals/setting-key.js";
 
-/** The Discord channel setting for one guild and target user. */
+/**
+ * The Discord channel setting for one guild and target user. Settings are split into a table per
+ * scope — one for a whole guild, one for a user inside it — rather than a nullable user id or a
+ * reserved value standing in for "everyone".
+ */
 export interface ChannelSetting {
 	guildId: string;
 	channelId: string;

@@ -4,6 +4,10 @@
 		"build": {
 			"dependsOn": ["^build"],
 			"outputs": ["backend/dist/**"]
+		},
+		"build:ui": {
+			"dependsOn": ["^build"],
+			"outputs": ["frontend/dist/**"]
 		}
 	}
 }

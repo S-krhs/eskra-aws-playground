@@ -25,7 +25,7 @@
 		"discord:sync": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run",
 		"discord:sync:run": "node apps/function-url-playground/dist/scripts/sync-discord-commands.js",
 		"media:upload": "node infra/local/media-library/run.mjs upload",
-		"media:library": "npm run build --workspace=@eskra-aws-playground/media-library && npm run build:ui --workspace=@eskra-aws-playground/media-library && node infra/local/media-library/run.mjs library",
+		"media:library": "turbo run build build:ui --filter=@eskra-aws-playground/media-library && node infra/local/media-library/run.mjs library",
 		"discord:sync:dry": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run -- --dry-run",
 		"dev": "npm run build && npm run build:browser-runtime-layer && npm run build:ffmpeg-layer && sst dev --config infra/sst.config.ts",
 		"test": "turbo run test -- --exclude '**/dist/**'",

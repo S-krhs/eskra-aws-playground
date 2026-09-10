@@ -3,6 +3,7 @@
 
 export type AnimeMetricSourceType = "api" | "webpage";
 
+/** `item-index` makes the position in the list the metric, which is how a ranking is read. */
 export type AnimeJsonMetricValueSource =
 	| {
 			type: "item-index";
@@ -27,6 +28,7 @@ export interface AnimeHtmlElementSource {
 	index?: number;
 }
 
+/** `item-index` makes the position in the list the metric, which is how a ranking is read. */
 export type AnimeHtmlMetricValueSource =
 	| {
 			type: "item-index";
@@ -51,7 +53,9 @@ export interface AnimeMetricDataSource {
 	id: string;
 	websiteName: string;
 	metricName: string;
+	/** True when a larger value ranks higher; false for a rank, where a smaller one does. Orders the notification. */
 	higherIsBetter: boolean;
+	/** Which of the orchestrator's runs picks this definition up. */
 	scheduleHourJst: number;
 	source: AnimeApiMetricSource | AnimeWebpageMetricSource;
 }

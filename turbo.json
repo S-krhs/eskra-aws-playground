@@ -11,6 +11,10 @@
 			"dependsOn": ["^build"],
 			"outputs": ["dist/**"]
 		},
+		"build:ui": {
+			"dependsOn": ["^build"],
+			"outputs": []
+		},
 		"test": {
 			"dependsOn": ["^build"]
 		},
