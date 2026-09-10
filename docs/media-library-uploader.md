@@ -10,7 +10,7 @@ npm run build:local-launchers
 
 | ファイル | 用途 |
 | --- | --- |
-| `config.template.json` | 設定ファイルの雛形。`bucket` と `syncFunctionName` は deploy と揃った値で埋まっている |
+| `config.template.json` | 設定ファイルの雛形。`bucket` は deploy と揃った値で埋まっている |
 | `sendto-command.txt` | 「送る」に登録するコマンドライン。ディストリ名と clone 先が埋まっている |
 | `eskra-media-library.service` | 管理ツールを常駐させる systemd unit（[media-library-app.md](./media-library-app.md) で使う） |
 

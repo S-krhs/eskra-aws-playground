@@ -13,8 +13,8 @@ const configSchema = z.object({
 	bucket: z.string().min(1),
 	r2: z.unknown(),
 	databaseUrl: z.string().min(1),
-	syncFunctionName: z.string().min(1),
-	awsRegion: z.string().min(1),
+	syncEndpointUrl: z.string().min(1),
+	syncToken: z.string().min(1),
 	port: z.number().int().min(1).max(65535).optional(),
 });
 
@@ -31,13 +31,13 @@ const config = await loadJsonConfigFile({
 });
 
 // 2. Publish the connections as environment variables. Everything downstream contracts for one that
-//    way — repositories for the DB and R2, the sync operation for the Lambda — so they are all set
+//    way — repositories for the DB and R2, the sync operation for the endpoint — so they are all set
 //    before anything can reach for one.
 process.env.DATABASE_URL = config.databaseUrl;
 process.env.R2_CREDENTIALS = JSON.stringify(config.r2);
 process.env.MEDIA_BUCKET = config.bucket;
-process.env.MEDIA_SYNC_FUNCTION_NAME = config.syncFunctionName;
-process.env.AWS_REGION = config.awsRegion;
+process.env.MEDIA_SYNC_ENDPOINT_URL = config.syncEndpointUrl;
+process.env.MEDIA_SYNC_TOKEN = config.syncToken;
 
 // 3. Listen on the loopback interface only — this runs on the user's WSL, not on a network.
 const port = config.port ?? DEFAULT_PORT;

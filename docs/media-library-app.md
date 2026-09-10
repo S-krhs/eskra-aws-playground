@@ -4,11 +4,12 @@
 
 ## 1. 設定ファイルへ項目を足す
 
-`~/.config/eskra-media-library/config.json` に管理ツールが使う項目を足す。雛形（`.tmp/local/config.template.json`）には `bucket` と `syncFunctionName` が deploy と揃った値で入っている。
+`~/.config/eskra-media-library/config.json` に管理ツールが使う項目を足す。雛形（`.tmp/local/config.template.json`）には `bucket` が deploy と揃った値で入っている。
 
 - `databaseUrl` は Neon の pooled 接続文字列（GitHub Secret `DATABASE_URL` と同じ値）。
-- `awsRegion` は同期 Lambda が居る region。
-- 同期ボタンが Lambda を invoke するため、`~/.aws/credentials` か環境変数に、その関数への `lambda:InvokeFunction` を持つ資格情報を用意する。
+- `syncEndpointUrl` は SST の出力 `functionUrl` に `/media/sync` を付けた URL。
+- `syncToken` は GitHub Secret `MEDIA_SYNC_TOKEN` と同じ値。
+- AWS の認証情報は要らない。同期ボタンは上のエンドポイントを叩くだけで、Lambda の invoke はエンドポイント側が行う。
 
 ## 2. 動作を確かめる
 

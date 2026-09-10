@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../app.js";
 
 const syncRunRepository = vi.hoisted(() => {
@@ -12,17 +12,7 @@ vi.mock(
 	},
 );
 
-const lambda = vi.hoisted(() => {
-	return { invokeEvent: vi.fn() };
-});
-
-vi.mock("@eskra-aws-playground/integration-lambda/lambda-invoker.js", () => {
-	return {
-		LambdaInvoker: class {
-			invokeEvent = lambda.invokeEvent;
-		},
-	};
-});
+const fetchMock = vi.fn();
 
 const uiOrigin = "http://127.0.0.1:7420";
 const runId = "33333333-3333-4333-8333-333333333333";
@@ -40,17 +30,23 @@ const finishedRun = {
 };
 
 beforeEach(() => {
-	process.env.MEDIA_SYNC_FUNCTION_NAME = "media-sync";
+	process.env.MEDIA_SYNC_ENDPOINT_URL = "https://endpoint.test/media/sync";
+	process.env.MEDIA_SYNC_TOKEN = "sync-token";
 	syncRunRepository.findLatest.mockReset();
 	syncRunRepository.findLatest.mockResolvedValue(finishedRun);
 	syncRunRepository.findUnfinished.mockReset();
 	syncRunRepository.findUnfinished.mockResolvedValue(undefined);
-	lambda.invokeEvent.mockReset();
-	lambda.invokeEvent.mockResolvedValue(undefined);
+	fetchMock.mockReset();
+	fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+	vi.stubGlobal("fetch", fetchMock);
+});
+
+afterEach(() => {
+	vi.unstubAllGlobals();
 });
 
 describe("startSync", () => {
-	it("asks the sync Lambda to run and answers with an empty acceptance", async () => {
+	it("asks the sync endpoint to start a run and answers with an empty acceptance", async () => {
 		const response = await createApp().request(`${uiOrigin}/api/sync`, {
 			method: "POST",
 			headers: { origin: uiOrigin },
@@ -58,14 +54,15 @@ describe("startSync", () => {
 
 		expect(response.status).toBe(202);
 		expect(await response.text()).toBe("");
-		expect(lambda.invokeEvent).toHaveBeenCalledWith({ job: "media-sync" });
+		expect(fetchMock).toHaveBeenCalledWith(
+			"https://endpoint.test/media/sync",
+			expect.objectContaining({ method: "POST" }),
+		);
 	});
 
-	it("answers 500 without naming the function when it can't be reached", async () => {
+	it("answers 500 without repeating the endpoint's own refusal when it can't be reached", async () => {
 		const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-		lambda.invokeEvent.mockRejectedValue(
-			new Error("Lambda 関数の非同期呼び出しに失敗しました: media-sync"),
-		);
+		fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
 
 		const response = await createApp().request(`${uiOrigin}/api/sync`, {
 			method: "POST",
