@@ -16,6 +16,35 @@ describe("buildMediaObjectMetadata", () => {
 			"original-name": "%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88.png",
 		});
 	});
+
+	// A Japanese character costs nine after encoding, so a name Windows accepts can still blow the
+	// 2KB metadata budget and come back as a bare 400 from the SDK
+	it("cuts a long name down to the metadata budget", () => {
+		const originalName = `${"あ".repeat(300)}.png`;
+		const built = buildMediaObjectMetadata({ mediaId, originalName });
+		const encodedName = built["original-name"];
+
+		expect(encodedName.length).toBeLessThanOrEqual(
+			2048 - "media-id".length - mediaId.length - "original-name".length,
+		);
+		expect(originalName.startsWith(decodeURIComponent(encodedName))).toBe(true);
+	});
+
+	// Cutting the encoded string directly would leave a half-written %E3 or half a surrogate pair
+	it("cuts on a character boundary, so what is left still decodes", () => {
+		const built = buildMediaObjectMetadata({
+			mediaId,
+			originalName: "🎬".repeat(300),
+		});
+		const decoded = decodeURIComponent(built["original-name"]);
+
+		expect(decoded.length).toBeGreaterThan(0);
+		expect(
+			[...decoded].every((character) => {
+				return character === "🎬";
+			}),
+		).toBe(true);
+	});
 });
 
 describe("parseMediaObjectMetadata", () => {

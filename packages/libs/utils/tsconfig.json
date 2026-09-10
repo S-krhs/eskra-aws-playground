@@ -5,6 +5,7 @@
 		"rootDir": "."
 	},
 	"include": [
+		"config/**/*.ts",
 		"date/**/*.ts",
 		"gacha/**/*.ts",
 		"logger/**/*.ts",

@@ -11,10 +11,8 @@ import {
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import type { RelocateMediaObjectInput } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
-import {
-	MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
-	type MediaThumbnailMessage,
-} from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
+import { MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-delivery.js";
+import type { MediaThumbnailMessage } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
 import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/storage/content-type.js";
 
 /**

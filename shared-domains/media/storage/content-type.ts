@@ -1,5 +1,5 @@
 // In scope: the extension allowlist and the content-type each one maps to
-// Out of scope: inspecting a file's actual content, key construction, talking to R2
+// Out of scope: inspecting a file's actual content, key construction, talking to external storage
 
 // Explicit allowlist — an extension not listed here is never treated as media
 const CONTENT_TYPES: Record<string, string> = {
@@ -19,5 +19,10 @@ const CONTENT_TYPES: Record<string, string> = {
 
 /** Returns undefined for an unlisted extension — the caller skips that file. */
 export const resolveContentType = (extension: string): string | undefined => {
-	return CONTENT_TYPES[extension.replace(/^\./, "").toLowerCase()];
+	const listed = extension.replace(/^\./, "").toLowerCase();
+
+	// A file named `x.constructor` would otherwise reach Object.prototype and come back as a function
+	return Object.hasOwn(CONTENT_TYPES, listed)
+		? CONTENT_TYPES[listed]
+		: undefined;
 };

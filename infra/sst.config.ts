@@ -34,7 +34,7 @@ export default $config({
 
 		const { jobSchedules } = await import("./config/job-schedules.js");
 		const { MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT } = await import(
-			"@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js"
+			"@eskra-aws-playground/shared-domains/media/jobs/thumbnail-delivery.js"
 		);
 		const { alarmDescriptions } = await import(
 			"./config/alarm-descriptions.js"

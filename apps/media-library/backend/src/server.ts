@@ -1,6 +1,6 @@
 // In scope: reading the config file into the environment and starting the process listening on 127.0.0.1
 // Out of scope: route handling, building the UI, how it stays resident (systemd's job)
-import { readFile } from "node:fs/promises";
+import { loadJsonConfigFile } from "@eskra-aws-playground/libs/config/json-config-file.js";
 import { serve } from "@hono/node-server";
 import { z } from "zod";
 import { createApp } from "./app.js";
@@ -22,44 +22,10 @@ const configSchema = z.object({
 //    systemd unit both put it here — so there is no default path to fall back to. Every failure names
 //    the field and the file's location and never the content: the file holds a key and a connection
 //    string, and this goes to the console.
-const configPath = process.env.MEDIA_LIBRARY_CONFIG;
-const config = await (async () => {
-	if (!configPath) {
-		throw new Error(
-			"MEDIA_LIBRARY_CONFIG が設定されていません。infra/local/run.mjs 経由で起動してください",
-		);
-	}
-
-	let raw: string;
-
-	try {
-		raw = await readFile(configPath, "utf8");
-	} catch {
-		throw new Error(`設定ファイルを読めませんでした: ${configPath}`);
-	}
-
-	let parsed: unknown;
-
-	try {
-		parsed = JSON.parse(raw);
-	} catch {
-		throw new Error(`設定ファイルが JSON として不正です: ${configPath}`);
-	}
-
-	const result = configSchema.safeParse(parsed);
-
-	if (!result.success) {
-		const fields = result.error.issues
-			.map((issue) => {
-				return issue.path.join(".");
-			})
-			.join(", ");
-
-		throw new Error(`設定ファイルの項目が不正です(${fields}): ${configPath}`);
-	}
-
-	return result.data;
-})().catch((error: unknown) => {
+const config = await loadJsonConfigFile({
+	envName: "MEDIA_LIBRARY_CONFIG",
+	schema: configSchema,
+}).catch((error: unknown) => {
 	console.error(error instanceof Error ? error.message : String(error));
 	process.exit(1);
 });

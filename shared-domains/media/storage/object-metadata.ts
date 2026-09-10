@@ -1,5 +1,5 @@
-// In scope: the R2 object-metadata keys, and converting between that metadata and a media object's identity
-// Out of scope: talking to R2, key construction, deciding where metadata is stored
+// In scope: the object-metadata keys a media object carries, and converting between that metadata and its identity
+// Out of scope: talking to external storage, key construction, deciding where metadata is stored
 import { z } from "zod";
 
 export const MEDIA_ID_METADATA_KEY = "media-id";
@@ -11,17 +11,54 @@ export interface MediaObjectMetadata {
 	originalName: string;
 }
 
+/** What S3-compatible storage allows for user-defined metadata, counting every key and value together. */
+const METADATA_MAX_LENGTH = 2048;
+
 /**
  * Metadata travels as an HTTP header and only ASCII survives, so the file name —
- * which may contain Japanese — is percent-encoded.
+ * which may contain Japanese — is percent-encoded. Encoding costs a Japanese character nine
+ * characters, and Windows allows 255 of them, so a long name is cut to fit the metadata budget.
  */
 export const buildMediaObjectMetadata = (
 	metadata: MediaObjectMetadata,
 ): Record<string, string> => {
+	const originalNameBudget =
+		METADATA_MAX_LENGTH -
+		MEDIA_ID_METADATA_KEY.length -
+		metadata.mediaId.length -
+		ORIGINAL_NAME_METADATA_KEY.length;
+
 	return {
 		[MEDIA_ID_METADATA_KEY]: metadata.mediaId,
-		[ORIGINAL_NAME_METADATA_KEY]: encodeURIComponent(metadata.originalName),
+		[ORIGINAL_NAME_METADATA_KEY]: encodeOriginalName(
+			metadata.originalName,
+			originalNameBudget,
+		),
 	};
+};
+
+/**
+ * Encodes character by character so a cut never lands inside an escape sequence or a surrogate pair.
+ * The tail of an over-long name is dropped rather than the upload failing over it: the name is only
+ * ever shown to a person, while the media-id is what identifies the object.
+ */
+const encodeOriginalName = (
+	originalName: string,
+	maxLength: number,
+): string => {
+	let encoded = "";
+
+	for (const character of originalName) {
+		const encodedCharacter = encodeURIComponent(character);
+
+		if (encoded.length + encodedCharacter.length > maxLength) {
+			break;
+		}
+
+		encoded += encodedCharacter;
+	}
+
+	return encoded;
 };
 
 const mediaIdSchema = z.uuid();

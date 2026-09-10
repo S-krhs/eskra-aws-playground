@@ -53,4 +53,25 @@ describe("Discord custom ID", () => {
 			buildCustomId({ prefix: "panel", action: "page:next" });
 		}).toThrow("custom_id の segment が不正です。");
 	});
+
+	// Over the limit Discord only answers with a 400 at send time, which points nowhere near here
+	it("refuses to build a custom_id longer than Discord allows", () => {
+		expect(() => {
+			buildCustomId({
+				prefix: "play-check-reminder",
+				target: "a".repeat(80),
+				action: "won",
+			});
+		}).toThrow("custom_id が 100 文字を超えています。");
+	});
+
+	it("builds a custom_id that lands exactly on the limit", () => {
+		expect(
+			buildCustomId({
+				prefix: "panel",
+				target: "b".repeat(89),
+				action: "next",
+			}),
+		).toHaveLength(100);
+	});
 });

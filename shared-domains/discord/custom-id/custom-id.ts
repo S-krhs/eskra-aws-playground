@@ -10,6 +10,9 @@ export interface DiscordCustomId {
 
 const CUSTOM_ID_SEPARATOR = ":";
 
+/** Discord's own cap. Going over it only ever shows up as a 400 at send time. */
+const CUSTOM_ID_MAX_LENGTH = 100;
+
 /** With no target the second segment is still kept, giving `prefix::action`. */
 export const buildCustomId = ({
 	prefix,
@@ -26,7 +29,15 @@ export const buildCustomId = ({
 		throw new Error("custom_id の segment が不正です。");
 	}
 
-	return [prefix, target, action].join(CUSTOM_ID_SEPARATOR);
+	const customId = [prefix, target, action].join(CUSTOM_ID_SEPARATOR);
+
+	if (customId.length > CUSTOM_ID_MAX_LENGTH) {
+		throw new Error(
+			`custom_id が ${CUSTOM_ID_MAX_LENGTH} 文字を超えています。`,
+		);
+	}
+
+	return customId;
 };
 
 export const parseCustomId = (

@@ -22,4 +22,13 @@ describe("resolveContentType", () => {
 		expect(resolveContentType("txt")).toBeUndefined();
 		expect(resolveContentType("")).toBeUndefined();
 	});
+
+	// A file name reaching Object.prototype would otherwise hand back a function or an object,
+	// and pass every `if (!contentType)` on the way to storage
+	it("returns undefined for a key inherited from Object.prototype", () => {
+		expect(resolveContentType("constructor")).toBeUndefined();
+		expect(resolveContentType("__proto__")).toBeUndefined();
+		expect(resolveContentType("toString")).toBeUndefined();
+		expect(resolveContentType(".hasOwnProperty")).toBeUndefined();
+	});
 });

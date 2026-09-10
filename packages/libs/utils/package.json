@@ -4,6 +4,10 @@
 	"private": true,
 	"type": "module",
 	"exports": {
+		"./config/json-config-file.js": {
+			"types": "./dist/config/json-config-file.d.ts",
+			"default": "./dist/config/json-config-file.js"
+		},
 		"./date/current-jst-date.js": {
 			"types": "./dist/date/current-jst-date.d.ts",
 			"default": "./dist/date/current-jst-date.js"
@@ -42,6 +46,7 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"dayjs": "^1.11.23"
+		"dayjs": "^1.11.23",
+		"zod": "^4.5.3"
 	}
 }

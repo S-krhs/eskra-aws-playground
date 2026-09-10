@@ -48,12 +48,16 @@ for (const [index, path] of paths.entries()) {
 	}
 }
 
-// 4. Report the run, and let the failure count decide the exit code.
-console.log(`\n${uploaded} 件を保存しました。`);
-
-if (failures.length > 0) {
-	console.error(`${failures.length} 件が失敗しました。`);
-	process.exit(1);
+// 4. Report the run. Anything that did go up is worth the sync line even when the rest failed
+if (uploaded > 0) {
+	console.log(
+		`\n${uploaded} 件を保存しました。管理ツールに出すには同期を実行してください。`,
+	);
 }
 
-console.log("管理ツールに出すには同期を実行してください。");
+// 5. Let the failure count decide the exit code — an exit code is one byte, so a selection with more
+//    than 255 failures saturates instead of wrapping around to 0 and reading as a clean run
+if (failures.length > 0) {
+	console.error(`\n${failures.length} 件が失敗しました。`);
+	process.exit(Math.min(failures.length, 255));
+}

@@ -18,6 +18,12 @@ export interface UploadedMedia {
  * Stores a file where it waits for its thumbnail. The UUID and original file name only go into object
  * metadata — nothing is written to the DB, which the sync job takes care of later.
  * `filePath` is the path as WSL sees it.
+ *
+ * Sending the same file again stores a second copy: the key takes a suffix rather than landing on the
+ * existing object, and the UUID is drawn fresh per call. Re-sending a whole selection after a partial
+ * failure therefore duplicates everything that already went up, in storage and in the library the
+ * sync builds from it. Telling that apart from a genuinely second copy would mean comparing the
+ * content itself, so it is accepted as is — a retry sends only the files that failed.
  */
 export const mediaUploadJob = async (
 	filePath: string,

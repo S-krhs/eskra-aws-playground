@@ -1,5 +1,5 @@
-// In scope: the wire schema for a thumbnail job's message, and how many deliveries it gets
-// Out of scope: the job names themselves, job implementation, SQS send/receive, routing
+// In scope: the wire schema for a thumbnail job's message
+// Out of scope: the job names themselves, how many deliveries it gets, job implementation, SQS send/receive, routing
 import { z } from "zod";
 import { mediaJobNames } from "./names.js";
 
@@ -11,9 +11,3 @@ export const mediaThumbnailMessageSchema = z.object({
 });
 
 export type MediaThumbnailMessage = z.infer<typeof mediaThumbnailMessageSchema>;
-
-/**
- * How many times SQS delivers a thumbnail request before the DLQ takes it.
- * The queue's redrive policy and the job's give-up point both read this, so they can't drift apart.
- */
-export const MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT = 3;
