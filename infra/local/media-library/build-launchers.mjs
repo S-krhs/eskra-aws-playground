@@ -47,8 +47,11 @@ RestartSec=5
 WantedBy=default.target
 `;
 
-// A SendTo shortcut has nowhere to put an environment entry, so this one goes through run.mjs
-const sendToCommand = `C:\\Windows\\System32\\wsl.exe -d ${distroName} -- node ${launcherPath} upload
+// A SendTo shortcut has nowhere to put an environment entry, so this one goes through run.mjs.
+// -e (--exec) rather than --: with --, wsl.exe joins the trailing arguments and hands them to
+// /bin/bash -c, and the shell eats the backslashes in the Windows path Explorer appends, leaving
+// E:Picturesa.jpg. -e execs directly, so the path arrives whole
+const sendToCommand = `C:\\Windows\\System32\\wsl.exe -d ${distroName} -e node ${launcherPath} upload
 `;
 
 const configTemplate = `${JSON.stringify(

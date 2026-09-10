@@ -20,6 +20,7 @@ Some apps never deploy — they run on the user's WSL, either as a resident serv
 ## Launched from Windows
 
 - Arguments arrive as Windows paths (`C:\...`). Convert to a WSL path before any read or write.
+- A generated launcher runs the tool through `wsl.exe -e`, never `wsl.exe --`. With `--`, wsl.exe joins the trailing arguments and hands them to the login shell, which eats the backslashes in the path Explorer appends — the tool receives `E:Picturesa.jpg` and can't resolve it. `-e` execs directly, so the path arrives whole.
 - SendTo splits a large selection across multiple launches (~32KB command-line limit per launch). One launch sees a subset — never write logic assuming it sees the whole selection.
 - Windows creation time isn't readable through WSL's `stat` (`birthtime` reads as epoch 0). Use mtime; genuinely needing creation time means going through `powershell.exe`.
 - One file's failure doesn't stop the run. Report per file, and reflect the failure count in the exit code at the end.
