@@ -10,7 +10,7 @@
 		"generate:api": "npm run generate:openapi && orval --config orval.config.ts",
 		"build:ui": "vite build --config frontend/vite.config.ts",
 		"dev:ui": "vite --config frontend/vite.config.ts",
-		"test": "vitest run",
+		"test": "vitest run --exclude '**/dist/**'",
 		"typecheck": "tsc -p backend/tsconfig.json --noEmit && tsc -p frontend/tsconfig.json --noEmit",
 		"lint": "biome ci . && cd frontend && steiger ./src",
 		"validate": "npm run typecheck && npm run lint && npm run test"
