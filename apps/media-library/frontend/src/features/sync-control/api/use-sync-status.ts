@@ -28,7 +28,9 @@ export const useSyncStatus = (): SyncStatus => {
 	const status = useReadSyncStatus({
 		query: {
 			refetchInterval: (query) => {
-				return query.state.data?.data.running
+				const data = query.state.data;
+
+				return data?.status === 200 && data.data.running
 					? RUNNING_INTERVAL_MS
 					: IDLE_INTERVAL_MS;
 			},
@@ -43,11 +45,16 @@ export const useSyncStatus = (): SyncStatus => {
 		},
 	});
 
+	// A 500 comes back as a resolved response rather than a rejection, so it is read off the union here
+	const body = status.data?.status === 200 ? status.data.data : undefined;
+	const failure =
+		status.data?.status === 500 ? status.data.data.message : undefined;
+
 	return {
-		latest: status.data?.data.latest ?? null,
-		running: status.data?.data.running ?? null,
+		latest: body?.latest ?? null,
+		running: body?.running ?? null,
 		isStarting: start.isPending,
-		error: toMessage(status.error ?? start.error),
+		error: failure ?? toMessage(status.error ?? start.error),
 		start: () => {
 			start.mutate();
 		},

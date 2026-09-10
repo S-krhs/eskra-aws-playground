@@ -6,7 +6,10 @@ import {
 	mediaListResponseSchema,
 } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import { createRoute, z } from "@hono/zod-openapi";
-import { errorResponseSchema } from "../_shared/responses/error-response.js";
+import {
+	errorResponseSchema,
+	serverErrorResponse,
+} from "../_shared/responses/error-response.js";
 
 export const listMediaRoute = createRoute({
 	method: "get",
@@ -23,6 +26,7 @@ export const listMediaRoute = createRoute({
 			description: "query の項目が不正",
 			content: { "application/json": { schema: errorResponseSchema } },
 		},
+		500: serverErrorResponse,
 	},
 });
 
@@ -31,14 +35,19 @@ export const getThumbnailRoute = createRoute({
 	path: "/media/{id}/thumbnail",
 	operationId: "getThumbnail",
 	summary: "メディア 1 件のサムネイル画像を返す",
+	// The screen reaches this through an <img> src, so the tag is what keeps it out of the generated
+	// client — orval filters endpoints by tag and by nothing else
+	tags: ["thumbnail"],
 	request: { params: mediaIdParamSchema },
 	responses: {
 		200: {
 			description: "サムネイルの webp 画像",
-			// The screen reaches this through an <img> src rather than the generated client
 			content: {
 				"image/webp": { schema: z.string().openapi({ format: "binary" }) },
 			},
+		},
+		304: {
+			description: "If-None-Match が今の ETag と一致し、中身が変わっていない",
 		},
 		400: {
 			description: "id が UUID ではない",
@@ -48,5 +57,6 @@ export const getThumbnailRoute = createRoute({
 			description: "サムネイルがまだ生成されていない",
 			content: { "application/json": { schema: errorResponseSchema } },
 		},
+		500: serverErrorResponse,
 	},
 });

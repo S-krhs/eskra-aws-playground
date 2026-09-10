@@ -7,7 +7,13 @@ import { defineConfig } from "orval";
 
 export default defineConfig({
 	mediaLibrary: {
-		input: "../../shared-domains/media/library-api/openapi.json",
+		input: {
+			target: "../../shared-domains/media/library-api/openapi.json",
+			// The thumbnail answers with an image the screen reaches through an <img> src, so there is
+			// nothing for a generated fetcher to type. orval selects endpoints by tag alone, which is
+			// why that route carries one.
+			filters: { mode: "exclude", tags: ["thumbnail"] },
+		},
 		output: {
 			target: "./frontend/src/shared/api/generated/media-library.ts",
 			client: "react-query",

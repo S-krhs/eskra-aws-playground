@@ -5,8 +5,25 @@ import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
 import type { getThumbnailRoute, listMediaRoute } from "./schema.js";
 
-// A thumbnail gets a new id whenever its content changes, so the browser may keep it
-const THUMBNAIL_CACHE_CONTROL = "private, max-age=86400";
+// A rebuilt thumbnail keeps its id and therefore its URL, so the ETag is the only thing that tells the
+// browser the picture changed. Revalidating on every read costs one 304 and can't serve a stale one.
+const THUMBNAIL_CACHE_CONTROL = "private, max-age=0, must-revalidate";
+
+/** Weak, because the value identifies the source object's content rather than the thumbnail's bytes. */
+const toWeakEtag = (etag: string): string => {
+	return `W/"${etag}"`;
+};
+
+/** If-None-Match carries a comma-separated list, and each entry may be quoted and marked weak. */
+const parseIfNoneMatch = (header: string | undefined): string[] => {
+	if (!header) {
+		return [];
+	}
+
+	return header.split(",").map((entry) => {
+		return entry.trim().replace(/^W\//, "").replace(/^"|"$/g, "");
+	});
+};
 
 export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 	const query = c.req.valid("query");
@@ -38,15 +55,26 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 export const getThumbnail: RouteHandler<typeof getThumbnailRoute> = async (
 	c,
 ) => {
-	const result = await getThumbnailOperation(c.req.valid("param").id);
+	const result = await getThumbnailOperation({
+		mediaId: c.req.valid("param").id,
+		knownEtags: parseIfNoneMatch(c.req.header("if-none-match")),
+	});
 
 	if (result.kind === "NOT_GENERATED") {
 		// Absent until the sync finishes generating it; the screen falls back to a placeholder
 		return c.json({ message: "サムネイルがまだありません" }, 404);
 	}
 
+	if (result.kind === "NOT_MODIFIED") {
+		return c.body(null, 304, {
+			etag: toWeakEtag(result.etag),
+			"cache-control": THUMBNAIL_CACHE_CONTROL,
+		});
+	}
+
 	return c.body(result.data.body, 200, {
 		"content-type": result.data.contentType,
 		"cache-control": THUMBNAIL_CACHE_CONTROL,
+		etag: toWeakEtag(result.data.etag),
 	});
 };

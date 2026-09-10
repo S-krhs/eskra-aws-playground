@@ -4,8 +4,8 @@
 import { z } from "@hono/zod-openapi";
 
 // What the virtual scroll appends at a time: larger makes the first paint heavier, smaller makes the appending visible
-export const MEDIA_PAGE_DEFAULT_LIMIT = 200;
-export const MEDIA_PAGE_MAX_LIMIT = 500;
+const MEDIA_PAGE_DEFAULT_LIMIT = 200;
+const MEDIA_PAGE_MAX_LIMIT = 500;
 
 /** A position in the listing — the last item of the previous page. Both fields travel together or not at all. */
 export const mediaCursorSchema = z
@@ -52,7 +52,9 @@ export const mediaSchema = z
 export const mediaListResponseSchema = z
 	.object({
 		objects: z.array(mediaSchema),
-		nextCursor: mediaCursorSchema.nullable(),
+		// A union rather than `.nullable()`: calling that on a registered schema writes the null into
+		// the shared component itself, so every other reference to it would allow null too
+		nextCursor: z.union([mediaCursorSchema, z.null()]),
 	})
 	.openapi("MediaListResponse");
 
@@ -72,21 +74,14 @@ export const syncRunSchema = z
 
 export const syncStatusResponseSchema = z
 	.object({
-		latest: syncRunSchema.nullable(),
-		running: syncRunSchema.nullable(),
+		latest: z.union([syncRunSchema, z.null()]),
+		running: z.union([syncRunSchema, z.null()]),
 	})
 	.openapi("SyncStatusResponse");
-
-export const syncStartResponseSchema = z
-	.object({
-		started: z.boolean(),
-	})
-	.openapi("SyncStartResponse");
 
 export type MediaCursor = z.infer<typeof mediaCursorSchema>;
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
 export type Media = z.infer<typeof mediaSchema>;
 export type MediaListResponse = z.infer<typeof mediaListResponseSchema>;
 export type SyncRun = z.infer<typeof syncRunSchema>;
-export type SyncStartResponse = z.infer<typeof syncStartResponseSchema>;
 export type SyncStatusResponse = z.infer<typeof syncStatusResponseSchema>;

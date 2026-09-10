@@ -2,7 +2,6 @@
 // Out of scope: running the sync, waiting for it, reading the run record
 import { LambdaInvoker } from "@eskra-aws-playground/integration-lambda/lambda-invoker.js";
 import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/names.js";
-import type { SyncStartResponse } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 /**
@@ -10,9 +9,7 @@ import type { OperationResult } from "../../_shared/intermediate-models/operatio
  * record instead. A second start is refused by the sync job itself, which takes the one run slot the
  * DB allows, so nothing guards against it here.
  */
-export const startSyncOperation = async (): Promise<
-	OperationResult<SyncStartResponse>
-> => {
+export const startSyncOperation = async (): Promise<OperationResult<void>> => {
 	const functionName = process.env.MEDIA_SYNC_FUNCTION_NAME;
 
 	if (!functionName) {
@@ -23,5 +20,5 @@ export const startSyncOperation = async (): Promise<
 		job: mediaJobNames.mediaSync,
 	});
 
-	return { kind: "OK", data: { started: true } };
+	return { kind: "OK", data: undefined };
 };
