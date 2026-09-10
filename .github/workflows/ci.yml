@@ -23,7 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Typecheck
-        run: npm run typecheck
+        # npm script 側は systemd の cgroup で上限を掛けるが、runner には user session が無いので
+        # turbo を直に呼ぶ
+        run: npx turbo run typecheck
       - name: Lint
         run: npm run lint
       # アーカイブは 40MB 超を配布元から取るため、release 定義が変わるまで使い回す
