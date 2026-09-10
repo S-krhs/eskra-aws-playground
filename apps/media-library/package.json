@@ -33,7 +33,7 @@
 	"devDependencies": {
 		"@feature-sliced/steiger-plugin": "^0.7.0",
 		"@types/react": "^19.2.18",
-		"@types/react-dom": "^19.2.5",
+		"@types/react-dom": "^19.2.7",
 		"@vitejs/plugin-react": "^6.1.1",
 		"daisyui": "^5.7.28",
 		"orval": "^8.30.0",
