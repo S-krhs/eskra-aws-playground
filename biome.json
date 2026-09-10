@@ -5,7 +5,13 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**/*", "!**/package-lock.json", "!repositories/generated"]
+		"includes": [
+			"**/*",
+			"!**/package-lock.json",
+			"!repositories/generated",
+			"!shared-domains/media/library-api/openapi.json",
+			"!apps/media-library/frontend/src/shared/api/generated"
+		]
 	},
 	"css": {
 		"parser": {
@@ -37,7 +43,7 @@
 			}
 		},
 		{
-			"includes": ["apps/static-site-playground/**"],
+			"includes": ["apps/media-library/**", "apps/static-site-playground/**"],
 			"linter": {
 				"rules": {
 					"nursery": {

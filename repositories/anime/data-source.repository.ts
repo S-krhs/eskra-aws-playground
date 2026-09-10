@@ -1,5 +1,5 @@
-// In scope: repository からアニメ指標スクレイピング定義を読み込む
-// Out of scope: スクレイピング実行、parser 入力変換、外部通知を行う
+// In scope: reading anime-metric scraping definitions out of the catalog
+// Out of scope: running the scrape, converting parser input, outbound notifications
 import { animeMetricDataSources } from "./data.js";
 import type { AnimeMetricDataSource } from "./types.js";
 

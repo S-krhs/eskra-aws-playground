@@ -1,5 +1,5 @@
-// In scope: Windows Forms 風の押しボタン
-// Out of scope: 押されたときの処理、リンクとして開くボタン
+// In scope: the Windows-Forms-style push button
+// Out of scope: what happens on press, a button that opens as a link
 
 import type { ReactNode } from "react";
 
@@ -8,7 +8,7 @@ interface Props {
 	children: ReactNode;
 }
 
-/** 立体的な枠を持つ押しボタン。押している間は枠がへこむ */
+/** A push button with a raised bevel that sinks while held */
 export const Button = ({ onPress, children }: Props) => {
 	return (
 		<button

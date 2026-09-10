@@ -1,8 +1,6 @@
 # Migration
 
-Prisma schema と migration history を管理する領域です。
-npm workspace ではなく、`prisma` CLI(root devDependency)を root の scripts から実行します。
-CLI の設定(schema / migrations の場所、接続先の解決)は root の `prisma.config.ts` にあります。
+Prisma schema と migration history を置く領域です。npm workspace ではなく、`prisma` CLI(root の devDependency)を root の scripts から実行します。CLI の設定(schema / migrations の場所、接続先の解決)は root の `prisma.config.ts` にあります。
 
 ## コマンド(root で実行)
 
@@ -14,7 +12,7 @@ CLI の設定(schema / migrations の場所、接続先の解決)は root の `p
 
 ## 接続文字列の扱い
 
-- `DATABASE_URL`: pooled 接続。runtime(repositories/db)だけが使う。
+- `DATABASE_URL`: pooled 接続。runtime(repositories/client)だけが使う。
 - `DIRECT_DATABASE_URL`: direct 接続。migrate 系コマンドだけが使う(`prisma.config.ts` で解決)。CD では migration step の env にだけ渡し、他の step へ漏らさない。
 - ローカルは root `.env` に **ローカル用 Neon branch** の値を入れる(`.env.example` 参照)。develop 用の値を手元に置かない。
 

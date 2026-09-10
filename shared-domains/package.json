@@ -4,15 +4,15 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		"./contracts/*.test.js": null,
-		"./contracts/*.js": {
-			"types": "./dist/contracts/*.d.ts",
-			"default": "./dist/contracts/*.js"
+		"./media/*.test.js": null,
+		"./media/*.js": {
+			"types": "./dist/media/*.d.ts",
+			"default": "./dist/media/*.js"
 		},
-		"./protocols/*.test.js": null,
-		"./protocols/*.js": {
-			"types": "./dist/protocols/*.d.ts",
-			"default": "./dist/protocols/*.js"
+		"./discord/*.test.js": null,
+		"./discord/*.js": {
+			"types": "./dist/discord/*.d.ts",
+			"default": "./dist/discord/*.js"
 		}
 	},
 	"scripts": {
@@ -24,6 +24,7 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
+		"@hono/zod-openapi": "^1.6.3",
 		"zod": "^4.5.3"
 	}
 }

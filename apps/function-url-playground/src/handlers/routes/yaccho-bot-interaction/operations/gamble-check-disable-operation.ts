@@ -1,5 +1,5 @@
-// In scope: gamble-check-disable の実行場所を確認し、deferred 応答で ACK して削除ジョブを enqueue する
-// Out of scope: command routing、DB query、HTTP response の形成、確定メッセージの生成
+// In scope: checking where gamble-check-disable was run, deferred-ACKing it, and enqueuing the removal job
+// Out of scope: command routing, DB queries, shaping the HTTP response, writing the final message
 
 import type {
 	DiscordApplicationCommandInteraction,
@@ -12,13 +12,13 @@ import {
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
-import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/message.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/names.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 import { ephemeralOperation } from "./ephemeral-operation.js";
 
-/** gamble-check-disable の実行場所を確認し、ephemeral な deferred 応答で ACK して削除ジョブを enqueue する。 */
+/** Checks where it was run, ACKs with an ephemeral deferred response, and enqueues the removal job. */
 export const gambleCheckDisableOperation = async (
 	interaction: DiscordApplicationCommandInteraction,
 	callback: DiscordInteractionCallback,

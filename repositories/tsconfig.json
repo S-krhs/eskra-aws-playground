@@ -6,8 +6,9 @@
 	},
 	"include": [
 		"anime/**/*.ts",
-		"db/**/*.ts",
+		"client/**/*.ts",
 		"generated/**/*.ts",
+		"media/**/*.ts",
 		"playground/**/*.ts"
 	],
 	"exclude": ["dist", "node_modules"]

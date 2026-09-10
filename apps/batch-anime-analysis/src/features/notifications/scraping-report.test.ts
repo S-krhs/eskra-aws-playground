@@ -9,7 +9,7 @@ const source = {
 };
 
 describe("buildScrapingReport", () => {
-	it("higherIsBetter が true のとき値の大きい順に並べ、上位 3 件へメダルを付ける", () => {
+	it("orders by descending value and medals the top 3 when higherIsBetter is true", () => {
 		const report = buildScrapingReport({
 			source,
 			metrics: [
@@ -30,7 +30,7 @@ describe("buildScrapingReport", () => {
 		);
 	});
 
-	it("higherIsBetter が false の順位系は値の小さい順に並べる", () => {
+	it("orders a rank-style metric ascending when higherIsBetter is false", () => {
 		const report = buildScrapingReport({
 			source: { ...source, metricName: "rank", higherIsBetter: false },
 			metrics: [
@@ -45,7 +45,7 @@ describe("buildScrapingReport", () => {
 		expect(report).toContain("🥉 X — **3**");
 	});
 
-	it("入力が未ソートでもメダルは実際の最上位に付く", () => {
+	it("medals the actual top even when the input is unsorted", () => {
 		const report = buildScrapingReport({
 			source,
 			metrics: [
@@ -58,7 +58,7 @@ describe("buildScrapingReport", () => {
 		expect(report).toContain("🥈 低 — **1**");
 	});
 
-	it("4 件目以降はメダルではなくキーキャップ絵文字で表す", () => {
+	it("uses a keycap emoji instead of a medal from the fourth entry on", () => {
 		const report = buildScrapingReport({
 			source,
 			metrics: [
@@ -72,7 +72,7 @@ describe("buildScrapingReport", () => {
 		expect(report).toContain("4️⃣ 4th — **10**");
 	});
 
-	it("previewLimit を超えた分は表示しない", () => {
+	it("shows nothing past previewLimit", () => {
 		const metrics = Array.from({ length: 12 }, (_, index) => {
 			return {
 				label: `title-${index}`,
@@ -86,7 +86,7 @@ describe("buildScrapingReport", () => {
 		expect(report).not.toContain("title-3");
 	});
 
-	it("skippedCount があればヘッダーに除外件数を出す", () => {
+	it("puts the excluded count in the header when skippedCount is set", () => {
 		const report = buildScrapingReport({
 			source,
 			metrics: [{ label: "A", value: 1 }],
@@ -96,7 +96,7 @@ describe("buildScrapingReport", () => {
 		expect(report).toContain("｜ 1 件 ｜ 除外：3 件");
 	});
 
-	it("metrics が空ならデータなしメッセージを返す", () => {
+	it("returns the no-data message for empty metrics", () => {
 		const report = buildScrapingReport({ source, metrics: [] });
 
 		expect(report).toContain("0 件");

@@ -1,19 +1,17 @@
-// In scope: 指定の API URL から JSON を取得し（timeout / 応答サイズ上限つき）、metric 一覧へ変換する
-// Out of scope: リトライ制御やアプリ固有の定義変換を行う
-import type { MetricBuildResult } from "@/shared/intermediate-models/metric/metric.js";
+// In scope: fetching JSON from an API URL (with a timeout and a response-size cap) and turning it into a metric list
+// Out of scope: retry control, this app's own definition conversion
+import type { MetricBuildResult } from "@/_shared/intermediate-models/metric/metric.js";
 import {
 	type JsonParseOptions,
 	type JsonValueTarget,
 	parseJsonMetrics,
 } from "./json-parser.js";
 
-/** API 取得のタイムアウト（ミリ秒）。 */
 const FETCH_TIMEOUT_MS = 10_000;
 
-/** 受け入れる API 応答の最大サイズ（バイト目安）。 */
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 
-/** API から metric を取り出すための source 定義。 */
+/** The source definition pulling metrics out of an API. */
 export type ApiSource = {
 	type: "api";
 	url: string;
@@ -23,9 +21,9 @@ export type ApiSource = {
 };
 
 /**
- * API の source 定義を受け取り、JSON を取得して metric 一覧を返す
- * @param source API から metric を取り出す定義
- * @returns 解析済み metric 一覧と変換できず除外した件数
+ * Takes an API source definition, fetches the JSON, and returns the metric list
+ * @param source how to pull metrics out of the API
+ * @returns the parsed metrics and how many were excluded as unconvertible
  */
 export const getApiMetrics = async (
 	source: ApiSource,

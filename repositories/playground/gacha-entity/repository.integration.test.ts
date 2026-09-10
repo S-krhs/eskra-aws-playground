@@ -1,5 +1,5 @@
-// TODO: 別タスクで testcontainers の PostgreSQL に移行する。
-//       それまでは TEST_DATABASE_URL(ローカル用 Neon branch)が設定されている場合のみ実行される。
+// TODO: move to a testcontainers PostgreSQL in a separate task.
+//       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import {
 	afterAll,
 	afterEach,
@@ -11,9 +11,9 @@ import {
 } from "vitest";
 import { z } from "zod";
 
-import { getPrismaClient } from "../../db/client.js";
-import { gachaPoolKeys } from "../shared/literals/gacha-pool-key.js";
-import { gachaRarities } from "../shared/literals/gacha-rarity.js";
+import { getPrismaClient } from "../../client/prisma.js";
+import { gachaPoolKeys } from "../_shared/literals/gacha-pool-key.js";
+import { gachaRarities } from "../_shared/literals/gacha-rarity.js";
 import { gachaEntityRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -47,7 +47,7 @@ describe.skipIf(!testDatabaseUrl)("gachaEntityRepository (integration)", () => {
 		await getPrismaClient().$disconnect();
 	});
 
-	it("pool の候補を検証済みで読み出す", async () => {
+	it("reads a pool's candidates back validated", async () => {
 		await getPrismaClient().gachaEntity.createMany({
 			data: [
 				{ poolKey, name, rarity: gachaRarities.common },
@@ -63,7 +63,7 @@ describe.skipIf(!testDatabaseUrl)("gachaEntityRepository (integration)", () => {
 		});
 	});
 
-	it("保存済み rarity が schema に違反していれば読み込みを失敗させる", async () => {
+	it("fails the read when a stored rarity violates the schema", async () => {
 		await getPrismaClient().gachaEntity.create({
 			data: { poolKey, name: invalidRarityName, rarity: "LEGENDARY" },
 		});

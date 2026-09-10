@@ -1,34 +1,30 @@
-// In scope: Discord interaction の raw payload を変換した、アプリ内部の型付きモデル
-// Out of scope: parse 処理、署名検証、応答 payload の生成
+// In scope: the app's internal typed model, converted from a Discord interaction's raw payload
+// Out of scope: parsing, signature verification, building a response payload
 
-/** Discord application command の subcommand option。 */
 export interface DiscordSubcommandOption {
 	kind: "subcommand";
 	name: string;
 	options: readonly DiscordCommandOption[];
 }
 
-/** Discord application command の user option。 */
 export interface DiscordUserCommandOption {
 	kind: "user";
 	name: string;
 	userId: string;
 }
 
-/** アプリが意味を解釈しない Discord application command option。 */
+/** A command option this app doesn't interpret. */
 export interface DiscordUnsupportedCommandOption {
 	kind: "unsupported";
 	discordType: number;
 	name: string;
 }
 
-/** 用途ごとの意味へ変換した Discord application command option。 */
 export type DiscordCommandOption =
 	| DiscordSubcommandOption
 	| DiscordUserCommandOption
 	| DiscordUnsupportedCommandOption;
 
-/** Discord application command の実行コンテキスト。 */
 export type DiscordCommandContext =
 	| {
 			kind: "guild";
@@ -37,15 +33,13 @@ export type DiscordCommandContext =
 	  }
 	| { kind: "direct-message" };
 
-/** Discord の PING interaction。 */
 export interface DiscordPingInteraction {
 	kind: "ping";
 }
 
-/** Discord application command interaction。 */
 export interface DiscordApplicationCommandInteraction {
 	kind: "application-command";
-	/** コマンドを実行した Discord ユーザー ID。 */
+	/** Discord user who ran the command. */
 	userId: string;
 	command: {
 		name: string;
@@ -54,34 +48,30 @@ export interface DiscordApplicationCommandInteraction {
 	context: DiscordCommandContext;
 }
 
-/** Discord message component interaction。 */
 export interface DiscordMessageComponentInteraction {
 	kind: "message-component";
-	/** Discord から受け取った生の custom_id。規約の解釈は呼び出し側が行う。 */
+	/** Raw custom_id as received from Discord — the convention is interpreted by the caller. */
 	customId: string;
 	userId: string;
 }
 
-/** Discord autocomplete interaction。 */
 export interface DiscordAutocompleteInteraction {
 	kind: "autocomplete";
 }
 
-/** deferred 応答後の元メッセージ編集・follow-up 送信に必要な interaction の callback 情報。 */
+/** What editing the original message / posting a follow-up after a deferred response needs. */
 export interface DiscordInteractionCallback {
-	/** 応答先 application の ID。編集先 webhook URL の組み立てに使う。 */
+	/** Used to build the edit-target webhook URL. */
 	applicationId: string;
-	/** interaction ごとに発行される応答用 token。発行から 15 分有効。 */
+	/** Issued per interaction, valid for 15 minutes. */
 	token: string;
 }
 
-/** アプリが対応していない Discord interaction type。 */
 export interface DiscordUnsupportedInteraction {
 	kind: "unsupported";
 	discordType: number;
 }
 
-/** Discord の raw payload から変換した、アプリ内部の interaction model。 */
 export type DiscordInteraction =
 	| DiscordPingInteraction
 	| DiscordApplicationCommandInteraction

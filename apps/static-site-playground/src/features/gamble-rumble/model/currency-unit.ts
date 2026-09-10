@@ -1,7 +1,7 @@
-// In scope: 収支を表す通貨単位の型と一覧
-// Out of scope: 円との換算、表示文字列の組み立て、単位の選択 UI
+// In scope: the type and list of currency units a balance is shown in
+// Out of scope: converting to and from yen, building the display string, the unit-picker UI
 
-/** 収支を表す通貨単位。`yenPerUnit` は 1 単位あたりの円 */
+/** A currency unit a balance is shown in; `yenPerUnit` is the yen one unit is worth */
 export interface CurrencyUnit {
 	id: "yen" | "wf" | "dcu";
 	label: string;
@@ -10,7 +10,7 @@ export interface CurrencyUnit {
 	imageAlt: string;
 }
 
-/** 選択できる通貨単位。表示順はそのまま単位切り替えの並び順になる */
+/** The selectable units; this order is the order they appear in the switcher */
 export const currencyUnits: readonly CurrencyUnit[] = [
 	{
 		id: "yen",

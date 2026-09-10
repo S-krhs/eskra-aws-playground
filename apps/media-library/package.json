@@ -1,0 +1,45 @@
+{
+	"name": "@eskra-aws-playground/media-library",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rm -rf backend/dist frontend/dist",
+		"build": "rm -rf backend/dist && tsc -p backend/tsconfig.json",
+		"generate:openapi": "npm run build && node backend/dist/scripts/write-openapi-document.js",
+		"generate:api": "npm run generate:openapi && orval --config orval.config.ts",
+		"build:ui": "vite build --config frontend/vite.config.ts",
+		"dev:ui": "vite --config frontend/vite.config.ts",
+		"test": "vitest run",
+		"typecheck": "tsc -p backend/tsconfig.json --noEmit && tsc -p frontend/tsconfig.json --noEmit",
+		"lint": "biome ci . && cd frontend && steiger ./src",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"dependencies": {
+		"@eskra-aws-playground/integration-lambda": "0.1.0",
+		"@eskra-aws-playground/libs": "0.1.0",
+		"@eskra-aws-playground/repositories": "0.1.0",
+		"@eskra-aws-playground/shared-domains": "0.1.0",
+		"@hono/node-server": "^2.1.1",
+		"@hono/zod-openapi": "^1.6.3",
+		"@tailwindcss/vite": "^4.3.3",
+		"@tanstack/react-query": "^5.102.8",
+		"@tanstack/react-virtual": "^3.14.10",
+		"hono": "^4.13.7",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"tailwindcss": "^4.3.3",
+		"zod": "^4.5.3"
+	},
+	"devDependencies": {
+		"@feature-sliced/steiger-plugin": "^0.7.0",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.5",
+		"@vitejs/plugin-react": "^6.1.1",
+		"daisyui": "^5.7.28",
+		"orval": "^8.30.0",
+		"steiger": "^0.6.0",
+		"vite": "^8.2.2",
+		"vite-plugin-pwa": "^1.3.0"
+	}
+}

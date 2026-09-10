@@ -24,7 +24,7 @@ describe("buildChromiumLaunchOptions", () => {
 		chromium.executablePath.mockClear();
 	});
 
-	it("Lambda 向け Chromium の起動設定を作る", async () => {
+	it("builds launch config for Lambda's Chromium", async () => {
 		const options = await buildChromiumLaunchOptions({
 			args: ["--app-arg"],
 		});
@@ -36,7 +36,7 @@ describe("buildChromiumLaunchOptions", () => {
 		});
 	});
 
-	it("呼び出し側の executablePath と headless を優先する", async () => {
+	it("prefers the caller's executablePath and headless", async () => {
 		const options = await buildChromiumLaunchOptions({
 			executablePath: "/custom/chromium",
 			headless: false,

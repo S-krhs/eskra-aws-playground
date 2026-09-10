@@ -1,26 +1,25 @@
-// In scope: SQS event から dataSource 単位のアニメスクレイピングを実行する
-// Out of scope: Lambda エントリポイント、SQS message の構築、個別 parser の詳細を持つ
+// In scope: running one dataSource's anime scrape from an SQS event
+// Out of scope: the Lambda entry point, building the SQS message, each parser's detail
 import { DiscordWebhookClient } from "@eskra-aws-playground/integration-discord/discord-webhook-client.js";
 import { getCurrentJstDateString } from "@eskra-aws-playground/libs/date/current-jst-date.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { dataSourceRepository } from "@eskra-aws-playground/repositories/anime/data-source.repository.js";
 import { scrapingMetricRepository } from "@eskra-aws-playground/repositories/anime/scraping-metric.repository.js";
+import { batchNames } from "@/_shared/routes/batch-names.js";
+import { sqsWorkerEventSchema } from "@/_shared/schemas/lambda/sqs-worker/event.js";
+import type { SqsWorkerResponse } from "@/_shared/schemas/lambda/sqs-worker/response.js";
+import { dataSourceMessageSchema } from "@/_shared/schemas/sqs/data-source/message.js";
 import { buildScrapingReport } from "@/features/notifications/scraping-report.js";
 import { getApiMetrics } from "@/features/scrape-api/get-metrics.js";
 import { getWebpageMetrics } from "@/features/scrape-webpage/get-metrics.js";
-import { batchNames } from "@/shared/routes/batch-names.js";
-import { sqsWorkerEventSchema } from "@/shared/schemas/lambda/sqs-worker/event.js";
-import type { SqsWorkerResponse } from "@/shared/schemas/lambda/sqs-worker/response.js";
-import { dataSourceMessageSchema } from "@/shared/schemas/sqs/data-source/message.js";
 import { getDataSourceSettings } from "./runtime-settings/data-source-setting-resolver.js";
 
 const logger = createBatchLogger(batchNames.animeScrapingDataSource);
 
-/** SQS message を dataSource 単位のアニメスクレイピングとして処理する。 */
 export const dataSourceJob = async (
 	event: unknown,
 ): Promise<SqsWorkerResponse> => {
-	// 起動イベント全体を worker の入力として検証し、処理する record を取り出す。
+	// Validate the whole launch event as the worker's input and pull out the records to process.
 	const { Records } = sqsWorkerEventSchema.parse(event);
 
 	const batchItemFailures: SqsWorkerResponse["batchItemFailures"] = [];
@@ -30,7 +29,7 @@ export const dataSourceJob = async (
 		const { messageId } = record;
 
 		try {
-			// 1. SQS message body を dataSource スクレイピング job の入力へ正規化する。
+			// 1. Normalize the SQS message body into the scrape job's input.
 			const message = dataSourceMessageSchema.parse(JSON.parse(record.body));
 
 			logger.start({
@@ -38,7 +37,7 @@ export const dataSourceJob = async (
 				dataSourceId: message.dataSourceId,
 			});
 
-			// 2. repository からスクレイピング定義を取得する。
+			// 2. Read the scraping definition from the repository.
 			const dataSource = dataSourceRepository.findUnique(message.dataSourceId);
 			if (!dataSource) {
 				throw new Error(
@@ -46,23 +45,23 @@ export const dataSourceJob = async (
 				);
 			}
 
-			// 3. 定義の取得方式に合わせて metric を取得する。
+			// 3. Fetch the metrics the way the definition says to.
 			const sourceType = dataSource.source.type;
 			const { metrics, skippedCount } =
 				sourceType === "api"
 					? await getApiMetrics(dataSource.source)
 					: await getWebpageMetrics(dataSource.source);
-			// 取得日は job のメタパラメータとして metric 取得完了時に採る
+			// The scraped date is a job meta-parameter, taken once the metrics are in
 			const scrapedDate = getCurrentJstDateString();
 
-			// 4. スクレイピング結果を DB へ保存する。失敗は record 単位の retry に任せる。
-			await scrapingMetricRepository.saveScrapingResult({
+			// 4. Save the scrape result to the DB; a failure is left to the per-record retry.
+			await scrapingMetricRepository.insertMany({
 				dataSourceId: dataSource.id,
 				scrapedDate,
 				metrics,
 			});
 
-			// 5. Discord 通知は保存後の副作用として扱い、失敗しても record retry しない。
+			// 5. The Discord notification is a side effect after the save, and a failure doesn't retry the record.
 			let notificationSucceeded = false;
 			try {
 				const reportMessage = buildScrapingReport({
@@ -109,7 +108,7 @@ export const dataSourceJob = async (
 		}
 	}
 
-	// 6. SQS へ record ごとの処理結果を返す。
+	// 6. Return the per-record outcome to SQS.
 	return {
 		batchItemFailures,
 	};

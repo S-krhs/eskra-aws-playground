@@ -6,7 +6,7 @@ import {
 } from "./reminder-message.js";
 
 describe("buildReminderQuestionMessage", () => {
-	it("対象ユーザーをメンションした質問メッセージを生成する", () => {
+	it("writes the question mentioning the target user", () => {
 		expect(buildReminderQuestionMessage("987654321098765432")).toEqual({
 			content: "<@987654321098765432> やおよろ～！今日は遊技した？",
 			allowed_mentions: {
@@ -18,7 +18,7 @@ describe("buildReminderQuestionMessage", () => {
 });
 
 describe("buildReminderChoicesMessage", () => {
-	it("遊技チェックリマインダーの選択肢をボタンメッセージへ変換する", () => {
+	it("turns the reminder's choices into a button message", () => {
 		expect(buildReminderChoicesMessage("987654321098765432")).toEqual({
 			components: [
 				{

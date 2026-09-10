@@ -1,7 +1,6 @@
-// In scope: Discord interaction callback の type・flag・payload 型
-// Out of scope: callback payload の生成、メッセージ内容の決定、HTTP response の形成
+// In scope: Discord interaction callback type/flag/payload types
+// Out of scope: building a callback payload, deciding message content, forming the HTTP response
 
-/** Discord interaction callback type。 */
 export const responseTypes = {
 	pong: 1,
 	message: 4,
@@ -11,17 +10,14 @@ export const responseTypes = {
 	autocomplete: 8,
 } as const;
 
-/** Discord message flag。 */
 export const messageFlags = {
 	ephemeral: 64,
 } as const;
 
-/** Discord PONG interaction callback の payload。 */
 export type DiscordPongResponsePayload = {
 	type: typeof responseTypes.pong;
 };
 
-/** Discord channel message interaction callback の payload。 */
 export type DiscordChannelMessageResponsePayload = {
 	type: typeof responseTypes.message;
 	data: {
@@ -30,7 +26,6 @@ export type DiscordChannelMessageResponsePayload = {
 	};
 };
 
-/** Discord ephemeral interaction callback の payload。 */
 export type DiscordEphemeralResponsePayload = {
 	type: typeof responseTypes.message;
 	data: {
@@ -40,7 +35,6 @@ export type DiscordEphemeralResponsePayload = {
 	};
 };
 
-/** Discord message update interaction callback の payload。 */
 export type DiscordUpdateMessageResponsePayload = {
 	type: typeof responseTypes.update;
 	data: {
@@ -50,16 +44,14 @@ export type DiscordUpdateMessageResponsePayload = {
 	};
 };
 
-/** 空の Discord autocomplete interaction callback の payload。 */
 export type DiscordEmptyAutocompleteResponsePayload = {
 	type: typeof responseTypes.autocomplete;
 	data: { choices: readonly [] };
 };
 
 /**
- * Discord deferred message interaction callback の payload。
- * この応答で 3 秒制限内に ACK し、確定した内容は後続の元メッセージ編集で表示する。
- * ephemeral にする場合のみ flags を付ける。
+ * ACKs within Discord's 3-second limit; the final content shows up later via
+ * an edit of the original message. Only set `data.flags` to make it ephemeral.
  */
 export type DiscordDeferredMessageResponsePayload = {
 	type: typeof responseTypes.deferredMessage;
@@ -67,14 +59,13 @@ export type DiscordDeferredMessageResponsePayload = {
 };
 
 /**
- * Discord deferred update interaction callback の payload(message component 用)。
- * 元メッセージを保持したまま ACK し、確定した内容は後続の元メッセージ編集で反映する。
+ * For message components. Keeps the original message as-is while ACKing;
+ * the final content arrives later via an edit of that message.
  */
 export type DiscordDeferredUpdateResponsePayload = {
 	type: typeof responseTypes.deferredUpdate;
 };
 
-/** Discord interaction callback の payload。 */
 export type DiscordInteractionResponsePayload =
 	| DiscordPongResponsePayload
 	| DiscordChannelMessageResponsePayload

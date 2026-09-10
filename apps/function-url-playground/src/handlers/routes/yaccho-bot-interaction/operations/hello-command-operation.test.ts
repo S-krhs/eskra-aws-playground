@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 
 describe("helloCommandOperation", () => {
-	it("あいさつジョブを enqueue し公開 deferred で ACK する", async () => {
+	it("enqueues the greeting job and ACKs with a public deferred response", async () => {
 		const result = await helloCommandOperation(callback);
 
 		expect(sqs.sendMessages).toHaveBeenCalledWith([

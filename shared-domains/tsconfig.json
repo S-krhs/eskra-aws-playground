@@ -4,6 +4,6 @@
 		"outDir": "dist",
 		"rootDir": "."
 	},
-	"include": ["contracts/**/*.ts", "protocols/**/*.ts"],
+	"include": ["media/**/*.ts", "discord/**/*.ts"],
 	"exclude": ["dist", "node_modules"]
 }

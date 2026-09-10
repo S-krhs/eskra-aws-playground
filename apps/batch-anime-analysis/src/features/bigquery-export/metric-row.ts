@@ -1,19 +1,19 @@
-// In scope: 蓄積済み metric を連携先テーブルの列名に合わせた BigQuery の行へ変換する
-// Out of scope: metric の読み出し、テーブル構造の定義、BigQuery API の呼び出しを行う
+// In scope: converting a stored metric into a BigQuery row matching the destination table's column names
+// Out of scope: reading metrics, defining the table structure, calling the BigQuery API
 
-/** BigQuery の行へ変換する metric 1 件。repository の行をそのまま渡せる形にする。 */
+/** One metric to convert; shaped so a repository row can be handed over as-is. */
 export interface StoredMetric {
 	id: string;
 	dataSourceId: string;
 	label: string;
 	value: number;
-	/** JST 基準の取得日(YYYY-MM-DD)。 */
+	/** Scraped date in JST (YYYY-MM-DD). */
 	scrapedDate: string;
-	/** 保存時刻(ISO 8601)。 */
+	/** Time the row was stored (ISO 8601). */
 	createdAt: string;
 }
 
-/** 蓄積済み metric を BigQuery へ書き込む行へ変換する。id は INTEGER 列へ文字列のまま渡す。 */
+/** Converts a stored metric into the row written to BigQuery; id goes into the INTEGER column still as a string. */
 export const toScrapingMetricRow = (
 	metric: StoredMetric,
 ): Record<string, unknown> => {

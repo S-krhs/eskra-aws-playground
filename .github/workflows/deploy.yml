@@ -34,6 +34,16 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           role-session-name: github-actions
+      # アーカイブは 40MB 超を配布元から取るため、release 定義が変わるまで使い回す(CI job と同じ key)
+      - name: Restore ffmpeg archive
+        uses: actions/cache@v4
+        with:
+          path: .tmp/layers/ffmpeg-download
+          key: ffmpeg-archive-${{ hashFiles('infra/layers/ffmpeg/ffmpeg-release.json') }}
+      # 配布元からの取得を伴うので DB migration より前に済ませる。ここで失敗しても DB は無傷のまま。
+      # npm run deploy も同じ script を呼ぶが、成果物が揃っていれば取得は走らない
+      - name: Build Lambda layers
+        run: npm run build:browser-runtime-layer && npm run build:ffmpeg-layer
       # DIRECT_DATABASE_URL はこの step にだけ渡す(他の step へ漏らさない)
       - name: Run DB migration
         run: npm run db:migrate
@@ -47,6 +57,7 @@ jobs:
           SST_SECRET_AlertDiscordWebhook: ${{ secrets.ALERT_DISCORD_WEBHOOK_URL }}
           SST_SECRET_DatabaseUrl: ${{ secrets.DATABASE_URL }}
           SST_SECRET_GcpServiceAccountKey: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          SST_SECRET_R2Credentials: ${{ secrets.R2_CREDENTIALS }}
           SST_SECRET_YacchoDiscordBotToken: ${{ secrets.YACCHO_DISCORD_BOT_TOKEN }}
           SST_SECRET_YacchoDiscordInteractionPublicKey: ${{ secrets.YACCHO_DISCORD_INTERACTION_PUBLIC_KEY }}
           SST_SECRET_YacchoDiscordApplicationId: ${{ secrets.YACCHO_DISCORD_APPLICATION_ID }}

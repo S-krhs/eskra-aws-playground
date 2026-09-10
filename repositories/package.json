@@ -9,17 +9,15 @@
 			"types": "./dist/anime/*.d.ts",
 			"default": "./dist/anime/*.js"
 		},
+		"./media/_shared/virtual/*.js": null,
+		"./media/_shared/literals/*.js": null,
+		"./media/_shared/formatter/*.js": null,
+		"./media/*.test.js": null,
+		"./media/*.js": {
+			"types": "./dist/media/*.d.ts",
+			"default": "./dist/media/*.js"
+		},
 		"./playground/*.test.js": null,
-		"./playground/*/*.test.js": null,
-		"./playground/*/*/*.test.js": null,
-		"./playground/*/*/*.js": {
-			"types": "./dist/playground/*/*/*.d.ts",
-			"default": "./dist/playground/*/*/*.js"
-		},
-		"./playground/*/*.js": {
-			"types": "./dist/playground/*/*.d.ts",
-			"default": "./dist/playground/*/*.js"
-		},
 		"./playground/*.js": {
 			"types": "./dist/playground/*.d.ts",
 			"default": "./dist/playground/*.js"
@@ -34,6 +32,8 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1127.0",
+		"@aws-sdk/lib-storage": "^3.1127.0",
 		"@eskra-aws-playground/libs": "0.1.0",
 		"@prisma/adapter-pg": "^7.10.0",
 		"@prisma/client": "^7.10.0",

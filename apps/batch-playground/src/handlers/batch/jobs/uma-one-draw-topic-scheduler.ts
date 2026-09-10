@@ -1,5 +1,5 @@
-// In scope: UMA ワンドロお題通知の one-time schedule 登録をオーケストレーションする
-// Out of scope: 起動時刻の決定ロジックや EventBridge Scheduler API 通信の詳細を持つ
+// In scope: orchestrating registration of the one-time schedule for the UMA one-draw topic notification
+// Out of scope: how the firing time is picked, EventBridge Scheduler API detail
 import { OneTimeScheduleClient } from "@eskra-aws-playground/integration-scheduler/one-time-schedule-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 
@@ -12,12 +12,12 @@ import {
 
 const logger = createBatchLogger(batchJobNames.umaOneDrawTopicScheduler);
 
-/** UMA ワンドロお題通知を当日ランダムな時刻に起動する one-time schedule を登録するバッチジョブ。 */
+/** The batch job registering the one-time schedule that fires the topic notification at a random time that day. */
 export const umaOneDrawTopicSchedulerJob = async (
 	_event: unknown,
 	context?: unknown,
 ): Promise<BatchResponse> => {
-	// 1. SST が設定する環境変数から schedule group・role を、Lambda context から起動対象の ARN を解決する。
+	// 1. Resolve the schedule group and role from the env vars SST sets, and the target ARN from the Lambda context.
 	const scheduleGroupName = process.env.UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME;
 	const schedulerRoleArn = process.env.UMA_ONE_DRAW_TOPIC_SCHEDULER_ROLE_ARN;
 
@@ -35,11 +35,11 @@ export const umaOneDrawTopicSchedulerJob = async (
 
 	logger.start();
 
-	// 2. feature で当日の起動 window 内からランダムな起動時刻の実行計画を作る。
+	// 2. Build the plan in the feature, picking a random firing time inside that day's window.
 	const invocationPlan = planOneTimeInvocation();
 
-	// 3. EventBridge Scheduler integration へ one-time schedule の登録を委譲する。
-	//    当日分が登録済み(同名 schedule が存在)の場合は二重登録せず正常終了する。
+	// 3. Delegate registering the one-time schedule to the EventBridge Scheduler integration.
+	//    If that day's is already registered (a schedule of the same name exists), it succeeds without registering again.
 	const scheduleClient = new OneTimeScheduleClient();
 	const { created } = await scheduleClient.createSchedule({
 		name: invocationPlan.scheduleName,
@@ -53,7 +53,7 @@ export const umaOneDrawTopicSchedulerJob = async (
 
 	logger.complete({ scheduleAt: invocationPlan.scheduleAt, created });
 
-	// 4. Lambda ハンドラーへ共通レスポンスを返す。
+	// 4. Return the shared response to the Lambda handler.
 	return {
 		ok: true,
 		job: batchJobNames.umaOneDrawTopicScheduler,

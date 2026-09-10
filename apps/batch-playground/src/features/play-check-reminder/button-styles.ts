@@ -1,9 +1,9 @@
-// In scope: Discord button の意味的な tone と API style 値の対応
-// Out of scope: feature 固有の選択肢、button payload、メッセージの生成
+// In scope: mapping a Discord button's semantic tone to the API's style value
+// Out of scope: a feature's own choices, the button payload, writing the message
 import type { DiscordButtonComponent } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
-import type { ButtonTone } from "@eskra-aws-playground/shared-domains/contracts/button-tone.js";
+import type { ButtonTone } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/choices.js";
 
-/** Discord button の意味的な tone と API style 値の対応。 */
+/** A Discord button's semantic tone to the API's style value. */
 export const buttonStyles = {
 	primary: 1,
 	neutral: 2,

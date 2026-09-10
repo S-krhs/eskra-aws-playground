@@ -1,11 +1,11 @@
-// In scope: 遊技チェックリマインダーの Discord 投稿バッチをオーケストレーションする
-// Out of scope: リマインダーメッセージ生成や Discord Bot API HTTP 通信の詳細を持つ
+// In scope: orchestrating the batch that posts the play-check reminder to Discord
+// Out of scope: writing the reminder message, Discord bot API HTTP detail
 import { DiscordBotClient } from "@eskra-aws-playground/integration-discord/discord-bot-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
+import { applicationKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/application-key.js";
+import { settingKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/setting-key.js";
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
-import { applicationKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/application-key.js";
-import { settingKeys } from "@eskra-aws-playground/repositories/playground/shared/literals/setting-key.js";
-import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/contracts/reminder-choices.js";
+import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/choices.js";
 import { Resource } from "sst/resource";
 import {
 	buildReminderChoicesMessage,
@@ -15,19 +15,19 @@ import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger("play-check-reminder");
 
-/** 遊技チェックリマインダーをボタン付きメッセージとして Discord チャンネルへ投稿するバッチジョブ。 */
+/** The batch job posting the play-check reminder to a Discord channel as a message with buttons. */
 export const playCheckReminderJob = async (
 	_event: unknown,
 ): Promise<BatchResponse> => {
 	logger.start();
-	// 1. Yaccho Bot token と登録済みの利用者設定を解決する。
+	// 1. Resolve the Yaccho Bot token and the registered user settings.
 	const discordBotToken = Resource.YacchoDiscordBotToken.value;
 	const configs = await channelSettingRepository.findMany({
 		applicationKey: applicationKeys.yacchoBot,
 		settingKey: settingKeys.playCheckReminder,
 	});
 
-	// 2. 全設定へ質問と選択肢を投稿し、1件の失敗で他の送信を止めない。
+	// 2. Post the question and choices to every setting; one failure doesn't stop the rest.
 	const botClient = new DiscordBotClient(discordBotToken);
 	const results = await Promise.allSettled(
 		configs.map(async ({ channelId, userId }) => {
@@ -60,7 +60,7 @@ export const playCheckReminderJob = async (
 		configCount: configs.length,
 	});
 
-	// 3. Lambda ハンドラーへ共通レスポンスを返す。
+	// 3. Return the shared response to the Lambda handler.
 	return {
 		ok: true,
 		job: "play-check-reminder",

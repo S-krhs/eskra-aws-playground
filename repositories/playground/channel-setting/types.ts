@@ -1,16 +1,19 @@
-// In scope: ChannelSetting repository の入出力型
-// Out of scope: validation schema、DB 操作、settingKey の解釈
-import type { ApplicationKey } from "../shared/literals/application-key.js";
-import type { SettingKey } from "../shared/literals/setting-key.js";
+// In scope: the input/output types of the ChannelSetting repository
+// Out of scope: validation schemas, DB access, interpreting a settingKey
+import type { ApplicationKey } from "../_shared/literals/application-key.js";
+import type { SettingKey } from "../_shared/literals/setting-key.js";
 
-/** Guild・対象利用者ごとの Discord チャンネル設定。 */
+/**
+ * The Discord channel setting for one guild and target user. Settings are split into a table per
+ * scope — one for a whole guild, one for a user inside it — rather than a nullable user id or a
+ * reserved value standing in for "everyone".
+ */
 export interface ChannelSetting {
 	guildId: string;
 	channelId: string;
 	userId: string;
 }
 
-/** Discord チャンネル設定の保存入力。 */
 export interface SaveChannelSettingInput {
 	applicationKey: ApplicationKey;
 	settingKey: SettingKey;
@@ -19,7 +22,6 @@ export interface SaveChannelSettingInput {
 	userId: string;
 }
 
-/** Discord チャンネル設定の削除入力。 */
 export interface DeleteChannelSettingInput {
 	applicationKey: ApplicationKey;
 	settingKey: SettingKey;
@@ -27,7 +29,6 @@ export interface DeleteChannelSettingInput {
 	userId: string;
 }
 
-/** Discord チャンネル設定の取得入力。 */
 export interface FindChannelSettingsInput {
 	applicationKey: ApplicationKey;
 	settingKey: SettingKey;

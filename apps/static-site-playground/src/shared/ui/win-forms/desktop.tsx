@@ -1,10 +1,10 @@
-// In scope: アイコンを並べ、ダブルクリックで窓を増やすデスクトップ
-// Out of scope: 窓の中身、窓の枠そのものの描画
+// In scope: the desktop laying out icons and opening another window on a double click
+// Out of scope: a window's contents, drawing the window frame itself
 
 import { type ReactNode, useRef, useState } from "react";
 import { WindowHostContext } from "./window-host.js";
 
-/** デスクトップに置くアイコン。`render` は開いた窓 1 枚分を描く */
+/** An icon on the desktop; `render` draws one opened window */
 export interface DesktopIcon {
 	id: string;
 	label: string;
@@ -19,28 +19,28 @@ interface OpenWindow {
 	cascadeIndex: number;
 }
 
-/** 同じアイコンをこの間隔以内に 2 回押したら、ダブルクリックとみなす */
+/** Two presses on the same icon within this gap count as a double click */
 const doubleClickMs = 500;
 
-/** アイコンから開くとき、窓が出るまで待たせる時間。起動中らしく見せる */
+/** How long an icon-opened window waits before appearing, so it looks like it is starting up */
 const openingMs = 400;
 
 /**
- * アイコンを左上に並べ、ダブルクリック（キーボードなら Enter / Space）で
- * 窓を増やす。最初の 1 枚は最初のアイコンのものを開いた状態で始める。
+ * Lays icons out at the top left and opens another window on a double click (Enter / Space from the
+ * keyboard). It starts with the first icon's window already open.
  */
 export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 	const firstIcon = icons[0];
 	const [windows, setWindows] = useState<OpenWindow[]>(
 		firstIcon ? [{ key: 0, iconId: firstIcon.id, cascadeIndex: 0 }] : [],
 	);
-	// 手前に来た順。末尾ほど手前。描画順は開いた順のまま動かさない。
-	// 並べ替えると DOM が動き、押している最中のクリックが取りこぼされる。
+	// Focus order, frontmost last. Render order stays as opened and never moves:
+	// reordering moves DOM nodes, which drops a click mid-press.
 	const [zOrder, setZOrder] = useState<number[]>(firstIcon ? [0] : []);
-	// 添字が下辺に並べる位置、値がそこに置く窓の key。1 枚を戻したときに
-	// 残りが左へ動かないよう、空いた位置は null のまま残す
+	// Index is the slot along the bottom edge, value the window key in it. A freed slot stays null
+	// so restoring one window doesn't shift the rest leftward
 	const [minimizedSlots, setMinimizedSlots] = useState<(number | null)[]>([]);
-	// アイコンから開くのを待っている窓の数。0 でない間はカーソルを砂時計にする
+	// How many icon-opened windows are still pending; the cursor is an hourglass while this is non-zero
 	const [openingCount, setOpeningCount] = useState(0);
 	const nextKey = useRef(1);
 	const nextCascade = useRef(1);
@@ -72,8 +72,8 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 	};
 
 	/**
-	 * ダブルクリックを自前で数える。ブラウザの dblclick は click 回数が
-	 * ちょうど 2 のときしか出ず、連打すると 2 回目以降が出ないため。
+	 * Double clicks are counted here, because the browser's dblclick only fires on exactly 2 clicks
+	 * and stops firing once the clicking goes faster than that.
 	 */
 	const handleIconClick = (iconId: string) => {
 		const at = Date.now();
@@ -82,7 +82,7 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 			previous !== null &&
 			previous.iconId === iconId &&
 			at - previous.at <= doubleClickMs;
-		// 3 回目を 2 回目の続きにしないよう、開いたら数え直す
+		// Reset after opening, so a third click doesn't continue from the second
 		lastIconClick.current = isSecondClick ? null : { iconId, at };
 		if (isSecondClick) {
 			openFromIcon(iconId);

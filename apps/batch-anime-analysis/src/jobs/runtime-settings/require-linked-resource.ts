@@ -1,5 +1,5 @@
-// In scope: SST link された resource 値の解決と、未 link・未設定時の日本語エラーへの変換を提供する
-// Out of scope: 各 job 固有の設定型の組み立てを行う
+// In scope: resolving an SST-linked resource value and turning an unlinked or unset one into a Japanese error
+// Out of scope: assembling each job's own settings type
 import { Resource } from "sst/resource";
 
 const readLinkedProperty = (
@@ -13,7 +13,7 @@ const readLinkedProperty = (
 			string,
 			Record<string, string | undefined>
 		>;
-		// 未 link の resource へのアクセスは SST の Resource proxy が throw する
+		// SST's Resource proxy throws on access to an unlinked resource
 		linkedValue = resources[resourceName][property];
 	} catch {
 		throw new Error(`${resourceName} が link されていません。`);
@@ -22,7 +22,7 @@ const readLinkedProperty = (
 	return linkedValue?.trim() ?? "";
 };
 
-/** SST link された secret の値を解決する。未 link・空値はエラーとして扱う。 */
+/** Resolves an SST-linked secret; unlinked or empty is an error. */
 export const requireSecret = (secretName: string): string => {
 	const value = readLinkedProperty(secretName, "value");
 
@@ -33,7 +33,7 @@ export const requireSecret = (secretName: string): string => {
 	return value;
 };
 
-/** SST link された resource の URL を解決する。未 link・空値はエラーとして扱う。 */
+/** Resolves an SST-linked resource's URL; unlinked or empty is an error. */
 export const requireLinkedUrl = (resourceName: string): string => {
 	const url = readLinkedProperty(resourceName, "url");
 

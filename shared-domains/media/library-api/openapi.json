@@ -1,0 +1,399 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "media-library API",
+		"version": "1.0.0",
+		"description": "この文書に無い /api 配下のパスは 404 を返します。UI 以外のオリジンからの POST は、ルートに届く前に 403 で拒否されます。"
+	},
+	"servers": [
+		{
+			"url": "/api"
+		}
+	],
+	"components": {
+		"schemas": {
+			"MediaListResponse": {
+				"type": "object",
+				"properties": {
+					"objects": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Media"
+						}
+					},
+					"nextCursor": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/MediaCursor"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"objects",
+					"nextCursor"
+				]
+			},
+			"Media": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"fileName": {
+						"type": "string"
+					},
+					"logicalPath": {
+						"type": "string"
+					},
+					"contentType": {
+						"type": "string"
+					},
+					"byteSize": {
+						"type": "number"
+					},
+					"width": {
+						"type": "number"
+					},
+					"height": {
+						"type": "number"
+					},
+					"durationMs": {
+						"type": "number"
+					},
+					"hasThumbnail": {
+						"type": "boolean"
+					},
+					"uploadedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"id",
+					"fileName",
+					"logicalPath",
+					"contentType",
+					"byteSize",
+					"hasThumbnail",
+					"uploadedAt"
+				]
+			},
+			"MediaCursor": {
+				"type": "object",
+				"properties": {
+					"uploadedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					}
+				},
+				"required": [
+					"uploadedAt",
+					"id"
+				]
+			},
+			"ErrorResponse": {
+				"type": "object",
+				"properties": {
+					"message": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"message"
+				]
+			},
+			"SyncStatusResponse": {
+				"type": "object",
+				"properties": {
+					"latest": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SyncRun"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"running": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SyncRun"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": [
+					"latest",
+					"running"
+				]
+			},
+			"SyncRun": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"startedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"finishedAt": {
+						"type": [
+							"string",
+							"null"
+						],
+						"format": "date-time"
+					},
+					"scannedCount": {
+						"type": "number"
+					},
+					"insertedCount": {
+						"type": "number"
+					},
+					"updatedCount": {
+						"type": "number"
+					},
+					"deletedCount": {
+						"type": "number"
+					},
+					"error": {
+						"type": [
+							"string",
+							"null"
+						]
+					}
+				},
+				"required": [
+					"id",
+					"startedAt",
+					"finishedAt",
+					"scannedCount",
+					"insertedCount",
+					"updatedCount",
+					"deletedCount",
+					"error"
+				]
+			}
+		},
+		"parameters": {}
+	},
+	"paths": {
+		"/media": {
+			"get": {
+				"operationId": "listMedia",
+				"summary": "メディアを絞り込んで 1 ページ分返す",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1
+						},
+						"required": false,
+						"name": "logicalPath",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1
+						},
+						"required": false,
+						"name": "contentTypePrefix",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 500,
+							"default": 200
+						},
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"format": "date-time"
+						},
+						"required": false,
+						"name": "cursorUploadedAt",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": false,
+						"name": "cursorId",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "絞り込み条件に合うメディアの 1 ページ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MediaListResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "query の項目が不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/media/{id}/thumbnail": {
+			"get": {
+				"operationId": "getThumbnail",
+				"summary": "メディア 1 件のサムネイル画像を返す",
+				"tags": [
+					"thumbnail"
+				],
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": true,
+						"name": "id",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "サムネイルの webp 画像",
+						"content": {
+							"image/webp": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"304": {
+						"description": "If-None-Match が今の ETag と一致し、中身が変わっていない"
+					},
+					"400": {
+						"description": "id が UUID ではない",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "サムネイルがまだ生成されていない",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/sync": {
+			"post": {
+				"operationId": "startSync",
+				"summary": "同期の起動を依頼する",
+				"responses": {
+					"202": {
+						"description": "起動を受け付けた。完了は /sync/status を読んで確かめる"
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/sync/status": {
+			"get": {
+				"operationId": "readSyncStatus",
+				"summary": "直近の実行と、実行中があればその進捗を返す",
+				"responses": {
+					"200": {
+						"description": "直近の実行と、実行中があればその進捗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SyncStatusResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"webhooks": {}
+}

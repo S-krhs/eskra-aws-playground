@@ -1,9 +1,11 @@
-// In scope: batch handler が受け付ける job 名を一元管理する
-// Out of scope: job の実装、Lambda イベントの解釈、実行スケジュールを持つ
+// In scope: the one place listing job names the batch handler accepts
+// Out of scope: job implementations, interpreting the Lambda event, schedules
+import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/names.js";
 
-/** Batch Playground app でサポートする job 名。 */
 export const batchJobNames = {
 	umaOneDrawTopic: "uma-one-draw-topic",
 	umaOneDrawTopicScheduler: "uma-one-draw-topic-scheduler",
+	// The management tool invokes this too, so the name is shared through shared-domains
+	mediaSync: mediaJobNames.mediaSync,
 	playCheckReminder: "play-check-reminder",
 } as const;

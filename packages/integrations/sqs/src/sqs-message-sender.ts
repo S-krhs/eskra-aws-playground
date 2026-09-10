@@ -1,12 +1,11 @@
-// In scope: AWS SDK を使って SQS へ message を batch 送信する
-// Out of scope: queue URL の解決、個別 job の message 形式、Lambda イベント解釈を持つ
+// In scope: batch-sending messages to SQS via the AWS SDK
+// Out of scope: resolving the queue URL, a job's message shape, Lambda event parsing
 import {
 	SendMessageBatchCommand,
 	type SendMessageBatchRequestEntry,
 	SQSClient,
 } from "@aws-sdk/client-sqs";
 
-/** SQS へ送信する message の最小入力。 */
 export interface SqsMessageInput {
 	id: string;
 	body: unknown;
@@ -14,7 +13,6 @@ export interface SqsMessageInput {
 
 const maxBatchSize = 10;
 
-/** AWS SDK を使って SQS message を batch 送信するクライアント。 */
 export class SqsMessageSender {
 	private readonly client = new SQSClient({});
 

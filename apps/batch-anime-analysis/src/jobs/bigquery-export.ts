@@ -1,26 +1,26 @@
-// In scope: 指定した日付範囲のアニメ指標を、取得日ごとに BigQuery のパーティションへ連携する
-// Out of scope: Lambda エントリポイント、BigQuery API の詳細、行の列名変換、日付範囲の既定値決定
+// In scope: exporting a date range of anime metrics into BigQuery, one scraped-date partition at a time
+// Out of scope: the Lambda entry point, BigQuery API detail, column-name conversion, the default date range
 import { BigQueryPartitionLoader } from "@eskra-aws-playground/integration-bigquery/bigquery-partition-loader.js";
 import { parseServiceAccountKey } from "@eskra-aws-playground/integration-bigquery/service-account-credentials.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { scrapingMetricRepository } from "@eskra-aws-playground/repositories/anime/scraping-metric.repository.js";
+import { batchNames } from "@/_shared/routes/batch-names.js";
+import { bigQueryExportEventSchema } from "@/_shared/schemas/lambda/bigquery-export/event.js";
+import type { BigQueryExportResponse } from "@/_shared/schemas/lambda/bigquery-export/response.js";
 import { resolveExportRange } from "@/features/bigquery-export/export-range.js";
 import { toScrapingMetricRow } from "@/features/bigquery-export/metric-row.js";
 import {
 	scrapingMetricTableDefinition,
 	scrapingMetricTableId,
 } from "@/features/bigquery-export/metric-table-definition.js";
-import { batchNames } from "@/shared/routes/batch-names.js";
-import { bigQueryExportEventSchema } from "@/shared/schemas/lambda/bigquery-export/event.js";
-import type { BigQueryExportResponse } from "@/shared/schemas/lambda/bigquery-export/response.js";
 import { getBigQueryExportSettings } from "./runtime-settings/bigquery-export-setting-resolver.js";
 
 const logger = createBatchLogger(batchNames.animeMetricBigQueryExport);
 
-// 1 日分をまとめてメモリに載せないための、1 回の読み出しあたりの行数
+// Rows per read, so a whole day never sits in memory at once
 const readPageSize = 5_000;
 
-/** 取得日の metric を、DB からページ単位で読みながら BigQuery の行として流す。 */
+/** Streams a scraped date's metrics out as BigQuery rows, reading the DB a page at a time. */
 const readScrapingMetricRows = async function* (
 	scrapedDate: string,
 ): AsyncGenerator<Record<string, unknown>> {
@@ -45,18 +45,17 @@ const readScrapingMetricRows = async function* (
 	}
 };
 
-/** 指定した日付範囲のアニメ指標を BigQuery へ連携する。 */
 export const bigQueryExportJob = async (
 	event: unknown,
 ): Promise<BigQueryExportResponse> => {
-	// 1. 起動イベントを連携対象の日付範囲へ正規化する。
+	// 1. Normalize the launch event into the date range to export.
 	const { startDate, endDate } = resolveExportRange(
 		bigQueryExportEventSchema.parse(event),
 	);
 
 	logger.start({ startDate, endDate });
 
-	// 2. 設定不足を DB へ問い合わせる前に検出するため、実行時設定を先に解決する。
+	// 2. Resolve the runtime settings first, so a missing one surfaces before the DB is queried.
 	const { serviceAccountKey, datasetId } = getBigQueryExportSettings();
 	const loader = new BigQueryPartitionLoader(
 		parseServiceAccountKey(serviceAccountKey),
@@ -67,17 +66,17 @@ export const bigQueryExportJob = async (
 		},
 	);
 
-	// 3. 連携先テーブルを用意する。dataset は事前に作成済みであることを前提にする。
-	// BigQuery client は遅延認証のため、鍵・dataset・権限の不備はこの呼び出しで初めて分かる。
+	// 3. Prepare the destination table, assuming the dataset was created beforehand.
+	// The BigQuery client authenticates lazily, so a bad key, dataset or permission first surfaces on this call.
 	await loader.ensureTable();
 
-	// 4. 範囲内で metric が存在する取得日だけを対象にする。
+	// 4. Narrow to the scraped dates in range that actually hold metrics.
 	const scrapedDates = await scrapingMetricRepository.findScrapedDates({
 		startDate,
 		endDate,
 	});
 
-	// 5. 取得日ごとにパーティションを置き換える。途中で失敗しても、済んだ取得日はそのまま残る。
+	// 5. Replace one partition per scraped date; a failure partway leaves the finished dates in place.
 	let exportedRowCount = 0;
 	for (const scrapedDate of scrapedDates) {
 		const { loadedRowCount } = await loader.replacePartition({
@@ -86,7 +85,7 @@ export const bigQueryExportJob = async (
 		});
 		exportedRowCount += loadedRowCount;
 
-		// 途中で timeout しても、どの取得日まで終えたかを追えるようにする
+		// So a run that times out partway still shows which scraped date it got to
 		logger.complete({ scrapedDate, loadedRowCount });
 	}
 
@@ -97,7 +96,7 @@ export const bigQueryExportJob = async (
 		exportedRowCount,
 	});
 
-	// 6. Lambda ハンドラーへレスポンスを返す。
+	// 6. Return the response to the Lambda handler.
 	return {
 		ok: true,
 		job: batchNames.animeMetricBigQueryExport,

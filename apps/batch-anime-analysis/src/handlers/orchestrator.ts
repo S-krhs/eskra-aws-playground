@@ -1,9 +1,9 @@
-// In scope: Orchestrator Lambda イベントを受け取り、SQS 投入 job を実行する
-// Out of scope: 個別スクレイピング処理、dataSource 単位実行制御、外部通知詳細を持つ
-import { orchestratorJob } from "@/jobs/orchestrator.js";
-import type { OrchestratorResponse } from "@/shared/schemas/lambda/orchestrator/response.js";
+// In scope: taking the orchestrator Lambda's event and running the enqueue job
+// Out of scope: the scraping itself, per-dataSource execution control, notification detail
 
-/** アニメ分析 orchestrator Lambda のエントリポイント。 */
+import type { OrchestratorResponse } from "@/_shared/schemas/lambda/orchestrator/response.js";
+import { orchestratorJob } from "@/jobs/orchestrator.js";
+
 export const handler = async (
 	event: unknown = {},
 ): Promise<OrchestratorResponse> => {

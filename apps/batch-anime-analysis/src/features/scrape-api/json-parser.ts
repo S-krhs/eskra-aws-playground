@@ -1,11 +1,10 @@
-// In scope: JSON データから metric 一覧を作る
-// Out of scope: JSON 取得、HTML 解析、app 固有の定義変換を行う
+// In scope: building a metric list out of JSON data
+// Out of scope: fetching the JSON, parsing HTML, this app's own definition conversion
 import {
 	buildMetrics,
 	type MetricBuildResult,
-} from "@/shared/intermediate-models/metric/metric.js";
+} from "@/_shared/intermediate-models/metric/metric.js";
 
-/** JSON metric value の取得方法。 */
 export type JsonValueTarget =
 	| {
 			type: "item-index";
@@ -15,14 +14,14 @@ export type JsonValueTarget =
 			path: string;
 	  };
 
-/** JSON データから metric input を取り出すための path 指定。 */
+/** The paths that pull metric inputs out of JSON data. */
 export interface JsonParseOptions {
 	itemsPath: string;
 	labelPath: string;
 	value: JsonValueTarget;
 }
 
-/** JSON データから metric 一覧を作る。変換できない item は除外して件数に数える。 */
+/** Builds a metric list from JSON data; an item that can't be converted is excluded and counted. */
 export const parseJsonMetrics = (
 	jsonData: unknown,
 	options: JsonParseOptions,
@@ -43,7 +42,6 @@ export const parseJsonMetrics = (
 	return buildMetrics(metricInputs);
 };
 
-/** metric value を取得方法に応じて取り出す。 */
 const readValue = (
 	item: unknown,
 	index: number,
@@ -56,7 +54,7 @@ const readValue = (
 	return readJsonPath(item, value.path);
 };
 
-/** "items/0/name" のような path を辿って値を取り出す。 */
+/** Walks a path like "items/0/name" to pull a value out. */
 const readJsonPath = (input: unknown, path: string): unknown => {
 	const segments = path.split("/").filter((segment) => {
 		return segment.length > 0;
@@ -65,7 +63,7 @@ const readJsonPath = (input: unknown, path: string): unknown => {
 	return segments.reduce<unknown>(readSegment, input);
 };
 
-/** path の 1 階層分を辿る。到達できない場合は undefined を返す。 */
+/** Walks one level of a path; undefined when it can't be reached. */
 const readSegment = (current: unknown, segment: string): unknown => {
 	if (Array.isArray(current)) {
 		const index = Number(segment);

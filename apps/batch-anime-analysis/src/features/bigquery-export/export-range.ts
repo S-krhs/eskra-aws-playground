@@ -1,22 +1,21 @@
-// In scope: 起動イベントの日付指定から BigQuery 連携対象の日付範囲を決める
-// Out of scope: 対象日に metric があるかの判定、起動イベントの検証、BigQuery への書き込みを行う
+// In scope: deciding the date range to export from the dates given on the launch event
+// Out of scope: checking whether a date holds any metric, validating the launch event, writing to BigQuery
 import { getPreviousJstDateString } from "@eskra-aws-playground/libs/date/previous-jst-date.js";
 
-/** 連携対象の日付範囲の指定。どちらも省略できる。 */
+/** The requested date range; either end may be omitted. */
 export interface ExportRangeInput {
 	startDate?: string;
 	endDate?: string;
 }
 
-/** 連携対象の日付範囲。両端を含む。 */
+/** The date range to export; inclusive at both ends. */
 export interface ExportRange {
 	startDate: string;
 	endDate: string;
 }
 
 /**
- * 日付指定から連携対象の日付範囲を決める。
- * 片方だけの指定はその 1 日、どちらも省略した場合は JST の前日 1 日分にする。
+ * One end alone means that single day; both omitted means the previous JST day.
  */
 export const resolveExportRange = (input: ExportRangeInput): ExportRange => {
 	const defaultDate = getPreviousJstDateString();

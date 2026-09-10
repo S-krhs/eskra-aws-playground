@@ -1,7 +1,7 @@
-// In scope: CloudWatch alarm の SNS 通知内容から Discord 通知文を生成する
-// Out of scope: SNS event の受信、Webhook URL 解決、HTTP 送信を行う
+// In scope: writing the Discord notification from a CloudWatch alarm's SNS message
+// Out of scope: receiving the SNS event, resolving the webhook URL, sending over HTTP
 
-/** CloudWatch alarm の SNS Message に含まれる主要フィールド。 */
+/** The fields of interest in a CloudWatch alarm's SNS message. */
 interface CloudWatchAlarmMessage {
 	AlarmName?: string;
 	AlarmDescription?: string | null;
@@ -13,7 +13,6 @@ interface CloudWatchAlarmMessage {
 
 const MAX_REASON_LENGTH = 500;
 
-/** CloudWatch alarm の SNS Message から Discord 通知文を生成する。 */
 export const buildAlarmReport = (snsMessage: string): string => {
 	const alarm = parseAlarmMessage(snsMessage);
 
@@ -43,7 +42,7 @@ export const buildAlarmReport = (snsMessage: string): string => {
 	return lines.join("\n");
 };
 
-/** SNS Message を CloudWatch alarm として解釈する。解釈できなければ null。 */
+/** Reads an SNS message as a CloudWatch alarm; null when it doesn't read as one. */
 const parseAlarmMessage = (
 	snsMessage: string,
 ): CloudWatchAlarmMessage | null => {
@@ -63,7 +62,6 @@ const parseAlarmMessage = (
 	return null;
 };
 
-/** 文字列を最大長で切り詰める。 */
 const truncate = (text: string, maxLength: number): string => {
 	return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
 };

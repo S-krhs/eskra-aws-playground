@@ -1,5 +1,5 @@
-// In scope: Lambda 向け Chromium の Playwright 起動設定と起動処理を提供する
-// Out of scope: Webpage からの値取得、metric 正規化、app 固有の定義変換を行う
+// In scope: Playwright launch config and launching Chromium for Lambda
+// Out of scope: fetching a page's content, metric normalization, app-specific definition conversion
 import sparticuzChromium from "@sparticuz/chromium";
 import {
 	type Browser,
@@ -7,7 +7,6 @@ import {
 	chromium as playwrightChromium,
 } from "playwright-core";
 
-/** Playwright 用の Chromium 起動設定を作る。 */
 export const buildChromiumLaunchOptions = async (
 	launchOptions: LaunchOptions = {},
 ): Promise<LaunchOptions> => {
@@ -21,7 +20,6 @@ export const buildChromiumLaunchOptions = async (
 	};
 };
 
-/** Lambda 向け Chromium を Playwright で起動する。 */
 export const launchChromium = async (
 	launchOptions?: LaunchOptions,
 ): Promise<Browser> => {

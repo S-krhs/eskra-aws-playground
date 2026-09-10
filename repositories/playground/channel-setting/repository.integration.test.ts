@@ -1,5 +1,5 @@
-// TODO: 別タスクで testcontainers の PostgreSQL に移行する。
-//       それまでは TEST_DATABASE_URL(ローカル用 Neon branch)が設定されている場合のみ実行される。
+// TODO: move to a testcontainers PostgreSQL in a separate task.
+//       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import {
 	afterAll,
 	afterEach,
@@ -11,9 +11,9 @@ import {
 } from "vitest";
 import { z } from "zod";
 
-import { getPrismaClient } from "../../db/client.js";
-import { applicationKeys } from "../shared/literals/application-key.js";
-import { settingKeys } from "../shared/literals/setting-key.js";
+import { getPrismaClient } from "../../client/prisma.js";
+import { applicationKeys } from "../_shared/literals/application-key.js";
+import { settingKeys } from "../_shared/literals/setting-key.js";
 import { channelSettingRepository } from "./repository.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
@@ -57,7 +57,7 @@ describe.skipIf(!testDatabaseUrl)(
 			await getPrismaClient().$disconnect();
 		});
 
-		it("Guild・対象利用者ごとの JSON 設定を保存して検証済みで読み戻せる", async () => {
+		it("saves the JSON setting for a guild and target user and reads it back validated", async () => {
 			await expect(
 				channelSettingRepository.save({
 					applicationKey,
@@ -91,7 +91,7 @@ describe.skipIf(!testDatabaseUrl)(
 			expect(row?.configuration).toEqual({ version: 1, channelId });
 		});
 
-		it("同じ Guild・対象利用者の設定を 1 行のまま上書きする", async () => {
+		it("overwrites the same guild and target user in place, still one row", async () => {
 			await channelSettingRepository.save({
 				applicationKey,
 				settingKey,
@@ -122,7 +122,7 @@ describe.skipIf(!testDatabaseUrl)(
 			});
 		});
 
-		it("同じ Guild の別利用者を独立して保存・削除する", async () => {
+		it("saves and deletes another user in the same guild independently", async () => {
 			await channelSettingRepository.save({
 				applicationKey,
 				settingKey,
@@ -158,7 +158,7 @@ describe.skipIf(!testDatabaseUrl)(
 			).toEqual([anotherUserId]);
 		});
 
-		it("Guild・対象利用者の設定を削除し、削除対象の有無を返す", async () => {
+		it("deletes the setting and reports whether there was one to delete", async () => {
 			await channelSettingRepository.save({
 				applicationKey,
 				settingKey,
@@ -185,7 +185,7 @@ describe.skipIf(!testDatabaseUrl)(
 			).resolves.toBeNull();
 		});
 
-		it("保存済み JSON が schema に違反していれば読み込みを失敗させる", async () => {
+		it("fails the read when stored JSON violates the schema", async () => {
 			await getPrismaClient().discordUserSetting.create({
 				data: {
 					applicationKey,
@@ -204,7 +204,7 @@ describe.skipIf(!testDatabaseUrl)(
 			).rejects.toBeInstanceOf(z.ZodError);
 		});
 
-		it("不正な入力は DB へ保存する前に失敗させる", async () => {
+		it("fails invalid input before it reaches the DB", async () => {
 			await expect(
 				channelSettingRepository.save({
 					applicationKey,

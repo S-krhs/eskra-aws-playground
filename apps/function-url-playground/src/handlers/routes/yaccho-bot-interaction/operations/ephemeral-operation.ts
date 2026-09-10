@@ -1,13 +1,13 @@
-// In scope: Discord ephemeral interaction callback payload の生成
-// Out of scope: interaction 種別のルーティング、メッセージ内容の決定、HTTP response の形成
+// In scope: building an ephemeral Discord interaction callback payload
+// Out of scope: routing by interaction type, deciding the message content, shaping the HTTP response
 import {
 	type DiscordEphemeralResponsePayload,
 	messageFlags,
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 
-/** 呼び出し元だけに表示する Discord interaction callback payload を生成する。 */
+/** Builds a Discord interaction callback payload visible only to the caller. */
 export const ephemeralOperation = (
 	content: string,
 ): OperationResult<DiscordEphemeralResponsePayload> => {

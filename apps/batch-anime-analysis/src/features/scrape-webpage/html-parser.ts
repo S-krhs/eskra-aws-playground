@@ -1,19 +1,18 @@
-// In scope: HTML から metric 一覧を作る
-// Out of scope: HTML 取得、browser 起動、app 固有の定義変換を行う
+// In scope: building a metric list out of HTML
+// Out of scope: fetching the HTML, launching a browser, this app's own definition conversion
 
 import * as cheerio from "cheerio";
 import {
 	buildMetrics,
 	type MetricBuildResult,
-} from "@/shared/intermediate-models/metric/metric.js";
+} from "@/_shared/intermediate-models/metric/metric.js";
 
-/** HTML 上の要素を選ぶ指定。 */
+/** Picks one element out of an HTML document. */
 export interface HtmlElementTarget {
 	selector: string;
 	index?: number;
 }
 
-/** HTML metric value の取得方法。 */
 export type HtmlValueTarget =
 	| {
 			type: "item-index";
@@ -23,7 +22,7 @@ export type HtmlValueTarget =
 			target: HtmlElementTarget;
 	  };
 
-/** HTML から metric を作るための指定。 */
+/** How metrics are built out of HTML. */
 export interface HtmlParseOptions {
 	wrapper: HtmlElementTarget;
 	itemsSelector: string;
@@ -31,7 +30,7 @@ export interface HtmlParseOptions {
 	value: HtmlValueTarget;
 }
 
-/** HTML から metric 一覧を作る。変換できない item は除外して件数に数える。 */
+/** Builds a metric list from HTML; an item that can't be converted is excluded and counted. */
 export const parseHtmlMetrics = (
 	html: string,
 	options: HtmlParseOptions,

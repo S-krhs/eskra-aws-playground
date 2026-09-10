@@ -1,5 +1,5 @@
-// In scope: 受信した Discord interaction リクエストの Ed25519 署名を検証する
-// Out of scope: interaction body の parse、応答生成、public key の解決
+// In scope: verifying the Ed25519 signature on an incoming Discord interaction request
+// Out of scope: parsing the interaction body, building a response, resolving the public key
 import { createPublicKey, verify } from "node:crypto";
 
 const ED25519_SPKI_DER_PREFIX_HEX = "302a300506032b6570032100";
@@ -14,7 +14,7 @@ interface InteractionSignatureInput {
 	rawBody: string;
 }
 
-/** Discord interaction リクエストが正規の application から送られたことを検証する。 */
+/** Confirms the request genuinely came from the application, not just that it's well-formed. */
 export const verifyInteractionSignature = (
 	input: InteractionSignatureInput,
 ): boolean => {

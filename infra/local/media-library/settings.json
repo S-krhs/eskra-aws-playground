@@ -1,0 +1,12 @@
+{
+	"configEnv": "MEDIA_LIBRARY_CONFIG",
+	"configPath": ".config/eskra-media-library/config.json",
+	"serviceName": "eskra-media-library",
+	"port": 7420,
+	"bucketName": "eskra-media-library",
+	"syncFunctionName": "eskra-aws-playground-develop-media-sync",
+	"targets": {
+		"library": "apps/media-library/backend/dist/server.js",
+		"upload": "apps/windows-playground/dist/handlers/media-upload/handler.js"
+	}
+}

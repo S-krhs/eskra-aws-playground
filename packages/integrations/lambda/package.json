@@ -1,0 +1,23 @@
+{
+	"name": "@eskra-aws-playground/integration-lambda",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./lambda-invoker.js": {
+			"types": "./dist/lambda-invoker.d.ts",
+			"default": "./dist/lambda-invoker.js"
+		}
+	},
+	"dependencies": {
+		"@aws-sdk/client-lambda": "^3.1127.0"
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc -p tsconfig.json",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "biome ci .",
+		"validate": "npm run typecheck && npm run lint && npm run test"
+	}
+}

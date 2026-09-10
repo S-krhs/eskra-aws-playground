@@ -1,5 +1,5 @@
-// In scope: 収支を増減させるボタン列
-// Out of scope: 収支の保持、増減後の表示
+// In scope: the row of buttons moving the balance up and down
+// Out of scope: holding the balance, showing it afterwards
 
 import { Button } from "@/shared/ui/win-forms";
 import { expenseSteps } from "../model/expense-steps.js";
@@ -8,7 +8,7 @@ interface Props {
 	onAdjust: (stepYen: number) => void;
 }
 
-/** 投資・回収のボタン列。押された額を円で親へ渡す */
+/** The spend/recover button row; hands the pressed amount up in yen */
 export const ExpenseButtons = ({ onAdjust }: Props) => {
 	return (
 		<div className="flex flex-wrap gap-2">

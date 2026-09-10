@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseHtmlMetrics } from "./html-parser.js";
 
 describe("parseHtmlMetrics", () => {
-	it("HTML と selector 指定から metric 一覧を作る", () => {
+	it("builds a metric list from HTML and its selectors", () => {
 		const html = `
 			<section class="ranking">
 				<article class="item">
@@ -51,7 +51,7 @@ describe("parseHtmlMetrics", () => {
 		});
 	});
 
-	it("metric に変換できない item は除外して件数に数える", () => {
+	it("excludes an item that can't be converted and counts it", () => {
 		const html = `
 			<section class="ranking">
 				<article class="item">
@@ -98,7 +98,7 @@ describe("parseHtmlMetrics", () => {
 		});
 	});
 
-	it("item-index を metric value にできる", () => {
+	it("can use the item index as the metric value", () => {
 		const html = `
 			<section class="ranking">
 				<article class="item"><h2 class="title">Title A</h2></article>

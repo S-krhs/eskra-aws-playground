@@ -4,9 +4,17 @@
 	"private": true,
 	"type": "module",
 	"exports": {
+		"./config/json-config-file.js": {
+			"types": "./dist/config/json-config-file.d.ts",
+			"default": "./dist/config/json-config-file.js"
+		},
 		"./date/current-jst-date.js": {
 			"types": "./dist/date/current-jst-date.d.ts",
 			"default": "./dist/date/current-jst-date.js"
+		},
+		"./date/jst-date-time-parts.js": {
+			"types": "./dist/date/jst-date-time-parts.d.ts",
+			"default": "./dist/date/jst-date-time-parts.js"
 		},
 		"./date/previous-jst-date.js": {
 			"types": "./dist/date/previous-jst-date.d.ts",
@@ -19,6 +27,10 @@
 		"./logger/batch-logger.js": {
 			"types": "./dist/logger/batch-logger.d.ts",
 			"default": "./dist/logger/batch-logger.js"
+		},
+		"./path/windows-path.js": {
+			"types": "./dist/path/windows-path.d.ts",
+			"default": "./dist/path/windows-path.js"
 		},
 		"./string/text-sanitizer.js": {
 			"types": "./dist/string/text-sanitizer.d.ts",
@@ -34,6 +46,7 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"dayjs": "^1.11.23"
+		"dayjs": "^1.11.23",
+		"zod": "^4.5.3"
 	}
 }

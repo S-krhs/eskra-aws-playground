@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 describe("gambleCheckDisableOperation", () => {
-	it("実行者本人の削除ジョブを enqueue し ephemeral deferred で ACK する", async () => {
+	it("enqueues the removal job for the caller and ACKs with an ephemeral deferred response", async () => {
 		const result = await gambleCheckDisableOperation(guildCommand(), callback);
 
 		expect(sqs.sendMessages).toHaveBeenCalledWith([
@@ -65,7 +65,7 @@ describe("gambleCheckDisableOperation", () => {
 		});
 	});
 
-	it("サーバー外からの実行は enqueue せず即時 ephemeral を返す", async () => {
+	it("enqueues nothing and answers immediately with an ephemeral response when run outside a server", async () => {
 		const result = await gambleCheckDisableOperation(
 			{
 				kind: "application-command",

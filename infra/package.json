@@ -8,5 +8,8 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"lint": "biome ci .",
 		"validate": "npm run typecheck && npm run lint && npm run test"
+	},
+	"devDependencies": {
+		"@eskra-aws-playground/shared-domains": "0.1.0"
 	}
 }

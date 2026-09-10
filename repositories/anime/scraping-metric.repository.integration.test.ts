@@ -1,8 +1,8 @@
-// TODO: 別タスクで testcontainers の PostgreSQL に移行する。
-//       それまでは TEST_DATABASE_URL(ローカル用 Neon branch)が設定されている場合のみ実行される。
+// TODO: move to a testcontainers PostgreSQL in a separate task.
+//       Until then this only runs when TEST_DATABASE_URL (a local Neon branch) is set.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { getPrismaClient } from "../db/client.js";
+import { getPrismaClient } from "../client/prisma.js";
 import {
 	type ScrapingMetricRecord,
 	scrapingMetricRepository,
@@ -28,8 +28,8 @@ describe.skipIf(!testDatabaseUrl)(
 			await prisma.$disconnect();
 		});
 
-		it("スクレイピング結果を 1 metric = 1 行で insert して読み戻せる", async () => {
-			await scrapingMetricRepository.saveScrapingResult({
+		it("inserts a scrape as one row per metric and reads it back", async () => {
+			await scrapingMetricRepository.insertMany({
 				dataSourceId: testDataSourceId,
 				scrapedDate: testScrapedDate,
 				metrics: [
@@ -57,9 +57,9 @@ describe.skipIf(!testDatabaseUrl)(
 			expect(rows[0]?.id).toBeGreaterThan(0n);
 		});
 
-		it("label が空文字列の場合は validation で弾かれ insert されない", async () => {
+		it("rejects an empty label at validation and inserts nothing", async () => {
 			await expect(
-				scrapingMetricRepository.saveScrapingResult({
+				scrapingMetricRepository.insertMany({
 					dataSourceId: testDataSourceId,
 					scrapedDate: testScrapedDate,
 					metrics: [{ label: "", value: 1 }],
@@ -73,8 +73,8 @@ describe.skipIf(!testDatabaseUrl)(
 			expect(rows).toHaveLength(0);
 		});
 
-		it("metric がある取得日だけを古い順に返す", async () => {
-			await scrapingMetricRepository.saveScrapingResult({
+		it("returns only the dates holding a metric, oldest first", async () => {
+			await scrapingMetricRepository.insertMany({
 				dataSourceId: testDataSourceId,
 				scrapedDate: testNextScrapedDate,
 				metrics: [{ label: "作品C", value: 3 }],
@@ -91,8 +91,8 @@ describe.skipIf(!testDatabaseUrl)(
 			expect([...scrapedDates].sort()).toEqual(scrapedDates);
 		});
 
-		it("取得日の metric を id 昇順で 1 ページずつ読み出せる", async () => {
-			// 同じ取得日に他 run の行が残っていても成立するよう、自分の dataSourceId の行だけを集める
+		it("pages through a date's metrics ordered by id", async () => {
+			// Collect only this run's dataSourceId, so leftover rows from another run on the same date don't break it
 			const collected: ScrapingMetricRecord[] = [];
 			let afterId: string | undefined;
 
@@ -102,7 +102,7 @@ describe.skipIf(!testDatabaseUrl)(
 					afterId,
 					limit: 1,
 				});
-				// 行が尽きたらここで落ちるため、ページ送りが進まなくても無限には回らない
+				// Running out of rows fails here, so a stalled page cursor can't loop forever
 				expect(page).toHaveLength(1);
 
 				const record = page[0];
@@ -122,7 +122,7 @@ describe.skipIf(!testDatabaseUrl)(
 			expect(collected[1]).toMatchObject({ label: "作品B", value: 2.5 });
 		});
 
-		it("YYYY-MM-DD 形式でない取得日はエラーにする", async () => {
+		it("errors on a scraped date not in YYYY-MM-DD form", async () => {
 			for (const scrapedDate of ["2026-08", "2026", "2026-8-1", "2026/08/01"]) {
 				await expect(
 					scrapingMetricRepository.findManyByScrapedDate({
@@ -133,8 +133,8 @@ describe.skipIf(!testDatabaseUrl)(
 			}
 		});
 
-		it("存在しない取得日は別の日へ繰り上げずエラーにする", async () => {
-			// 2026-02-30 は Date が 2026-03-02 へ繰り上げるため、黙って別の日を読まないことを確かめる
+		it("errors on a nonexistent date instead of rolling it into another day", async () => {
+			// Date rolls 2026-02-30 into 2026-03-02, so check that another day is never read silently
 			for (const scrapedDate of ["2026-02-30", "2026-13-99"]) {
 				await expect(
 					scrapingMetricRepository.findManyByScrapedDate({
@@ -145,7 +145,7 @@ describe.skipIf(!testDatabaseUrl)(
 			}
 		});
 
-		it("id の形式でない afterId はエラーにする", async () => {
+		it("errors on an afterId that is not id-shaped", async () => {
 			await expect(
 				scrapingMetricRepository.findManyByScrapedDate({
 					scrapedDate: testScrapedDate,

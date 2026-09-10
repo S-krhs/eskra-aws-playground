@@ -1,9 +1,9 @@
-// In scope: SQS event を受け取り、dataSource スクレイピング job へ委譲する
-// Out of scope: SQS message body の解釈、スクレイピング処理、通知処理を持つ
-import { dataSourceJob } from "@/jobs/data-source.js";
-import type { SqsWorkerResponse } from "@/shared/schemas/lambda/sqs-worker/response.js";
+// In scope: taking the SQS event and delegating to the per-dataSource scrape job
+// Out of scope: interpreting the SQS message body, the scraping itself, notifications
 
-/** アニメ分析 dataSource スクレイピング Lambda のエントリポイント。 */
+import type { SqsWorkerResponse } from "@/_shared/schemas/lambda/sqs-worker/response.js";
+import { dataSourceJob } from "@/jobs/data-source.js";
+
 export const handler = async (event: unknown): Promise<SqsWorkerResponse> => {
 	return dataSourceJob(event);
 };

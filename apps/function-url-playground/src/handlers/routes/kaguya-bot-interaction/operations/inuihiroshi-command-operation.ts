@@ -1,5 +1,5 @@
-// In scope: /inuihiroshi を deferred 応答で ACK し、公開宣言を送る後追いジョブを enqueue する
-// Out of scope: command routing、宣言本文の生成、HTTP response の形成
+// In scope: deferred-ACKing /inuihiroshi and enqueuing the follow-up job that posts the public declaration
+// Out of scope: command routing, writing the declaration, shaping the HTTP response
 
 import type { DiscordInteractionCallback } from "@eskra-aws-playground/integration-discord/discord-interaction.js";
 import {
@@ -7,12 +7,12 @@ import {
 	responseTypes,
 } from "@eskra-aws-playground/integration-discord/interaction-response.js";
 import { SqsMessageSender } from "@eskra-aws-playground/integration-sqs/sqs-message-sender.js";
-import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-message.js";
-import { interactionJobNames } from "@eskra-aws-playground/shared-domains/contracts/interaction-job-names.js";
+import type { InteractionJobMessage } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/message.js";
+import { interactionJobNames } from "@eskra-aws-playground/shared-domains/discord/interaction-jobs/names.js";
 import { Resource } from "sst/resource";
-import type { OperationResult } from "@/handlers/routes/intermediate-models/operation-result.js";
+import type { OperationResult } from "@/handlers/routes/_shared/intermediate-models/operation-result.js";
 
-/** /inuihiroshi を公開の deferred 応答で ACK し、宣言本文の送信を後追いジョブへ委譲する。 */
+/** ACKs /inuihiroshi with a public deferred response and leaves sending the declaration to a follow-up job. */
 export const inuihiroshiCommandOperation = async (
 	callback: DiscordInteractionCallback,
 ): Promise<OperationResult<DiscordDeferredMessageResponsePayload>> => {

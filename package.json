@@ -19,15 +19,19 @@
 		"db:migrate:dev": "prisma migrate dev",
 		"build": "turbo run build",
 		"build:browser-runtime-layer": "node infra/layers/browser-runtime/build.mjs",
-		"deploy": "npm run build && npm run build:browser-runtime-layer && sst deploy --stage develop --config infra/sst.config.ts",
+		"build:ffmpeg-layer": "node infra/layers/ffmpeg/build.mjs",
+		"build:local-launchers": "node infra/local/media-library/build-launchers.mjs",
+		"deploy": "npm run build && npm run build:browser-runtime-layer && npm run build:ffmpeg-layer && sst deploy --stage develop --config infra/sst.config.ts",
 		"discord:sync": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run",
 		"discord:sync:run": "node apps/function-url-playground/dist/scripts/sync-discord-commands.js",
+		"media:upload": "node infra/local/media-library/run.mjs upload",
+		"media:library": "turbo run build build:ui --filter=@eskra-aws-playground/media-library && node infra/local/media-library/run.mjs library",
 		"discord:sync:dry": "npm run build && sst shell --config infra/sst.config.ts -- npm run discord:sync:run -- --dry-run",
-		"dev": "npm run build && npm run build:browser-runtime-layer && sst dev --config infra/sst.config.ts",
+		"dev": "npm run build && npm run build:browser-runtime-layer && npm run build:ffmpeg-layer && sst dev --config infra/sst.config.ts",
 		"test": "turbo run test -- --exclude '**/dist/**'",
 		"test:ci": "turbo run test --continue -- --exclude '**/dist/**' --reporter=default --reporter=json --outputFile.json=vitest-report.json",
 		"test:summary": "node scripts/ci-test-summary.js",
-		"typecheck": "turbo run typecheck",
+		"typecheck": "systemd-run --user --scope -q -p MemoryMax=6G -p MemorySwapMax=0 turbo run typecheck",
 		"lint": "biome ci . && turbo run lint",
 		"format": "biome format .",
 		"format:fix": "biome format --write .",
@@ -35,12 +39,14 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.11",
+		"@hono/zod-openapi": "^1.6.3",
 		"@types/node": "^26.4.0",
 		"prisma": "^7.10.0",
 		"prisma-zod-generator": "^3.3.1",
 		"sst": "^4.17.1",
 		"turbo": "^2.10.12",
 		"typescript": "^7.0.2",
-		"vitest": "^4.1.11"
+		"vitest": "^4.1.11",
+		"zod": "^4.5.4"
 	}
 }

@@ -1,10 +1,9 @@
-// In scope: アニメ指標スクレイピング定義の型を定義する
-// Out of scope: スクレイピング実行、永続化用の DB 行型、外部通知を行う
+// In scope: the types describing an anime-metric scraping definition
+// Out of scope: running the scrape, DB row shapes for persistence, outbound notifications
 
-/** スクレイピング対象の取得方式。 */
 export type AnimeMetricSourceType = "api" | "webpage";
 
-/** JSON metric value の取得方法。 */
+/** `item-index` makes the position in the list the metric, which is how a ranking is read. */
 export type AnimeJsonMetricValueSource =
 	| {
 			type: "item-index";
@@ -14,7 +13,7 @@ export type AnimeJsonMetricValueSource =
 			path: string;
 	  };
 
-/** API から metric を取り出す定義。 */
+/** How to pull a metric out of an API response. */
 export interface AnimeApiMetricSource {
 	type: "api";
 	url: string;
@@ -23,13 +22,13 @@ export interface AnimeApiMetricSource {
 	value: AnimeJsonMetricValueSource;
 }
 
-/** HTML 上の要素を選ぶ指定。 */
+/** Picks one element out of an HTML document. */
 export interface AnimeHtmlElementSource {
 	selector: string;
 	index?: number;
 }
 
-/** HTML metric value の取得方法。 */
+/** `item-index` makes the position in the list the metric, which is how a ranking is read. */
 export type AnimeHtmlMetricValueSource =
 	| {
 			type: "item-index";
@@ -39,7 +38,7 @@ export type AnimeHtmlMetricValueSource =
 			target: AnimeHtmlElementSource;
 	  };
 
-/** Webpage から metric を取り出す定義。 */
+/** How to pull a metric out of a webpage. */
 export interface AnimeWebpageMetricSource {
 	type: "webpage";
 	url: string;
@@ -49,12 +48,14 @@ export interface AnimeWebpageMetricSource {
 	value: AnimeHtmlMetricValueSource;
 }
 
-/** アニメ指標スクレイピングで使う repository の 1 項目。 */
+/** One entry in the anime-metric scraping catalog. */
 export interface AnimeMetricDataSource {
 	id: string;
 	websiteName: string;
 	metricName: string;
+	/** True when a larger value ranks higher; false for a rank, where a smaller one does. Orders the notification. */
 	higherIsBetter: boolean;
+	/** Which of the orchestrator's runs picks this definition up. */
 	scheduleHourJst: number;
 	source: AnimeApiMetricSource | AnimeWebpageMetricSource;
 }

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { discordInteractionRequestSchema } from "./schema.js";
 
 describe("discordInteractionRequestSchema", () => {
-	it("署名headersとraw bodyとparse済みinteractionを取り出す", () => {
+	it("pulls out the signature headers, the raw body and the parsed interaction", () => {
 		expect(
 			discordInteractionRequestSchema.parse({
 				headers: {
@@ -21,7 +21,7 @@ describe("discordInteractionRequestSchema", () => {
 		});
 	});
 
-	it("base64 bodyをdecodeしてinteractionを取り出す", () => {
+	it("decodes a base64 body and pulls the interaction out of it", () => {
 		const body = Buffer.from('{"type":1}', "utf8").toString("base64");
 
 		expect(
@@ -38,7 +38,7 @@ describe("discordInteractionRequestSchema", () => {
 		});
 	});
 
-	it("interaction として parse できない body は失敗する", () => {
+	it("fails on a body that does not parse as an interaction", () => {
 		expect(
 			discordInteractionRequestSchema.safeParse({
 				headers: {},

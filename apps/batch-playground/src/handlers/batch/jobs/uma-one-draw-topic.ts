@@ -1,5 +1,5 @@
-// In scope: UMA ワンドロのお題通知バッチをオーケストレーションする
-// Out of scope: お題メッセージ生成や Discord Webhook HTTP 通信の詳細を持つ
+// In scope: orchestrating the UMA one-draw topic notification batch
+// Out of scope: writing the topic message, Discord webhook HTTP detail
 import { DiscordWebhookClient } from "@eskra-aws-playground/integration-discord/discord-webhook-client.js";
 import { createBatchLogger } from "@eskra-aws-playground/libs/logger/batch-logger.js";
 import { Resource } from "sst/resource";
@@ -9,20 +9,19 @@ import type { BatchResponse } from "@/handlers/batch/schema.js";
 
 const logger = createBatchLogger("uma-one-draw-topic");
 
-/** UMA ワンドロのお題を Discord へ通知するバッチジョブ。 */
 export const umaOneDrawTopicJob = async (
 	_event: unknown,
 ): Promise<BatchResponse> => {
-	// 1. SST link から送信先 Discord Webhook URL を解決する。
+	// 1. Resolve the destination Discord webhook URL from the SST link.
 	const discordWebhookUrl = Resource.UmaOneDrawTopicDiscordWebhook.value;
 
 	logger.start();
 
-	// 2. feature で UMA ワンドロのお題メッセージを生成する。
+	// 2. Write the topic message in the feature.
 	const message = await buildTopicMessage();
 
-	// 3. Discord Webhook integration へ送信を委譲する。失敗しても throw せず、
-	//    Lambda 非同期リトライによる重複通知を防ぐ。
+	// 3. Delegate sending to the Discord webhook integration. A failure doesn't throw, which keeps
+	//    Lambda's async retry from posting the notification twice.
 	let notificationSucceeded = false;
 	try {
 		const webhookClient = new DiscordWebhookClient(discordWebhookUrl);
@@ -37,7 +36,7 @@ export const umaOneDrawTopicJob = async (
 		notificationSucceeded,
 	});
 
-	// 4. Lambda ハンドラーへ共通レスポンスを返す。
+	// 4. Return the shared response to the Lambda handler.
 	return {
 		ok: true,
 		job: "uma-one-draw-topic",

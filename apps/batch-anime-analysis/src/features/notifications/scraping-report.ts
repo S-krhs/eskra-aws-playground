@@ -1,20 +1,18 @@
-// In scope: アニメ指標スクレイピング結果から Discord 通知文を生成する
-// Out of scope: スクレイピング実行、Webhook URL 解決、HTTP 通信を行う
-import type { Metric } from "@/shared/intermediate-models/metric/metric.js";
+// In scope: writing the Discord notification for an anime-metric scrape result
+// Out of scope: running the scrape, resolving the webhook URL, HTTP calls
+import type { Metric } from "@/_shared/intermediate-models/metric/metric.js";
 
 const DISCORD_CONTENT_LIMIT = 2_000;
 const DEFAULT_PREVIEW_LIMIT = 5;
 const TRUNCATION_NOTE = "\n…（文字数上限のため以降を省略）";
 const RANK_MEDALS = ["🥇", "🥈", "🥉"];
 
-/** スクレイピング結果レポートに添える取得元情報。 */
 export interface ScrapingReportSource {
 	websiteName: string;
 	metricName: string;
 	higherIsBetter: boolean;
 }
 
-/** アニメ指標スクレイピング結果レポートの入力。 */
 export interface ScrapingReportInput {
 	source: ScrapingReportSource;
 	metrics: readonly Metric[];
@@ -22,7 +20,6 @@ export interface ScrapingReportInput {
 	previewLimit?: number;
 }
 
-/** アニメ指標スクレイピング結果から Discord 通知文を生成する。 */
 export const buildScrapingReport = ({
 	source,
 	metrics,
@@ -53,7 +50,7 @@ export const buildScrapingReport = ({
 	return `${content.slice(0, DISCORD_CONTENT_LIMIT - TRUNCATION_NOTE.length)}${TRUNCATION_NOTE}`;
 };
 
-/** 指標の上位が先頭に来るよう metric を並べ替える。 */
+/** Orders the metrics so the top of the ranking comes first. */
 const rankMetrics = (
 	metrics: readonly Metric[],
 	higherIsBetter: boolean,
@@ -64,17 +61,17 @@ const rankMetrics = (
 	});
 };
 
-/** 桁区切り付きで数値を整形する。 */
+/** Formats a number with thousands separators. */
 const formatNumber = (value: number): string => {
 	return value.toLocaleString("ja-JP");
 };
 
-/** 上位 3 件はメダル、それ以降はキーキャップ絵文字で順位を表す。 */
+/** The top 3 get medals; everything after uses a keycap emoji for its rank. */
 const formatRank = (rank: number): string => {
 	return RANK_MEDALS[rank - 1] ?? toKeycapEmoji(rank);
 };
 
-/** キーキャップ絵文字は 0〜10 しか無いため、超えたら番号表記へ落とす。 */
+/** Keycap emoji only run 0-10, so anything past that falls back to a plain number. */
 const toKeycapEmoji = (rank: number): string => {
 	if (rank === 10) {
 		return "🔟";
