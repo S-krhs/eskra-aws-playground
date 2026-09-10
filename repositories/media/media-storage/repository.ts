@@ -33,6 +33,10 @@ import type {
 } from "./types.js";
 
 // Files sharing a modified time are rare; going past this points at a skew in what is being taken in
+// Written beside the caller's metadata so a retried copy can recognise what it already produced. It is
+// this package's own bookkeeping, kept apart from the metadata a caller passes
+const COPY_SOURCE_METADATA_KEY = "copied-from";
+
 const MAX_KEY_SEQUENCE = 100;
 
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
@@ -216,14 +220,18 @@ export const mediaStorageRepository = {
 
 	/**
 	 * Copies an object into an area under a newly built key, leaving the source in place.
-	 * `REPLACE` only when `metadata` is passed — omitting it carries over the source's metadata.
-	 * A single CopyObject tops out at 5GB; past that needs multipart copy.
+	 * `REPLACE` only when `metadata` is passed — omitting it carries over the source's metadata, and
+	 * with it the chance to record where the copy came from, so only a copy that passes `metadata`
+	 * is safe to retry. A single CopyObject tops out at 5GB; past that needs multipart copy.
 	 */
 	copyIntoArea: async (
 		input: CopyIntoAreaInput,
 	): Promise<StoredObjectLocation> => {
 		const bucket = getMediaBucket();
-		const key = await resolveFreeAreaKey(input);
+		const key = await resolveFreeAreaKey({
+			...input,
+			copiedFrom: input.metadata ? input.sourceKey : undefined,
+		});
 
 		await getR2Client().send(
 			new CopyObjectCommand({
@@ -231,7 +239,10 @@ export const mediaStorageRepository = {
 				Key: key,
 				CopySource: buildCopySource(bucket, input.sourceKey),
 				MetadataDirective: input.metadata ? "REPLACE" : undefined,
-				Metadata: input.metadata,
+				Metadata: input.metadata && {
+					...input.metadata,
+					[COPY_SOURCE_METADATA_KEY]: input.sourceKey,
+				},
 				ContentType: input.contentType,
 			}),
 		);
@@ -309,11 +320,16 @@ export const mediaStorageRepository = {
 	},
 };
 
-/** Steps past a key already taken, so two files sharing a modified millisecond don't collide. */
+/**
+ * Steps past a key already taken, so two files sharing a modified millisecond don't collide.
+ * `copiedFrom` makes a key this same copy already produced count as free, so a retry lands back on the
+ * one object instead of stepping past it to a second.
+ */
 const resolveFreeAreaKey = async (input: {
 	area: Exclude<NamedMediaStorageArea, "thumbnail">;
 	modifiedAt: Date;
 	extension: string;
+	copiedFrom?: string;
 }): Promise<string> => {
 	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
 		const key = buildAreaObjectKey({
@@ -321,8 +337,13 @@ const resolveFreeAreaKey = async (input: {
 			// The first key carries no counter; a collision starts numbering at -2
 			sequence: sequence === 0 ? undefined : sequence + 1,
 		});
+		const taken = await mediaStorageRepository.headIfExists(key);
 
-		if (!(await mediaStorageRepository.headIfExists(key))) {
+		if (
+			!taken ||
+			(input.copiedFrom !== undefined &&
+				taken.metadata[COPY_SOURCE_METADATA_KEY] === input.copiedFrom)
+		) {
 			return key;
 		}
 	}

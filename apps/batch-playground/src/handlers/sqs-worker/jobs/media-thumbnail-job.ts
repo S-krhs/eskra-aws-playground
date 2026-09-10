@@ -24,6 +24,12 @@ export const mediaThumbnailJob = async (
 	message: MediaThumbnailMessage,
 	receiveCount: number,
 ): Promise<void> => {
+	// A redelivery arrives after the first delivery already moved the object on, so its key is gone and
+	// there is nothing left to do — the same guard the adoption worker keeps
+	if (!(await mediaStorageRepository.headIfExists(message.objectKey))) {
+		return;
+	}
+
 	const isPending =
 		mediaStorageRepository.resolveArea(message.objectKey) === "pending";
 	// Lambda's ephemeral storage is raised and /tmp is the work area, so even a large video fits

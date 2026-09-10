@@ -18,6 +18,14 @@
 
 - 接続先は環境変数 `R2_CREDENTIALS`(SST secret の `R2Credentials` を渡す JSON)と `MEDIA_BUCKET` から解決します。
 - R2 の一覧が空、または一度に削除される割合が大きすぎる場合は削除せずエラーにします。内容を確認したうえで手動起動する場合は `{"job": "media-sync", "allowBulkDelete": true}` を渡します。
+- サムネイル生成は 3 回の配信で成功しなければ諦め、対象を `_failed/` へ移して DLQ へ送ります。`MediaThumbnailDlqDepthAlarm` が鳴るのはこのときです。
+- `_failed/` は同期の対象から外れるので、放置しても再依頼はされません。原因を取り除いたうえで戻す手順:
+
+  ```bash
+  aws s3 mv s3://<bucket>/_failed/<key> s3://<bucket>/_pending/<key> --endpoint-url <r2-endpoint>
+  ```
+
+  次の `media-sync` が `_pending/` として拾い、サムネイルを依頼し直します。
 
 ## 実行できるジョブ
 
@@ -67,10 +75,19 @@ cron は JST 00:00 起動です。デプロイや障害で当日分が未登録�
 | `DATABASE_URL` | `SST_SECRET_DatabaseUrl` | batch / sqs-worker: DB 接続 |
 | `R2_CREDENTIALS` | `SST_SECRET_R2Credentials` | media-sync / media-thumbnail / media-adopt: R2 接続 |
 
-secret ではない環境変数として、`MEDIA_BUCKET`(R2 の bucket 名)を media-sync と media-thumbnail と media-adopt の
-Function へ渡します。値は `infra/sst.config.ts` が持ちます。
+secret ではない環境変数:
+
+| 環境変数 | 渡す先 | 用途 |
+| --- | --- | --- |
+| `MEDIA_BUCKET` | media-sync / media-thumbnail / media-adopt | R2 の bucket 名 |
+| `UMA_ONE_DRAW_TOPIC_SCHEDULE_GROUP_NAME` | batch | one-time schedule を登録する schedule group 名 |
+| `UMA_ONE_DRAW_TOPIC_SCHEDULER_ROLE_ARN` | batch | Scheduler が Lambda を起動するときに引き受ける role |
+
+いずれも値は `infra/sst.config.ts` が持ちます。`uma-one-draw-topic-scheduler` は後ろ 2 つが未設定だとエラーで終了します。
 
 Discord interaction / command 同期用の secret は `apps/function-url-playground/README.md` を参照。
+
+`sqs-worker` の interaction 系 job は Discord の interaction token を使うため、発行から 15 分以内に投稿を終える必要があります。3 回の配信で成功しなければ DLQ へ送られ、深さの alarm が鳴ります。
 
 ## ローカル実行
 

@@ -7,6 +7,7 @@ const jobs = vi.hoisted(() => {
 		umaOneDrawTopicJob: vi.fn(),
 		umaOneDrawTopicSchedulerJob: vi.fn(),
 		playCheckReminderJob: vi.fn(),
+		mediaSyncJob: vi.fn(),
 	};
 });
 
@@ -18,6 +19,9 @@ vi.mock("./jobs/uma-one-draw-topic-scheduler.js", () => {
 });
 vi.mock("./jobs/play-check-reminder.js", () => {
 	return { playCheckReminderJob: jobs.playCheckReminderJob };
+});
+vi.mock("./jobs/media-sync.js", () => {
+	return { mediaSyncJob: jobs.mediaSyncJob };
 });
 
 beforeEach(() => {
@@ -48,12 +52,15 @@ describe("handler", () => {
 			ok: true,
 			job: "play-check-reminder",
 		});
+		jobs.mediaSyncJob.mockResolvedValue({ ok: true, job: "media-sync" });
 
 		await handler({ job: "uma-one-draw-topic-scheduler" });
 		await handler({ job: "play-check-reminder" });
+		await handler({ job: "media-sync" });
 
 		expect(jobs.umaOneDrawTopicSchedulerJob).toHaveBeenCalledOnce();
 		expect(jobs.playCheckReminderJob).toHaveBeenCalledOnce();
+		expect(jobs.mediaSyncJob).toHaveBeenCalledOnce();
 	});
 
 	it("errors when job is unset", async () => {

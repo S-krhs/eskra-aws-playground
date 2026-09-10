@@ -6,8 +6,6 @@ import { mediaJobNames } from "@eskra-aws-playground/shared-domains/media/jobs/n
 import { gambleCheckDisableJob } from "./jobs/gamble-check-disable-job.js";
 import { gambleCheckEnableJob } from "./jobs/gamble-check-enable-job.js";
 import { kaguyaInuihiroshiReplyJob } from "./jobs/kaguya-inuihiroshi-reply-job.js";
-import { mediaAdoptJob } from "./jobs/media-adopt-job.js";
-import { mediaThumbnailJob } from "./jobs/media-thumbnail-job.js";
 import { playCheckReminderChoiceJob } from "./jobs/play-check-reminder-choice-job.js";
 import { yacchoHelloReplyJob } from "./jobs/yaccho-hello-reply-job.js";
 import {
@@ -19,7 +17,10 @@ import {
 
 const logger = createBatchLogger("sqs-job-worker");
 
-const runJob = (
+// The media jobs pull in the storage SDK and the ffmpeg wrapper, which the interaction queues never
+// touch. Importing them on demand keeps that off the cold start of the Lambda serving Discord, whose
+// interaction token expires in 15 minutes and whose ack is due in 3 seconds
+const runJob = async (
 	message: SqsJobMessage,
 	receiveCount: number,
 ): Promise<void> => {
@@ -34,10 +35,18 @@ const runJob = (
 			return gambleCheckDisableJob(message);
 		case interactionJobNames.playCheckReminderChoice:
 			return playCheckReminderChoiceJob(message);
-		case mediaJobNames.mediaThumbnail:
+		case mediaJobNames.mediaThumbnail: {
+			const { mediaThumbnailJob } = await import(
+				"./jobs/media-thumbnail-job.js"
+			);
+
 			return mediaThumbnailJob(message, receiveCount);
-		case mediaJobNames.mediaAdopt:
+		}
+		case mediaJobNames.mediaAdopt: {
+			const { mediaAdoptJob } = await import("./jobs/media-adopt-job.js");
+
 			return mediaAdoptJob(message);
+		}
 	}
 };
 

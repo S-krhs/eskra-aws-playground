@@ -16,6 +16,14 @@ export const batchContextSchema = z.object({
 
 export type BatchContext = z.infer<typeof batchContextSchema>;
 
+/** What a media-sync launch carries on top of the job name. */
+export const mediaSyncEventSchema = z.object({
+	/** Waives the bulk-delete guard; set true on a manual invoke once the deletion has been reviewed. */
+	allowBulkDelete: z.boolean().default(false),
+});
+
+export type MediaSyncEvent = z.infer<typeof mediaSyncEventSchema>;
+
 export interface BatchResponse {
 	ok: true;
 	job: string;
