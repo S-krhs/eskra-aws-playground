@@ -14,7 +14,6 @@ const settingsSchema = settings as {
 	serviceName: string;
 	port: number;
 	bucketName: string;
-	syncFunctionName: string;
 	targets: Record<string, string>;
 };
 
@@ -47,18 +46,5 @@ describe("media library local run settings", () => {
 		)?.[1];
 
 		expect(developBucketName).toBe(settingsSchema.bucketName);
-	});
-
-	// The management tool invokes this Lambda by name, and the name is composed in sst.config.ts
-	it("matches the sync function name sst.config.ts composes for develop", () => {
-		const appName = sstConfigSource.match(/const appName = "(.+?)"/)?.[1];
-
-		expect(appName).toBeDefined();
-		expect(sstConfigSource).toMatch(
-			/name: `\$\{appName\}-\$\{\$app\.stage\}-media-sync`/,
-		);
-		expect(settingsSchema.syncFunctionName).toBe(
-			`${appName}-develop-media-sync`,
-		);
 	});
 });

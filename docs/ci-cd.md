@@ -44,6 +44,7 @@ npm run build:ffmpeg-layer            # .tmp/layers/ffmpeg
 - `KAGUYA_DISCORD_BOT_TOKEN`
 - `KAGUYA_DISCORD_INTERACTION_PUBLIC_KEY`
 - `KAGUYA_DISCORD_APPLICATION_ID`
+- `MEDIA_SYNC_TOKEN`（メディアライブラリ管理ツールが `/media/sync` に付ける bearer token）
 
 app/job 固有の secret は該当 app の README を参照。
 

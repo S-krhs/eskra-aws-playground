@@ -7,6 +7,7 @@ const route = vi.hoisted(() => {
 	return {
 		yacchoBotInteractionRoute: vi.fn(),
 		kaguyaBotInteractionRoute: vi.fn(),
+		mediaSyncRoute: vi.fn(),
 	};
 });
 
@@ -15,6 +16,9 @@ vi.mock("./routes/kaguya-bot-interaction/route.js", () => {
 });
 vi.mock("./routes/yaccho-bot-interaction/route.js", () => {
 	return { yacchoBotInteractionRoute: route.yacchoBotInteractionRoute };
+});
+vi.mock("./routes/media-sync/route.js", () => {
+	return { mediaSyncRoute: route.mediaSyncRoute };
 });
 
 const buildEvent = (rawPath: string) => {
@@ -29,6 +33,7 @@ const buildEvent = (rawPath: string) => {
 beforeEach(() => {
 	route.yacchoBotInteractionRoute.mockReset();
 	route.kaguyaBotInteractionRoute.mockReset();
+	route.mediaSyncRoute.mockReset();
 });
 
 describe("handler", () => {
@@ -61,6 +66,20 @@ describe("handler", () => {
 		await handler(event);
 
 		expect(route.kaguyaBotInteractionRoute).toHaveBeenCalledWith(event);
+		expect(route.yacchoBotInteractionRoute).not.toHaveBeenCalled();
+	});
+
+	it("delegates the media sync path to its own route", async () => {
+		route.mediaSyncRoute.mockResolvedValue({
+			statusCode: 202,
+			headers: { "Content-Type": "application/json" },
+			body: '{"message":"同期の起動を受け付けました。"}',
+		});
+		const event = buildEvent(paths.mediaSync);
+
+		await handler(event);
+
+		expect(route.mediaSyncRoute).toHaveBeenCalledWith(event);
 		expect(route.yacchoBotInteractionRoute).not.toHaveBeenCalled();
 	});
 

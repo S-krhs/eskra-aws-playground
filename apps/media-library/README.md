@@ -43,8 +43,8 @@
     "secretAccessKey": "..."
   },
   "databaseUrl": "postgresql://...",
-  "syncFunctionName": "eskra-aws-playground-develop-media-sync",
-  "awsRegion": "ap-southeast-1",
+  "syncEndpointUrl": "https://xxxxx.lambda-url.ap-southeast-1.on.aws/media/sync",
+  "syncToken": "...",
   "port": 7420
 }
 ```
@@ -53,8 +53,10 @@
 | --- | --- | --- |
 | `bucket` / `r2` | 必須 | アップローダと共通。`bucket` は雛形に deploy と揃った値が入っている |
 | `databaseUrl` | 必須 | Neon の pooled 接続文字列。develop の DB を読む |
-| `syncFunctionName` | 必須 | 同期 Lambda の関数名。`POST /api/sync` の起動先。雛形に入っている |
-| `awsRegion` | 必須 | 同期 Lambda が居る region |
+| `syncEndpointUrl` | 必須 | 同期の起動を受け付けるエンドポイント。SST の出力 `functionUrl` に `/media/sync` を付けた URL |
+| `syncToken` | 必須 | そのエンドポイントに付ける bearer token。GitHub Secret `MEDIA_SYNC_TOKEN` と同じ値 |
 | `port` | 任意 | 既定は 7420 |
 
-`POST /api/sync` は AWS の認証情報を使います。`~/.aws/credentials` か環境変数で、対象 Lambda への `lambda:InvokeFunction` を持つ資格情報を用意してください。
+`POST /api/sync` は `syncEndpointUrl` を叩くだけなので、AWS の認証情報は要りません。Lambda の invoke は
+エンドポイント側が自分のロールで行います。エンドポイントの仕様は
+[apps/function-url-playground/README.md](../function-url-playground/README.md) を参照。

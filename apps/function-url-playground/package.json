@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@eskra-aws-playground/integration-discord": "0.1.0",
+		"@eskra-aws-playground/integration-lambda": "0.1.0",
 		"@eskra-aws-playground/integration-sqs": "0.1.0",
 		"@eskra-aws-playground/libs": "0.1.0",
 		"@eskra-aws-playground/shared-domains": "0.1.0",

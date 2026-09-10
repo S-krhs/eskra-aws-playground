@@ -2,12 +2,25 @@
 
 ## route
 
-| Bot | path | command |
+| 呼び出し元 | path | 内容 |
 | --- | --- | --- |
 | Yaccho Bot | `/discord/interactions/yaccho-bot` | `/hello`, `/gamble-check-enable`, `/gamble-check-disable` |
 | Kaguya Bot | `/discord/interactions/kaguya-bot` | `/inuihiroshi` |
+| メディアライブラリ管理ツール | `/media/sync` | 同期 Lambda の起動依頼 |
 
 別の Bot やサービスを追加する場合は、別パスと route を `src/handlers/handler.ts` の `routesByPath` に登録します。
+
+## `/media/sync`
+
+`POST` のみです。Function URL 自体は認証を持たないので、`Authorization: Bearer <token>` を
+`MediaSyncToken` と照合し、一致しない場合は何も起動せず 401 を返します。一致した場合は同期 Lambda を
+非同期 invoke して 202 を返します。完了は待ちません。進捗は管理ツールが DB の実行記録から読みます。
+
+token は任意の十分長いランダム文字列です。次のように作れます。
+
+```bash
+openssl rand -base64 32
+```
 
 ## command 同期
 
@@ -34,6 +47,15 @@ npm run discord:sync:dry    # 送信せず、現登録と登録予定を表示
 | `YACCHO_DISCORD_APPLICATION_ID` | `SST_SECRET_YacchoDiscordApplicationId` | command 同期 |
 | `KAGUYA_DISCORD_BOT_TOKEN` | `SST_SECRET_KaguyaDiscordBotToken` | command 同期 |
 | `KAGUYA_DISCORD_APPLICATION_ID` | `SST_SECRET_KaguyaDiscordApplicationId` | command 同期 |
+| `MEDIA_SYNC_TOKEN` | `SST_SECRET_MediaSyncToken` | Lambda: `/media/sync` の認証 |
+
+secret ではない環境変数:
+
+| 環境変数 | 用途 |
+| --- | --- |
+| `MEDIA_SYNC_FUNCTION_NAME` | `/media/sync` が invoke する同期 Lambda の関数名 |
+
+値は `infra/sst.config.ts` が持ちます。未設定の場合、`/media/sync` は何も invoke せず 500 を返します。
 
 ## ローカル実行（sst dev）
 
@@ -45,4 +67,5 @@ npx sst secret set YacchoDiscordApplicationId <application-id> --config infra/ss
 npx sst secret set KaguyaDiscordBotToken <bot-token> --config infra/sst.config.ts --stage <your-stage>
 npx sst secret set KaguyaDiscordInteractionPublicKey <public-key> --config infra/sst.config.ts --stage <your-stage>
 npx sst secret set KaguyaDiscordApplicationId <application-id> --config infra/sst.config.ts --stage <your-stage>
+npx sst secret set MediaSyncToken <token> --config infra/sst.config.ts --stage <your-stage>
 ```

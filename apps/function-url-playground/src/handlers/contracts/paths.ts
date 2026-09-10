@@ -3,4 +3,5 @@
 export const paths = {
 	yacchoBotInteraction: "/discord/interactions/yaccho-bot",
 	kaguyaBotInteraction: "/discord/interactions/kaguya-bot",
+	mediaSync: "/media/sync",
 } as const;

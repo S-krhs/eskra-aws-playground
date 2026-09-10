@@ -12,32 +12,25 @@ vi.mock(
 	},
 );
 
-const lambda = vi.hoisted(() => {
-	return { invokeEvent: vi.fn() };
-});
-
-vi.mock("@eskra-aws-playground/integration-lambda/lambda-invoker.js", () => {
-	return {
-		LambdaInvoker: class {
-			invokeEvent = lambda.invokeEvent;
-		},
-	};
-});
+const fetchMock = vi.fn();
 
 const uiOrigin = "http://127.0.0.1:7420";
 
 beforeEach(() => {
-	process.env.MEDIA_SYNC_FUNCTION_NAME = "media-sync";
+	process.env.MEDIA_SYNC_ENDPOINT_URL = "https://endpoint.test/media/sync";
+	process.env.MEDIA_SYNC_TOKEN = "sync-token";
 	syncRunRepository.findLatest.mockReset();
 	syncRunRepository.findLatest.mockResolvedValue(undefined);
 	syncRunRepository.findUnfinished.mockReset();
 	syncRunRepository.findUnfinished.mockResolvedValue(undefined);
-	lambda.invokeEvent.mockReset();
-	lambda.invokeEvent.mockResolvedValue(undefined);
+	fetchMock.mockReset();
+	fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+	vi.stubGlobal("fetch", fetchMock);
 });
 
 afterEach(() => {
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 describe("createApp", () => {
@@ -81,7 +74,7 @@ describe("createApp", () => {
 		});
 
 		expect(response.status).toBe(403);
-		expect(lambda.invokeEvent).not.toHaveBeenCalled();
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	it("turns away a state-changing request that carries no origin at all", async () => {
@@ -90,7 +83,7 @@ describe("createApp", () => {
 		});
 
 		expect(response.status).toBe(403);
-		expect(lambda.invokeEvent).not.toHaveBeenCalled();
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	it("lets the UI's own origin start a sync", async () => {
@@ -100,7 +93,7 @@ describe("createApp", () => {
 		});
 
 		expect(response.status).toBe(202);
-		expect(lambda.invokeEvent).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
 	it("lets a read through without an origin, since it changes nothing", async () => {
