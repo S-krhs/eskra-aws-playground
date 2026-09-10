@@ -2,9 +2,12 @@
 // Out of scope: how ffmpeg is called, validating the SQS event, sending messages, job dispatch
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { probeMedia } from "@eskra-aws-playground/libs-media/ffmpeg/media-probe.js";
-import { generateThumbnail } from "@eskra-aws-playground/libs-media/ffmpeg/thumbnail-generator.js";
+import {
+	generateThumbnail,
+	resolvePosterSeconds,
+} from "@eskra-aws-playground/libs-media/ffmpeg/thumbnail-generator.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
 import type { RelocateMediaObjectInput } from "@eskra-aws-playground/repositories/media/media-object/types.js";
 import { mediaStorageRepository } from "@eskra-aws-playground/repositories/media/media-storage/repository.js";
@@ -12,6 +15,7 @@ import {
 	MEDIA_THUMBNAIL_MAX_RECEIVE_COUNT,
 	type MediaThumbnailMessage,
 } from "@eskra-aws-playground/shared-domains/media/jobs/thumbnail-message.js";
+import { resolveContentType } from "@eskra-aws-playground/shared-domains/media/storage/content-type.js";
 
 /**
  * Makes a webp thumbnail from the original, puts it in R2, and records it in the DB.
@@ -37,9 +41,13 @@ export const mediaThumbnailJob = async (
 		await writeFile(sourcePath, object.body);
 
 		const probe = await probeMedia(sourcePath);
+		// A still image has no frame past its first, so seeking into it would only cost a second run
+		const isVideo =
+			resolveContentType(extname(message.objectKey))?.startsWith("video/") ===
+			true;
 		const thumbnail = await generateThumbnail({
 			sourcePath,
-			durationMs: probe.durationMs,
+			seekSeconds: isVideo ? resolvePosterSeconds(probe.durationMs) : 0,
 		});
 
 		await mediaStorageRepository.uploadThumbnail({

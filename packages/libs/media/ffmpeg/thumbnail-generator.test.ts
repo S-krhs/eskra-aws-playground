@@ -72,21 +72,35 @@ describe("generateThumbnail against a stubbed ffmpeg", () => {
 		return path;
 	};
 
-	it("seeks to the poster position even when the duration is unreadable", async () => {
+	it("seeks to the position it was given", async () => {
 		const stubPath = await buildStub(
 			'process.stdout.write(process.argv.slice(2).join(" "));',
 		);
 
 		const thumbnail = await generateThumbnail(
-			{ sourcePath: "/any/source.mp4", durationMs: undefined },
+			{ sourcePath: "/any/source.mp4", seekSeconds: 1 },
 			{ ffmpegPath: stubPath },
 		);
 
 		expect(thumbnail.toString()).toContain("-ss 1");
 	});
 
-	// How ffmpeg behaves on an image: seeking past the only frame writes nothing and still exits 0
-	it("takes the frame from the start when the poster position holds none", async () => {
+	it("runs ffmpeg once when the frame is taken from the start", async () => {
+		const stubPath = await buildStub(`
+			const args = process.argv.slice(2);
+			process.stdout.write(args[args.indexOf("-ss") + 1]);
+		`);
+
+		const thumbnail = await generateThumbnail(
+			{ sourcePath: "/any/source.png", seekSeconds: 0 },
+			{ ffmpegPath: stubPath },
+		);
+
+		expect(thumbnail).toEqual(Buffer.from("0"));
+	});
+
+	// How ffmpeg behaves when the seek lands past the end: it writes nothing and still exits 0
+	it("takes the frame from the start when the seek position holds none", async () => {
 		const stubPath = await buildStub(`
 			const args = process.argv.slice(2);
 			if (args[args.indexOf("-ss") + 1] !== "0") {
@@ -96,7 +110,7 @@ describe("generateThumbnail against a stubbed ffmpeg", () => {
 		`);
 
 		const thumbnail = await generateThumbnail(
-			{ sourcePath: "/any/source.png", durationMs: undefined },
+			{ sourcePath: "/any/source.mp4", seekSeconds: 1 },
 			{ ffmpegPath: stubPath },
 		);
 
@@ -108,7 +122,7 @@ describe("generateThumbnail against a stubbed ffmpeg", () => {
 
 		await expect(
 			generateThumbnail(
-				{ sourcePath: "/any/source.mp4", durationMs: undefined },
+				{ sourcePath: "/any/source.mp4", seekSeconds: 1 },
 				{ ffmpegPath: stubPath },
 			),
 		).rejects.toThrow(/フレームを取得できませんでした/);
@@ -119,7 +133,7 @@ describe("generateThumbnail against a stubbed ffmpeg", () => {
 
 		await expect(
 			generateThumbnail(
-				{ sourcePath: "/any/source.mp4", durationMs: 3000 },
+				{ sourcePath: "/any/source.mp4", seekSeconds: 1 },
 				{ ffmpegPath: stubPath, timeoutMs: 100 },
 			),
 		).rejects.toThrow(/タイムアウトしました: 100ms/);
@@ -187,7 +201,7 @@ describe.skipIf(!hasFfmpeg)("generateThumbnail against the real ffmpeg", () => {
 
 	it("makes a 320-wide webp from an image", async () => {
 		const thumbnail = await generateThumbnail(
-			{ sourcePath: await buildImage(), durationMs: undefined },
+			{ sourcePath: await buildImage(), seekSeconds: 0 },
 			{ ffmpegPath },
 		);
 
@@ -198,7 +212,7 @@ describe.skipIf(!hasFfmpeg)("generateThumbnail against the real ffmpeg", () => {
 
 	it("makes a 320-wide webp from a video", async () => {
 		const thumbnail = await generateThumbnail(
-			{ sourcePath: await buildVideo(), durationMs: 3000 },
+			{ sourcePath: await buildVideo(), seekSeconds: 1 },
 			{ ffmpegPath },
 		);
 

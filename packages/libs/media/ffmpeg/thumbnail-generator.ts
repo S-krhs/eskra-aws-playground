@@ -22,8 +22,8 @@ const POSTER_MIN_DURATION_MS = 2_000;
 
 export interface GenerateThumbnailInput {
 	sourcePath: string;
-	/** undefined for an image, and for a video whose duration ffprobe could not read. */
-	durationMs: number | undefined;
+	/** Where the frame is taken from. 0 for a still image, `resolvePosterSeconds` for a video. */
+	seekSeconds: number;
 }
 
 export interface GenerateThumbnailOptions {
@@ -32,7 +32,10 @@ export interface GenerateThumbnailOptions {
 	timeoutMs?: number;
 }
 
-/** Picks where in a video the single frame comes from. */
+/**
+ * Picks where in a video the single frame comes from. An unreadable duration is treated as long
+ * enough — `generateThumbnail` falls back to the start if that turns out to be past the end.
+ */
 export const resolvePosterSeconds = (
 	durationMs: number | undefined,
 ): number => {
@@ -54,20 +57,18 @@ export const generateThumbnail = async (
 	const executablePath =
 		options.ffmpegPath ?? process.env.FFMPEG_PATH ?? DEFAULT_FFMPEG_PATH;
 	const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-	const posterSeconds = resolvePosterSeconds(input.durationMs);
 
 	const poster = await runFfmpeg(
 		executablePath,
 		input.sourcePath,
-		posterSeconds,
+		input.seekSeconds,
 		timeoutMs,
 	);
 
-	// ffmpeg exits 0 having written nothing when the poster position is past the end — an image, or a
-	// video whose duration was unreadable and turned out to be shorter than the position. The start
-	// is the only frame left to take
+	// ffmpeg exits 0 having written nothing when the seek position is past the end, which a video
+	// whose duration was unreadable can turn out to be. The start is the only frame left to take
 	const thumbnail =
-		poster.length === 0 && posterSeconds > 0
+		poster.length === 0 && input.seekSeconds > 0
 			? await runFfmpeg(executablePath, input.sourcePath, 0, timeoutMs)
 			: poster;
 
