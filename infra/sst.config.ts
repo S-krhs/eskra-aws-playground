@@ -169,6 +169,14 @@ export default $config({
 			},
 		);
 
+		// The bearer token the media library's sync request has to carry, held as a Secret. The Function
+		// URL takes no authorization of its own, so this is the only thing standing in front of the endpoint
+		const mediaSyncToken = new sst.Secret("MediaSyncToken");
+
+		// The sync Lambda's name, composed once here because two places take it: its own Function below,
+		// and the Function URL Lambda, which invokes it before that declaration exists
+		const mediaSyncFunctionName = `${appName}-${$app.stage}-media-sync`;
+
 		// One Lambda holds the whole public endpoint rather than one per job. It returns a deferred
 		// response inside Discord's 3-second limit and hands the real work to a worker over the Queue,
 		// so it never connects to the DB itself
@@ -181,7 +189,11 @@ export default $config({
 				yacchoDiscordInteractionPublicKey,
 				kaguyaDiscordInteractionPublicKey,
 				playgroundInteractionQueue,
+				mediaSyncToken,
 			],
+			environment: {
+				MEDIA_SYNC_FUNCTION_NAME: mediaSyncFunctionName,
+			},
 			url: true,
 		});
 
@@ -409,8 +421,8 @@ export default $config({
 		// The sync Lambda reconciling R2 against the DB. It shares the batch handler's router, but gets its
 		// own Function because a 100k-row upsert doesn't fit the shared batch Lambda's 60 seconds
 		const mediaSyncFunction = new sst.aws.Function("MediaSyncFunction", {
-			// The management tool's sync button invokes it, so the name can't be left to generation
-			name: `${appName}-${$app.stage}-media-sync`,
+			// The Function URL Lambda invokes it by name, so the name can't be left to generation
+			name: mediaSyncFunctionName,
 			handler: "../apps/batch-playground/src/handlers/batch/handler.handler",
 			runtime: "nodejs22.x",
 			timeout: "15 minutes",
@@ -426,6 +438,23 @@ export default $config({
 				R2_CREDENTIALS: r2Credentials.value,
 				MEDIA_BUCKET: mediaBucketName,
 			},
+		});
+
+		// The endpoint that starts a sync is on the Function URL Lambda, which is declared before this
+		// one, so the invoke permission is attached to its role here instead of through its own permissions
+		new aws.iam.RolePolicy("FunctionUrlMediaSyncInvokePolicy", {
+			role: functionUrlFunction.nodes.role.id,
+			policy: aws.iam.getPolicyDocumentOutput({
+				statements: [
+					{
+						actions: ["lambda:InvokeFunction"],
+						resources: [
+							mediaSyncFunction.arn,
+							$interpolate`${mediaSyncFunction.arn}:*`,
+						],
+					},
+				],
+			}).json,
 		});
 
 		// The thumbnail-generation worker. It shares the sqs-worker router but gets its own Function,

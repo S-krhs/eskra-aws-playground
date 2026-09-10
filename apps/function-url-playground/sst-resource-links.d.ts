@@ -11,5 +11,6 @@ declare module "sst/resource" {
 		YacchoDiscordApplicationId: { value: string };
 		KaguyaDiscordBotToken: { value: string };
 		KaguyaDiscordApplicationId: { value: string };
+		MediaSyncToken: { value: string };
 	}
 }

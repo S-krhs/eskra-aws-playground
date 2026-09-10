@@ -2,6 +2,7 @@
 // Out of scope: signature verification, interpreting an interaction, the contents of a response payload
 import { paths } from "./contracts/paths.js";
 import { kaguyaBotInteractionRoute } from "./routes/kaguya-bot-interaction/route.js";
+import { mediaSyncRoute } from "./routes/media-sync/route.js";
 import { yacchoBotInteractionRoute } from "./routes/yaccho-bot-interaction/route.js";
 import {
 	type FunctionUrlEvent,
@@ -17,6 +18,7 @@ type FunctionUrlRoute = (
 const routesByPath = new Map<string, FunctionUrlRoute>([
 	[paths.yacchoBotInteraction, yacchoBotInteractionRoute],
 	[paths.kaguyaBotInteraction, kaguyaBotInteractionRoute],
+	[paths.mediaSync, mediaSyncRoute],
 ]);
 
 /** The Lambda Function URL entry point; validates the envelope and delegates to the route for that path. */
