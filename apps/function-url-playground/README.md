@@ -49,6 +49,14 @@ npm run discord:sync:dry    # 送信せず、現登録と登録予定を表示
 | `KAGUYA_DISCORD_APPLICATION_ID` | `SST_SECRET_KaguyaDiscordApplicationId` | command 同期 |
 | `MEDIA_SYNC_TOKEN` | `SST_SECRET_MediaSyncToken` | Lambda: `/media/sync` の認証 |
 
+secret ではない環境変数:
+
+| 環境変数 | 用途 |
+| --- | --- |
+| `MEDIA_SYNC_FUNCTION_NAME` | `/media/sync` が invoke する同期 Lambda の関数名 |
+
+値は `infra/sst.config.ts` が持ちます。未設定の場合、`/media/sync` は何も invoke せず 500 を返します。
+
 ## ローカル実行（sst dev）
 
 ローカル起動の手順は `apps/batch-playground/README.md` の「ローカル実行」を参照。interaction / command 同期の secret は次で設定します。
