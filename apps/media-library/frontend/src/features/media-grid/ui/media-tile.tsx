@@ -1,7 +1,7 @@
 // In scope: how one tile in the listing looks
 // Out of scope: fetching the listing, the virtual-scroll arithmetic, filtering
 import type { Media } from "@/shared/api";
-import { formatByteSize, formatDuration } from "@/shared/lib/format.js";
+import { formatByteSize, formatDuration } from "@/shared/lib";
 
 /** One item in the listing; anything without a thumbnail yet shows only its kind. */
 export const MediaTile = ({ media }: { media: Media }) => {

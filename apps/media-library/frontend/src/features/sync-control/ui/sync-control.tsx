@@ -1,6 +1,6 @@
 // In scope: the sync button, the in-flight progress, and the last run's result
 // Out of scope: starting the sync, fetching the status, showing the listing
-import { formatUploadedAt } from "@/shared/lib/format.js";
+import { formatDateTime } from "@/shared/lib";
 import type { SyncStatus } from "../api/use-sync-status.js";
 
 const toProgressText = (status: SyncStatus): string => {
@@ -19,25 +19,27 @@ const toProgressText = (status: SyncStatus): string => {
 		return `前回は失敗しました: ${status.latest.error}`;
 	}
 
-	return `前回 ${formatUploadedAt(status.latest.startedAt)} / 追加 ${status.latest.insertedCount} / 更新 ${status.latest.updatedCount} / 削除 ${status.latest.deletedCount}`;
+	return `前回 ${formatDateTime(status.latest.startedAt)} / 追加 ${status.latest.insertedCount} / 更新 ${status.latest.updatedCount} / 削除 ${status.latest.deletedCount}`;
 };
 
 /** The start button and its progress; the button is disabled while a sync runs. */
 export const SyncControl = ({ status }: { status: SyncStatus }) => {
-	const isRunning = status.running !== null;
+	// The run record is created on the Lambda's side, so nothing is running yet from the moment the
+	// button is pressed until the status comes back — the button says so rather than sitting mute
+	const isBusy = status.running !== null || status.isStarting;
 
 	return (
 		<div className="flex flex-wrap items-center gap-3">
 			<button
 				type="button"
-				disabled={isRunning || status.isStarting}
+				disabled={isBusy}
 				onClick={status.start}
 				className="btn btn-primary btn-sm"
 			>
-				{isRunning ? (
+				{isBusy ? (
 					<span className="loading loading-spinner loading-xs" />
 				) : null}
-				{isRunning ? "同期中…" : "同期する"}
+				{isBusy ? "同期中…" : "同期する"}
 			</button>
 			<p className="font-mono text-base-content/60 text-xs">
 				{toProgressText(status)}

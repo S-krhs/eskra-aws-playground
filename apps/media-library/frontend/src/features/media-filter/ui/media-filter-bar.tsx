@@ -1,6 +1,10 @@
 // In scope: the folder and kind filter controls
 // Out of scope: fetching the listing, showing the results, starting a sync
+import { useRef, useState } from "react";
 import type { MediaFilter } from "@/entities/media";
+
+// Long enough that a folder name is typed out before the listing is asked for again
+const FOLDER_COMMIT_DELAY_MS = 300;
 
 const KINDS = [
 	{ label: "すべて", value: "" },
@@ -16,19 +20,36 @@ export const MediaFilterBar = ({
 	filter: MediaFilter;
 	onChange: (filter: MediaFilter) => void;
 }) => {
+	// The field holds what is being typed and hands it over once it settles, so every keystroke doesn't
+	// become a query key of its own and blank the grid on the way past
+	const [folder, setFolder] = useState(filter.logicalPath ?? "");
+	const commitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+		undefined,
+	);
+	const commitFolder = (value: string) => {
+		clearTimeout(commitTimer.current);
+		onChange({ ...filter, logicalPath: value || undefined });
+	};
+
 	return (
 		<div className="flex flex-wrap items-center gap-3">
 			<fieldset className="fieldset">
 				<legend className="fieldset-legend py-0">フォルダ</legend>
 				<input
 					type="text"
-					value={filter.logicalPath ?? ""}
-					placeholder="_inbox"
+					aria-label="フォルダ"
+					value={folder}
+					placeholder="例: photos/2024"
 					onChange={(event) => {
-						onChange({
-							...filter,
-							logicalPath: event.target.value || undefined,
-						});
+						const { value } = event.target;
+						setFolder(value);
+						clearTimeout(commitTimer.current);
+						commitTimer.current = setTimeout(() => {
+							commitFolder(value);
+						}, FOLDER_COMMIT_DELAY_MS);
+					}}
+					onBlur={(event) => {
+						commitFolder(event.target.value);
 					}}
 					className="input input-sm w-48"
 				/>

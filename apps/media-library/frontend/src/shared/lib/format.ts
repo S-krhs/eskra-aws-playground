@@ -24,9 +24,9 @@ export const formatDuration = (durationMs: number): string => {
 	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-/** Renders the upload time as a Japanese-style date and time. */
-export const formatUploadedAt = (uploadedAt: string): string => {
-	return new Date(uploadedAt).toLocaleString("ja-JP", {
+/** Renders an ISO timestamp as a Japanese-style date and time. */
+export const formatDateTime = (isoTimestamp: string): string => {
+	return new Date(isoTimestamp).toLocaleString("ja-JP", {
 		year: "numeric",
 		month: "2-digit",
 		day: "2-digit",

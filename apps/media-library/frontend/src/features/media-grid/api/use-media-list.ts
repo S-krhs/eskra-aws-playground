@@ -19,27 +19,32 @@ export interface MediaList {
 }
 
 /**
- * `syncedAt` is the last finished sync's time. It sits in the query key, so a sync closing out
- * refetches the listing without anything having to watch for the transition.
+ * `syncedAt` is the last finished sync's time and sits in the query key, so a sync closing out
+ * refetches the listing without anything having to watch for the transition. Undefined means it is not
+ * known yet — the first page waits for it rather than fetching once now and again under a new key.
  */
 export const useMediaList = (input: {
 	filter: MediaFilter;
-	syncedAt: string | null;
+	syncedAt: string | null | undefined;
 }): MediaList => {
 	const { logicalPath, contentTypePrefix } = input.filter;
 	const query = useInfiniteQuery({
+		enabled: input.syncedAt !== undefined,
 		queryKey: [
 			...getListMediaQueryKey({ logicalPath, contentTypePrefix }),
-			input.syncedAt,
+			input.syncedAt ?? null,
 		],
-		queryFn: async ({ pageParam }) => {
-			const response = await listMedia({
-				logicalPath,
-				contentTypePrefix,
-				...(pageParam
-					? { cursorUploadedAt: pageParam.uploadedAt, cursorId: pageParam.id }
-					: {}),
-			});
+		queryFn: async ({ pageParam, signal }) => {
+			const response = await listMedia(
+				{
+					logicalPath,
+					contentTypePrefix,
+					...(pageParam
+						? { cursorUploadedAt: pageParam.uploadedAt, cursorId: pageParam.id }
+						: {}),
+				},
+				{ signal },
+			);
 
 			if (response.status !== 200) {
 				throw new Error(response.data.message);
@@ -59,7 +64,7 @@ export const useMediaList = (input: {
 				return page.objects;
 			}) ?? [],
 		hasMore: query.hasNextPage,
-		isLoading: query.isFetching,
+		isLoading: query.isFetching || input.syncedAt === undefined,
 		error: query.error?.message,
 		loadMore: () => {
 			if (query.hasNextPage && !query.isFetchingNextPage) {

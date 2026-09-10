@@ -10,6 +10,9 @@ const MIN_TILE_WIDTH = 180;
 const ROW_HEIGHT = 208;
 const GAP = 12;
 
+// The scroll element's own padding, which sits between its top and the virtual container's origin
+const SCROLL_PADDING = 12;
+
 // Getting within this many rows of the end fetches the next page
 const PREFETCH_ROWS = 2;
 
@@ -51,6 +54,9 @@ export const MediaGrid = ({ list }: { list: MediaList }) => {
 		estimateSize: () => {
 			return ROW_HEIGHT + GAP;
 		},
+		// Everything but the virtual container sits outside the scroll element, so the only thing between
+		// the two origins is the padding — no measuring needed to keep the last row from being cut off
+		scrollMargin: SCROLL_PADDING,
 		overscan: 2,
 		// Scrolling is an event, so the next page is asked for here rather than from an effect
 		onChange: (instance) => {
@@ -63,9 +69,9 @@ export const MediaGrid = ({ list }: { list: MediaList }) => {
 	});
 
 	return (
-		<div ref={measure} className="h-full overflow-y-auto p-3">
+		<div className="flex h-full flex-col">
 			{list.error ? (
-				<p role="alert" className="alert alert-error mb-3">
+				<p role="alert" className="alert alert-error mx-3 mt-3">
 					{list.error}
 				</p>
 			) : null}
@@ -77,30 +83,34 @@ export const MediaGrid = ({ list }: { list: MediaList }) => {
 				</p>
 			) : null}
 
-			<div
-				className="relative w-full"
-				style={{ height: `${virtualizer.getTotalSize()}px` }}
-			>
-				{virtualizer.getVirtualItems().map((row) => {
-					const from = row.index * columns;
+			<div ref={measure} className="min-h-0 flex-1 overflow-y-auto p-3">
+				<div
+					className="relative w-full"
+					// Both values feed the virtualizer's size estimate, so they are kept in one place
+					// with it rather than split between here and a class
+					style={{ height: `${virtualizer.getTotalSize()}px` }}
+				>
+					{virtualizer.getVirtualItems().map((row) => {
+						const from = row.index * columns;
 
-					return (
-						<div
-							key={row.key}
-							className="absolute top-0 left-0 grid w-full"
-							style={{
-								height: `${ROW_HEIGHT}px`,
-								gap: `${GAP}px`,
-								gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-								transform: `translateY(${row.start}px)`,
-							}}
-						>
-							{list.items.slice(from, from + columns).map((media) => {
-								return <MediaTile key={media.id} media={media} />;
-							})}
-						</div>
-					);
-				})}
+						return (
+							<div
+								key={row.key}
+								className="absolute top-0 left-0 grid w-full"
+								style={{
+									height: `${ROW_HEIGHT}px`,
+									gap: `${GAP}px`,
+									gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+									transform: `translateY(${row.start - SCROLL_PADDING}px)`,
+								}}
+							>
+								{list.items.slice(from, from + columns).map((media) => {
+									return <MediaTile key={media.id} media={media} />;
+								})}
+							</div>
+						);
+					})}
+				</div>
 			</div>
 
 			{list.isLoading ? (

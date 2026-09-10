@@ -19,6 +19,8 @@ const toMessage = (error: unknown): string | undefined => {
 export interface SyncStatus {
 	latest: SyncRun | null;
 	running: SyncRun | null;
+	/** False until the first read comes back, so a caller can tell "no runs" from "not read yet". */
+	isLoaded: boolean;
 	isStarting: boolean;
 	error: string | undefined;
 	start: () => void;
@@ -53,6 +55,7 @@ export const useSyncStatus = (): SyncStatus => {
 	return {
 		latest: body?.latest ?? null,
 		running: body?.running ?? null,
+		isLoaded: !status.isPending,
 		isStarting: start.isPending,
 		error: failure ?? toMessage(status.error ?? start.error),
 		start: () => {

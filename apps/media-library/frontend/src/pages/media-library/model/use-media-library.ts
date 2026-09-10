@@ -16,11 +16,26 @@ export interface MediaLibrary {
 export const useMediaLibrary = (): MediaLibrary => {
 	const [filter, setFilter] = useState<MediaFilter>({});
 	const status = useSyncStatus();
-	// A finished sync changes this, which refetches the listing so what it took in shows up
-	const list = useMediaList({
-		filter,
-		syncedAt: status.latest?.finishedAt ?? null,
-	});
+
+	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
+	// having to watch for it. `latest` covers the run in flight as well and reports no finish time while
+	// one is going, and following it down to null there would throw away every page already scrolled
+	const [syncedAt, setSyncedAt] = useState<string | null | undefined>(
+		undefined,
+	);
+	const reportedAt = status.isLoaded
+		? (status.latest?.finishedAt ?? null)
+		: undefined;
+	const isNewer =
+		reportedAt !== undefined &&
+		reportedAt !== syncedAt &&
+		(reportedAt !== null || syncedAt === undefined);
+
+	if (isNewer) {
+		setSyncedAt(reportedAt);
+	}
+
+	const list = useMediaList({ filter, syncedAt });
 
 	return { filter, setFilter, list, status };
 };

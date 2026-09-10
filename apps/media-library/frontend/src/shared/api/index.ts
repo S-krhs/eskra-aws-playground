@@ -1,8 +1,8 @@
+// In scope: what the generated API client offers the slices
+// Out of scope: how the client is generated, the query client's settings
 export type {
-	ListMediaParams as MediaListParams,
 	Media,
 	MediaCursor,
-	MediaListResponse,
 	SyncRun,
 } from "./generated/media-library.js";
 export {
