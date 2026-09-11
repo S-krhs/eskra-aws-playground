@@ -9,7 +9,6 @@
 		"date/**/*.ts",
 		"gacha/**/*.ts",
 		"logger/**/*.ts",
-		"path/**/*.ts",
 		"string/**/*.ts",
 		"windows/**/*.ts"
 	],

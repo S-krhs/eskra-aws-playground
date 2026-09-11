@@ -28,10 +28,6 @@
 			"types": "./dist/logger/batch-logger.d.ts",
 			"default": "./dist/logger/batch-logger.js"
 		},
-		"./path/windows-path.js": {
-			"types": "./dist/path/windows-path.d.ts",
-			"default": "./dist/path/windows-path.js"
-		},
 		"./string/text-sanitizer.js": {
 			"types": "./dist/string/text-sanitizer.d.ts",
 			"default": "./dist/string/text-sanitizer.js"
@@ -47,6 +43,10 @@
 		"./windows/temp-directory.js": {
 			"types": "./dist/windows/temp-directory.d.ts",
 			"default": "./dist/windows/temp-directory.js"
+		},
+		"./windows/wsl-path.js": {
+			"types": "./dist/windows/wsl-path.d.ts",
+			"default": "./dist/windows/wsl-path.js"
 		}
 	},
 	"scripts": {

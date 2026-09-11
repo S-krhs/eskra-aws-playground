@@ -2,10 +2,10 @@
 // Out of scope: reading the media out of storage, how PowerShell is run, HTTP status codes
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { toWslPath } from "@eskra-aws-playground/libs/path/windows-path.js";
 import { runPowerShell } from "@eskra-aws-playground/libs/windows/power-shell.js";
 import { toPowerShellLiteral } from "@eskra-aws-playground/libs/windows/power-shell-literal.js";
 import { resolveWindowsTempDirectory } from "@eskra-aws-playground/libs/windows/temp-directory.js";
+import { toWslPath } from "@eskra-aws-playground/libs/windows/wsl-path.js";
 
 // Under the Windows user's TEMP: the file has to be somewhere Windows itself can open, and TEMP is
 // cleared on its own schedule

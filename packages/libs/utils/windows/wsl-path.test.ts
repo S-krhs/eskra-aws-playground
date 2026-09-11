@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toWslPath } from "./windows-path.js";
+import { toWslPath } from "./wsl-path.js";
 
 describe("toWslPath", () => {
 	it("moves the drive letter under /mnt in lowercase", () => {

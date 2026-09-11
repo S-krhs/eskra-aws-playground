@@ -1,6 +1,6 @@
 // In scope: the entry point — validating the arguments, dispatching each file to the job, and deciding the exit code
 // Out of scope: how a file gets stored, key construction, the config file's format, converting the path
-import { toWslPath } from "@eskra-aws-playground/libs/path/windows-path.js";
+import { toWslPath } from "@eskra-aws-playground/libs/windows/wsl-path.js";
 import { loadConfigFile } from "./config-file.js";
 import { mediaUploadJob } from "./jobs/media-upload-job.js";
 
