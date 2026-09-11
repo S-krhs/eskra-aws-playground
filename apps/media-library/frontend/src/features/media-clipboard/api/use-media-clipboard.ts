@@ -2,11 +2,11 @@
 // Out of scope: rendering, deciding which media is copied, the listing itself
 import { useMutation } from "@tanstack/react-query";
 import {
+	buildMediaFileUrl,
 	type CopyMediaToClipboardResponse,
 	type Media,
 	useCopyMediaToClipboard,
 } from "@/shared/api";
-import { buildMediaFileUrl } from "@/shared/lib";
 import { writeImageToClipboard } from "../lib/image-clipboard.js";
 
 /** The generated client resolves a 404 or a 500 instead of rejecting, so a failure is read off the status. */

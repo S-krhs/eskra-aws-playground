@@ -1,11 +1,7 @@
 // In scope: how one tile in the listing looks, and that it opens the media it stands for
 // Out of scope: fetching the listing, the virtual-scroll arithmetic, filtering, the preview itself
-import type { Media } from "@/shared/api";
-import {
-	buildThumbnailUrl,
-	formatByteSize,
-	formatDuration,
-} from "@/shared/lib";
+import { buildThumbnailUrl, type Media } from "@/shared/api";
+import { formatByteSize, formatDuration } from "@/shared/lib";
 
 /**
  * One item in the listing; anything without a thumbnail yet shows only its kind.

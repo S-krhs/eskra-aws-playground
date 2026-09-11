@@ -1,13 +1,8 @@
 // In scope: showing one media object's original, its details, and the way to save it
 // Out of scope: deciding which one is open, fetching the listing, editing anything about it
 import { useCallback, useState } from "react";
-import type { Media } from "@/shared/api";
-import {
-	buildMediaFileUrl,
-	formatByteSize,
-	formatDateTime,
-	formatDuration,
-} from "@/shared/lib";
+import { buildMediaFileUrl, type Media } from "@/shared/api";
+import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
 
 /** Everything about the media worth reading beside it, in the order it reads best. */
 const toDetails = (media: Media): { label: string; value: string }[] => {

@@ -26,4 +26,5 @@ export {
 	useStartSync,
 	useTrashMedia,
 } from "./generated/media-library.js";
+export { buildMediaFileUrl, buildThumbnailUrl } from "./media-url.js";
 export { queryClient } from "./query-client.js";
