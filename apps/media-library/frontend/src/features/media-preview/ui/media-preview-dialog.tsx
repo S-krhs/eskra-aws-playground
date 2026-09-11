@@ -1,6 +1,6 @@
 // In scope: showing one media object's original, its details, and the way to save it
 // Out of scope: deciding which one is open, fetching the listing, editing anything about it
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { Media } from "@/shared/api";
 import {
 	buildMediaFileUrl,
@@ -28,12 +28,14 @@ const toDetails = (media: Media): { label: string; value: string }[] => {
 /**
  * The original itself, read straight from the backend — a video plays in place and seeks over Range.
  * `isTrashed` says which of the two trash moves to offer; the caller knows which side it is listing.
- * `clipboardMessage` is shown as it stands: copying gives no sign of itself otherwise.
+ * `message` is shown as it stands: copying and saving give no sign of themselves otherwise.
  */
 export const MediaPreviewDialog = ({
 	media,
 	isTrashed,
-	clipboardMessage,
+	tagSuggestions,
+	message,
+	onChangeTags,
 	onCopyImage,
 	onCopyFile,
 	onTrash,
@@ -42,7 +44,10 @@ export const MediaPreviewDialog = ({
 }: {
 	media: Media;
 	isTrashed: boolean;
-	clipboardMessage: string | undefined;
+	/** The tags already in use, offered as completions while typing a new one. */
+	tagSuggestions: string[];
+	message: string | undefined;
+	onChangeTags: (tags: string[]) => void;
 	onCopyImage: () => void;
 	onCopyFile: () => void;
 	onTrash: () => void;
@@ -55,6 +60,22 @@ export const MediaPreviewDialog = ({
 	const openModal = useCallback((element: HTMLDialogElement | null) => {
 		element?.showModal();
 	}, []);
+	// What the media carries is held here while it is edited, so a chip appears the moment it is added
+	// rather than once the listing has been read again. The dialog is gone by the next open
+	const [tags, setTags] = useState(media.tags);
+	const [draft, setDraft] = useState("");
+	const changeTags = (next: string[]) => {
+		setTags(next);
+		onChangeTags(next);
+	};
+	const addDraftTag = () => {
+		const name = draft.trim();
+		setDraft("");
+
+		if (name !== "" && !tags.includes(name)) {
+			changeTags([...tags, name]);
+		}
+	};
 	const fileUrl = buildMediaFileUrl(media.id);
 	// A video has no single picture to hand the browser's clipboard, so only the file copy is offered
 	const isVideo = media.contentType.startsWith("video/");
@@ -84,6 +105,53 @@ export const MediaPreviewDialog = ({
 					)}
 				</div>
 
+				<div className="mt-3 flex flex-wrap items-center gap-1">
+					{tags.map((tag) => {
+						return (
+							<span key={tag} className="badge badge-outline gap-1">
+								{tag}
+								<button
+									type="button"
+									aria-label={`${tag} を外す`}
+									onClick={() => {
+										changeTags(
+											tags.filter((kept) => {
+												return kept !== tag;
+											}),
+										);
+									}}
+								>
+									×
+								</button>
+							</span>
+						);
+					})}
+					<input
+						type="text"
+						list="media-tag-suggestions"
+						aria-label="タグを追加"
+						placeholder="タグを追加"
+						value={draft}
+						onChange={(event) => {
+							setDraft(event.target.value);
+						}}
+						onKeyDown={(event) => {
+							if (event.key === "Enter") {
+								// Nothing here submits, but Enter in a dialog closes it unless it is stopped
+								event.preventDefault();
+								addDraftTag();
+							}
+						}}
+						onBlur={addDraftTag}
+						className="input input-xs w-32"
+					/>
+					<datalist id="media-tag-suggestions">
+						{tagSuggestions.map((tag) => {
+							return <option key={tag} value={tag} />;
+						})}
+					</datalist>
+				</div>
+
 				<dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 text-sm">
 					{toDetails(media).map((detail) => {
 						return (
@@ -96,10 +164,8 @@ export const MediaPreviewDialog = ({
 				</dl>
 
 				<div className="modal-action flex-wrap items-center">
-					{clipboardMessage ? (
-						<p className="mr-auto text-base-content/60 text-xs">
-							{clipboardMessage}
-						</p>
+					{message ? (
+						<p className="mr-auto text-base-content/60 text-xs">{message}</p>
 					) : null}
 					{isVideo ? null : (
 						<button type="button" onClick={onCopyImage} className="btn btn-sm">

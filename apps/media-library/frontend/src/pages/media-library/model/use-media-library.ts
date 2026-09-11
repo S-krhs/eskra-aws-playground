@@ -2,11 +2,13 @@
 // Out of scope: fetching either of them, what the sync does, rendering
 import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
+import { useTagList } from "@/entities/tag";
 import {
 	type MediaClipboard,
 	useMediaClipboard,
 } from "@/features/media-clipboard";
 import { type MediaList, useMediaList } from "@/features/media-grid";
+import { type MediaTags, useMediaTags } from "@/features/media-tags";
 import { type MediaTrash, useMediaTrash } from "@/features/media-trash";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
 import type { Media } from "@/shared/api";
@@ -19,6 +21,9 @@ export interface MediaLibrary {
 	status: SyncStatus;
 	trash: MediaTrash;
 	clipboard: MediaClipboard;
+	tags: MediaTags;
+	/** The tags in use, for narrowing the listing and for completing a new one. */
+	tagSuggestions: string[];
 	/** The media the preview is open on; null while none is. */
 	preview: Media | null;
 	openPreview: (media: Media) => void;
@@ -32,6 +37,8 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const status = useSyncStatus();
 	const trash = useMediaTrash();
 	const clipboard = useMediaClipboard();
+	const tags = useMediaTags();
+	const tagSuggestions = useTagList();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
 	// having to watch for it. `latest` covers the run in flight as well and reports no finish time while
@@ -60,6 +67,8 @@ export const useMediaLibrary = (): MediaLibrary => {
 		status,
 		trash,
 		clipboard,
+		tags,
+		tagSuggestions,
 		preview,
 		openPreview: (media: Media) => {
 			setPreview(media);

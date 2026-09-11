@@ -20,9 +20,12 @@ const KINDS = [
 /** Changing anything here restarts the listing from the top. */
 export const MediaFilterBar = ({
 	filter,
+	tags,
 	onChange,
 }: {
 	filter: MediaFilter;
+	/** The tags there are to narrow by; the caller reads them. */
+	tags: string[];
 	onChange: (filter: MediaFilter) => void;
 }) => {
 	// The field holds what is being typed and hands it over once it settles, so every keystroke doesn't
@@ -58,6 +61,27 @@ export const MediaFilterBar = ({
 					}}
 					className="input input-sm w-48"
 				/>
+			</fieldset>
+
+			<fieldset className="fieldset">
+				<legend className="fieldset-legend py-0">タグ</legend>
+				<select
+					aria-label="タグ"
+					value={filter.tag ?? ""}
+					onChange={(event) => {
+						onChange({ ...filter, tag: event.target.value || undefined });
+					}}
+					className="select select-sm w-36"
+				>
+					<option value="">すべて</option>
+					{tags.map((tag) => {
+						return (
+							<option key={tag} value={tag}>
+								{tag}
+							</option>
+						);
+					})}
+				</select>
 			</fieldset>
 
 			<fieldset className="fieldset">

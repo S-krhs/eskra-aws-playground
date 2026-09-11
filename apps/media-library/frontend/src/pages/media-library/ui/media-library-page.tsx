@@ -14,6 +14,8 @@ export const MediaLibraryPage = () => {
 		status,
 		trash,
 		clipboard,
+		tags,
+		tagSuggestions,
 		preview,
 		openPreview,
 		closePreview,
@@ -22,7 +24,11 @@ export const MediaLibraryPage = () => {
 	return (
 		<div className="flex h-dvh flex-col bg-base-200 text-base-content">
 			<header className="flex flex-wrap items-center justify-between gap-3 border-base-300 border-b bg-base-100 px-3 py-2">
-				<MediaFilterBar filter={filter} onChange={setFilter} />
+				<MediaFilterBar
+					filter={filter}
+					tags={tagSuggestions}
+					onChange={setFilter}
+				/>
 				<SyncControl status={status} />
 			</header>
 			{trash.error ? (
@@ -37,7 +43,11 @@ export const MediaLibraryPage = () => {
 				<MediaPreviewDialog
 					media={preview}
 					isTrashed={filter.state === "trashed"}
-					clipboardMessage={clipboard.message}
+					tagSuggestions={tagSuggestions}
+					message={tags.error ?? clipboard.message}
+					onChangeTags={(next) => {
+						tags.save(preview.id, next);
+					}}
 					onCopyImage={() => {
 						clipboard.copyImage(preview);
 					}}
