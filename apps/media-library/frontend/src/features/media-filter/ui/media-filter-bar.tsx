@@ -21,11 +21,14 @@ const KINDS = [
 export const MediaFilterBar = ({
 	filter,
 	tags,
+	folders,
 	onChange,
 }: {
 	filter: MediaFilter;
 	/** The tags there are to narrow by; the caller reads them. */
 	tags: string[];
+	/** The folders there are, offered as completions for the folder field. */
+	folders: string[];
 	onChange: (filter: MediaFilter) => void;
 }) => {
 	// The field holds what is being typed and hands it over once it settles, so every keystroke doesn't
@@ -45,6 +48,7 @@ export const MediaFilterBar = ({
 				<legend className="fieldset-legend py-0">フォルダ</legend>
 				<input
 					type="text"
+					list="media-filter-folders"
 					aria-label="フォルダ"
 					value={folder}
 					placeholder="例: photos/2024"
@@ -61,6 +65,11 @@ export const MediaFilterBar = ({
 					}}
 					className="input input-sm w-48"
 				/>
+				<datalist id="media-filter-folders">
+					{folders.map((path) => {
+						return <option key={path} value={path} />;
+					})}
+				</datalist>
 			</fieldset>
 
 			<fieldset className="fieldset">

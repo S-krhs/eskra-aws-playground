@@ -12,7 +12,6 @@ import {
 /** Everything about the media worth reading beside it, in the order it reads best. */
 const toDetails = (media: Media): { label: string; value: string }[] => {
 	return [
-		{ label: "フォルダ", value: media.logicalPath || "(未整理)" },
 		{ label: "種別", value: media.contentType },
 		{ label: "サイズ", value: formatByteSize(media.byteSize) },
 		...(media.width !== undefined && media.height !== undefined
@@ -34,8 +33,10 @@ export const MediaPreviewDialog = ({
 	media,
 	isTrashed,
 	tagSuggestions,
+	folderSuggestions,
 	message,
 	onChangeTags,
+	onMove,
 	onCopyImage,
 	onCopyFile,
 	onTrash,
@@ -46,8 +47,12 @@ export const MediaPreviewDialog = ({
 	isTrashed: boolean;
 	/** The tags already in use, offered as completions while typing a new one. */
 	tagSuggestions: string[];
+	/** The folders there are, offered the same way. A folder not among them is made by moving into it. */
+	folderSuggestions: string[];
 	message: string | undefined;
 	onChangeTags: (tags: string[]) => void;
+	/** An empty path takes the media back out of every folder. */
+	onMove: (logicalPath: string) => void;
 	onCopyImage: () => void;
 	onCopyFile: () => void;
 	onTrash: () => void;
@@ -64,6 +69,9 @@ export const MediaPreviewDialog = ({
 	// rather than once the listing has been read again. The dialog is gone by the next open
 	const [tags, setTags] = useState(media.tags);
 	const [draft, setDraft] = useState("");
+	// Where the media is being filed, held while it is typed. A move answers with where it landed, but
+	// what is in the field is what the user is still working on
+	const [folder, setFolder] = useState(media.logicalPath);
 	const changeTags = (next: string[]) => {
 		setTags(next);
 		onChangeTags(next);
@@ -105,7 +113,38 @@ export const MediaPreviewDialog = ({
 					)}
 				</div>
 
+				<div className="mt-3 flex flex-wrap items-center gap-2">
+					<span className="text-base-content/60 text-xs">フォルダ</span>
+					<input
+						type="text"
+						list="media-folder-suggestions"
+						aria-label="フォルダ"
+						placeholder="未整理"
+						value={folder}
+						onChange={(event) => {
+							setFolder(event.target.value);
+						}}
+						className="input input-xs w-64"
+					/>
+					<datalist id="media-folder-suggestions">
+						{folderSuggestions.map((path) => {
+							return <option key={path} value={path} />;
+						})}
+					</datalist>
+					<button
+						type="button"
+						disabled={folder.trim() === media.logicalPath}
+						onClick={() => {
+							onMove(folder.trim());
+						}}
+						className="btn btn-xs"
+					>
+						移す
+					</button>
+				</div>
+
 				<div className="mt-3 flex flex-wrap items-center gap-1">
+					<span className="text-base-content/60 text-xs">タグ</span>
 					{tags.map((tag) => {
 						return (
 							<span key={tag} className="badge badge-outline gap-1">

@@ -1,6 +1,7 @@
 // In scope: the screen's own state — the filter it is showing, and tying the sync's result to the listing
 // Out of scope: fetching either of them, what the sync does, rendering
 import { useState } from "react";
+import { useFolderList } from "@/entities/folder";
 import type { MediaFilter } from "@/entities/media";
 import { useTagList } from "@/entities/tag";
 import {
@@ -8,6 +9,7 @@ import {
 	useMediaClipboard,
 } from "@/features/media-clipboard";
 import { type MediaList, useMediaList } from "@/features/media-grid";
+import { type MediaMove, useMediaMove } from "@/features/media-move";
 import { type MediaTags, useMediaTags } from "@/features/media-tags";
 import { type MediaTrash, useMediaTrash } from "@/features/media-trash";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
@@ -22,8 +24,11 @@ export interface MediaLibrary {
 	trash: MediaTrash;
 	clipboard: MediaClipboard;
 	tags: MediaTags;
+	move: MediaMove;
 	/** The tags in use, for narrowing the listing and for completing a new one. */
 	tagSuggestions: string[];
+	/** The folders there are, for narrowing the listing and for filing media into one. */
+	folderSuggestions: string[];
 	/** The media the preview is open on; null while none is. */
 	preview: Media | null;
 	openPreview: (media: Media) => void;
@@ -38,7 +43,9 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const trash = useMediaTrash();
 	const clipboard = useMediaClipboard();
 	const tags = useMediaTags();
+	const move = useMediaMove();
 	const tagSuggestions = useTagList();
+	const folderSuggestions = useFolderList();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
 	// having to watch for it. `latest` covers the run in flight as well and reports no finish time while
@@ -68,7 +75,9 @@ export const useMediaLibrary = (): MediaLibrary => {
 		trash,
 		clipboard,
 		tags,
+		move,
 		tagSuggestions,
+		folderSuggestions,
 		preview,
 		openPreview: (media: Media) => {
 			setPreview(media);

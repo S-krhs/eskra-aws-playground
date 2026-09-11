@@ -15,7 +15,9 @@ export const MediaLibraryPage = () => {
 		trash,
 		clipboard,
 		tags,
+		move,
 		tagSuggestions,
+		folderSuggestions,
 		preview,
 		openPreview,
 		closePreview,
@@ -27,6 +29,7 @@ export const MediaLibraryPage = () => {
 				<MediaFilterBar
 					filter={filter}
 					tags={tagSuggestions}
+					folders={folderSuggestions}
 					onChange={setFilter}
 				/>
 				<SyncControl status={status} />
@@ -44,9 +47,13 @@ export const MediaLibraryPage = () => {
 					media={preview}
 					isTrashed={filter.state === "trashed"}
 					tagSuggestions={tagSuggestions}
-					message={tags.error ?? clipboard.message}
+					folderSuggestions={folderSuggestions}
+					message={move.message ?? tags.error ?? clipboard.message}
 					onChangeTags={(next) => {
 						tags.save(preview.id, next);
+					}}
+					onMove={(logicalPath) => {
+						move.move(preview.id, logicalPath);
 					}}
 					onCopyImage={() => {
 						clipboard.copyImage(preview);
