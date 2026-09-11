@@ -44,7 +44,6 @@ export const MediaFilterBar = ({
 		onChange({ ...filter, logicalPath: value || undefined });
 	};
 	const selectState = (value: ListMediaState) => {
-		// The folder field is gone in the inbox, and what was typed into it goes with it
 		if (value === "inbox") {
 			clearTimeout(commitTimer.current);
 			setFolder("");
@@ -62,8 +61,6 @@ export const MediaFilterBar = ({
 				<legend className="mb-1 font-medium text-base-content/60 text-xs">
 					表示
 				</legend>
-				{/* Three of these don't fit across the sidebar without breaking a label over two lines,
-				    and they read as the places media sits, so there they become a column */}
 				<div className="join md:join-vertical md:w-full">
 					{STATES.map((state) => {
 						const isActive = (filter.state ?? "filed") === state.value;
@@ -113,7 +110,6 @@ export const MediaFilterBar = ({
 				</div>
 			</fieldset>
 
-			{/* The inbox is exactly the media no folder holds, so there is nothing left here to narrow */}
 			{filter.state === "inbox" ? null : (
 				<>
 					<label className="flex flex-col gap-1">
