@@ -1,6 +1,12 @@
 // In scope: turning each media operation's result into a response
 // Out of scope: registering the routes, reading the DB or storage, the shape of what comes back
 import type { RouteHandler } from "@hono/zod-openapi";
+import {
+	parseIfNoneMatch,
+	REVALIDATE_CACHE_CONTROL,
+	toStrongEtag,
+	toWeakEtag,
+} from "../_shared/responses/etag.js";
 import { copyMediaToClipboardOperation } from "./operations/copy-media-to-clipboard-operation.js";
 import { getMediaFileOperation } from "./operations/get-media-file-operation.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
@@ -19,23 +25,8 @@ import type {
 	trashMediaRoute,
 } from "./schema.js";
 
-// A rebuilt thumbnail, and an original replaced under the same key, both keep their URL, so the ETag is
-// the only thing that tells the browser the content changed. Revalidating on every read costs one 304
-// and can't serve a stale one.
-const CACHE_CONTROL = "private, max-age=0, must-revalidate";
-
 // The same answer whether the media was never registered or is gone; nothing the caller does differs
 const MEDIA_NOT_FOUND_MESSAGE = "そのメディアはありません";
-
-/** Weak, because the value identifies the source object's content rather than the thumbnail's bytes. */
-const toWeakEtag = (etag: string): string => {
-	return `W/"${etag}"`;
-};
-
-/** Strong, because for the original the value identifies the very bytes being sent. */
-const toStrongEtag = (etag: string): string => {
-	return `"${etag}"`;
-};
 
 /**
  * A file name that isn't ASCII can't travel in the header as it stands, so it goes in RFC 5987's
@@ -47,17 +38,6 @@ const buildContentDisposition = (
 	isDownload: boolean,
 ): string => {
 	return `${isDownload ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(fileName)}`;
-};
-
-/** If-None-Match carries a comma-separated list, and each entry may be quoted and marked weak. */
-const parseIfNoneMatch = (header: string | undefined): string[] => {
-	if (!header) {
-		return [];
-	}
-
-	return header.split(",").map((entry) => {
-		return entry.trim().replace(/^W\//, "").replace(/^"|"$/g, "");
-	});
 };
 
 export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
@@ -105,13 +85,13 @@ export const getThumbnail: RouteHandler<typeof getThumbnailRoute> = async (
 	if (result.kind === "NOT_MODIFIED") {
 		return c.body(null, 304, {
 			etag: toWeakEtag(result.etag),
-			"cache-control": CACHE_CONTROL,
+			"cache-control": REVALIDATE_CACHE_CONTROL,
 		});
 	}
 
 	return c.body(result.data.body, 200, {
 		"content-type": result.data.contentType,
-		"cache-control": CACHE_CONTROL,
+		"cache-control": REVALIDATE_CACHE_CONTROL,
 		etag: toWeakEtag(result.data.etag),
 	});
 };
@@ -132,7 +112,7 @@ export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
 	if (result.kind === "NOT_MODIFIED") {
 		return c.body(null, 304, {
 			etag: toStrongEtag(result.etag),
-			"cache-control": CACHE_CONTROL,
+			"cache-control": REVALIDATE_CACHE_CONTROL,
 		});
 	}
 
@@ -149,7 +129,7 @@ export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
 			file.fileName,
 			c.req.valid("query").download === "1",
 		),
-		"cache-control": CACHE_CONTROL,
+		"cache-control": REVALIDATE_CACHE_CONTROL,
 		...(file.contentRange ? { "content-range": file.contentRange } : {}),
 	});
 };
