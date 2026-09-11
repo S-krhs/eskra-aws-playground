@@ -4,8 +4,6 @@ import { useCallback, useState } from "react";
 import { getGetMediaFileUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
 
-const SECTION_TITLE_CLASS = "font-medium text-base-content/60 text-xs";
-
 /** Everything about the media worth reading beside it, in the order it reads best. */
 const toDetails = (media: Media): { label: string; value: string }[] => {
 	return [
@@ -130,7 +128,9 @@ export const MediaPreviewDialog = ({
 
 					<aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto border-base-300 border-t bg-base-100 p-3 lg:w-80 lg:border-t-0 lg:border-l">
 						<section className="flex flex-col gap-1.5">
-							<h3 className={SECTION_TITLE_CLASS}>フォルダ</h3>
+							<h3 className="font-medium text-base-content/60 text-xs">
+								フォルダ
+							</h3>
 							<div className="flex gap-1.5">
 								<input
 									type="text"
@@ -168,7 +168,7 @@ export const MediaPreviewDialog = ({
 						</section>
 
 						<section className="flex flex-col gap-1.5">
-							<h3 className={SECTION_TITLE_CLASS}>タグ</h3>
+							<h3 className="font-medium text-base-content/60 text-xs">タグ</h3>
 							{tags.length === 0 ? null : (
 								<div className="flex flex-wrap items-center gap-1">
 									{tags.map((tag) => {
@@ -224,7 +224,7 @@ export const MediaPreviewDialog = ({
 						</section>
 
 						<section className="flex flex-col gap-1.5">
-							<h3 className={SECTION_TITLE_CLASS}>詳細</h3>
+							<h3 className="font-medium text-base-content/60 text-xs">詳細</h3>
 							<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
 								{toDetails(media).map((detail) => {
 									return (

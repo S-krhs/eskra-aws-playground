@@ -17,8 +17,6 @@ const KINDS = [
 	{ label: "動画", value: "video/" },
 ] as const;
 
-const LABEL_CLASS = "font-medium text-base-content/60 text-xs";
-
 /** Changing anything here restarts the listing from the top. */
 export const MediaFilterBar = ({
 	filter,
@@ -48,7 +46,9 @@ export const MediaFilterBar = ({
 		// Wraps as a row while the screen is narrow, and stacks once it is the sidebar's column
 		<div className="flex flex-wrap items-end gap-x-4 gap-y-3 md:flex-col md:flex-nowrap md:items-stretch md:gap-4">
 			<fieldset>
-				<legend className={`mb-1 ${LABEL_CLASS}`}>表示</legend>
+				<legend className="mb-1 font-medium text-base-content/60 text-xs">
+					表示
+				</legend>
 				<div className="join md:w-full">
 					{STATES.map((state) => {
 						const isActive = (filter.state ?? "active") === state.value;
@@ -71,7 +71,9 @@ export const MediaFilterBar = ({
 			</fieldset>
 
 			<fieldset>
-				<legend className={`mb-1 ${LABEL_CLASS}`}>種別</legend>
+				<legend className="mb-1 font-medium text-base-content/60 text-xs">
+					種別
+				</legend>
 				<div className="join md:w-full">
 					{KINDS.map((kind) => {
 						const isActive = (filter.contentTypePrefix ?? "") === kind.value;
@@ -97,7 +99,9 @@ export const MediaFilterBar = ({
 			</fieldset>
 
 			<label className="flex flex-col gap-1">
-				<span className={LABEL_CLASS}>フォルダ</span>
+				<span className="font-medium text-base-content/60 text-xs">
+					フォルダ
+				</span>
 				<input
 					type="text"
 					list="media-filter-folders"
@@ -124,7 +128,7 @@ export const MediaFilterBar = ({
 			</datalist>
 
 			<label className="flex flex-col gap-1">
-				<span className={LABEL_CLASS}>タグ</span>
+				<span className="font-medium text-base-content/60 text-xs">タグ</span>
 				<select
 					value={filter.tag ?? ""}
 					onChange={(event) => {
