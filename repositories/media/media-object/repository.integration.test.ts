@@ -197,7 +197,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		});
 
 		const page = await mediaObjectRepository.findPage({
-			trashed: false,
+			state: "filed",
 			logicalPath: "_inbox",
 			limit: 10,
 		});
@@ -207,6 +207,41 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 			}),
 		).toEqual([newerId, olderId]);
 		expect(page.nextCursor).toBeUndefined();
+	});
+
+	// The inbox is the empty logical path, so there is no folder to keep this run's rows to itself the
+	// way the other listings do — a content type of its own does that instead
+	it("splits the inbox from the library on whether the object has been filed", async () => {
+		const contentType = `image/x-test-${testId}`;
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z", {
+				contentType,
+				logicalPath: "",
+			}),
+			buildInput(newerId, "b.png", "2026-09-02T00:00:00.000Z", { contentType }),
+		]);
+
+		const inbox = await mediaObjectRepository.findPage({
+			state: "inbox",
+			contentTypePrefix: contentType,
+			limit: 10,
+		});
+		expect(
+			inbox.objects.map((object) => {
+				return object.id;
+			}),
+		).toEqual([olderId]);
+
+		const library = await mediaObjectRepository.findPage({
+			state: "filed",
+			contentTypePrefix: contentType,
+			limit: 10,
+		});
+		expect(
+			library.objects.map((object) => {
+				return object.id;
+			}),
+		).toEqual([newerId]);
 	});
 
 	it("reads the trash as the other side of the same listing", async () => {
@@ -229,7 +264,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		).toBe(1);
 
 		const trash = await mediaObjectRepository.findPage({
-			trashed: true,
+			state: "trashed",
 			logicalPath: "_inbox",
 			limit: 10,
 		});
@@ -255,7 +290,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 			}),
 		).toBe(1);
 		const library = await mediaObjectRepository.findPage({
-			trashed: false,
+			state: "filed",
 			logicalPath: "_inbox",
 			limit: 10,
 		});
@@ -287,7 +322,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		]);
 
 		const first = await mediaObjectRepository.findPage({
-			trashed: false,
+			state: "filed",
 			logicalPath: "_inbox",
 			limit: 1,
 		});
@@ -299,7 +334,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(first.nextCursor).toBeDefined();
 
 		const second = await mediaObjectRepository.findPage({
-			trashed: false,
+			state: "filed",
 			logicalPath: "_inbox",
 			limit: 1,
 			cursor: first.nextCursor,
@@ -321,7 +356,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		]);
 
 		const page = await mediaObjectRepository.findPage({
-			trashed: false,
+			state: "filed",
 			logicalPath: "_inbox",
 			contentTypePrefix: "video/",
 			limit: 10,

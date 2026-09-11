@@ -56,7 +56,7 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 	}
 
 	const result = await listMediaOperation({
-		trashed: query.state === "trashed",
+		state: query.state,
 		logicalPath: query.logicalPath,
 		contentTypePrefix: query.contentTypePrefix,
 		tagName: query.tag,

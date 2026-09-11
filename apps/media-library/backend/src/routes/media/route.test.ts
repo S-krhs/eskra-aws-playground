@@ -180,7 +180,7 @@ describe("listMedia", () => {
 
 		expect(response.status).toBe(200);
 		expect(objectRepository.findPage).toHaveBeenCalledWith({
-			trashed: false,
+			state: "filed",
 			logicalPath: "2026/01",
 			contentTypePrefix: "image/",
 			limit: 5,
@@ -195,7 +195,18 @@ describe("listMedia", () => {
 
 		expect(response.status).toBe(200);
 		expect(objectRepository.findPage).toHaveBeenCalledWith(
-			expect.objectContaining({ trashed: true }),
+			expect.objectContaining({ state: "trashed" }),
+		);
+	});
+
+	it("reads what is waiting in the inbox when asked for that side", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media?state=inbox`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(objectRepository.findPage).toHaveBeenCalledWith(
+			expect.objectContaining({ state: "inbox" }),
 		);
 	});
 
@@ -203,7 +214,7 @@ describe("listMedia", () => {
 		await createApp().request(`${uiOrigin}/api/media`);
 
 		expect(objectRepository.findPage).toHaveBeenCalledWith(
-			expect.objectContaining({ trashed: false }),
+			expect.objectContaining({ state: "filed" }),
 		);
 	});
 

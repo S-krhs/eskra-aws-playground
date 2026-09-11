@@ -116,9 +116,17 @@ export interface MediaObjectCursor {
 	id: string;
 }
 
-/** Listing conditions. `trashed` picks the side to read: the trash, or everything outside it. */
+/**
+ * Which set of rows a listing reads.
+ * An object that has been taken in but filed nowhere carries the empty logical path, and that is what
+ * separates `inbox` from `filed`; `trashed` holds both kinds, each under the path it had.
+ */
+export type MediaObjectPageState = "inbox" | "filed" | "trashed";
+
+/** Listing conditions. */
 export interface FindMediaObjectPageInput {
-	trashed: boolean;
+	state: MediaObjectPageState;
+	/** Narrows to one folder. The inbox is the empty path itself, so it takes none. */
 	logicalPath?: string;
 	contentTypePrefix?: string;
 	/** Narrows to the objects carrying this tag. */

@@ -123,7 +123,8 @@ export type ListMediaState = typeof ListMediaState[keyof typeof ListMediaState];
 
 
 export const ListMediaState = {
-  active: 'active',
+  inbox: 'inbox',
+  filed: 'filed',
   trashed: 'trashed',
 } as const;
 

@@ -287,10 +287,11 @@
 						"schema": {
 							"type": "string",
 							"enum": [
-								"active",
+								"inbox",
+								"filed",
 								"trashed"
 							],
-							"default": "active"
+							"default": "filed"
 						},
 						"required": false,
 						"name": "state",

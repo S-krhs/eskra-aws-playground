@@ -2,12 +2,14 @@
 // Out of scope: fetching the listing, showing the results, starting a sync
 import { useRef, useState } from "react";
 import type { MediaFilter } from "@/entities/media";
+import type { ListMediaState } from "@/shared/api";
 
 // Long enough that a folder name is typed out before the listing is asked for again
 const FOLDER_COMMIT_DELAY_MS = 300;
 
 const STATES = [
-	{ label: "ライブラリ", value: "active" },
+	{ label: "未整理", value: "inbox" },
+	{ label: "ライブラリ", value: "filed" },
 	{ label: "ゴミ箱", value: "trashed" },
 ] as const;
 
@@ -41,6 +43,17 @@ export const MediaFilterBar = ({
 		clearTimeout(commitTimer.current);
 		onChange({ ...filter, logicalPath: value || undefined });
 	};
+	const selectState = (value: ListMediaState) => {
+		// The folder field is gone in the inbox, and what was typed into it goes with it
+		if (value === "inbox") {
+			clearTimeout(commitTimer.current);
+			setFolder("");
+			onChange({ ...filter, state: value, logicalPath: undefined });
+			return;
+		}
+
+		onChange({ ...filter, state: value });
+	};
 
 	return (
 		// Wraps as a row while the screen is narrow, and stacks once it is the sidebar's column
@@ -51,7 +64,7 @@ export const MediaFilterBar = ({
 				</legend>
 				<div className="join md:w-full">
 					{STATES.map((state) => {
-						const isActive = (filter.state ?? "active") === state.value;
+						const isActive = (filter.state ?? "filed") === state.value;
 
 						return (
 							<button
@@ -59,7 +72,7 @@ export const MediaFilterBar = ({
 								type="button"
 								aria-pressed={isActive}
 								onClick={() => {
-									onChange({ ...filter, state: state.value });
+									selectState(state.value);
 								}}
 								className={`btn join-item btn-sm md:flex-1 ${isActive ? "btn-primary" : ""}`}
 							>
@@ -98,34 +111,39 @@ export const MediaFilterBar = ({
 				</div>
 			</fieldset>
 
-			<label className="flex flex-col gap-1">
-				<span className="font-medium text-base-content/60 text-xs">
-					フォルダ
-				</span>
-				<input
-					type="text"
-					list="media-filter-folders"
-					value={folder}
-					placeholder="例: photos/2024"
-					onChange={(event) => {
-						const { value } = event.target;
-						setFolder(value);
-						clearTimeout(commitTimer.current);
-						commitTimer.current = setTimeout(() => {
-							commitFolder(value);
-						}, FOLDER_COMMIT_DELAY_MS);
-					}}
-					onBlur={(event) => {
-						commitFolder(event.target.value);
-					}}
-					className="input input-sm w-48 md:w-full"
-				/>
-			</label>
-			<datalist id="media-filter-folders">
-				{folders.map((path) => {
-					return <option key={path} value={path} />;
-				})}
-			</datalist>
+			{/* The inbox is exactly the media no folder holds, so there is nothing left here to narrow */}
+			{filter.state === "inbox" ? null : (
+				<>
+					<label className="flex flex-col gap-1">
+						<span className="font-medium text-base-content/60 text-xs">
+							フォルダ
+						</span>
+						<input
+							type="text"
+							list="media-filter-folders"
+							value={folder}
+							placeholder="例: photos/2024"
+							onChange={(event) => {
+								const { value } = event.target;
+								setFolder(value);
+								clearTimeout(commitTimer.current);
+								commitTimer.current = setTimeout(() => {
+									commitFolder(value);
+								}, FOLDER_COMMIT_DELAY_MS);
+							}}
+							onBlur={(event) => {
+								commitFolder(event.target.value);
+							}}
+							className="input input-sm w-48 md:w-full"
+						/>
+					</label>
+					<datalist id="media-filter-folders">
+						{folders.map((path) => {
+							return <option key={path} value={path} />;
+						})}
+					</datalist>
+				</>
+			)}
 
 			<label className="flex flex-col gap-1">
 				<span className="font-medium text-base-content/60 text-xs">タグ</span>

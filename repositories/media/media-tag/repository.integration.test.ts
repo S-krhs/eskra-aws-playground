@@ -112,7 +112,7 @@ describe.skipIf(!testDatabaseUrl)("mediaTagRepository (integration)", () => {
 		await mediaTagRepository.replaceObjectTags(mediaId, [referenceTag]);
 
 		const page = await mediaObjectRepository.findPage({
-			trashed: false,
+			state: "filed",
 			logicalPath,
 			tagName: referenceTag,
 			limit: 10,

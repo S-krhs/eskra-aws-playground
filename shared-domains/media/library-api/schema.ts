@@ -24,8 +24,13 @@ export const mediaCursorSchema = z
 
 /** The cursor's two fields have to travel together; that pairing is checked in the route, since OpenAPI can't state it. */
 export const mediaListQuerySchema = z.object({
-	/** Which side of the trash to read. The two never mix, so one listing answers for both. */
-	state: z.enum(["active", "trashed"]).default("active"),
+	/**
+	 * Which of the three sides to read. `inbox` is what has been taken in but not filed into a folder
+	 * yet, `filed` is the library proper, and `trashed` is both of them once they are in the trash.
+	 * They never mix, so one listing answers for all three.
+	 */
+	state: z.enum(["inbox", "filed", "trashed"]).default("filed"),
+	/** Narrows to one folder. The inbox is the media no folder holds, so it takes none. */
 	logicalPath: z.string().min(1).optional(),
 	contentTypePrefix: z.string().min(1).optional(),
 	tag: z.string().min(1).max(MEDIA_TAG_MAX_LENGTH).optional(),

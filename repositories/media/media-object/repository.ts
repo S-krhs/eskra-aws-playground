@@ -138,15 +138,19 @@ export const mediaObjectRepository = {
 		return row ? toMediaObject(row) : undefined;
 	},
 
-	/** One page, newest first, of one side of the trash. */
+	/** One page, newest first, of whichever of the three sides the input names. */
 	findPage: async (
 		input: FindMediaObjectPageInput,
 	): Promise<MediaObjectPage> => {
 		const prisma = getPrismaClient();
 		const rows = await prisma.mediaObject.findMany({
 			where: {
-				trashedAt: input.trashed ? { not: null } : null,
-				logicalPath: input.logicalPath,
+				trashedAt: input.state === "trashed" ? { not: null } : null,
+				// The inbox and the library are the same side of the trash, split on the logical path:
+				// an object nothing has filed carries the empty one. The trash keeps the path each
+				// object was filed under, so it answers for both kinds on whatever path it is given
+				logicalPath: input.state === "inbox" ? "" : input.logicalPath,
+				NOT: input.state === "filed" ? { logicalPath: "" } : undefined,
 				contentType: input.contentTypePrefix
 					? { startsWith: input.contentTypePrefix }
 					: undefined,

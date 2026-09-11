@@ -11,6 +11,6 @@ export interface MediaFilter {
 	contentTypePrefix?: string;
 	/** Narrows to the media carrying this tag. */
 	tag?: string;
-	/** Which side of the trash to read; omitted reads the library. */
+	/** Which of the three sides to read; omitted reads the library. */
 	state?: ListMediaState;
 }
