@@ -392,9 +392,6 @@
 			"get": {
 				"operationId": "getThumbnail",
 				"summary": "メディア 1 件のサムネイル画像を返す",
-				"tags": [
-					"thumbnail"
-				],
 				"parameters": [
 					{
 						"schema": {
@@ -458,9 +455,6 @@
 			"get": {
 				"operationId": "getMediaFile",
 				"summary": "メディア 1 件の原本を返す",
-				"tags": [
-					"file"
-				],
 				"parameters": [
 					{
 						"schema": {

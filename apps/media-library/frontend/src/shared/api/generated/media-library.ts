@@ -52,6 +52,10 @@ export interface ErrorResponse {
   message: string;
 }
 
+export interface TagListResponse {
+  tags: string[];
+}
+
 export interface MediaTagsRequest {
   /**
      * @maxItems 50
@@ -61,16 +65,12 @@ export interface MediaTagsRequest {
   tags: string[];
 }
 
-export interface TagListResponse {
-  tags: string[];
+export interface MediaLocationResponse {
+  logicalPath: string;
 }
 
 export interface MediaMoveRequest {
   logicalPath: '' | string;
-}
-
-export interface MediaLocationResponse {
-  logicalPath: string;
 }
 
 export interface FolderListResponse {
@@ -125,6 +125,17 @@ export type ListMediaState = typeof ListMediaState[keyof typeof ListMediaState];
 export const ListMediaState = {
   active: 'active',
   trashed: 'trashed',
+} as const;
+
+export type GetMediaFileParams = {
+download?: GetMediaFileDownload;
+};
+
+export type GetMediaFileDownload = typeof GetMediaFileDownload[keyof typeof GetMediaFileDownload];
+
+
+export const GetMediaFileDownload = {
+  NUMBER_1: '1',
 } as const;
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -276,6 +287,308 @@ export function useListMedia<TData = Awaited<ReturnType<typeof listMedia>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListMediaQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getThumbnailResponse200 = {
+  data: Blob
+  status: 200
+}
+
+export type getThumbnailResponse304 = {
+  data: void
+  status: 304
+}
+
+export type getThumbnailResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type getThumbnailResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type getThumbnailResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type getThumbnailResponseSuccess = (getThumbnailResponse200) & {
+  headers: Headers;
+};
+export type getThumbnailResponseError = (getThumbnailResponse304 | getThumbnailResponse400 | getThumbnailResponse404 | getThumbnailResponse500) & {
+  headers: Headers;
+};
+
+export type getThumbnailResponse = (getThumbnailResponseSuccess | getThumbnailResponseError)
+
+export const getGetThumbnailUrl = (id: string,) => {
+
+
+
+
+  return `/api/media/${id}/thumbnail`
+}
+
+/**
+ * @summary メディア 1 件のサムネイル画像を返す
+ */
+export const getThumbnail = async (id: string, options?: RequestInit): Promise<getThumbnailResponse> => {
+
+  const res = await fetch(getGetThumbnailUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.blob();
+  const data: getThumbnailResponse['data'] = body as getThumbnailResponse['data']
+  return { data, status: res.status, headers: res.headers } as getThumbnailResponse
+}
+
+
+
+
+
+export const getGetThumbnailQueryKey = (id: string,) => {
+    return [
+    `/api/media/${id}/thumbnail`
+    ] as const;
+    }
+
+
+export const getGetThumbnailQueryOptions = <TData = Awaited<ReturnType<typeof getThumbnail>>, TError = void | ErrorResponse>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThumbnail>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetThumbnailQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getThumbnail>>> = ({ signal }) => getThumbnail(id, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getThumbnail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetThumbnailQueryResult = NonNullable<Awaited<ReturnType<typeof getThumbnail>>>
+export type GetThumbnailQueryError = void | ErrorResponse
+
+
+export function useGetThumbnail<TData = Awaited<ReturnType<typeof getThumbnail>>, TError = void | ErrorResponse>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThumbnail>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof getThumbnail>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetThumbnail<TData = Awaited<ReturnType<typeof getThumbnail>>, TError = void | ErrorResponse>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThumbnail>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getThumbnail>>,
+          TError,
+          Awaited<ReturnType<typeof getThumbnail>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetThumbnail<TData = Awaited<ReturnType<typeof getThumbnail>>, TError = void | ErrorResponse>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThumbnail>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary メディア 1 件のサムネイル画像を返す
+ */
+
+export function useGetThumbnail<TData = Awaited<ReturnType<typeof getThumbnail>>, TError = void | ErrorResponse>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getThumbnail>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetThumbnailQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getMediaFileResponse200 = {
+  data: Blob
+  status: 200
+}
+
+export type getMediaFileResponse206 = {
+  data: Blob
+  status: 206
+}
+
+export type getMediaFileResponse304 = {
+  data: void
+  status: 304
+}
+
+export type getMediaFileResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type getMediaFileResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type getMediaFileResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type getMediaFileResponseSuccess = (getMediaFileResponse200 | getMediaFileResponse206) & {
+  headers: Headers;
+};
+export type getMediaFileResponseError = (getMediaFileResponse304 | getMediaFileResponse400 | getMediaFileResponse404 | getMediaFileResponse500) & {
+  headers: Headers;
+};
+
+export type getMediaFileResponse = (getMediaFileResponseSuccess | getMediaFileResponseError)
+
+export const getGetMediaFileUrl = (id: string,
+    params?: GetMediaFileParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/media/${id}/file?${stringifiedParams}` : `/api/media/${id}/file`
+}
+
+/**
+ * @summary メディア 1 件の原本を返す
+ */
+export const getMediaFile = async (id: string,
+    params?: GetMediaFileParams, options?: RequestInit): Promise<getMediaFileResponse> => {
+
+  const res = await fetch(getGetMediaFileUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.blob();
+  const data: getMediaFileResponse['data'] = body as getMediaFileResponse['data']
+  return { data, status: res.status, headers: res.headers } as getMediaFileResponse
+}
+
+
+
+
+
+export const getGetMediaFileQueryKey = (id: string,
+    params?: GetMediaFileParams,) => {
+    return [
+    `/api/media/${id}/file`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMediaFileQueryOptions = <TData = Awaited<ReturnType<typeof getMediaFile>>, TError = void | ErrorResponse>(id: string,
+    params?: GetMediaFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMediaFileQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMediaFile>>> = ({ signal }) => getMediaFile(id,params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMediaFileQueryResult = NonNullable<Awaited<ReturnType<typeof getMediaFile>>>
+export type GetMediaFileQueryError = void | ErrorResponse
+
+
+export function useGetMediaFile<TData = Awaited<ReturnType<typeof getMediaFile>>, TError = void | ErrorResponse>(
+ id: string,
+    params: undefined |  GetMediaFileParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMediaFile>>,
+          TError,
+          Awaited<ReturnType<typeof getMediaFile>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMediaFile<TData = Awaited<ReturnType<typeof getMediaFile>>, TError = void | ErrorResponse>(
+ id: string,
+    params?: GetMediaFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMediaFile>>,
+          TError,
+          Awaited<ReturnType<typeof getMediaFile>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMediaFile<TData = Awaited<ReturnType<typeof getMediaFile>>, TError = void | ErrorResponse>(
+ id: string,
+    params?: GetMediaFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary メディア 1 件の原本を返す
+ */
+
+export function useGetMediaFile<TData = Awaited<ReturnType<typeof getMediaFile>>, TError = void | ErrorResponse>(
+ id: string,
+    params?: GetMediaFileParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaFile>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMediaFileQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

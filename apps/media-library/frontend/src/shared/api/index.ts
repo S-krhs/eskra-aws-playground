@@ -12,6 +12,10 @@ export type {
 	trashMediaResponse as TrashMediaResponse,
 } from "./generated/media-library.js";
 export {
+	// The two endpoints answering with a file are read through an element's own attribute, so only
+	// their URL builders are taken from the generated client
+	getGetMediaFileUrl as buildMediaFileUrl,
+	getGetThumbnailUrl as buildThumbnailUrl,
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
 	getListTagsQueryKey,
@@ -26,5 +30,4 @@ export {
 	useStartSync,
 	useTrashMedia,
 } from "./generated/media-library.js";
-export { buildMediaFileUrl, buildThumbnailUrl } from "./media-url.js";
 export { queryClient } from "./query-client.js";

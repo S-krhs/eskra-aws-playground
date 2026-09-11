@@ -26,7 +26,7 @@ Every UI app uses Feature-Sliced Design and Tailwind, and differs only in render
 - **Avoid `useEffect`.** Fetching and polling belong to the query library (`useQuery` / `useInfiniteQuery` / `refetchInterval`); measuring an element goes in a ref callback that returns its own cleanup; reacting to something finishing is expressed by putting the value in the query key rather than watching for the transition. Reach for an effect only when none of those fit, and say why in a comment.
 - A UI app takes no runtime dependency on the Lambda-side workspaces (`packages/*`, `shared-domains`, `repositories`) — its runtime and build stay separate. Revisit that placement itself before working around it.
 - When the backend is in this repo, never hand-write the client or its response types — generate them from the backend's OpenAPI document into `shared/api/generated/`, and export what the slices need from `shared/api`'s public API under readable names. The generated directory is excluded from lint and is never edited by hand; regenerate instead.
-- An endpoint that returns a file rather than JSON stays out of the generated client — the screen reaches it through an `<img>`/`<a>` and there is nothing to type.
+- An endpoint that returns a file rather than JSON is generated like every other one, even though the screen reaches it through an `<img>`/`<a>` and never calls the fetcher. Keeping it out would take the URL builder with it, leaving the path to be written a second time by hand; take that builder from `shared/api`'s public API and let the fetcher and hook go unused.
 
 ## Astro
 

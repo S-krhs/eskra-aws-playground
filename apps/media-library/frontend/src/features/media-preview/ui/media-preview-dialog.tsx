@@ -219,7 +219,7 @@ export const MediaPreviewDialog = ({
 						</button>
 					)}
 					<a
-						href={buildMediaFileUrl(media.id, { download: true })}
+						href={buildMediaFileUrl(media.id, { download: "1" })}
 						download={media.fileName}
 						className="btn btn-primary btn-sm"
 					>

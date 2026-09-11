@@ -40,9 +40,6 @@ export const getThumbnailRoute = createRoute({
 	path: "/media/{id}/thumbnail",
 	operationId: "getThumbnail",
 	summary: "メディア 1 件のサムネイル画像を返す",
-	// The screen reaches this through an <img> src, so the tag is what keeps it out of the generated
-	// client — orval filters endpoints by tag and by nothing else
-	tags: ["thumbnail"],
 	request: { params: mediaIdParamSchema },
 	responses: {
 		200: {
@@ -71,9 +68,6 @@ export const getMediaFileRoute = createRoute({
 	path: "/media/{id}/file",
 	operationId: "getMediaFile",
 	summary: "メディア 1 件の原本を返す",
-	// The screen reaches this through an <img>/<video> src and an <a href>, so it stays out of the
-	// generated client the same way the thumbnail does — orval selects by tag and by nothing else
-	tags: ["file"],
 	request: { params: mediaIdParamSchema, query: mediaFileQuerySchema },
 	responses: {
 		200: {
