@@ -4,18 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
-	type moveMediaResponse,
+	toMutationFailure,
 	useMoveMedia,
 } from "@/shared/api";
-
-/** The generated client resolves a 404 or a 500 instead of rejecting, so a failure is read off the status. */
-const toFailure = (
-	response: moveMediaResponse | undefined,
-): string | undefined => {
-	return response && response.status !== 200
-		? response.data.message
-		: undefined;
-};
 
 /**
  * Moving one media object, and what to show while it goes.
@@ -44,6 +35,6 @@ export const useMediaMove = (): MediaMove => {
 		move: (mediaId, logicalPath) => {
 			move.mutate({ id: mediaId, data: { logicalPath } });
 		},
-		message: move.isPending ? "移しています…" : toFailure(move.data),
+		message: move.isPending ? "移しています…" : toMutationFailure(move, 200),
 	};
 };

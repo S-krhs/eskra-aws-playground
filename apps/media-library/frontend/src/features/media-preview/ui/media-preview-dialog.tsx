@@ -116,6 +116,7 @@ export const MediaPreviewDialog = ({
 						aria-label="フォルダ"
 						placeholder="未整理"
 						value={folder}
+						disabled={isTrashed}
 						onChange={(event) => {
 							setFolder(event.target.value);
 						}}
@@ -128,7 +129,7 @@ export const MediaPreviewDialog = ({
 					</datalist>
 					<button
 						type="button"
-						disabled={folder.trim() === media.logicalPath}
+						disabled={isTrashed || folder.trim() === media.logicalPath}
 						onClick={() => {
 							onMove(folder.trim());
 						}}
@@ -136,6 +137,11 @@ export const MediaPreviewDialog = ({
 					>
 						移す
 					</button>
+					{isTrashed ? (
+						<span className="text-base-content/60 text-xs">
+							ゴミ箱にある間は整理できません
+						</span>
+					) : null}
 				</div>
 
 				<div className="mt-3 flex flex-wrap items-center gap-1">
@@ -147,6 +153,7 @@ export const MediaPreviewDialog = ({
 								<button
 									type="button"
 									aria-label={`${tag} を外す`}
+									disabled={isTrashed}
 									onClick={() => {
 										changeTags(
 											tags.filter((kept) => {
@@ -164,8 +171,9 @@ export const MediaPreviewDialog = ({
 						type="text"
 						list="media-tag-suggestions"
 						aria-label="タグを追加"
-						placeholder="タグを追加"
+						placeholder="Enter で追加"
 						value={draft}
+						disabled={isTrashed}
 						onChange={(event) => {
 							setDraft(event.target.value);
 						}}
@@ -176,8 +184,7 @@ export const MediaPreviewDialog = ({
 								addDraftTag();
 							}
 						}}
-						onBlur={addDraftTag}
-						className="input input-xs w-32"
+						className="input input-xs w-36"
 					/>
 					<datalist id="media-tag-suggestions">
 						{tagSuggestions.map((tag) => {

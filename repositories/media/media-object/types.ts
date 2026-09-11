@@ -24,7 +24,7 @@ export interface MediaObject {
 	tags: string[];
 	uploadedAt: Date;
 	syncedAt: Date;
-	/** When it was put in the trash; the object itself stays in storage either way. */
+	/** When it was put in the trash. The stored object moves into the trash area along with it. */
 	trashedAt: Date | undefined;
 }
 

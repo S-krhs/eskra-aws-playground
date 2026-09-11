@@ -3,23 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListMediaQueryKey,
-	type restoreMediaResponse,
-	type trashMediaResponse,
+	toMutationFailure,
 	useRestoreMedia,
 	useTrashMedia,
 } from "@/shared/api";
-
-/**
- * The generated client resolves a 404 or a 500 instead of rejecting, so a failure has to be read off
- * the status rather than caught.
- */
-const toFailure = (
-	response: trashMediaResponse | restoreMediaResponse | undefined,
-): string | undefined => {
-	return response && response.status !== 204
-		? response.data.message
-		: undefined;
-};
 
 /** The two moves the screen can make on one media object, and what went wrong with the last one. */
 export interface MediaTrash {
@@ -45,6 +32,6 @@ export const useMediaTrash = (): MediaTrash => {
 		restore: (mediaId) => {
 			restore.mutate({ id: mediaId });
 		},
-		error: toFailure(trash.data) ?? toFailure(restore.data),
+		error: toMutationFailure(trash, 204) ?? toMutationFailure(restore, 204),
 	};
 };

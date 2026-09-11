@@ -30,4 +30,5 @@ export {
 	useStartSync,
 	useTrashMedia,
 } from "./generated/media-library.js";
+export { toMutationFailure } from "./mutation-failure.js";
 export { queryClient } from "./query-client.js";

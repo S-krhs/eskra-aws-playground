@@ -23,8 +23,21 @@ export const toSafeFileName = (fileName: string): string => {
 };
 
 // Asked of Windows once per process, since each launch of powershell.exe costs the better part of a
-// second and TEMP can't move while the session is up
+// second and TEMP can't move while the session is up. A failed lookup is dropped rather than kept —
+// holding a rejected promise here would leave every later copy failing for the same stale reason
 let windowsTempDirectory: Promise<string> | undefined;
+
+const readWindowsTempDirectory = async (): Promise<string> => {
+	windowsTempDirectory ??= resolveWindowsTempDirectory().catch(
+		(error: unknown) => {
+			windowsTempDirectory = undefined;
+
+			throw error;
+		},
+	);
+
+	return await windowsTempDirectory;
+};
 
 /**
  * Writes the body under the Windows user's TEMP and puts that file on the clipboard, so it pastes as a
@@ -40,9 +53,8 @@ export const copyFileToWindowsClipboard = async (input: {
 	body: ReadableStream<Uint8Array>;
 }): Promise<void> => {
 	const fileName = toSafeFileName(input.fileName);
-	windowsTempDirectory ??= resolveWindowsTempDirectory();
 	// One directory per media, so two files sharing a name still paste under their own
-	const windowsDirectory = `${await windowsTempDirectory}\\${CLIPBOARD_DIRECTORY_NAME}\\${input.mediaId}`;
+	const windowsDirectory = `${await readWindowsTempDirectory()}\\${CLIPBOARD_DIRECTORY_NAME}\\${input.mediaId}`;
 	const directory = toWslPath(windowsDirectory);
 
 	await mkdir(directory, { recursive: true });

@@ -107,6 +107,26 @@ describe("getMediaFileOperation", () => {
 		});
 	});
 
+	it("reads a trashed object too, since the trash is listed on its own side", async () => {
+		objectRepository.findById.mockResolvedValue({
+			...storedMedia,
+			objectKey: "_deleted/2026/01/clip.mp4",
+			trashedAt: new Date("2026-09-11T00:00:00.000Z"),
+		});
+
+		const result = await getMediaFileOperation({
+			mediaId,
+			range: undefined,
+			knownEtags: [],
+		});
+
+		expect(result.kind).toBe("OK");
+		expect(storageRepository.get).toHaveBeenCalledWith({
+			key: "_deleted/2026/01/clip.mp4",
+			range: undefined,
+		});
+	});
+
 	it("reports it missing only when no row carries the id", async () => {
 		objectRepository.findById.mockResolvedValue(undefined);
 

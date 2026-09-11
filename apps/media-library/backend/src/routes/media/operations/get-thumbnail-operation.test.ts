@@ -69,6 +69,17 @@ describe("getThumbnailOperation", () => {
 		});
 	});
 
+	it("reads a trashed object's thumbnail, which is what the trash listing shows", async () => {
+		objectRepository.findById.mockResolvedValue({
+			...storedMedia,
+			trashedAt: new Date("2026-09-11T00:00:00.000Z"),
+		});
+
+		const result = await getThumbnailOperation({ mediaId, knownEtags: [] });
+
+		expect(result.kind).toBe("OK");
+	});
+
 	it("reports it missing only when no row carries the id", async () => {
 		objectRepository.findById.mockResolvedValue(undefined);
 

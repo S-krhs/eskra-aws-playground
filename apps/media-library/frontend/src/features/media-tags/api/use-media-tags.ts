@@ -4,18 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListMediaQueryKey,
 	getListTagsQueryKey,
-	type replaceMediaTagsResponse,
+	toMutationFailure,
 	useReplaceMediaTags,
 } from "@/shared/api";
-
-/** The generated client resolves a 404 or a 500 instead of rejecting, so a failure is read off the status. */
-const toFailure = (
-	response: replaceMediaTagsResponse | undefined,
-): string | undefined => {
-	return response && response.status !== 200
-		? response.data.message
-		: undefined;
-};
 
 /** Saving the tags of one media object, and what went wrong with the last save. */
 export interface MediaTags {
@@ -42,6 +33,6 @@ export const useMediaTags = (): MediaTags => {
 		save: (mediaId, tags) => {
 			replace.mutate({ id: mediaId, data: { tags } });
 		},
-		error: toFailure(replace.data),
+		error: toMutationFailure(replace, 200),
 	};
 };

@@ -111,7 +111,7 @@ export const trashMediaRoute = createRoute({
 		204: {
 			// Nothing to report: the caller knows which media it asked about, and the listing is where
 			// the new state is read from
-			description: "ゴミ箱に入れた。R2 の実体はそのまま残る",
+			description: "ゴミ箱に入れた。R2 の実体も _deleted/ へ移る",
 		},
 		400: {
 			description: "id が UUID ではない",
@@ -133,7 +133,7 @@ export const restoreMediaRoute = createRoute({
 	request: { params: mediaIdParamSchema },
 	responses: {
 		204: {
-			description: "ゴミ箱から戻した",
+			description: "ゴミ箱から戻した。入っていたフォルダへ戻る",
 		},
 		400: {
 			description: "id が UUID ではない",

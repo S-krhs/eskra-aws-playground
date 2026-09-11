@@ -33,12 +33,7 @@ const toPng = async (blob: Blob): Promise<Blob> => {
 	}
 };
 
-/**
- * Reads the original back from the backend and puts it on the clipboard as an image, so it pastes into
- * a document or a chat window as a picture. The page is served over loopback, which counts as a secure
- * context, so the clipboard is writable without HTTPS.
- */
-export const writeImageToClipboard = async (url: string): Promise<void> => {
+const readAsPng = async (url: string): Promise<Blob> => {
 	const response = await fetch(url);
 
 	if (!response.ok) {
@@ -46,9 +41,21 @@ export const writeImageToClipboard = async (url: string): Promise<void> => {
 	}
 
 	const blob = await response.blob();
-	const image = blob.type === CLIPBOARD_IMAGE_TYPE ? blob : await toPng(blob);
 
+	return blob.type === CLIPBOARD_IMAGE_TYPE ? blob : await toPng(blob);
+};
+
+/**
+ * Reads the original back from the backend and puts it on the clipboard as an image, so it pastes into
+ * a document or a chat window as a picture. The page is served over loopback, which counts as a secure
+ * context, so the clipboard is writable without HTTPS.
+ *
+ * The blob is handed over as a promise rather than awaited first: the clipboard is only writable while
+ * the click that asked for it still counts as user activation, and reading a large original back over
+ * HTTP outlasts that.
+ */
+export const writeImageToClipboard = async (url: string): Promise<void> => {
 	await navigator.clipboard.write([
-		new ClipboardItem({ [CLIPBOARD_IMAGE_TYPE]: image }),
+		new ClipboardItem({ [CLIPBOARD_IMAGE_TYPE]: readAsPng(url) }),
 	]);
 };
