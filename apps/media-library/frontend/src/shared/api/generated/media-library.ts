@@ -70,6 +70,7 @@ export interface SyncStatusResponse {
 }
 
 export type ListMediaParams = {
+state?: ListMediaState;
 /**
  * @minLength 1
  */
@@ -86,6 +87,14 @@ limit?: number;
 cursorUploadedAt?: string;
 cursorId?: string;
 };
+
+export type ListMediaState = typeof ListMediaState[keyof typeof ListMediaState];
+
+
+export const ListMediaState = {
+  active: 'active',
+  trashed: 'trashed',
+} as const;
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -247,6 +256,226 @@ export function useListMedia<TData = Awaited<ReturnType<typeof listMedia>>, TErr
 
 
 
+
+export type trashMediaResponse204 = {
+  data: void
+  status: 204
+}
+
+export type trashMediaResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type trashMediaResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type trashMediaResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type trashMediaResponseSuccess = (trashMediaResponse204) & {
+  headers: Headers;
+};
+export type trashMediaResponseError = (trashMediaResponse400 | trashMediaResponse404 | trashMediaResponse500) & {
+  headers: Headers;
+};
+
+export type trashMediaResponse = (trashMediaResponseSuccess | trashMediaResponseError)
+
+export const getTrashMediaUrl = (id: string,) => {
+
+
+
+
+  return `/api/media/${id}/trash`
+}
+
+/**
+ * @summary メディアをゴミ箱に入れる
+ */
+export const trashMedia = async (id: string, options?: RequestInit): Promise<trashMediaResponse> => {
+
+  const res = await fetch(getTrashMediaUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: trashMediaResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as trashMediaResponse
+}
+
+
+
+
+
+export const getTrashMediaMutationKey = () => ['trashMedia'] as const;
+
+export const getTrashMediaMutationOptions = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trashMedia>>, TError,TrashMediaMutationVariables, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof trashMedia>>, TError,TrashMediaMutationVariables, TContext> => {
+
+const mutationKey = getTrashMediaMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof trashMedia>>, TrashMediaMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  trashMedia(id,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TrashMediaMutationResult = NonNullable<Awaited<ReturnType<typeof trashMedia>>>
+
+    export type TrashMediaMutationError = ErrorResponse
+    export type TrashMediaMutationVariables = {id: string}
+
+    /**
+ * @summary メディアをゴミ箱に入れる
+ */
+export const useTrashMedia = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof trashMedia>>, TError,TrashMediaMutationVariables, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof trashMedia>>,
+        TError,
+        TrashMediaMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTrashMediaMutationOptions(options), queryClient);
+    }
+
+export type restoreMediaResponse204 = {
+  data: void
+  status: 204
+}
+
+export type restoreMediaResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type restoreMediaResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type restoreMediaResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type restoreMediaResponseSuccess = (restoreMediaResponse204) & {
+  headers: Headers;
+};
+export type restoreMediaResponseError = (restoreMediaResponse400 | restoreMediaResponse404 | restoreMediaResponse500) & {
+  headers: Headers;
+};
+
+export type restoreMediaResponse = (restoreMediaResponseSuccess | restoreMediaResponseError)
+
+export const getRestoreMediaUrl = (id: string,) => {
+
+
+
+
+  return `/api/media/${id}/restore`
+}
+
+/**
+ * @summary メディアをゴミ箱から戻す
+ */
+export const restoreMedia = async (id: string, options?: RequestInit): Promise<restoreMediaResponse> => {
+
+  const res = await fetch(getRestoreMediaUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: restoreMediaResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as restoreMediaResponse
+}
+
+
+
+
+
+export const getRestoreMediaMutationKey = () => ['restoreMedia'] as const;
+
+export const getRestoreMediaMutationOptions = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreMedia>>, TError,RestoreMediaMutationVariables, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreMedia>>, TError,RestoreMediaMutationVariables, TContext> => {
+
+const mutationKey = getRestoreMediaMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreMedia>>, RestoreMediaMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  restoreMedia(id,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreMediaMutationResult = NonNullable<Awaited<ReturnType<typeof restoreMedia>>>
+
+    export type RestoreMediaMutationError = ErrorResponse
+    export type RestoreMediaMutationVariables = {id: string}
+
+    /**
+ * @summary メディアをゴミ箱から戻す
+ */
+export const useRestoreMedia = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreMedia>>, TError,RestoreMediaMutationVariables, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreMedia>>,
+        TError,
+        RestoreMediaMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRestoreMediaMutationOptions(options), queryClient);
+    }
 
 export type startSyncResponse202 = {
   data: void

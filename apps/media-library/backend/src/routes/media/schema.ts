@@ -102,3 +102,49 @@ export const getMediaFileRoute = createRoute({
 		500: serverErrorResponse,
 	},
 });
+
+export const trashMediaRoute = createRoute({
+	method: "post",
+	path: "/media/{id}/trash",
+	operationId: "trashMedia",
+	summary: "メディアをゴミ箱に入れる",
+	request: { params: mediaIdParamSchema },
+	responses: {
+		204: {
+			// Nothing to report: the caller knows which media it asked about, and the listing is where
+			// the new state is read from
+			description: "ゴミ箱に入れた。R2 の実体はそのまま残る",
+		},
+		400: {
+			description: "id が UUID ではない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		404: {
+			description: "そのメディアがない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		500: serverErrorResponse,
+	},
+});
+
+export const restoreMediaRoute = createRoute({
+	method: "post",
+	path: "/media/{id}/restore",
+	operationId: "restoreMedia",
+	summary: "メディアをゴミ箱から戻す",
+	request: { params: mediaIdParamSchema },
+	responses: {
+		204: {
+			description: "ゴミ箱から戻した",
+		},
+		400: {
+			description: "id が UUID ではない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		404: {
+			description: "そのメディアがない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		500: serverErrorResponse,
+	},
+});

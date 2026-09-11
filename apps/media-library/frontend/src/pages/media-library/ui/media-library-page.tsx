@@ -1,4 +1,4 @@
-// In scope: assembling the filter, listing, preview and sync features into one screen
+// In scope: assembling the filter, listing, preview, trash and sync features into one screen
 // Out of scope: each feature's implementation, calling the API, formatting
 import { MediaFilterBar } from "@/features/media-filter";
 import { MediaGrid } from "@/features/media-grid";
@@ -12,6 +12,7 @@ export const MediaLibraryPage = () => {
 		setFilter,
 		list,
 		status,
+		trash,
 		preview,
 		openPreview,
 		closePreview,
@@ -23,11 +24,28 @@ export const MediaLibraryPage = () => {
 				<MediaFilterBar filter={filter} onChange={setFilter} />
 				<SyncControl status={status} />
 			</header>
+			{trash.error ? (
+				<p role="alert" className="alert alert-error mx-3 mt-3">
+					{trash.error}
+				</p>
+			) : null}
 			<main className="min-h-0 flex-1">
 				<MediaGrid list={list} onSelect={openPreview} />
 			</main>
 			{preview ? (
-				<MediaPreviewDialog media={preview} onClose={closePreview} />
+				<MediaPreviewDialog
+					media={preview}
+					isTrashed={filter.state === "trashed"}
+					onTrash={() => {
+						trash.trash(preview.id);
+						closePreview();
+					}}
+					onRestore={() => {
+						trash.restore(preview.id);
+						closePreview();
+					}}
+					onClose={closePreview}
+				/>
 			) : null}
 		</div>
 	);

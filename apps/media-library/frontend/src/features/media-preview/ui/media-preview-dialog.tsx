@@ -25,12 +25,21 @@ const toDetails = (media: Media): { label: string; value: string }[] => {
 	];
 };
 
-/** The original itself, read straight from the backend — a video plays in place and seeks over Range. */
+/**
+ * The original itself, read straight from the backend — a video plays in place and seeks over Range.
+ * `isTrashed` says which of the two trash moves to offer; the caller knows which side it is listing.
+ */
 export const MediaPreviewDialog = ({
 	media,
+	isTrashed,
+	onTrash,
+	onRestore,
 	onClose,
 }: {
 	media: Media;
+	isTrashed: boolean;
+	onTrash: () => void;
+	onRestore: () => void;
 	onClose: () => void;
 }) => {
 	// showModal() is what puts a <dialog> in the top layer, where Esc closes it and the rest of the
@@ -78,6 +87,15 @@ export const MediaPreviewDialog = ({
 				</dl>
 
 				<div className="modal-action">
+					{isTrashed ? (
+						<button type="button" onClick={onRestore} className="btn btn-sm">
+							元に戻す
+						</button>
+					) : (
+						<button type="button" onClick={onTrash} className="btn btn-sm">
+							ゴミ箱へ
+						</button>
+					)}
 					<a
 						href={buildMediaFileUrl(media.id, { download: true })}
 						download={media.fileName}

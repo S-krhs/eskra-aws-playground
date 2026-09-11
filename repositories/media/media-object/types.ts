@@ -22,7 +22,7 @@ export interface MediaObject {
 	hasThumbnail: boolean;
 	uploadedAt: Date;
 	syncedAt: Date;
-	/** Only ever read here — a listing skips a trashed row, and no method in this package writes it. */
+	/** When it was put in the trash; the object itself stays in storage either way. */
 	trashedAt: Date | undefined;
 }
 
@@ -99,8 +99,9 @@ export interface MediaObjectCursor {
 	id: string;
 }
 
-/** Listing conditions; trashed objects are always excluded. */
+/** Listing conditions. `trashed` picks the side to read: the trash, or everything outside it. */
 export interface FindMediaObjectPageInput {
+	trashed: boolean;
 	logicalPath?: string;
 	contentTypePrefix?: string;
 	limit: number;

@@ -6,6 +6,11 @@ import type { MediaFilter } from "@/entities/media";
 // Long enough that a folder name is typed out before the listing is asked for again
 const FOLDER_COMMIT_DELAY_MS = 300;
 
+const STATES = [
+	{ label: "ライブラリ", value: "active" },
+	{ label: "ゴミ箱", value: "trashed" },
+] as const;
+
 const KINDS = [
 	{ label: "すべて", value: "" },
 	{ label: "画像", value: "image/" },
@@ -53,6 +58,29 @@ export const MediaFilterBar = ({
 					}}
 					className="input input-sm w-48"
 				/>
+			</fieldset>
+
+			<fieldset className="fieldset">
+				<legend className="fieldset-legend py-0">表示</legend>
+				<div className="join">
+					{STATES.map((state) => {
+						const isActive = (filter.state ?? "active") === state.value;
+
+						return (
+							<button
+								key={state.value}
+								type="button"
+								aria-pressed={isActive}
+								onClick={() => {
+									onChange({ ...filter, state: state.value });
+								}}
+								className={`btn join-item btn-sm ${isActive ? "btn-primary" : ""}`}
+							>
+								{state.label}
+							</button>
+						);
+					})}
+				</div>
 			</fieldset>
 
 			<fieldset className="fieldset">

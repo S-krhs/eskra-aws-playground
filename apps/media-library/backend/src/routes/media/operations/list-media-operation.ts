@@ -6,6 +6,7 @@ import type { MediaListResponse } from "@eskra-aws-playground/shared-domains/med
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 export const listMediaOperation = async (input: {
+	trashed: boolean;
 	logicalPath?: string;
 	contentTypePrefix?: string;
 	limit: number;

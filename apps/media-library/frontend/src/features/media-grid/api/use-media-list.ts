@@ -27,16 +27,17 @@ export const useMediaList = (input: {
 	filter: MediaFilter;
 	syncedAt: string | null | undefined;
 }): MediaList => {
-	const { logicalPath, contentTypePrefix } = input.filter;
+	const { state, logicalPath, contentTypePrefix } = input.filter;
 	const query = useInfiniteQuery({
 		enabled: input.syncedAt !== undefined,
 		queryKey: [
-			...getListMediaQueryKey({ logicalPath, contentTypePrefix }),
+			...getListMediaQueryKey({ state, logicalPath, contentTypePrefix }),
 			input.syncedAt ?? null,
 		],
 		queryFn: async ({ pageParam, signal }) => {
 			const response = await listMedia(
 				{
+					state,
 					logicalPath,
 					contentTypePrefix,
 					...(pageParam

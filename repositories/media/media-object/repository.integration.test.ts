@@ -197,6 +197,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		});
 
 		const page = await mediaObjectRepository.findPage({
+			trashed: false,
 			logicalPath: "_inbox",
 			limit: 10,
 		});
@@ -208,6 +209,51 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(page.nextCursor).toBeUndefined();
 	});
 
+	it("reads the trash as the other side of the same listing", async () => {
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
+			buildInput(trashedId, "c.png", "2026-09-03T00:00:00.000Z"),
+		]);
+		const trashedAt = new Date("2026-09-11T00:00:00.000Z");
+
+		expect(
+			await mediaObjectRepository.updateTrashedAt(trashedId, trashedAt),
+		).toBe(1);
+
+		const trash = await mediaObjectRepository.findPage({
+			trashed: true,
+			logicalPath: "_inbox",
+			limit: 10,
+		});
+		expect(
+			trash.objects.map((object) => {
+				return object.id;
+			}),
+		).toEqual([trashedId]);
+		expect(trash.objects[0]?.trashedAt).toEqual(trashedAt);
+
+		// Taking it back out puts it on the library side again, with the stored key untouched
+		expect(await mediaObjectRepository.updateTrashedAt(trashedId, null)).toBe(
+			1,
+		);
+		const library = await mediaObjectRepository.findPage({
+			trashed: false,
+			logicalPath: "_inbox",
+			limit: 10,
+		});
+		expect(
+			library.objects.map((object) => {
+				return object.id;
+			}),
+		).toEqual([trashedId, olderId]);
+	});
+
+	it("reports 0 rows when trashing a media object that isn't registered", async () => {
+		expect(
+			await mediaObjectRepository.updateTrashedAt(trashedId, new Date()),
+		).toBe(0);
+	});
+
 	it("resumes from a cursor", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),
@@ -215,6 +261,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		]);
 
 		const first = await mediaObjectRepository.findPage({
+			trashed: false,
 			logicalPath: "_inbox",
 			limit: 1,
 		});
@@ -226,6 +273,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		expect(first.nextCursor).toBeDefined();
 
 		const second = await mediaObjectRepository.findPage({
+			trashed: false,
 			logicalPath: "_inbox",
 			limit: 1,
 			cursor: first.nextCursor,
@@ -247,6 +295,7 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		]);
 
 		const page = await mediaObjectRepository.findPage({
+			trashed: false,
 			logicalPath: "_inbox",
 			contentTypePrefix: "video/",
 			limit: 10,

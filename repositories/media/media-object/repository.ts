@@ -106,14 +106,14 @@ export const mediaObjectRepository = {
 		return row ? toMediaObject(row) : undefined;
 	},
 
-	/** One page, newest first, excluding trashed objects. */
+	/** One page, newest first, of one side of the trash. */
 	findPage: async (
 		input: FindMediaObjectPageInput,
 	): Promise<MediaObjectPage> => {
 		const prisma = getPrismaClient();
 		const rows = await prisma.mediaObject.findMany({
 			where: {
-				trashedAt: null,
+				trashedAt: input.trashed ? { not: null } : null,
 				logicalPath: input.logicalPath,
 				contentType: input.contentTypePrefix
 					? { startsWith: input.contentTypePrefix }
@@ -156,6 +156,24 @@ export const mediaObjectRepository = {
 					? { ...location, byteSize: BigInt(location.byteSize) }
 					: {}),
 			},
+		});
+
+		return result.count;
+	},
+
+	/**
+	 * Puts one object in the trash, or takes it back out when passed null.
+	 * The stored object is left alone either way — this column is the whole of what the trash is.
+	 * Returns the number of rows updated, so a row that isn't there reads as 0 rather than throwing.
+	 */
+	updateTrashedAt: async (
+		id: string,
+		trashedAt: Date | null,
+	): Promise<number> => {
+		const prisma = getPrismaClient();
+		const result = await prisma.mediaObject.updateMany({
+			where: { id },
+			data: { trashedAt },
 		});
 
 		return result.count;

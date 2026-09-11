@@ -4,16 +4,22 @@ import type { RouteHandler } from "@hono/zod-openapi";
 import { getMediaFileOperation } from "./operations/get-media-file-operation.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
+import { setMediaTrashedOperation } from "./operations/set-media-trashed-operation.js";
 import type {
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
+	restoreMediaRoute,
+	trashMediaRoute,
 } from "./schema.js";
 
 // A rebuilt thumbnail, and an original replaced under the same key, both keep their URL, so the ETag is
 // the only thing that tells the browser the content changed. Revalidating on every read costs one 304
 // and can't serve a stale one.
 const CACHE_CONTROL = "private, max-age=0, must-revalidate";
+
+// The same answer whether the media was never registered or is gone; nothing the caller does differs
+const MEDIA_NOT_FOUND_MESSAGE = "そのメディアはありません";
 
 /** Weak, because the value identifies the source object's content rather than the thumbnail's bytes. */
 const toWeakEtag = (etag: string): string => {
@@ -63,6 +69,7 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 	}
 
 	const result = await listMediaOperation({
+		trashed: query.state === "trashed",
 		logicalPath: query.logicalPath,
 		contentTypePrefix: query.contentTypePrefix,
 		limit: query.limit,
@@ -112,7 +119,7 @@ export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
 	});
 
 	if (result.kind === "NOT_FOUND") {
-		return c.json({ message: "そのメディアはありません" }, 404);
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
 	}
 
 	if (result.kind === "NOT_MODIFIED") {
@@ -138,4 +145,32 @@ export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
 		"cache-control": CACHE_CONTROL,
 		...(file.contentRange ? { "content-range": file.contentRange } : {}),
 	});
+};
+
+export const trashMedia: RouteHandler<typeof trashMediaRoute> = async (c) => {
+	const result = await setMediaTrashedOperation({
+		mediaId: c.req.valid("param").id,
+		trashed: true,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.body(null, 204);
+};
+
+export const restoreMedia: RouteHandler<typeof restoreMediaRoute> = async (
+	c,
+) => {
+	const result = await setMediaTrashedOperation({
+		mediaId: c.req.valid("param").id,
+		trashed: false,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.body(null, 204);
 };

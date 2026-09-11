@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
 import { type MediaList, useMediaList } from "@/features/media-grid";
+import { type MediaTrash, useMediaTrash } from "@/features/media-trash";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
 import type { Media } from "@/shared/api";
 
@@ -12,6 +13,7 @@ export interface MediaLibrary {
 	setFilter: (filter: MediaFilter) => void;
 	list: MediaList;
 	status: SyncStatus;
+	trash: MediaTrash;
 	/** The media the preview is open on; null while none is. */
 	preview: Media | null;
 	openPreview: (media: Media) => void;
@@ -23,6 +25,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 	// What the preview shows is the row the listing already handed over, so opening one asks for nothing
 	const [preview, setPreview] = useState<Media | null>(null);
 	const status = useSyncStatus();
+	const trash = useMediaTrash();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
 	// having to watch for it. `latest` covers the run in flight as well and reports no finish time while
@@ -49,6 +52,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 		setFilter,
 		list,
 		status,
+		trash,
 		preview,
 		openPreview: (media: Media) => {
 			setPreview(media);

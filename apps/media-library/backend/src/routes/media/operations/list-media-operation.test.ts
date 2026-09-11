@@ -43,7 +43,7 @@ describe("listMediaOperation", () => {
 			nextCursor: undefined,
 		});
 
-		const result = await listMediaOperation({ limit: 200 });
+		const result = await listMediaOperation({ trashed: false, limit: 200 });
 
 		expect(result).toEqual({
 			kind: "OK",
@@ -73,7 +73,7 @@ describe("listMediaOperation", () => {
 			nextCursor: { uploadedAt, id: mediaId },
 		});
 
-		const result = await listMediaOperation({ limit: 1 });
+		const result = await listMediaOperation({ trashed: false, limit: 1 });
 
 		expect(result.data.nextCursor).toEqual({
 			uploadedAt: uploadedAt.toISOString(),

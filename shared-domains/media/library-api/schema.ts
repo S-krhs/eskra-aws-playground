@@ -17,6 +17,8 @@ export const mediaCursorSchema = z
 
 /** The cursor's two fields have to travel together; that pairing is checked in the route, since OpenAPI can't state it. */
 export const mediaListQuerySchema = z.object({
+	/** Which side of the trash to read. The two never mix, so one listing answers for both. */
+	state: z.enum(["active", "trashed"]).default("active"),
 	logicalPath: z.string().min(1).optional(),
 	contentTypePrefix: z.string().min(1).optional(),
 	limit: z.coerce

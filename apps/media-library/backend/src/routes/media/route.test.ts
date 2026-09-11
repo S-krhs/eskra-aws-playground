@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../app.js";
 
 const objectRepository = vi.hoisted(() => {
-	return { findPage: vi.fn(), findUntrashedById: vi.fn() };
+	return {
+		findPage: vi.fn(),
+		findUntrashedById: vi.fn(),
+		updateTrashedAt: vi.fn(),
+	};
 });
 
 vi.mock(
@@ -53,6 +57,8 @@ beforeEach(() => {
 	});
 	objectRepository.findUntrashedById.mockReset();
 	objectRepository.findUntrashedById.mockResolvedValue(storedMedia);
+	objectRepository.updateTrashedAt.mockReset();
+	objectRepository.updateTrashedAt.mockResolvedValue(1);
 	storageRepository.getThumbnail.mockReset();
 	storageRepository.getThumbnail.mockResolvedValue({
 		body: new Response(new Uint8Array([1, 2, 3])).body,
@@ -101,11 +107,31 @@ describe("listMedia", () => {
 
 		expect(response.status).toBe(200);
 		expect(objectRepository.findPage).toHaveBeenCalledWith({
+			trashed: false,
 			logicalPath: "2026/01",
 			contentTypePrefix: "image/",
 			limit: 5,
 			cursor: { uploadedAt, id: cursorId },
 		});
+	});
+
+	it("reads the trash when asked for that side", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media?state=trashed`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(objectRepository.findPage).toHaveBeenCalledWith(
+			expect.objectContaining({ trashed: true }),
+		);
+	});
+
+	it("reads the library side when no state is asked for", async () => {
+		await createApp().request(`${uiOrigin}/api/media`);
+
+		expect(objectRepository.findPage).toHaveBeenCalledWith(
+			expect.objectContaining({ trashed: false }),
+		);
 	});
 
 	it("refuses a cursor missing its other half", async () => {
@@ -305,5 +331,71 @@ describe("getMediaFile", () => {
 			message: "リクエストの項目が不正です: download",
 		});
 		expect(storageRepository.get).not.toHaveBeenCalled();
+	});
+});
+
+describe("trashMedia", () => {
+	it("marks the media as trashed and answers with nothing to read", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/trash`,
+			{ method: "POST", headers: { origin: uiOrigin } },
+		);
+
+		expect(response.status).toBe(204);
+		expect(await response.text()).toBe("");
+		expect(objectRepository.updateTrashedAt).toHaveBeenCalledWith(
+			mediaId,
+			expect.any(Date),
+		);
+	});
+
+	it("answers 404 for a media object that isn't registered", async () => {
+		objectRepository.updateTrashedAt.mockResolvedValue(0);
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/trash`,
+			{ method: "POST", headers: { origin: uiOrigin } },
+		);
+
+		expect(response.status).toBe(404);
+		expect(await response.json()).toEqual({
+			message: "そのメディアはありません",
+		});
+	});
+
+	it("turns away a POST from another origin before it reaches the route", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/trash`,
+			{ method: "POST", headers: { origin: "https://example.test" } },
+		);
+
+		expect(response.status).toBe(403);
+		expect(objectRepository.updateTrashedAt).not.toHaveBeenCalled();
+	});
+});
+
+describe("restoreMedia", () => {
+	it("clears the trashed mark rather than writing a new one", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/restore`,
+			{ method: "POST", headers: { origin: uiOrigin } },
+		);
+
+		expect(response.status).toBe(204);
+		expect(objectRepository.updateTrashedAt).toHaveBeenCalledWith(
+			mediaId,
+			null,
+		);
+	});
+
+	it("answers 404 for a media object that isn't registered", async () => {
+		objectRepository.updateTrashedAt.mockResolvedValue(0);
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/restore`,
+			{ method: "POST", headers: { origin: uiOrigin } },
+		);
+
+		expect(response.status).toBe(404);
 	});
 });
