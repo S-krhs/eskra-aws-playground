@@ -10,7 +10,8 @@
 		"gacha/**/*.ts",
 		"logger/**/*.ts",
 		"path/**/*.ts",
-		"string/**/*.ts"
+		"string/**/*.ts",
+		"windows/**/*.ts"
 	],
 	"exclude": ["dist", "node_modules"]
 }

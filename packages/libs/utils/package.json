@@ -35,6 +35,18 @@
 		"./string/text-sanitizer.js": {
 			"types": "./dist/string/text-sanitizer.d.ts",
 			"default": "./dist/string/text-sanitizer.js"
+		},
+		"./windows/power-shell.js": {
+			"types": "./dist/windows/power-shell.d.ts",
+			"default": "./dist/windows/power-shell.js"
+		},
+		"./windows/power-shell-literal.js": {
+			"types": "./dist/windows/power-shell-literal.d.ts",
+			"default": "./dist/windows/power-shell-literal.js"
+		},
+		"./windows/temp-directory.js": {
+			"types": "./dist/windows/temp-directory.d.ts",
+			"default": "./dist/windows/temp-directory.js"
 		}
 	},
 	"scripts": {
