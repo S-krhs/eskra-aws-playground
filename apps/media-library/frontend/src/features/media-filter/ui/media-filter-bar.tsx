@@ -62,7 +62,9 @@ export const MediaFilterBar = ({
 				<legend className="mb-1 font-medium text-base-content/60 text-xs">
 					表示
 				</legend>
-				<div className="join md:w-full">
+				{/* Three of these don't fit across the sidebar without breaking a label over two lines,
+				    and they read as the places media sits, so there they become a column */}
+				<div className="join md:join-vertical md:w-full">
 					{STATES.map((state) => {
 						const isActive = (filter.state ?? "filed") === state.value;
 
@@ -74,7 +76,7 @@ export const MediaFilterBar = ({
 								onClick={() => {
 									selectState(state.value);
 								}}
-								className={`btn join-item btn-sm md:flex-1 ${isActive ? "btn-primary" : ""}`}
+								className={`btn join-item btn-sm ${isActive ? "btn-primary" : ""}`}
 							>
 								{state.label}
 							</button>
