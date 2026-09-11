@@ -16,12 +16,14 @@
 
 | 経路 | 用途 |
 | --- | --- |
-| `GET /api/media` | 一覧。`logicalPath`・`contentTypePrefix`・`limit` で絞り、`cursorUploadedAt` と `cursorId` で続きを取る。`state=trashed` でゴミ箱の側を読む |
+| `GET /api/media` | 一覧。`logicalPath`・`contentTypePrefix`・`tag`・`limit` で絞り、`cursorUploadedAt` と `cursorId` で続きを取る。`state=trashed` でゴミ箱の側を読む |
 | `GET /api/media/:id/thumbnail` | サムネイル。R2 から取って返す |
 | `GET /api/media/:id/file` | 原本。`Range` を R2 へ素通しするので動画のシークが効く。`?download=1` で保存を促す |
 | `POST /api/media/:id/trash` | ゴミ箱に入れる。DB の列を立てるだけで R2 の実体は残る(204) |
 | `POST /api/media/:id/restore` | ゴミ箱から戻す(204) |
 | `POST /api/media/:id/clipboard` | 原本を Windows の `%TEMP%\eskra-media-library\<id>\` へ書き、`Set-Clipboard` でファイルとして置く(204) |
+| `PUT /api/media/:id/tags` | タグを入れ替える。知らない名前は作り、誰も使わなくなったタグは消す |
+| `GET /api/tags` | 使われているタグを名前順に返す |
 | `POST /api/sync` | 同期 Lambda を非同期で起動する。完了は待たない(202) |
 | `GET /api/sync/status` | 直近の実行と、実行中の実行を返す |
 

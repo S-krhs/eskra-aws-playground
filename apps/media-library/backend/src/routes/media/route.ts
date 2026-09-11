@@ -5,12 +5,14 @@ import { copyMediaToClipboardOperation } from "./operations/copy-media-to-clipbo
 import { getMediaFileOperation } from "./operations/get-media-file-operation.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
+import { replaceMediaTagsOperation } from "./operations/replace-media-tags-operation.js";
 import { setMediaTrashedOperation } from "./operations/set-media-trashed-operation.js";
 import type {
 	copyMediaToClipboardRoute,
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
+	replaceMediaTagsRoute,
 	restoreMediaRoute,
 	trashMediaRoute,
 } from "./schema.js";
@@ -74,6 +76,7 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 		trashed: query.state === "trashed",
 		logicalPath: query.logicalPath,
 		contentTypePrefix: query.contentTypePrefix,
+		tagName: query.tag,
 		limit: query.limit,
 		cursor:
 			query.cursorUploadedAt && query.cursorId
@@ -189,4 +192,19 @@ export const copyMediaToClipboard: RouteHandler<
 	}
 
 	return c.body(null, 204);
+};
+
+export const replaceMediaTags: RouteHandler<
+	typeof replaceMediaTagsRoute
+> = async (c) => {
+	const result = await replaceMediaTagsOperation({
+		mediaId: c.req.valid("param").id,
+		tagNames: c.req.valid("json").tags,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.json(result.data, 200);
 };

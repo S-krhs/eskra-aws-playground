@@ -7,6 +7,10 @@ import { z } from "@hono/zod-openapi";
 const MEDIA_PAGE_DEFAULT_LIMIT = 200;
 const MEDIA_PAGE_MAX_LIMIT = 500;
 
+// The column the names are stored in, and a count past which a picker stops being usable anyway
+const MEDIA_TAG_MAX_LENGTH = 64;
+const MEDIA_TAG_MAX_COUNT = 50;
+
 /** A position in the listing — the last item of the previous page. Both fields travel together or not at all. */
 export const mediaCursorSchema = z
 	.object({
@@ -21,6 +25,7 @@ export const mediaListQuerySchema = z.object({
 	state: z.enum(["active", "trashed"]).default("active"),
 	logicalPath: z.string().min(1).optional(),
 	contentTypePrefix: z.string().min(1).optional(),
+	tag: z.string().min(1).max(MEDIA_TAG_MAX_LENGTH).optional(),
 	limit: z.coerce
 		.number()
 		.int()
@@ -53,6 +58,7 @@ export const mediaSchema = z
 		height: z.number().optional(),
 		durationMs: z.number().optional(),
 		hasThumbnail: z.boolean(),
+		tags: z.array(z.string()),
 		uploadedAt: z.iso.datetime(),
 	})
 	.openapi("Media");
@@ -65,6 +71,22 @@ export const mediaListResponseSchema = z
 		nextCursor: z.union([mediaCursorSchema, z.null()]),
 	})
 	.openapi("MediaListResponse");
+
+/** The tags to leave on one media object. Whatever isn't listed comes off it. */
+export const mediaTagsRequestSchema = z
+	.object({
+		tags: z
+			.array(z.string().min(1).max(MEDIA_TAG_MAX_LENGTH))
+			.max(MEDIA_TAG_MAX_COUNT),
+	})
+	.openapi("MediaTagsRequest");
+
+/** Tag names, by name. Only the name is ever needed outside the DB, so the id stays there. */
+export const tagListResponseSchema = z
+	.object({
+		tags: z.array(z.string()),
+	})
+	.openapi("TagListResponse");
 
 /** One sync run. A null finishedAt means it is still going. */
 export const syncRunSchema = z
@@ -91,5 +113,6 @@ export type MediaCursor = z.infer<typeof mediaCursorSchema>;
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
 export type Media = z.infer<typeof mediaSchema>;
 export type MediaListResponse = z.infer<typeof mediaListResponseSchema>;
+export type TagListResponse = z.infer<typeof tagListResponseSchema>;
 export type SyncRun = z.infer<typeof syncRunSchema>;
 export type SyncStatusResponse = z.infer<typeof syncStatusResponseSchema>;

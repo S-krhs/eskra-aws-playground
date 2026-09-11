@@ -2,7 +2,7 @@
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
 import { buildThumbnailKey } from "../_shared/formatter/object-key.js";
-import type { MediaObjectRow } from "../_shared/virtual/media-object-row.js";
+import type { MediaObjectWithTagsRow } from "../_shared/virtual/media-object-row.js";
 import type {
 	FindMediaObjectPageInput,
 	InsertMediaObjectInput,
@@ -16,7 +16,13 @@ import type {
 	UpdateThumbnailInput,
 } from "./types.js";
 
-const toMediaObject = (row: MediaObjectRow): MediaObject => {
+// Read alongside every whole row, so a caller never has to ask for the tags separately
+const TAG_NAMES_SELECTION = {
+	select: { tag: { select: { name: true } } },
+	orderBy: { tag: { name: "asc" } },
+} as const;
+
+const toMediaObject = (row: MediaObjectWithTagsRow): MediaObject => {
 	return {
 		id: row.id,
 		objectKey: row.objectKey,
@@ -29,6 +35,9 @@ const toMediaObject = (row: MediaObjectRow): MediaObject => {
 		height: row.height ?? undefined,
 		durationMs: row.durationMs ?? undefined,
 		hasThumbnail: row.thumbnailKey !== null,
+		tags: row.tags.map((link) => {
+			return link.tag.name;
+		}),
 		uploadedAt: row.uploadedAt,
 		syncedAt: row.syncedAt,
 		trashedAt: row.trashedAt ?? undefined,
@@ -91,7 +100,10 @@ export const mediaObjectRepository = {
 	/** Returns trashed objects too. */
 	findById: async (id: string): Promise<MediaObject | undefined> => {
 		const prisma = getPrismaClient();
-		const row = await prisma.mediaObject.findUnique({ where: { id } });
+		const row = await prisma.mediaObject.findUnique({
+			where: { id },
+			include: { tags: TAG_NAMES_SELECTION },
+		});
 
 		return row ? toMediaObject(row) : undefined;
 	},
@@ -101,6 +113,7 @@ export const mediaObjectRepository = {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaObject.findFirst({
 			where: { id, trashedAt: null },
+			include: { tags: TAG_NAMES_SELECTION },
 		});
 
 		return row ? toMediaObject(row) : undefined;
@@ -118,8 +131,12 @@ export const mediaObjectRepository = {
 				contentType: input.contentTypePrefix
 					? { startsWith: input.contentTypePrefix }
 					: undefined,
+				tags: input.tagName
+					? { some: { tag: { name: input.tagName } } }
+					: undefined,
 				...(input.cursor ? toCursorFilter(input.cursor) : {}),
 			},
+			include: { tags: TAG_NAMES_SELECTION },
 			orderBy: [{ uploadedAt: "desc" }, { id: "desc" }],
 			// Read one extra row so the next page can be detected without a separate COUNT
 			take: input.limit + 1,

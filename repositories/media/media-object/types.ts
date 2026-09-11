@@ -20,6 +20,8 @@ export interface MediaObject {
 	durationMs: number | undefined;
 	/** The key itself stays inside this package — read the thumbnail through the storage repository. */
 	hasThumbnail: boolean;
+	/** The names it carries, in the order they are listed in. */
+	tags: string[];
 	uploadedAt: Date;
 	syncedAt: Date;
 	/** When it was put in the trash; the object itself stays in storage either way. */
@@ -104,6 +106,8 @@ export interface FindMediaObjectPageInput {
 	trashed: boolean;
 	logicalPath?: string;
 	contentTypePrefix?: string;
+	/** Narrows to the objects carrying this tag. */
+	tagName?: string;
 	limit: number;
 	cursor?: MediaObjectCursor;
 }

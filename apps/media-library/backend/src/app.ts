@@ -14,6 +14,7 @@ import {
 	getMediaFile,
 	getThumbnail,
 	listMedia,
+	replaceMediaTags,
 	restoreMedia,
 	trashMedia,
 } from "./routes/media/route.js";
@@ -22,11 +23,14 @@ import {
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
+	replaceMediaTagsRoute,
 	restoreMediaRoute,
 	trashMediaRoute,
 } from "./routes/media/schema.js";
 import { readSyncStatus, startSync } from "./routes/sync/route.js";
 import { readSyncStatusRoute, startSyncRoute } from "./routes/sync/schema.js";
+import { listTags } from "./routes/tags/route.js";
+import { listTagsRoute } from "./routes/tags/schema.js";
 
 // serveStatic joins this onto each request path, so an absolute one resolves the same wherever the
 // process was started from
@@ -50,6 +54,8 @@ const apiRoutes = new OpenAPIHono({
 	.openapi(trashMediaRoute, trashMedia)
 	.openapi(restoreMediaRoute, restoreMedia)
 	.openapi(copyMediaToClipboardRoute, copyMediaToClipboard)
+	.openapi(replaceMediaTagsRoute, replaceMediaTags)
+	.openapi(listTagsRoute, listTags)
 	.openapi(startSyncRoute, startSync)
 	.openapi(readSyncStatusRoute, readSyncStatus);
 

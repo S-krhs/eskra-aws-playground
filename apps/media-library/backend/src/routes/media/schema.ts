@@ -5,6 +5,8 @@ import {
 	mediaIdParamSchema,
 	mediaListQuerySchema,
 	mediaListResponseSchema,
+	mediaTagsRequestSchema,
+	tagListResponseSchema,
 } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
@@ -161,6 +163,34 @@ export const copyMediaToClipboardRoute = createRoute({
 		},
 		400: {
 			description: "id が UUID ではない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		404: {
+			description: "そのメディアがない、またはゴミ箱に入っている",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		500: serverErrorResponse,
+	},
+});
+
+export const replaceMediaTagsRoute = createRoute({
+	method: "put",
+	path: "/media/{id}/tags",
+	operationId: "replaceMediaTags",
+	summary: "メディアのタグを入れ替える",
+	request: {
+		params: mediaIdParamSchema,
+		body: {
+			content: { "application/json": { schema: mediaTagsRequestSchema } },
+		},
+	},
+	responses: {
+		200: {
+			description: "入れ替えた後のタグ",
+			content: { "application/json": { schema: tagListResponseSchema } },
+		},
+		400: {
+			description: "id が UUID ではない、またはタグの形式が不正",
 			content: { "application/json": { schema: errorResponseSchema } },
 		},
 		404: {

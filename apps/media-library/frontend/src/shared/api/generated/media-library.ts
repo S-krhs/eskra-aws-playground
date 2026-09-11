@@ -34,6 +34,7 @@ export interface Media {
   height?: number;
   durationMs?: number;
   hasThumbnail: boolean;
+  tags: string[];
   uploadedAt: string;
 }
 
@@ -49,6 +50,19 @@ export interface MediaListResponse {
 
 export interface ErrorResponse {
   message: string;
+}
+
+export interface MediaTagsRequest {
+  /**
+     * @maxItems 50
+     * @items.minLength 1
+     * @items.maxLength 64
+     */
+  tags: string[];
+}
+
+export interface TagListResponse {
+  tags: string[];
 }
 
 export interface SyncRun {
@@ -79,6 +93,11 @@ logicalPath?: string;
  * @minLength 1
  */
 contentTypePrefix?: string;
+/**
+ * @minLength 1
+ * @maxLength 64
+ */
+tag?: string;
 /**
  * @minimum 1
  * @maximum 500
@@ -586,6 +605,258 @@ export const useCopyMediaToClipboard = <TError = ErrorResponse,
       > => {
       return useMutation(getCopyMediaToClipboardMutationOptions(options), queryClient);
     }
+
+export type replaceMediaTagsResponse200 = {
+  data: TagListResponse
+  status: 200
+}
+
+export type replaceMediaTagsResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type replaceMediaTagsResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type replaceMediaTagsResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type replaceMediaTagsResponseSuccess = (replaceMediaTagsResponse200) & {
+  headers: Headers;
+};
+export type replaceMediaTagsResponseError = (replaceMediaTagsResponse400 | replaceMediaTagsResponse404 | replaceMediaTagsResponse500) & {
+  headers: Headers;
+};
+
+export type replaceMediaTagsResponse = (replaceMediaTagsResponseSuccess | replaceMediaTagsResponseError)
+
+export const getReplaceMediaTagsUrl = (id: string,) => {
+
+
+
+
+  return `/api/media/${id}/tags`
+}
+
+/**
+ * @summary メディアのタグを入れ替える
+ */
+export const replaceMediaTags = async (id: string,
+    mediaTagsRequest?: MediaTagsRequest, options?: RequestInit): Promise<replaceMediaTagsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getReplaceMediaTagsUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mediaTagsRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: replaceMediaTagsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as replaceMediaTagsResponse
+}
+
+
+
+
+
+export const getReplaceMediaTagsMutationKey = () => ['replaceMediaTags'] as const;
+
+export const getReplaceMediaTagsMutationOptions = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceMediaTags>>, TError,ReplaceMediaTagsMutationVariables, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceMediaTags>>, TError,ReplaceMediaTagsMutationVariables, TContext> => {
+
+const mutationKey = getReplaceMediaTagsMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceMediaTags>>, ReplaceMediaTagsMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  replaceMediaTags(id,data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplaceMediaTagsMutationResult = NonNullable<Awaited<ReturnType<typeof replaceMediaTags>>>
+    export type ReplaceMediaTagsMutationBody = MediaTagsRequest | undefined
+    export type ReplaceMediaTagsMutationError = ErrorResponse
+    export type ReplaceMediaTagsMutationVariables = {id: string;data?: MediaTagsRequest}
+
+    /**
+ * @summary メディアのタグを入れ替える
+ */
+export const useReplaceMediaTags = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceMediaTags>>, TError,ReplaceMediaTagsMutationVariables, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof replaceMediaTags>>,
+        TError,
+        ReplaceMediaTagsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReplaceMediaTagsMutationOptions(options), queryClient);
+    }
+
+export type listTagsResponse200 = {
+  data: TagListResponse
+  status: 200
+}
+
+export type listTagsResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type listTagsResponseSuccess = (listTagsResponse200) & {
+  headers: Headers;
+};
+export type listTagsResponseError = (listTagsResponse500) & {
+  headers: Headers;
+};
+
+export type listTagsResponse = (listTagsResponseSuccess | listTagsResponseError)
+
+export const getListTagsUrl = () => {
+
+
+
+
+  return `/api/tags`
+}
+
+/**
+ * @summary 使われているタグを名前順に返す
+ */
+export const listTags = async ( options?: RequestInit): Promise<listTagsResponse> => {
+
+  const res = await fetch(getListTagsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listTagsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listTagsResponse
+}
+
+
+
+
+
+export const getListTagsQueryKey = () => {
+    return [
+    `/api/tags`
+    ] as const;
+    }
+
+
+export const getListTagsQueryOptions = <TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTagsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTags>>> = ({ signal }) => listTags({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTagsQueryResult = NonNullable<Awaited<ReturnType<typeof listTags>>>
+export type ListTagsQueryError = ErrorResponse
+
+
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTags>>,
+          TError,
+          Awaited<ReturnType<typeof listTags>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTags>>,
+          TError,
+          Awaited<ReturnType<typeof listTags>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary 使われているタグを名前順に返す
+ */
+
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTagsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export type startSyncResponse202 = {
   data: void

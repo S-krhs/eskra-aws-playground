@@ -9,6 +9,7 @@ export const listMediaOperation = async (input: {
 	trashed: boolean;
 	logicalPath?: string;
 	contentTypePrefix?: string;
+	tagName?: string;
 	limit: number;
 	cursor?: MediaObjectCursor;
 }): Promise<OperationResult<MediaListResponse>> => {
@@ -30,6 +31,7 @@ export const listMediaOperation = async (input: {
 					height: media.height,
 					durationMs: media.durationMs,
 					hasThumbnail: media.hasThumbnail,
+					tags: media.tags,
 					uploadedAt: media.uploadedAt.toISOString(),
 				};
 			}),

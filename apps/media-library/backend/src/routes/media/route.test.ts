@@ -27,6 +27,17 @@ vi.mock(
 	},
 );
 
+const tagRepository = vi.hoisted(() => {
+	return { findAll: vi.fn(), replaceObjectTags: vi.fn() };
+});
+
+vi.mock(
+	"@eskra-aws-playground/repositories/media/media-tag/repository.js",
+	() => {
+		return { mediaTagRepository: tagRepository };
+	},
+);
+
 const windowsClipboard = vi.hoisted(() => {
 	return { copyFileToWindowsClipboard: vi.fn() };
 });
@@ -52,6 +63,7 @@ const storedMedia = {
 	height: 3000,
 	durationMs: undefined,
 	hasThumbnail: true,
+	tags: ["風景"],
 	uploadedAt,
 	syncedAt: uploadedAt,
 	trashedAt: undefined,
@@ -69,6 +81,13 @@ beforeEach(() => {
 	objectRepository.updateTrashedAt.mockResolvedValue(1);
 	windowsClipboard.copyFileToWindowsClipboard.mockReset();
 	windowsClipboard.copyFileToWindowsClipboard.mockResolvedValue(undefined);
+	tagRepository.findAll.mockReset();
+	tagRepository.findAll.mockResolvedValue([
+		{ id: 1, name: "資料" },
+		{ id: 2, name: "風景" },
+	]);
+	tagRepository.replaceObjectTags.mockReset();
+	tagRepository.replaceObjectTags.mockResolvedValue([{ id: 2, name: "風景" }]);
 	storageRepository.getThumbnail.mockReset();
 	storageRepository.getThumbnail.mockResolvedValue({
 		body: new Response(new Uint8Array([1, 2, 3])).body,
@@ -103,6 +122,7 @@ describe("listMedia", () => {
 					width: 4000,
 					height: 3000,
 					hasThumbnail: true,
+					tags: ["風景"],
 					uploadedAt: uploadedAt.toISOString(),
 				},
 			],
@@ -141,6 +161,14 @@ describe("listMedia", () => {
 
 		expect(objectRepository.findPage).toHaveBeenCalledWith(
 			expect.objectContaining({ trashed: false }),
+		);
+	});
+
+	it("narrows the listing to one tag", async () => {
+		await createApp().request(`${uiOrigin}/api/media?tag=風景`);
+
+		expect(objectRepository.findPage).toHaveBeenCalledWith(
+			expect.objectContaining({ tagName: "風景" }),
 		);
 	});
 
@@ -433,5 +461,63 @@ describe("copyMediaToClipboard", () => {
 
 		expect(response.status).toBe(404);
 		expect(windowsClipboard.copyFileToWindowsClipboard).not.toHaveBeenCalled();
+	});
+});
+
+describe("replaceMediaTags", () => {
+	it("takes a well-formed list and hands the stored names back", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/tags`,
+			{
+				method: "PUT",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ tags: ["風景"] }),
+			},
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ tags: ["風景"] });
+		expect(tagRepository.replaceObjectTags).toHaveBeenCalledWith(mediaId, [
+			"風景",
+		]);
+	});
+
+	it("refuses a blank tag rather than storing one nothing can be filtered by", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/tags`,
+			{
+				method: "PUT",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ tags: [""] }),
+			},
+		);
+
+		expect(response.status).toBe(400);
+		expect(tagRepository.replaceObjectTags).not.toHaveBeenCalled();
+	});
+
+	it("answers 404 for a media object that isn't there or has been trashed", async () => {
+		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/tags`,
+			{
+				method: "PUT",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ tags: ["風景"] }),
+			},
+		);
+
+		expect(response.status).toBe(404);
+		expect(tagRepository.replaceObjectTags).not.toHaveBeenCalled();
+	});
+});
+
+describe("listTags", () => {
+	it("answers with the tag names in use, and not their ids", async () => {
+		const response = await createApp().request(`${uiOrigin}/api/tags`);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ tags: ["資料", "風景"] });
 	});
 });

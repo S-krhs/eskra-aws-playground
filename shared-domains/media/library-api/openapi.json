@@ -68,6 +68,12 @@
 					"hasThumbnail": {
 						"type": "boolean"
 					},
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
 					"uploadedAt": {
 						"type": "string",
 						"format": "date-time"
@@ -80,6 +86,7 @@
 					"contentType",
 					"byteSize",
 					"hasThumbnail",
+					"tags",
 					"uploadedAt"
 				]
 			},
@@ -109,6 +116,37 @@
 				},
 				"required": [
 					"message"
+				]
+			},
+			"TagListResponse": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"required": [
+					"tags"
+				]
+			},
+			"MediaTagsRequest": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64
+						},
+						"maxItems": 50
+					}
+				},
+				"required": [
+					"tags"
 				]
 			},
 			"SyncStatusResponse": {
@@ -226,6 +264,16 @@
 						},
 						"required": false,
 						"name": "contentTypePrefix",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64
+						},
+						"required": false,
+						"name": "tag",
 						"in": "query"
 					},
 					{
@@ -585,6 +633,102 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/media/{id}/tags": {
+			"put": {
+				"operationId": "replaceMediaTags",
+				"summary": "メディアのタグを入れ替える",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": true,
+						"name": "id",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MediaTagsRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "入れ替えた後のタグ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagListResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "id が UUID ではない、またはタグの形式が不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "そのメディアがない、またはゴミ箱に入っている",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tags": {
+			"get": {
+				"operationId": "listTags",
+				"summary": "使われているタグを名前順に返す",
+				"responses": {
+					"200": {
+						"description": "使われているタグ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TagListResponse"
 								}
 							}
 						}
