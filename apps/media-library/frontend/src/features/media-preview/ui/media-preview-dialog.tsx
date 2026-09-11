@@ -28,16 +28,23 @@ const toDetails = (media: Media): { label: string; value: string }[] => {
 /**
  * The original itself, read straight from the backend — a video plays in place and seeks over Range.
  * `isTrashed` says which of the two trash moves to offer; the caller knows which side it is listing.
+ * `clipboardMessage` is shown as it stands: copying gives no sign of itself otherwise.
  */
 export const MediaPreviewDialog = ({
 	media,
 	isTrashed,
+	clipboardMessage,
+	onCopyImage,
+	onCopyFile,
 	onTrash,
 	onRestore,
 	onClose,
 }: {
 	media: Media;
 	isTrashed: boolean;
+	clipboardMessage: string | undefined;
+	onCopyImage: () => void;
+	onCopyFile: () => void;
 	onTrash: () => void;
 	onRestore: () => void;
 	onClose: () => void;
@@ -49,6 +56,8 @@ export const MediaPreviewDialog = ({
 		element?.showModal();
 	}, []);
 	const fileUrl = buildMediaFileUrl(media.id);
+	// A video has no single picture to hand the browser's clipboard, so only the file copy is offered
+	const isVideo = media.contentType.startsWith("video/");
 
 	return (
 		<dialog ref={openModal} className="modal" onClose={onClose}>
@@ -58,7 +67,7 @@ export const MediaPreviewDialog = ({
 				</h3>
 
 				<div className="mt-3 flex justify-center bg-base-200">
-					{media.contentType.startsWith("video/") ? (
+					{isVideo ? (
 						// biome-ignore lint/a11y/useMediaCaption: personal media taken in from a folder, with no caption track to point at
 						<video
 							src={fileUrl}
@@ -86,7 +95,20 @@ export const MediaPreviewDialog = ({
 					})}
 				</dl>
 
-				<div className="modal-action">
+				<div className="modal-action flex-wrap items-center">
+					{clipboardMessage ? (
+						<p className="mr-auto text-base-content/60 text-xs">
+							{clipboardMessage}
+						</p>
+					) : null}
+					{isVideo ? null : (
+						<button type="button" onClick={onCopyImage} className="btn btn-sm">
+							画像としてコピー
+						</button>
+					)}
+					<button type="button" onClick={onCopyFile} className="btn btn-sm">
+						ファイルとしてコピー
+					</button>
 					{isTrashed ? (
 						<button type="button" onClick={onRestore} className="btn btn-sm">
 							元に戻す

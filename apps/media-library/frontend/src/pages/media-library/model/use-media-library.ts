@@ -2,6 +2,10 @@
 // Out of scope: fetching either of them, what the sync does, rendering
 import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
+import {
+	type MediaClipboard,
+	useMediaClipboard,
+} from "@/features/media-clipboard";
 import { type MediaList, useMediaList } from "@/features/media-grid";
 import { type MediaTrash, useMediaTrash } from "@/features/media-trash";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
@@ -14,6 +18,7 @@ export interface MediaLibrary {
 	list: MediaList;
 	status: SyncStatus;
 	trash: MediaTrash;
+	clipboard: MediaClipboard;
 	/** The media the preview is open on; null while none is. */
 	preview: Media | null;
 	openPreview: (media: Media) => void;
@@ -26,6 +31,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const [preview, setPreview] = useState<Media | null>(null);
 	const status = useSyncStatus();
 	const trash = useMediaTrash();
+	const clipboard = useMediaClipboard();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
 	// having to watch for it. `latest` covers the run in flight as well and reports no finish time while
@@ -53,6 +59,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 		list,
 		status,
 		trash,
+		clipboard,
 		preview,
 		openPreview: (media: Media) => {
 			setPreview(media);

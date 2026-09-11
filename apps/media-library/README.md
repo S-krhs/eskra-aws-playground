@@ -21,6 +21,7 @@
 | `GET /api/media/:id/file` | 原本。`Range` を R2 へ素通しするので動画のシークが効く。`?download=1` で保存を促す |
 | `POST /api/media/:id/trash` | ゴミ箱に入れる。DB の列を立てるだけで R2 の実体は残る(204) |
 | `POST /api/media/:id/restore` | ゴミ箱から戻す(204) |
+| `POST /api/media/:id/clipboard` | 原本を Windows の `%TEMP%\eskra-media-library\<id>\` へ書き、`Set-Clipboard` でファイルとして置く(204) |
 | `POST /api/sync` | 同期 Lambda を非同期で起動する。完了は待たない(202) |
 | `GET /api/sync/status` | 直近の実行と、実行中の実行を返す |
 
@@ -30,6 +31,9 @@
 - フォルダ(論理パス)と種別(画像 / 動画)で絞り込める。条件を変えると先頭から取り直す。
 - タイルを押すと原本を開く。画像はそのまま、動画はその場で再生する(シークは `Range` で取り直す)。ダウンロードもここから。
 - 「表示」でライブラリとゴミ箱を切り替える。ゴミ箱に入れても R2 の実体は消えず、開いたメディアから元に戻せる。
+- コピーは 2 種類。「画像としてコピー」はブラウザのクリップボードへ画像として置く(PNG 以外は PNG に変換する)。
+  「ファイルとしてコピー」は backend が Windows の `%TEMP%` へ書き出してファイル参照を置くので、動画でも使えるしエクスプローラーへ貼れる。
+  貼り付けるまで参照が要るため、書き出したファイルは消さない(Windows の TEMP 掃除に任せる)。
 - 同期ボタンで `POST /api/sync` を叩き、実行中は 2 秒ごとに進捗を読む。終わった時点で一覧を取り直す。
 - 画面の API client は `shared-domains/media/library-api/openapi.json` から生成します。route を変えたら `generate:api` を実行してください。
 

@@ -1,6 +1,7 @@
 // In scope: what the generated API client offers the slices
 // Out of scope: how the client is generated, the query client's settings
 export type {
+	copyMediaToClipboardResponse as CopyMediaToClipboardResponse,
 	ListMediaState,
 	Media,
 	MediaCursor,
@@ -11,6 +12,7 @@ export type {
 export {
 	getListMediaQueryKey,
 	listMedia,
+	useCopyMediaToClipboard,
 	useReadSyncStatus,
 	useRestoreMedia,
 	useStartSync,

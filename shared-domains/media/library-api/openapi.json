@@ -550,6 +550,58 @@
 				}
 			}
 		},
+		"/media/{id}/clipboard": {
+			"post": {
+				"operationId": "copyMediaToClipboard",
+				"summary": "メディアをファイルとしてクリップボードへ置く",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": true,
+						"name": "id",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"204": {
+						"description": "クリップボードへ置いた。貼り付けるとファイルとして出る"
+					},
+					"400": {
+						"description": "id が UUID ではない",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "そのメディアがない、またはゴミ箱に入っている",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 		"/sync": {
 			"post": {
 				"operationId": "startSync",

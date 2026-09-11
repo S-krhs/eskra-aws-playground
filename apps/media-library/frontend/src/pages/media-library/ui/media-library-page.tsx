@@ -13,6 +13,7 @@ export const MediaLibraryPage = () => {
 		list,
 		status,
 		trash,
+		clipboard,
 		preview,
 		openPreview,
 		closePreview,
@@ -36,6 +37,13 @@ export const MediaLibraryPage = () => {
 				<MediaPreviewDialog
 					media={preview}
 					isTrashed={filter.state === "trashed"}
+					clipboardMessage={clipboard.message}
+					onCopyImage={() => {
+						clipboard.copyImage(preview);
+					}}
+					onCopyFile={() => {
+						clipboard.copyFile(preview);
+					}}
 					onTrash={() => {
 						trash.trash(preview.id);
 						closePreview();

@@ -27,6 +27,14 @@ vi.mock(
 	},
 );
 
+const windowsClipboard = vi.hoisted(() => {
+	return { copyFileToWindowsClipboard: vi.fn() };
+});
+
+vi.mock("../../features/windows-clipboard/file-clipboard.js", () => {
+	return windowsClipboard;
+});
+
 const uiOrigin = "http://127.0.0.1:7420";
 const mediaId = "11111111-1111-4111-8111-111111111111";
 const cursorId = "22222222-2222-4222-8222-222222222222";
@@ -59,6 +67,8 @@ beforeEach(() => {
 	objectRepository.findUntrashedById.mockResolvedValue(storedMedia);
 	objectRepository.updateTrashedAt.mockReset();
 	objectRepository.updateTrashedAt.mockResolvedValue(1);
+	windowsClipboard.copyFileToWindowsClipboard.mockReset();
+	windowsClipboard.copyFileToWindowsClipboard.mockResolvedValue(undefined);
 	storageRepository.getThumbnail.mockReset();
 	storageRepository.getThumbnail.mockResolvedValue({
 		body: new Response(new Uint8Array([1, 2, 3])).body,
@@ -397,5 +407,31 @@ describe("restoreMedia", () => {
 		);
 
 		expect(response.status).toBe(404);
+	});
+});
+
+describe("copyMediaToClipboard", () => {
+	it("puts the original on the clipboard and answers with nothing to read", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/clipboard`,
+			{ method: "POST", headers: { origin: uiOrigin } },
+		);
+
+		expect(response.status).toBe(204);
+		expect(windowsClipboard.copyFileToWindowsClipboard).toHaveBeenCalledWith(
+			expect.objectContaining({ mediaId, fileName: "photo.jpg" }),
+		);
+	});
+
+	it("answers 404 for a media object that isn't there or has been trashed", async () => {
+		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/clipboard`,
+			{ method: "POST", headers: { origin: uiOrigin } },
+		);
+
+		expect(response.status).toBe(404);
+		expect(windowsClipboard.copyFileToWindowsClipboard).not.toHaveBeenCalled();
 	});
 });

@@ -1,11 +1,13 @@
 // In scope: turning each media operation's result into a response
 // Out of scope: registering the routes, reading the DB or storage, the shape of what comes back
 import type { RouteHandler } from "@hono/zod-openapi";
+import { copyMediaToClipboardOperation } from "./operations/copy-media-to-clipboard-operation.js";
 import { getMediaFileOperation } from "./operations/get-media-file-operation.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
 import { setMediaTrashedOperation } from "./operations/set-media-trashed-operation.js";
 import type {
+	copyMediaToClipboardRoute,
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
@@ -166,6 +168,20 @@ export const restoreMedia: RouteHandler<typeof restoreMediaRoute> = async (
 	const result = await setMediaTrashedOperation({
 		mediaId: c.req.valid("param").id,
 		trashed: false,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.body(null, 204);
+};
+
+export const copyMediaToClipboard: RouteHandler<
+	typeof copyMediaToClipboardRoute
+> = async (c) => {
+	const result = await copyMediaToClipboardOperation({
+		mediaId: c.req.valid("param").id,
 	});
 
 	if (result.kind === "NOT_FOUND") {

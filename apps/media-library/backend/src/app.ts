@@ -10,6 +10,7 @@ import { HTTPException } from "hono/http-exception";
 import { loopbackHostGuard } from "./loopback-host-guard.js";
 import { toInvalidRequestResponse } from "./routes/_shared/responses/error-response.js";
 import {
+	copyMediaToClipboard,
 	getMediaFile,
 	getThumbnail,
 	listMedia,
@@ -17,6 +18,7 @@ import {
 	trashMedia,
 } from "./routes/media/route.js";
 import {
+	copyMediaToClipboardRoute,
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
@@ -47,6 +49,7 @@ const apiRoutes = new OpenAPIHono({
 	.openapi(getMediaFileRoute, getMediaFile)
 	.openapi(trashMediaRoute, trashMedia)
 	.openapi(restoreMediaRoute, restoreMedia)
+	.openapi(copyMediaToClipboardRoute, copyMediaToClipboard)
 	.openapi(startSyncRoute, startSync)
 	.openapi(readSyncStatusRoute, readSyncStatus);
 

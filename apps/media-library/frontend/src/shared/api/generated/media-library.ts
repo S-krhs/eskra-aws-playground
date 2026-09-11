@@ -477,6 +477,116 @@ export const useRestoreMedia = <TError = ErrorResponse,
       return useMutation(getRestoreMediaMutationOptions(options), queryClient);
     }
 
+export type copyMediaToClipboardResponse204 = {
+  data: void
+  status: 204
+}
+
+export type copyMediaToClipboardResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type copyMediaToClipboardResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type copyMediaToClipboardResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type copyMediaToClipboardResponseSuccess = (copyMediaToClipboardResponse204) & {
+  headers: Headers;
+};
+export type copyMediaToClipboardResponseError = (copyMediaToClipboardResponse400 | copyMediaToClipboardResponse404 | copyMediaToClipboardResponse500) & {
+  headers: Headers;
+};
+
+export type copyMediaToClipboardResponse = (copyMediaToClipboardResponseSuccess | copyMediaToClipboardResponseError)
+
+export const getCopyMediaToClipboardUrl = (id: string,) => {
+
+
+
+
+  return `/api/media/${id}/clipboard`
+}
+
+/**
+ * @summary メディアをファイルとしてクリップボードへ置く
+ */
+export const copyMediaToClipboard = async (id: string, options?: RequestInit): Promise<copyMediaToClipboardResponse> => {
+
+  const res = await fetch(getCopyMediaToClipboardUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: copyMediaToClipboardResponse['data'] = body ? JSON.parse(body) : undefined
+  return { data, status: res.status, headers: res.headers } as copyMediaToClipboardResponse
+}
+
+
+
+
+
+export const getCopyMediaToClipboardMutationKey = () => ['copyMediaToClipboard'] as const;
+
+export const getCopyMediaToClipboardMutationOptions = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyMediaToClipboard>>, TError,CopyMediaToClipboardMutationVariables, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof copyMediaToClipboard>>, TError,CopyMediaToClipboardMutationVariables, TContext> => {
+
+const mutationKey = getCopyMediaToClipboardMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof copyMediaToClipboard>>, CopyMediaToClipboardMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  copyMediaToClipboard(id,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CopyMediaToClipboardMutationResult = NonNullable<Awaited<ReturnType<typeof copyMediaToClipboard>>>
+
+    export type CopyMediaToClipboardMutationError = ErrorResponse
+    export type CopyMediaToClipboardMutationVariables = {id: string}
+
+    /**
+ * @summary メディアをファイルとしてクリップボードへ置く
+ */
+export const useCopyMediaToClipboard = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof copyMediaToClipboard>>, TError,CopyMediaToClipboardMutationVariables, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof copyMediaToClipboard>>,
+        TError,
+        CopyMediaToClipboardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCopyMediaToClipboardMutationOptions(options), queryClient);
+    }
+
 export type startSyncResponse202 = {
   data: void
   status: 202

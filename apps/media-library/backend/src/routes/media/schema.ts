@@ -148,3 +148,25 @@ export const restoreMediaRoute = createRoute({
 		500: serverErrorResponse,
 	},
 });
+
+export const copyMediaToClipboardRoute = createRoute({
+	method: "post",
+	path: "/media/{id}/clipboard",
+	operationId: "copyMediaToClipboard",
+	summary: "メディアをファイルとしてクリップボードへ置く",
+	request: { params: mediaIdParamSchema },
+	responses: {
+		204: {
+			description: "クリップボードへ置いた。貼り付けるとファイルとして出る",
+		},
+		400: {
+			description: "id が UUID ではない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		404: {
+			description: "そのメディアがない、またはゴミ箱に入っている",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		500: serverErrorResponse,
+	},
+});
