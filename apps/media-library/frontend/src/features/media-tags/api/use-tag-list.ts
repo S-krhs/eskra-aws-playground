@@ -1,4 +1,4 @@
-// In scope: reading the tags in use, for anything that offers them to pick from
+// In scope: reading the tags in use, for the screen to offer them to pick from
 // Out of scope: tagging a media object, filtering the listing, rendering
 import { useListTags } from "@/shared/api";
 

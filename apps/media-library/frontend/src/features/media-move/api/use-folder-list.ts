@@ -1,4 +1,4 @@
-// In scope: reading the folders there are to file into, for anything that offers them
+// In scope: reading the folders there are to file into, for the screen to offer them
 // Out of scope: moving a media object, filtering the listing, rendering
 import { useListFolders } from "@/shared/api";
 
