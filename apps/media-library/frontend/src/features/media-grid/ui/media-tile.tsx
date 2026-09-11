@@ -22,9 +22,9 @@ export const MediaTile = ({
 			onClick={() => {
 				onSelect(media);
 			}}
-			className="card m-0 h-full overflow-hidden border border-base-300 bg-base-100 text-left"
+			className="flex h-full flex-col overflow-hidden rounded-xs border border-base-300 bg-base-100 text-left transition-colors hover:border-primary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-primary"
 		>
-			<span className="relative flex flex-1 items-center justify-center bg-base-200">
+			<span className="relative flex min-h-0 flex-1 items-center justify-center bg-base-200">
 				{media.hasThumbnail ? (
 					<img
 						src={getGetThumbnailUrl(media.id)}
@@ -33,21 +33,22 @@ export const MediaTile = ({
 						className="size-full object-cover"
 					/>
 				) : (
-					<span className="text-base-content/50 text-xs">
+					<span className="text-base-content/40 text-xs">
 						{isVideo ? "動画" : "画像"}
 					</span>
 				)}
 				{media.durationMs === undefined ? null : (
-					<span className="badge badge-neutral badge-sm absolute right-1 bottom-1 font-mono">
+					// A plain chip rather than a badge: a pill over a square thumbnail reads as a stray blob
+					<span className="absolute right-1 bottom-1 rounded-xs bg-neutral/85 px-1 py-0.5 font-mono text-[11px] text-neutral-content">
 						{formatDuration(media.durationMs)}
 					</span>
 				)}
 			</span>
-			<span className="block w-full px-2 py-1">
+			<span className="block w-full shrink-0 border-base-300 border-t px-2 py-1.5">
 				<span className="block truncate text-xs" title={media.fileName}>
 					{media.fileName}
 				</span>
-				<span className="block text-base-content/60 text-xs">
+				<span className="block text-[11px] text-base-content/50">
 					{formatByteSize(media.byteSize)}
 				</span>
 			</span>

@@ -17,6 +17,8 @@ const KINDS = [
 	{ label: "動画", value: "video/" },
 ] as const;
 
+const LABEL_CLASS = "font-medium text-base-content/60 text-xs";
+
 /** Changing anything here restarts the listing from the top. */
 export const MediaFilterBar = ({
 	filter,
@@ -43,59 +45,11 @@ export const MediaFilterBar = ({
 	};
 
 	return (
-		<div className="flex flex-wrap items-center gap-3">
-			<fieldset className="fieldset">
-				<legend className="fieldset-legend py-0">フォルダ</legend>
-				<input
-					type="text"
-					list="media-filter-folders"
-					aria-label="フォルダ"
-					value={folder}
-					placeholder="例: photos/2024"
-					onChange={(event) => {
-						const { value } = event.target;
-						setFolder(value);
-						clearTimeout(commitTimer.current);
-						commitTimer.current = setTimeout(() => {
-							commitFolder(value);
-						}, FOLDER_COMMIT_DELAY_MS);
-					}}
-					onBlur={(event) => {
-						commitFolder(event.target.value);
-					}}
-					className="input input-sm w-48"
-				/>
-				<datalist id="media-filter-folders">
-					{folders.map((path) => {
-						return <option key={path} value={path} />;
-					})}
-				</datalist>
-			</fieldset>
-
-			<fieldset className="fieldset">
-				<legend className="fieldset-legend py-0">タグ</legend>
-				<select
-					aria-label="タグ"
-					value={filter.tag ?? ""}
-					onChange={(event) => {
-						onChange({ ...filter, tag: event.target.value || undefined });
-					}}
-					className="select select-sm w-36"
-				>
-					<option value="">すべて</option>
-					{tags.map((tag) => {
-						return (
-							<option key={tag} value={tag}>
-								{tag}
-							</option>
-						);
-					})}
-				</select>
-			</fieldset>
-
-			<fieldset className="fieldset">
-				<legend className="fieldset-legend py-0">表示</legend>
-				<div className="join">
+		// Wraps as a row while the screen is narrow, and stacks once it is the sidebar's column
+		<div className="flex flex-wrap items-end gap-x-4 gap-y-3 md:flex-col md:flex-nowrap md:items-stretch md:gap-4">
+			<fieldset>
+				<legend className={`mb-1 ${LABEL_CLASS}`}>表示</legend>
+				<div className="join md:w-full">
 					{STATES.map((state) => {
 						const isActive = (filter.state ?? "active") === state.value;
 
@@ -107,7 +61,7 @@ export const MediaFilterBar = ({
 								onClick={() => {
 									onChange({ ...filter, state: state.value });
 								}}
-								className={`btn join-item btn-sm ${isActive ? "btn-primary" : ""}`}
+								className={`btn join-item btn-sm md:flex-1 ${isActive ? "btn-primary" : ""}`}
 							>
 								{state.label}
 							</button>
@@ -116,9 +70,9 @@ export const MediaFilterBar = ({
 				</div>
 			</fieldset>
 
-			<fieldset className="fieldset">
-				<legend className="fieldset-legend py-0">種別</legend>
-				<div className="join">
+			<fieldset>
+				<legend className={`mb-1 ${LABEL_CLASS}`}>種別</legend>
+				<div className="join md:w-full">
 					{KINDS.map((kind) => {
 						const isActive = (filter.contentTypePrefix ?? "") === kind.value;
 
@@ -133,7 +87,7 @@ export const MediaFilterBar = ({
 										contentTypePrefix: kind.value || undefined,
 									});
 								}}
-								className={`btn join-item btn-sm ${isActive ? "btn-primary" : ""}`}
+								className={`btn join-item btn-sm md:flex-1 ${isActive ? "btn-primary" : ""}`}
 							>
 								{kind.label}
 							</button>
@@ -141,6 +95,53 @@ export const MediaFilterBar = ({
 					})}
 				</div>
 			</fieldset>
+
+			<label className="flex flex-col gap-1">
+				<span className={LABEL_CLASS}>フォルダ</span>
+				<input
+					type="text"
+					list="media-filter-folders"
+					value={folder}
+					placeholder="例: photos/2024"
+					onChange={(event) => {
+						const { value } = event.target;
+						setFolder(value);
+						clearTimeout(commitTimer.current);
+						commitTimer.current = setTimeout(() => {
+							commitFolder(value);
+						}, FOLDER_COMMIT_DELAY_MS);
+					}}
+					onBlur={(event) => {
+						commitFolder(event.target.value);
+					}}
+					className="input input-sm w-48 md:w-full"
+				/>
+			</label>
+			<datalist id="media-filter-folders">
+				{folders.map((path) => {
+					return <option key={path} value={path} />;
+				})}
+			</datalist>
+
+			<label className="flex flex-col gap-1">
+				<span className={LABEL_CLASS}>タグ</span>
+				<select
+					value={filter.tag ?? ""}
+					onChange={(event) => {
+						onChange({ ...filter, tag: event.target.value || undefined });
+					}}
+					className="select select-sm w-36 md:w-full"
+				>
+					<option value="">すべて</option>
+					{tags.map((tag) => {
+						return (
+							<option key={tag} value={tag}>
+								{tag}
+							</option>
+						);
+					})}
+				</select>
+			</label>
 		</div>
 	);
 };

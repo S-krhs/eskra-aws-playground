@@ -37,22 +37,27 @@ export const MediaLibraryPage = () => {
 				: clipboard.status.message);
 
 	return (
-		<div className="flex h-dvh flex-col bg-base-200 text-base-content">
-			<header className="flex flex-wrap items-center justify-between gap-3 border-base-300 border-b bg-base-100 px-3 py-2">
+		// The sidebar only forms once there is width for it; below that the same blocks stack above the grid
+		<div className="flex h-dvh flex-col bg-base-200 text-base-content md:flex-row">
+			<aside className="flex shrink-0 flex-col gap-4 border-base-300 border-b bg-base-100 p-3 md:w-60 md:overflow-y-auto md:border-r md:border-b-0">
+				<h1 className="font-bold text-sm">メディアライブラリ</h1>
 				<MediaFilterBar
 					filter={filter}
 					tags={tagSuggestions}
 					folders={folderSuggestions}
 					onChange={setFilter}
 				/>
-				<SyncControl status={status} />
-			</header>
-			{trash.status.kind === "failed" ? (
-				<p role="alert" className="alert alert-error mx-3 mt-3">
-					{trash.status.message}
-				</p>
-			) : null}
-			<main className="min-h-0 flex-1">
+				{/* Pinned to the foot of the sidebar, away from the filters it has nothing to do with */}
+				<div className="md:mt-auto">
+					<SyncControl status={status} />
+				</div>
+			</aside>
+			<main className="flex min-h-0 min-w-0 flex-1 flex-col">
+				{trash.status.kind === "failed" ? (
+					<p role="alert" className="alert alert-error m-3">
+						{trash.status.message}
+					</p>
+				) : null}
 				<MediaGrid list={list} onSelect={openPreview} />
 			</main>
 			{preview ? (

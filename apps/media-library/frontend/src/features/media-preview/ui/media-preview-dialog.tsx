@@ -4,6 +4,8 @@ import { useCallback, useState } from "react";
 import { getGetMediaFileUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
 
+const SECTION_TITLE_CLASS = "font-medium text-base-content/60 text-xs";
+
 /** Everything about the media worth reading beside it, in the order it reads best. */
 const toDetails = (media: Media): { label: string; value: string }[] => {
 	return [
@@ -85,159 +87,205 @@ export const MediaPreviewDialog = ({
 
 	return (
 		<dialog ref={openModal} className="modal" onClose={onClose}>
-			<div className="modal-box max-w-5xl">
-				<h3 className="truncate font-bold text-lg" title={media.fileName}>
-					{media.fileName}
-				</h3>
-
-				<div className="mt-3 flex justify-center bg-base-200">
-					{isVideo ? (
-						// biome-ignore lint/a11y/useMediaCaption: personal media taken in from a folder, with no caption track to point at
-						<video
-							src={fileUrl}
-							controls
-							preload="metadata"
-							className="max-h-[70vh]"
-						/>
-					) : (
-						<img
-							src={fileUrl}
-							alt={media.fileName}
-							className="max-h-[70vh] object-contain"
-						/>
-					)}
-				</div>
-
-				<div className="mt-3 flex flex-wrap items-center gap-2">
-					<span className="text-base-content/60 text-xs">フォルダ</span>
-					<input
-						type="text"
-						list="media-folder-suggestions"
-						aria-label="フォルダ"
-						placeholder="未整理"
-						value={folder}
-						disabled={isTrashed}
-						onChange={(event) => {
-							setFolder(event.target.value);
-						}}
-						className="input input-xs w-64"
-					/>
-					<datalist id="media-folder-suggestions">
-						{folderSuggestions.map((path) => {
-							return <option key={path} value={path} />;
-						})}
-					</datalist>
-					<button
-						type="button"
-						disabled={isTrashed || folder.trim() === media.logicalPath}
-						onClick={() => {
-							onMove(folder.trim());
-						}}
-						className="btn btn-xs"
+			{/* Padding is dropped so the header, the media, the details and the actions can each own their
+			    own edge; the media then takes every pixel the other three leave */}
+			<div className="modal-box flex h-[92dvh] w-[94vw] max-w-[96rem] flex-col overflow-hidden p-0">
+				<header className="flex shrink-0 items-center gap-2 border-base-300 border-b px-3 py-2">
+					<h2
+						className="min-w-0 flex-1 truncate font-bold text-sm"
+						title={media.fileName}
 					>
-						移す
-					</button>
-					{isTrashed ? (
-						<span className="text-base-content/60 text-xs">
-							ゴミ箱にある間は整理できません
-						</span>
-					) : null}
-				</div>
+						{media.fileName}
+					</h2>
+					<form method="dialog">
+						<button
+							type="submit"
+							aria-label="閉じる"
+							className="btn btn-ghost btn-sm rounded-full"
+						>
+							✕
+						</button>
+					</form>
+				</header>
 
-				<div className="mt-3 flex flex-wrap items-center gap-1">
-					<span className="text-base-content/60 text-xs">タグ</span>
-					{tags.map((tag) => {
-						return (
-							<span key={tag} className="badge badge-outline gap-1">
-								{tag}
+				<div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+					{/* Dark behind the original: the theme's light ground washes a photo out and hides where it ends */}
+					<div className="flex min-h-0 flex-1 items-center justify-center bg-neutral p-2">
+						{isVideo ? (
+							// biome-ignore lint/a11y/useMediaCaption: personal media taken in from a folder, with no caption track to point at
+							<video
+								src={fileUrl}
+								controls
+								preload="metadata"
+								className="max-h-full max-w-full"
+							/>
+						) : (
+							<img
+								src={fileUrl}
+								alt={media.fileName}
+								className="max-h-full max-w-full object-contain"
+							/>
+						)}
+					</div>
+
+					<aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto border-base-300 border-t bg-base-100 p-3 lg:w-80 lg:border-t-0 lg:border-l">
+						<section className="flex flex-col gap-1.5">
+							<h3 className={SECTION_TITLE_CLASS}>フォルダ</h3>
+							<div className="flex gap-1.5">
+								<input
+									type="text"
+									list="media-folder-suggestions"
+									aria-label="フォルダ"
+									placeholder="未整理"
+									value={folder}
+									disabled={isTrashed}
+									onChange={(event) => {
+										setFolder(event.target.value);
+									}}
+									className="input input-sm min-w-0 flex-1"
+								/>
+								<datalist id="media-folder-suggestions">
+									{folderSuggestions.map((path) => {
+										return <option key={path} value={path} />;
+									})}
+								</datalist>
 								<button
 									type="button"
-									aria-label={`${tag} を外す`}
-									disabled={isTrashed}
+									disabled={isTrashed || folder.trim() === media.logicalPath}
 									onClick={() => {
-										changeTags(
-											tags.filter((kept) => {
-												return kept !== tag;
-											}),
-										);
+										onMove(folder.trim());
 									}}
+									className="btn btn-sm rounded-full"
 								>
-									×
+									移す
 								</button>
-							</span>
-						);
-					})}
-					<input
-						type="text"
-						list="media-tag-suggestions"
-						aria-label="タグを追加"
-						placeholder="Enter で追加"
-						value={draft}
-						disabled={isTrashed}
-						onChange={(event) => {
-							setDraft(event.target.value);
-						}}
-						onKeyDown={(event) => {
-							if (event.key === "Enter") {
-								// Nothing here submits, but Enter in a dialog closes it unless it is stopped
-								event.preventDefault();
-								addDraftTag();
-							}
-						}}
-						className="input input-xs w-36"
-					/>
-					<datalist id="media-tag-suggestions">
-						{tagSuggestions.map((tag) => {
-							return <option key={tag} value={tag} />;
-						})}
-					</datalist>
+							</div>
+							{isTrashed ? (
+								<p className="text-base-content/60 text-xs">
+									ゴミ箱にある間は整理できません
+								</p>
+							) : null}
+						</section>
+
+						<section className="flex flex-col gap-1.5">
+							<h3 className={SECTION_TITLE_CLASS}>タグ</h3>
+							{tags.length === 0 ? null : (
+								<div className="flex flex-wrap items-center gap-1">
+									{tags.map((tag) => {
+										return (
+											<span
+												key={tag}
+												className="badge badge-outline badge-sm gap-1"
+											>
+												{tag}
+												<button
+													type="button"
+													aria-label={`${tag} を外す`}
+													disabled={isTrashed}
+													onClick={() => {
+														changeTags(
+															tags.filter((kept) => {
+																return kept !== tag;
+															}),
+														);
+													}}
+												>
+													×
+												</button>
+											</span>
+										);
+									})}
+								</div>
+							)}
+							<input
+								type="text"
+								list="media-tag-suggestions"
+								aria-label="タグを追加"
+								placeholder="Enter で追加"
+								value={draft}
+								disabled={isTrashed}
+								onChange={(event) => {
+									setDraft(event.target.value);
+								}}
+								onKeyDown={(event) => {
+									if (event.key === "Enter") {
+										// Nothing here submits, but Enter in a dialog closes it unless it is stopped
+										event.preventDefault();
+										addDraftTag();
+									}
+								}}
+								className="input input-sm w-full"
+							/>
+							<datalist id="media-tag-suggestions">
+								{tagSuggestions.map((tag) => {
+									return <option key={tag} value={tag} />;
+								})}
+							</datalist>
+						</section>
+
+						<section className="flex flex-col gap-1.5">
+							<h3 className={SECTION_TITLE_CLASS}>詳細</h3>
+							<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+								{toDetails(media).map((detail) => {
+									return (
+										<div key={detail.label} className="contents">
+											<dt className="text-base-content/60">{detail.label}</dt>
+											<dd className="truncate" title={detail.value}>
+												{detail.value}
+											</dd>
+										</div>
+									);
+								})}
+							</dl>
+						</section>
+					</aside>
 				</div>
 
-				<dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 text-sm">
-					{toDetails(media).map((detail) => {
-						return (
-							<div key={detail.label} className="contents">
-								<dt className="text-base-content/60">{detail.label}</dt>
-								<dd className="truncate">{detail.value}</dd>
-							</div>
-						);
-					})}
-				</dl>
-
-				<div className="modal-action flex-wrap items-center">
+				<footer className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-base-300 border-t px-3 py-2">
 					{message ? (
 						<p className="mr-auto text-base-content/60 text-xs">{message}</p>
 					) : null}
 					{isVideo ? null : (
-						<button type="button" onClick={onCopyImage} className="btn btn-sm">
+						<button
+							type="button"
+							onClick={onCopyImage}
+							className="btn btn-sm rounded-full"
+						>
 							画像としてコピー
 						</button>
 					)}
-					<button type="button" onClick={onCopyFile} className="btn btn-sm">
+					<button
+						type="button"
+						onClick={onCopyFile}
+						className="btn btn-sm rounded-full"
+					>
 						ファイルとしてコピー
 					</button>
 					{isTrashed ? (
-						<button type="button" onClick={onRestore} className="btn btn-sm">
+						<button
+							type="button"
+							onClick={onRestore}
+							className="btn btn-sm rounded-full"
+						>
 							元に戻す
 						</button>
 					) : (
-						<button type="button" onClick={onTrash} className="btn btn-sm">
+						<button
+							type="button"
+							onClick={onTrash}
+							className="btn btn-sm rounded-full"
+						>
 							ゴミ箱へ
 						</button>
 					)}
 					<a
 						href={getGetMediaFileUrl(media.id, { download: "1" })}
 						download={media.fileName}
-						className="btn btn-primary btn-sm"
+						className="btn btn-primary btn-sm rounded-full"
 					>
 						ダウンロード
 					</a>
-					<form method="dialog">
-						<button type="submit" className="btn btn-sm">
-							閉じる
-						</button>
-					</form>
-				</div>
+				</footer>
 			</div>
 
 			{/* The backdrop is a form of its own so clicking outside closes the dialog the same way */}
