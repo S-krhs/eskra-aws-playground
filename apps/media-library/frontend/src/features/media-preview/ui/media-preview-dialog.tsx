@@ -1,7 +1,7 @@
 // In scope: showing one media object's original, its details, and the way to save it
 // Out of scope: deciding which one is open, fetching the listing, editing anything about it
 import { useCallback, useState } from "react";
-import { buildMediaFileUrl, type Media } from "@/shared/api";
+import { getGetMediaFileUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
 
 /** Everything about the media worth reading beside it, in the order it reads best. */
@@ -79,7 +79,7 @@ export const MediaPreviewDialog = ({
 			changeTags([...tags, name]);
 		}
 	};
-	const fileUrl = buildMediaFileUrl(media.id);
+	const fileUrl = getGetMediaFileUrl(media.id);
 	// A video has no single picture to hand the browser's clipboard, so only the file copy is offered
 	const isVideo = media.contentType.startsWith("video/");
 
@@ -219,7 +219,7 @@ export const MediaPreviewDialog = ({
 						</button>
 					)}
 					<a
-						href={buildMediaFileUrl(media.id, { download: "1" })}
+						href={getGetMediaFileUrl(media.id, { download: "1" })}
 						download={media.fileName}
 						className="btn btn-primary btn-sm"
 					>

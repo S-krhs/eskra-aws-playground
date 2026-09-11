@@ -2,8 +2,8 @@
 // Out of scope: rendering, deciding which media is copied, the listing itself
 import { useMutation } from "@tanstack/react-query";
 import {
-	buildMediaFileUrl,
-	type CopyMediaToClipboardResponse,
+	type copyMediaToClipboardResponse,
+	getGetMediaFileUrl,
 	type Media,
 	useCopyMediaToClipboard,
 } from "@/shared/api";
@@ -11,7 +11,7 @@ import { writeImageToClipboard } from "../lib/image-clipboard.js";
 
 /** The generated client resolves a 404 or a 500 instead of rejecting, so a failure is read off the status. */
 const toFailure = (
-	response: CopyMediaToClipboardResponse | undefined,
+	response: copyMediaToClipboardResponse | undefined,
 ): string | undefined => {
 	return response && response.status !== 204
 		? response.data.message
@@ -41,7 +41,7 @@ export const useMediaClipboard = (): MediaClipboard => {
 	// The image goes through the browser's own clipboard, which takes a picture rather than a file
 	const image = useMutation({
 		mutationFn: async (media: Media) => {
-			await writeImageToClipboard(buildMediaFileUrl(media.id));
+			await writeImageToClipboard(getGetMediaFileUrl(media.id));
 		},
 	});
 	// The file goes through the backend, which writes it where Windows can reach it and calls Set-Clipboard

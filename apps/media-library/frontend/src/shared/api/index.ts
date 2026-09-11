@@ -1,21 +1,21 @@
 // In scope: what the generated API client offers the slices
 // Out of scope: how the client is generated, the query client's settings
 export type {
-	copyMediaToClipboardResponse as CopyMediaToClipboardResponse,
+	copyMediaToClipboardResponse,
 	ListMediaState,
 	Media,
 	MediaCursor,
-	moveMediaResponse as MoveMediaResponse,
-	replaceMediaTagsResponse as ReplaceMediaTagsResponse,
-	restoreMediaResponse as RestoreMediaResponse,
+	moveMediaResponse,
+	replaceMediaTagsResponse,
+	restoreMediaResponse,
 	SyncRun,
-	trashMediaResponse as TrashMediaResponse,
+	trashMediaResponse,
 } from "./generated/media-library.js";
 export {
 	// The two endpoints answering with a file are read through an element's own attribute, so only
 	// their URL builders are taken from the generated client
-	getGetMediaFileUrl as buildMediaFileUrl,
-	getGetThumbnailUrl as buildThumbnailUrl,
+	getGetMediaFileUrl,
+	getGetThumbnailUrl,
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
 	getListTagsQueryKey,

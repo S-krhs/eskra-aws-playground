@@ -4,13 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListMediaQueryKey,
 	getListTagsQueryKey,
-	type ReplaceMediaTagsResponse,
+	type replaceMediaTagsResponse,
 	useReplaceMediaTags,
 } from "@/shared/api";
 
 /** The generated client resolves a 404 or a 500 instead of rejecting, so a failure is read off the status. */
 const toFailure = (
-	response: ReplaceMediaTagsResponse | undefined,
+	response: replaceMediaTagsResponse | undefined,
 ): string | undefined => {
 	return response && response.status !== 200
 		? response.data.message

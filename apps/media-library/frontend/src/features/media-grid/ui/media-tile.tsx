@@ -1,6 +1,6 @@
 // In scope: how one tile in the listing looks, and that it opens the media it stands for
 // Out of scope: fetching the listing, the virtual-scroll arithmetic, filtering, the preview itself
-import { buildThumbnailUrl, type Media } from "@/shared/api";
+import { getGetThumbnailUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDuration } from "@/shared/lib";
 
 /**
@@ -27,7 +27,7 @@ export const MediaTile = ({
 			<span className="relative flex flex-1 items-center justify-center bg-base-200">
 				{media.hasThumbnail ? (
 					<img
-						src={buildThumbnailUrl(media.id)}
+						src={getGetThumbnailUrl(media.id)}
 						alt={media.fileName}
 						loading="lazy"
 						className="size-full object-cover"

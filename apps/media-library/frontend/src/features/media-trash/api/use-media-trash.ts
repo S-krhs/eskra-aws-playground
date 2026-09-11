@@ -3,8 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListMediaQueryKey,
-	type RestoreMediaResponse,
-	type TrashMediaResponse,
+	type restoreMediaResponse,
+	type trashMediaResponse,
 	useRestoreMedia,
 	useTrashMedia,
 } from "@/shared/api";
@@ -14,7 +14,7 @@ import {
  * the status rather than caught.
  */
 const toFailure = (
-	response: TrashMediaResponse | RestoreMediaResponse | undefined,
+	response: trashMediaResponse | restoreMediaResponse | undefined,
 ): string | undefined => {
 	return response && response.status !== 204
 		? response.data.message

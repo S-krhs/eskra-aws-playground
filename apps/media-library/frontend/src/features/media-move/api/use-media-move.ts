@@ -4,13 +4,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
-	type MoveMediaResponse,
+	type moveMediaResponse,
 	useMoveMedia,
 } from "@/shared/api";
 
 /** The generated client resolves a 404 or a 500 instead of rejecting, so a failure is read off the status. */
 const toFailure = (
-	response: MoveMediaResponse | undefined,
+	response: moveMediaResponse | undefined,
 ): string | undefined => {
 	return response && response.status !== 200
 		? response.data.message
