@@ -1,17 +1,18 @@
 // In scope: saving the tags on one media object, and refreshing what shows them
-// Out of scope: rendering, holding what is being edited, reading the tags in use
+// Out of scope: rendering, holding what is being edited, reading the tags in use, the words shown for it
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListMediaQueryKey,
 	getListTagsQueryKey,
-	toMutationFailure,
+	type MutationStatus,
+	toMutationStatus,
 	useReplaceMediaTags,
 } from "@/shared/api";
 
-/** Saving the tags of one media object, and what went wrong with the last save. */
+/** Saving the tags of one media object, and how the last save went. */
 export interface MediaTags {
 	save: (mediaId: string, tags: string[]) => void;
-	error: string | undefined;
+	status: MutationStatus;
 }
 
 export const useMediaTags = (): MediaTags => {
@@ -33,6 +34,6 @@ export const useMediaTags = (): MediaTags => {
 		save: (mediaId, tags) => {
 			replace.mutate({ id: mediaId, data: { tags } });
 		},
-		error: toMutationFailure(replace, 200),
+		status: toMutationStatus(replace),
 	};
 };

@@ -30,5 +30,5 @@ export {
 	useStartSync,
 	useTrashMedia,
 } from "./generated/media-library.js";
-export { toMutationFailure } from "./mutation-failure.js";
+export { type MutationStatus, toMutationStatus } from "./mutation-status.js";
 export { queryClient } from "./query-client.js";

@@ -1,4 +1,5 @@
-// In scope: assembling the filter, listing, preview, trash and sync features into one screen
+// In scope: assembling the filter, listing, preview, trash and sync features into one screen, and the
+//           words each of them reports itself with
 // Out of scope: each feature's implementation, calling the API, formatting
 import { MediaFilterBar } from "@/features/media-filter";
 import { MediaGrid } from "@/features/media-grid";
@@ -22,6 +23,18 @@ export const MediaLibraryPage = () => {
 		openPreview,
 		closePreview,
 	} = useMediaLibrary();
+	// The preview has one line to report with, and only one of these is ever going at a time. A failure
+	// arrives already worded, so only what to say while it goes is written here
+	const actionMessage =
+		(move.status.kind === "pending" ? "移しています…" : move.status.message) ??
+		(tags.status.kind === "pending"
+			? "タグを保存しています…"
+			: tags.status.message) ??
+		(clipboard.status.kind === "pending"
+			? "コピーしています…"
+			: clipboard.status.kind === "done"
+				? "コピーしました"
+				: clipboard.status.message);
 
 	return (
 		<div className="flex h-dvh flex-col bg-base-200 text-base-content">
@@ -34,9 +47,9 @@ export const MediaLibraryPage = () => {
 				/>
 				<SyncControl status={status} />
 			</header>
-			{trash.error ? (
+			{trash.status.kind === "failed" ? (
 				<p role="alert" className="alert alert-error mx-3 mt-3">
-					{trash.error}
+					{trash.status.message}
 				</p>
 			) : null}
 			<main className="min-h-0 flex-1">
@@ -48,7 +61,7 @@ export const MediaLibraryPage = () => {
 					isTrashed={filter.state === "trashed"}
 					tagSuggestions={tagSuggestions}
 					folderSuggestions={folderSuggestions}
-					message={move.message ?? tags.error ?? clipboard.message}
+					message={actionMessage}
 					onChangeTags={(next) => {
 						tags.save(preview.id, next);
 					}}

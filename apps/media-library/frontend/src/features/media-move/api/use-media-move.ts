@@ -1,20 +1,22 @@
 // In scope: filing one media object into a folder, and refreshing what shows where it sits
-// Out of scope: rendering, holding the folder being typed, reading the folders there are
+// Out of scope: rendering, holding the folder being typed, reading the folders there are, the words shown for it
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
-	toMutationFailure,
+	type MutationStatus,
+	toMutationStatus,
 	useMoveMedia,
 } from "@/shared/api";
 
 /**
- * Moving one media object, and what to show while it goes.
- * A move copies the object inside R2 before the old key is dropped, so a large video takes a while.
+ * Moving one media object, and how it is going.
+ * A move copies the object inside R2 before the old key is dropped, so a large video takes a while and
+ * the screen has something to say in the meantime.
  */
 export interface MediaMove {
 	move: (mediaId: string, logicalPath: string) => void;
-	message: string | undefined;
+	status: MutationStatus;
 }
 
 export const useMediaMove = (): MediaMove => {
@@ -35,6 +37,6 @@ export const useMediaMove = (): MediaMove => {
 		move: (mediaId, logicalPath) => {
 			move.mutate({ id: mediaId, data: { logicalPath } });
 		},
-		message: move.isPending ? "移しています…" : toMutationFailure(move, 200),
+		status: toMutationStatus(move),
 	};
 };
