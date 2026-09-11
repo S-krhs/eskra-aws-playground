@@ -19,8 +19,8 @@
 | `GET /api/media` | 一覧。`logicalPath`・`contentTypePrefix`・`tag`・`limit` で絞り、`cursorUploadedAt` と `cursorId` で続きを取る。`state=trashed` でゴミ箱の側を読む |
 | `GET /api/media/:id/thumbnail` | サムネイル。R2 から取って返す |
 | `GET /api/media/:id/file` | 原本。`Range` を R2 へ素通しするので動画のシークが効く。`?download=1` で保存を促す |
-| `POST /api/media/:id/trash` | ゴミ箱に入れる。DB の列を立てるだけで R2 の実体は残る(204) |
-| `POST /api/media/:id/restore` | ゴミ箱から戻す(204) |
+| `POST /api/media/:id/trash` | ゴミ箱に入れる。R2 の実体も `_deleted/` へ移し、入っていたフォルダはその下に保つ(204) |
+| `POST /api/media/:id/restore` | ゴミ箱から戻す。`_deleted/` の下に保っていたフォルダへ戻す(204) |
 | `POST /api/media/:id/clipboard` | 原本を Windows の `%TEMP%\eskra-media-library\<id>\` へ書き、`Set-Clipboard` でファイルとして置く(204) |
 | `PATCH /api/media/:id` | フォルダへ移す。R2 の Copy+Delete(5GB 超は multipart copy)と DB の付け替えを行う。空文字で `_inbox/` へ戻す |
 | `PUT /api/media/:id/tags` | タグを入れ替える。知らない名前は作り、誰も使わなくなったタグは消す |
@@ -37,7 +37,7 @@
 - フォルダは開いたメディアの「フォルダ」欄で移す。空にすると `_inbox/` へ戻り、無いフォルダ名を打てばそこへ移した時点でできる。
 - タグは開いたメディアで付け外しする。入力欄は既存のタグを補完し、外したタグがどこにも残らなければ一覧からも消える。
 - 「タグ」で絞り込むと、そのタグが付いたメディアだけを出す。
-- 「表示」でライブラリとゴミ箱を切り替える。ゴミ箱に入れても R2 の実体は消えず、開いたメディアから元に戻せる。
+- 「表示」でライブラリとゴミ箱を切り替える。ゴミ箱に入れると R2 の実体も `_deleted/` へ移り、開いたメディアから元のフォルダへ戻せる。実体を消すことはない。
 - コピーは 2 種類。「画像としてコピー」はブラウザのクリップボードへ画像として置く(PNG 以外は PNG に変換する)。
   「ファイルとしてコピー」は backend が Windows の `%TEMP%` へ書き出してファイル参照を置くので、動画でも使えるしエクスプローラーへ貼れる。
   貼り付けるまで参照が要るため、書き出したファイルは消さない(Windows の TEMP 掃除に任せる)。

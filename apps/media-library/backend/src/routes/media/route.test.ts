@@ -4,8 +4,9 @@ import { createApp } from "../../app.js";
 const objectRepository = vi.hoisted(() => {
 	return {
 		findPage: vi.fn(),
+		findById: vi.fn(),
 		findUntrashedById: vi.fn(),
-		updateTrashedAt: vi.fn(),
+		updateTrashedLocation: vi.fn(),
 		relocateMany: vi.fn(),
 		findAllLogicalPaths: vi.fn(),
 	};
@@ -19,7 +20,12 @@ vi.mock(
 );
 
 const storageRepository = vi.hoisted(() => {
-	return { getThumbnail: vi.fn(), get: vi.fn(), moveToLogicalPath: vi.fn() };
+	return {
+		getThumbnail: vi.fn(),
+		get: vi.fn(),
+		moveIntoArea: vi.fn(),
+		moveToLogicalPath: vi.fn(),
+	};
 });
 
 vi.mock(
@@ -90,8 +96,10 @@ beforeEach(() => {
 	});
 	objectRepository.findUntrashedById.mockReset();
 	objectRepository.findUntrashedById.mockResolvedValue(storedMedia);
-	objectRepository.updateTrashedAt.mockReset();
-	objectRepository.updateTrashedAt.mockResolvedValue(1);
+	objectRepository.findById.mockReset();
+	objectRepository.findById.mockResolvedValue(storedMedia);
+	objectRepository.updateTrashedLocation.mockReset();
+	objectRepository.updateTrashedLocation.mockResolvedValue(1);
 	windowsClipboard.copyFileToWindowsClipboard.mockReset();
 	windowsClipboard.copyFileToWindowsClipboard.mockResolvedValue(undefined);
 	tagRepository.findAll.mockReset();
@@ -105,6 +113,13 @@ beforeEach(() => {
 	objectRepository.relocateMany.mockResolvedValue(1);
 	objectRepository.findAllLogicalPaths.mockReset();
 	objectRepository.findAllLogicalPaths.mockResolvedValue(["2026/01"]);
+	storageRepository.moveIntoArea.mockReset();
+	storageRepository.moveIntoArea.mockResolvedValue({
+		key: "_deleted/2026/01/photo.jpg",
+		logicalPath: "2026/01",
+		byteSize: 1024,
+		etag: "def456",
+	});
 	storageRepository.moveToLogicalPath.mockReset();
 	storageRepository.moveToLogicalPath.mockResolvedValue({
 		key: "photos/2024/photo.jpg",
@@ -272,7 +287,7 @@ describe("getThumbnail", () => {
 	});
 
 	it("answers 404 for a media object whose thumbnail hasn't been generated", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue({
+		objectRepository.findById.mockResolvedValue({
 			...storedMedia,
 			hasThumbnail: false,
 		});
@@ -296,7 +311,7 @@ describe("getThumbnail", () => {
 		expect(await response.json()).toEqual({
 			message: "リクエストの項目が不正です: id",
 		});
-		expect(objectRepository.findUntrashedById).not.toHaveBeenCalled();
+		expect(objectRepository.findById).not.toHaveBeenCalled();
 	});
 });
 
@@ -339,7 +354,7 @@ describe("getMediaFile", () => {
 	});
 
 	it("carries the file name in a form a non-ASCII name survives", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue({
+		objectRepository.findById.mockResolvedValue({
 			...storedMedia,
 			fileName: "イラスト.jpg",
 		});
@@ -374,8 +389,8 @@ describe("getMediaFile", () => {
 		expect(storageRepository.get).not.toHaveBeenCalled();
 	});
 
-	it("answers 404 for a media object that isn't there or has been trashed", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+	it("answers 404 only when no row carries the id", async () => {
+		objectRepository.findById.mockResolvedValue(undefined);
 
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/file`,
@@ -401,7 +416,7 @@ describe("getMediaFile", () => {
 });
 
 describe("trashMedia", () => {
-	it("marks the media as trashed and answers with nothing to read", async () => {
+	it("moves the stored object into the trash and answers with nothing to read", async () => {
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/trash`,
 			{ method: "POST", headers: { origin: uiOrigin } },
@@ -409,14 +424,18 @@ describe("trashMedia", () => {
 
 		expect(response.status).toBe(204);
 		expect(await response.text()).toBe("");
-		expect(objectRepository.updateTrashedAt).toHaveBeenCalledWith(
-			mediaId,
-			expect.any(Date),
+		expect(storageRepository.moveIntoArea).toHaveBeenCalledWith({
+			key: storedMedia.objectKey,
+			area: "deleted",
+			logicalPath: storedMedia.logicalPath,
+		});
+		expect(objectRepository.updateTrashedLocation).toHaveBeenCalledWith(
+			expect.objectContaining({ id: mediaId, trashedAt: expect.any(Date) }),
 		);
 	});
 
 	it("answers 404 for a media object that isn't registered", async () => {
-		objectRepository.updateTrashedAt.mockResolvedValue(0);
+		objectRepository.findUntrashedById.mockResolvedValue(undefined);
 
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/trash`,
@@ -436,26 +455,35 @@ describe("trashMedia", () => {
 		);
 
 		expect(response.status).toBe(403);
-		expect(objectRepository.updateTrashedAt).not.toHaveBeenCalled();
+		expect(storageRepository.moveIntoArea).not.toHaveBeenCalled();
 	});
 });
 
 describe("restoreMedia", () => {
-	it("clears the trashed mark rather than writing a new one", async () => {
+	it("puts the object back under its folder and clears the mark", async () => {
+		objectRepository.findById.mockResolvedValue({
+			...storedMedia,
+			objectKey: "_deleted/2026/01/photo.jpg",
+			trashedAt: new Date("2026-09-11T00:00:00.000Z"),
+		});
+
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/restore`,
 			{ method: "POST", headers: { origin: uiOrigin } },
 		);
 
 		expect(response.status).toBe(204);
-		expect(objectRepository.updateTrashedAt).toHaveBeenCalledWith(
-			mediaId,
-			null,
+		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
+			key: "_deleted/2026/01/photo.jpg",
+			logicalPath: storedMedia.logicalPath,
+		});
+		expect(objectRepository.updateTrashedLocation).toHaveBeenCalledWith(
+			expect.objectContaining({ id: mediaId, trashedAt: null }),
 		);
 	});
 
 	it("answers 404 for a media object that isn't registered", async () => {
-		objectRepository.updateTrashedAt.mockResolvedValue(0);
+		objectRepository.findById.mockResolvedValue(undefined);
 
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/restore`,
@@ -479,8 +507,8 @@ describe("copyMediaToClipboard", () => {
 		);
 	});
 
-	it("answers 404 for a media object that isn't there or has been trashed", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+	it("answers 404 only when no row carries the id", async () => {
+		objectRepository.findById.mockResolvedValue(undefined);
 
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/clipboard`,

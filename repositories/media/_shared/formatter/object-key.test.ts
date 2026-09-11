@@ -99,6 +99,29 @@ describe("buildThumbnailKey", () => {
 	});
 });
 
+describe("buildAreaKeyKeepingName", () => {
+	it("keeps the file name and drops whatever came before it", () => {
+		expect(
+			buildAreaKeyKeepingName({
+				area: "inbox",
+				key: "_pending/20260907-133045123.png",
+			}),
+		).toBe("_inbox/20260907-133045123.png");
+	});
+
+	// The trash holds the path so a restore knows where the object came from
+	it("keeps the folder inside the area when one is passed", () => {
+		const key = buildAreaKeyKeepingName({
+			area: "deleted",
+			key: "photos/2024/20260907-133045123.png",
+			logicalPath: "photos/2024",
+		});
+
+		expect(key).toBe("_deleted/photos/2024/20260907-133045123.png");
+		expect(extractLogicalPath(key)).toBe("photos/2024");
+	});
+});
+
 describe("buildLogicalPathKey", () => {
 	it("keeps the name and files it under the folder", () => {
 		expect(

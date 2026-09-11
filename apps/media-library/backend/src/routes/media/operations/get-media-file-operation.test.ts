@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getMediaFileOperation } from "./get-media-file-operation.js";
 
 const objectRepository = vi.hoisted(() => {
-	return { findUntrashedById: vi.fn() };
+	return { findById: vi.fn() };
 });
 
 vi.mock(
@@ -53,8 +53,8 @@ const storedBody = () => {
 };
 
 beforeEach(() => {
-	objectRepository.findUntrashedById.mockReset();
-	objectRepository.findUntrashedById.mockResolvedValue(storedMedia);
+	objectRepository.findById.mockReset();
+	objectRepository.findById.mockResolvedValue(storedMedia);
 	storageRepository.get.mockReset();
 	storageRepository.get.mockResolvedValue(storedBody());
 });
@@ -107,8 +107,8 @@ describe("getMediaFileOperation", () => {
 		});
 	});
 
-	it("reads the row through the exclusion the listing applies, so a trashed one is unreachable", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+	it("reports it missing only when no row carries the id", async () => {
+		objectRepository.findById.mockResolvedValue(undefined);
 
 		const result = await getMediaFileOperation({
 			mediaId,

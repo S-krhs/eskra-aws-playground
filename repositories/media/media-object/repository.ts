@@ -14,6 +14,7 @@ import type {
 	RefreshMediaObjectInput,
 	RelocateMediaObjectInput,
 	UpdateThumbnailInput,
+	UpdateTrashedLocationInput,
 } from "./types.js";
 
 // Read alongside every whole row, so a caller never has to ask for the tags separately
@@ -197,18 +198,18 @@ export const mediaObjectRepository = {
 	},
 
 	/**
-	 * Puts one object in the trash, or takes it back out when passed null.
-	 * The stored object is left alone either way — this column is the whole of what the trash is.
+	 * Puts one object in the trash, or takes it back out when `trashedAt` is null, recording the key
+	 * its stored object now sits under.
 	 * Returns the number of rows updated, so a row that isn't there reads as 0 rather than throwing.
 	 */
-	updateTrashedAt: async (
-		id: string,
-		trashedAt: Date | null,
+	updateTrashedLocation: async (
+		input: UpdateTrashedLocationInput,
 	): Promise<number> => {
 		const prisma = getPrismaClient();
+		const { id, byteSize, ...values } = input;
 		const result = await prisma.mediaObject.updateMany({
 			where: { id },
-			data: { trashedAt },
+			data: { ...values, byteSize: BigInt(byteSize) },
 		});
 
 		return result.count;

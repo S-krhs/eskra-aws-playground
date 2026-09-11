@@ -18,7 +18,8 @@ export interface MediaFile {
 }
 
 /**
- * NOT_FOUND covers a trashed object as well — the listing hides one, so its original goes with it.
+ * A trashed object is readable too: it is listed on the trash's own side, and what to restore can't be
+ * judged without opening it.
  * NOT_MODIFIED when the caller already holds this content; storage is never read then.
  *
  * `range` is the request's Range header, passed to storage as it stands.
@@ -34,7 +35,7 @@ export const getMediaFileOperation = async (input: {
 		{ kind: "NOT_FOUND" } | { kind: "NOT_MODIFIED"; etag: string }
 	>
 > => {
-	const media = await mediaObjectRepository.findUntrashedById(input.mediaId);
+	const media = await mediaObjectRepository.findById(input.mediaId);
 
 	if (!media) {
 		return { kind: "NOT_FOUND" };

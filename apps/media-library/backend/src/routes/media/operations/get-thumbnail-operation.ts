@@ -26,8 +26,9 @@ export const getThumbnailOperation = async (input: {
 		{ kind: "NOT_GENERATED" } | { kind: "NOT_MODIFIED"; etag: string }
 	>
 > => {
-	// A trashed object stays out of the listing, so its thumbnail stays unreadable too
-	const media = await mediaObjectRepository.findUntrashedById(input.mediaId);
+	// Read past the trash on purpose: the trash is a listing of its own, and deciding what to restore
+	// means seeing what is in it
+	const media = await mediaObjectRepository.findById(input.mediaId);
 
 	if (!media?.hasThumbnail) {
 		return { kind: "NOT_GENERATED" };

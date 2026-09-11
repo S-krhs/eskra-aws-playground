@@ -13,7 +13,8 @@ import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
 import { moveMediaOperation } from "./operations/move-media-operation.js";
 import { replaceMediaTagsOperation } from "./operations/replace-media-tags-operation.js";
-import { setMediaTrashedOperation } from "./operations/set-media-trashed-operation.js";
+import { restoreMediaOperation } from "./operations/restore-media-operation.js";
+import { trashMediaOperation } from "./operations/trash-media-operation.js";
 import type {
 	copyMediaToClipboardRoute,
 	getMediaFileRoute,
@@ -135,9 +136,8 @@ export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
 };
 
 export const trashMedia: RouteHandler<typeof trashMediaRoute> = async (c) => {
-	const result = await setMediaTrashedOperation({
+	const result = await trashMediaOperation({
 		mediaId: c.req.valid("param").id,
-		trashed: true,
 	});
 
 	if (result.kind === "NOT_FOUND") {
@@ -150,9 +150,8 @@ export const trashMedia: RouteHandler<typeof trashMediaRoute> = async (c) => {
 export const restoreMedia: RouteHandler<typeof restoreMediaRoute> = async (
 	c,
 ) => {
-	const result = await setMediaTrashedOperation({
+	const result = await restoreMediaOperation({
 		mediaId: c.req.valid("param").id,
-		trashed: false,
 	});
 
 	if (result.kind === "NOT_FOUND") {

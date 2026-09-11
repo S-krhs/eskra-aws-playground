@@ -47,14 +47,20 @@ export const buildAreaObjectKey = (input: {
 	return `${AREA_PREFIXES[input.area]}/${fileName}${extension ? `.${extension}` : ""}`;
 };
 
-/** The key an object keeps its file name at when it moves between areas. */
+/**
+ * The key an object keeps its file name at when it moves between areas.
+ * `logicalPath` puts it under that path inside the area, so an object moved out of a folder reads back
+ * with the folder it came from — which is how it finds its way home again.
+ */
 export const buildAreaKeyKeepingName = (input: {
 	area: NamedMediaStorageArea;
 	key: string;
+	logicalPath?: string;
 }): string => {
 	const fileName = input.key.slice(input.key.lastIndexOf("/") + 1);
+	const path = input.logicalPath ? `${input.logicalPath}/` : "";
 
-	return `${AREA_PREFIXES[input.area]}/${fileName}`;
+	return `${AREA_PREFIXES[input.area]}/${path}${fileName}`;
 };
 
 /**

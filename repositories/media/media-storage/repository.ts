@@ -262,8 +262,9 @@ export const mediaStorageRepository = {
 	},
 
 	/**
-	 * Moves an object into an area, keeping its file name. Errors rather than overwriting when that
-	 * name is already taken there, and undoes the copy if the source can't be removed afterwards.
+	 * Moves an object into an area, keeping its file name and — where `logicalPath` is passed — the
+	 * folder it was filed under. Errors rather than overwriting when that name is already taken there,
+	 * and undoes the copy if the source can't be removed afterwards.
 	 */
 	moveIntoArea: async (
 		input: MoveIntoAreaInput,

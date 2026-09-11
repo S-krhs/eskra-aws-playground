@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { copyMediaToClipboardOperation } from "./copy-media-to-clipboard-operation.js";
 
 const objectRepository = vi.hoisted(() => {
-	return { findUntrashedById: vi.fn() };
+	return { findById: vi.fn() };
 });
 
 vi.mock(
@@ -53,8 +53,8 @@ const storedMedia = {
 const storedBody = new Response(new Uint8Array([1, 2, 3])).body;
 
 beforeEach(() => {
-	objectRepository.findUntrashedById.mockReset();
-	objectRepository.findUntrashedById.mockResolvedValue(storedMedia);
+	objectRepository.findById.mockReset();
+	objectRepository.findById.mockResolvedValue(storedMedia);
 	storageRepository.get.mockReset();
 	storageRepository.get.mockResolvedValue({
 		body: storedBody,
@@ -83,7 +83,7 @@ describe("copyMediaToClipboardOperation", () => {
 	});
 
 	it("reports NOT_FOUND for a media object that isn't there or has been trashed", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+		objectRepository.findById.mockResolvedValue(undefined);
 
 		const result = await copyMediaToClipboardOperation({ mediaId });
 

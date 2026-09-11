@@ -217,7 +217,15 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		const trashedAt = new Date("2026-09-11T00:00:00.000Z");
 
 		expect(
-			await mediaObjectRepository.updateTrashedAt(trashedId, trashedAt),
+			await mediaObjectRepository.updateTrashedLocation({
+				id: trashedId,
+				trashedAt,
+				objectKey: `${keyPrefix}_deleted/c.png`,
+				logicalPath: "_inbox",
+				byteSize: 1234,
+				etag: "etag-1",
+				syncedAt: trashedAt,
+			}),
 		).toBe(1);
 
 		const trash = await mediaObjectRepository.findPage({
@@ -231,11 +239,21 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 			}),
 		).toEqual([trashedId]);
 		expect(trash.objects[0]?.trashedAt).toEqual(trashedAt);
+		// The path travels with it, which is what a restore puts the object back under
+		expect(trash.objects[0]?.objectKey).toBe(`${keyPrefix}_deleted/c.png`);
 
-		// Taking it back out puts it on the library side again, with the stored key untouched
-		expect(await mediaObjectRepository.updateTrashedAt(trashedId, null)).toBe(
-			1,
-		);
+		// Taking it back out puts it on the library side again, under the key it was restored to
+		expect(
+			await mediaObjectRepository.updateTrashedLocation({
+				id: trashedId,
+				trashedAt: null,
+				objectKey: `${keyPrefix}c.png`,
+				logicalPath: "_inbox",
+				byteSize: 1234,
+				etag: "etag-1",
+				syncedAt: trashedAt,
+			}),
+		).toBe(1);
 		const library = await mediaObjectRepository.findPage({
 			trashed: false,
 			logicalPath: "_inbox",
@@ -250,7 +268,15 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 
 	it("reports 0 rows when trashing a media object that isn't registered", async () => {
 		expect(
-			await mediaObjectRepository.updateTrashedAt(trashedId, new Date()),
+			await mediaObjectRepository.updateTrashedLocation({
+				id: trashedId,
+				trashedAt: new Date(),
+				objectKey: `${keyPrefix}_deleted/c.png`,
+				logicalPath: "_inbox",
+				byteSize: 1234,
+				etag: "etag-1",
+				syncedAt: new Date(),
+			}),
 		).toBe(0);
 	});
 

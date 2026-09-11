@@ -8,12 +8,12 @@ import type { OperationResult } from "../../_shared/intermediate-models/operatio
 /**
  * The whole object is read before it can be put on the clipboard, so a large video takes as long as
  * downloading it would.
- * NOT_FOUND covers a trashed object too, on the same terms as reading the original.
+ * A trashed object copies too, on the same terms as reading the original.
  */
 export const copyMediaToClipboardOperation = async (input: {
 	mediaId: string;
 }): Promise<OperationResult<undefined, { kind: "NOT_FOUND" }>> => {
-	const media = await mediaObjectRepository.findUntrashedById(input.mediaId);
+	const media = await mediaObjectRepository.findById(input.mediaId);
 
 	if (!media) {
 		return { kind: "NOT_FOUND" };
