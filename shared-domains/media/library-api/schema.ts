@@ -11,6 +11,9 @@ const MEDIA_PAGE_MAX_LIMIT = 500;
 const MEDIA_TAG_MAX_LENGTH = 64;
 const MEDIA_TAG_MAX_COUNT = 50;
 
+// The column a folder's path is stored in
+const MEDIA_FOLDER_PATH_MAX_LENGTH = 512;
+
 /** A position in the listing — the last item of the previous page. Both fields travel together or not at all. */
 export const mediaCursorSchema = z
 	.object({
@@ -72,6 +75,47 @@ export const mediaListResponseSchema = z
 	})
 	.openapi("MediaListResponse");
 
+/**
+ * A folder's path: slash-separated names, no empty, relative or leading-underscore segment.
+ * The underscore is what the storage package prefixes its own areas with, so a folder taking one
+ * would put media where the sync reads its staging ground.
+ */
+export const mediaFolderPathSchema = z
+	.string()
+	.min(1)
+	.max(MEDIA_FOLDER_PATH_MAX_LENGTH)
+	.refine((path) => {
+		return path.split("/").every((segment) => {
+			return (
+				segment !== "" &&
+				segment !== "." &&
+				segment !== ".." &&
+				!segment.startsWith("_")
+			);
+		});
+	});
+
+/** Where to file one media object. The empty path takes it back out of every folder. */
+export const mediaMoveRequestSchema = z
+	.object({
+		logicalPath: z.union([z.literal(""), mediaFolderPathSchema]),
+	})
+	.openapi("MediaMoveRequest");
+
+/** Where a media object ended up, as the screen shows it. */
+export const mediaLocationResponseSchema = z
+	.object({
+		logicalPath: z.string(),
+	})
+	.openapi("MediaLocationResponse");
+
+/** The folders there are to file into, whether or not anything is filed there yet. */
+export const folderListResponseSchema = z
+	.object({
+		folders: z.array(z.string()),
+	})
+	.openapi("FolderListResponse");
+
 /** The tags to leave on one media object. Whatever isn't listed comes off it. */
 export const mediaTagsRequestSchema = z
 	.object({
@@ -114,5 +158,7 @@ export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
 export type Media = z.infer<typeof mediaSchema>;
 export type MediaListResponse = z.infer<typeof mediaListResponseSchema>;
 export type TagListResponse = z.infer<typeof tagListResponseSchema>;
+export type FolderListResponse = z.infer<typeof folderListResponseSchema>;
+export type MediaLocationResponse = z.infer<typeof mediaLocationResponseSchema>;
 export type SyncRun = z.infer<typeof syncRunSchema>;
 export type SyncStatusResponse = z.infer<typeof syncStatusResponseSchema>;

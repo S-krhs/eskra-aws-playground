@@ -57,6 +57,20 @@ export const buildAreaKeyKeepingName = (input: {
 	return `${AREA_PREFIXES[input.area]}/${fileName}`;
 };
 
+/**
+ * The key an object takes once it is filed into a folder, keeping the name it already has.
+ * The logical path sits at the top of the bucket rather than under an area's prefix: the named areas
+ * are this package's own staging ground, and a filed object has left them.
+ */
+export const buildLogicalPathKey = (input: {
+	key: string;
+	logicalPath: string;
+}): string => {
+	const fileName = input.key.slice(input.key.lastIndexOf("/") + 1);
+
+	return `${input.logicalPath}/${fileName}`;
+};
+
 /** A thumbnail is named after the media's id alone, so moving the media never has to touch it. */
 export const buildThumbnailKey = (mediaId: string): string => {
 	return `${AREA_PREFIXES.thumbnail}/${mediaId}.${THUMBNAIL_EXTENSION}`;

@@ -52,6 +52,12 @@ export interface MoveIntoAreaInput {
 	area: Exclude<NamedMediaStorageArea, "thumbnail">;
 }
 
+/** Where to file one object. An empty `logicalPath` puts it back where nothing is filed yet. */
+export interface MoveToLogicalPathInput {
+	key: string;
+	logicalPath: string;
+}
+
 export interface StoredObjectMetadata {
 	contentType: string;
 	byteSize: number;

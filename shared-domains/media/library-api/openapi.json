@@ -149,6 +149,54 @@
 					"tags"
 				]
 			},
+			"MediaLocationResponse": {
+				"type": "object",
+				"properties": {
+					"logicalPath": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"logicalPath"
+				]
+			},
+			"MediaMoveRequest": {
+				"type": "object",
+				"properties": {
+					"logicalPath": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									""
+								]
+							},
+							{
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 512
+							}
+						]
+					}
+				},
+				"required": [
+					"logicalPath"
+				]
+			},
+			"FolderListResponse": {
+				"type": "object",
+				"properties": {
+					"folders": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"required": [
+					"folders"
+				]
+			},
 			"SyncStatusResponse": {
 				"type": "object",
 				"properties": {
@@ -701,6 +749,102 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/media/{id}": {
+			"patch": {
+				"operationId": "moveMedia",
+				"summary": "メディアをフォルダへ移す",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": true,
+						"name": "id",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MediaMoveRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "移した後の置き場所",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/MediaLocationResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "id が UUID ではない、またはフォルダのパスが不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "そのメディアがない、またはゴミ箱に入っている",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/folders": {
+			"get": {
+				"operationId": "listFolders",
+				"summary": "メディアを入れられるフォルダを名前順に返す",
+				"responses": {
+					"200": {
+						"description": "登録済みのフォルダと、メディアが実際に入っているフォルダ",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FolderListResponse"
 								}
 							}
 						}

@@ -6,6 +6,8 @@ const objectRepository = vi.hoisted(() => {
 		findPage: vi.fn(),
 		findUntrashedById: vi.fn(),
 		updateTrashedAt: vi.fn(),
+		relocateMany: vi.fn(),
+		findAllLogicalPaths: vi.fn(),
 	};
 });
 
@@ -17,13 +19,24 @@ vi.mock(
 );
 
 const storageRepository = vi.hoisted(() => {
-	return { getThumbnail: vi.fn(), get: vi.fn() };
+	return { getThumbnail: vi.fn(), get: vi.fn(), moveToLogicalPath: vi.fn() };
 });
 
 vi.mock(
 	"@eskra-aws-playground/repositories/media/media-storage/repository.js",
 	() => {
 		return { mediaStorageRepository: storageRepository };
+	},
+);
+
+const folderRepository = vi.hoisted(() => {
+	return { findAll: vi.fn(), insert: vi.fn() };
+});
+
+vi.mock(
+	"@eskra-aws-playground/repositories/media/media-folder/repository.js",
+	() => {
+		return { mediaFolderRepository: folderRepository };
 	},
 );
 
@@ -88,6 +101,21 @@ beforeEach(() => {
 	]);
 	tagRepository.replaceObjectTags.mockReset();
 	tagRepository.replaceObjectTags.mockResolvedValue([{ id: 2, name: "風景" }]);
+	objectRepository.relocateMany.mockReset();
+	objectRepository.relocateMany.mockResolvedValue(1);
+	objectRepository.findAllLogicalPaths.mockReset();
+	objectRepository.findAllLogicalPaths.mockResolvedValue(["2026/01"]);
+	storageRepository.moveToLogicalPath.mockReset();
+	storageRepository.moveToLogicalPath.mockResolvedValue({
+		key: "photos/2024/photo.jpg",
+		logicalPath: "photos/2024",
+		byteSize: 1024,
+		etag: "def456",
+	});
+	folderRepository.findAll.mockReset();
+	folderRepository.findAll.mockResolvedValue(["photos/2024"]);
+	folderRepository.insert.mockReset();
+	folderRepository.insert.mockResolvedValue(undefined);
 	storageRepository.getThumbnail.mockReset();
 	storageRepository.getThumbnail.mockResolvedValue({
 		body: new Response(new Uint8Array([1, 2, 3])).body,
@@ -519,5 +547,64 @@ describe("listTags", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ tags: ["資料", "風景"] });
+	});
+});
+
+describe("moveMedia", () => {
+	it("files the media into the folder and answers with where it landed", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}`,
+			{
+				method: "PATCH",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ logicalPath: "photos/2024" }),
+			},
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ logicalPath: "photos/2024" });
+		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
+			key: storedMedia.objectKey,
+			logicalPath: "photos/2024",
+		});
+	});
+
+	it("refuses a path under a name the storage keeps for itself", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}`,
+			{
+				method: "PATCH",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ logicalPath: "_thumb/sneaky" }),
+			},
+		);
+
+		expect(response.status).toBe(400);
+		expect(storageRepository.moveToLogicalPath).not.toHaveBeenCalled();
+	});
+
+	it("refuses a path that climbs out of the folder it names", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}`,
+			{
+				method: "PATCH",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ logicalPath: "photos/../../etc" }),
+			},
+		);
+
+		expect(response.status).toBe(400);
+		expect(storageRepository.moveToLogicalPath).not.toHaveBeenCalled();
+	});
+});
+
+describe("listFolders", () => {
+	it("answers with the registered folders and the ones media is filed in", async () => {
+		const response = await createApp().request(`${uiOrigin}/api/folders`);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			folders: ["2026/01", "photos/2024"],
+		});
 	});
 });

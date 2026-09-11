@@ -65,6 +65,18 @@ export interface TagListResponse {
   tags: string[];
 }
 
+export interface MediaMoveRequest {
+  logicalPath: '' | string;
+}
+
+export interface MediaLocationResponse {
+  logicalPath: string;
+}
+
+export interface FolderListResponse {
+  folders: string[];
+}
+
 export interface SyncRun {
   id: string;
   startedAt: string;
@@ -730,6 +742,258 @@ export const useReplaceMediaTags = <TError = ErrorResponse,
       > => {
       return useMutation(getReplaceMediaTagsMutationOptions(options), queryClient);
     }
+
+export type moveMediaResponse200 = {
+  data: MediaLocationResponse
+  status: 200
+}
+
+export type moveMediaResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
+export type moveMediaResponse404 = {
+  data: ErrorResponse
+  status: 404
+}
+
+export type moveMediaResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type moveMediaResponseSuccess = (moveMediaResponse200) & {
+  headers: Headers;
+};
+export type moveMediaResponseError = (moveMediaResponse400 | moveMediaResponse404 | moveMediaResponse500) & {
+  headers: Headers;
+};
+
+export type moveMediaResponse = (moveMediaResponseSuccess | moveMediaResponseError)
+
+export const getMoveMediaUrl = (id: string,) => {
+
+
+
+
+  return `/api/media/${id}`
+}
+
+/**
+ * @summary メディアをフォルダへ移す
+ */
+export const moveMedia = async (id: string,
+    mediaMoveRequest?: MediaMoveRequest, options?: RequestInit): Promise<moveMediaResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getMoveMediaUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mediaMoveRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: moveMediaResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as moveMediaResponse
+}
+
+
+
+
+
+export const getMoveMediaMutationKey = () => ['moveMedia'] as const;
+
+export const getMoveMediaMutationOptions = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof moveMedia>>, TError,MoveMediaMutationVariables, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof moveMedia>>, TError,MoveMediaMutationVariables, TContext> => {
+
+const mutationKey = getMoveMediaMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof moveMedia>>, MoveMediaMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  moveMedia(id,data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MoveMediaMutationResult = NonNullable<Awaited<ReturnType<typeof moveMedia>>>
+    export type MoveMediaMutationBody = MediaMoveRequest | undefined
+    export type MoveMediaMutationError = ErrorResponse
+    export type MoveMediaMutationVariables = {id: string;data?: MediaMoveRequest}
+
+    /**
+ * @summary メディアをフォルダへ移す
+ */
+export const useMoveMedia = <TError = ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof moveMedia>>, TError,MoveMediaMutationVariables, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof moveMedia>>,
+        TError,
+        MoveMediaMutationVariables,
+        TContext
+      > => {
+      return useMutation(getMoveMediaMutationOptions(options), queryClient);
+    }
+
+export type listFoldersResponse200 = {
+  data: FolderListResponse
+  status: 200
+}
+
+export type listFoldersResponse500 = {
+  data: ErrorResponse
+  status: 500
+}
+
+export type listFoldersResponseSuccess = (listFoldersResponse200) & {
+  headers: Headers;
+};
+export type listFoldersResponseError = (listFoldersResponse500) & {
+  headers: Headers;
+};
+
+export type listFoldersResponse = (listFoldersResponseSuccess | listFoldersResponseError)
+
+export const getListFoldersUrl = () => {
+
+
+
+
+  return `/api/folders`
+}
+
+/**
+ * @summary メディアを入れられるフォルダを名前順に返す
+ */
+export const listFolders = async ( options?: RequestInit): Promise<listFoldersResponse> => {
+
+  const res = await fetch(getListFoldersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listFoldersResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as listFoldersResponse
+}
+
+
+
+
+
+export const getListFoldersQueryKey = () => {
+    return [
+    `/api/folders`
+    ] as const;
+    }
+
+
+export const getListFoldersQueryOptions = <TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFoldersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFolders>>> = ({ signal }) => listFolders({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListFoldersQueryResult = NonNullable<Awaited<ReturnType<typeof listFolders>>>
+export type ListFoldersQueryError = ErrorResponse
+
+
+export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFolders>>,
+          TError,
+          Awaited<ReturnType<typeof listFolders>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listFolders>>,
+          TError,
+          Awaited<ReturnType<typeof listFolders>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary メディアを入れられるフォルダを名前順に返す
+ */
+
+export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListFoldersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export type listTagsResponse200 = {
   data: TagListResponse

@@ -5,6 +5,8 @@ import {
 	mediaIdParamSchema,
 	mediaListQuerySchema,
 	mediaListResponseSchema,
+	mediaLocationResponseSchema,
+	mediaMoveRequestSchema,
 	mediaTagsRequestSchema,
 	tagListResponseSchema,
 } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
@@ -191,6 +193,36 @@ export const replaceMediaTagsRoute = createRoute({
 		},
 		400: {
 			description: "id が UUID ではない、またはタグの形式が不正",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		404: {
+			description: "そのメディアがない、またはゴミ箱に入っている",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		500: serverErrorResponse,
+	},
+});
+
+export const moveMediaRoute = createRoute({
+	method: "patch",
+	path: "/media/{id}",
+	operationId: "moveMedia",
+	summary: "メディアをフォルダへ移す",
+	request: {
+		params: mediaIdParamSchema,
+		body: {
+			content: { "application/json": { schema: mediaMoveRequestSchema } },
+		},
+	},
+	responses: {
+		200: {
+			description: "移した後の置き場所",
+			content: {
+				"application/json": { schema: mediaLocationResponseSchema },
+			},
+		},
+		400: {
+			description: "id が UUID ではない、またはフォルダのパスが不正",
 			content: { "application/json": { schema: errorResponseSchema } },
 		},
 		404: {

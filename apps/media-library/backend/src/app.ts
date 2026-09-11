@@ -9,11 +9,14 @@ import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import { loopbackHostGuard } from "./loopback-host-guard.js";
 import { toInvalidRequestResponse } from "./routes/_shared/responses/error-response.js";
+import { listFolders } from "./routes/folders/route.js";
+import { listFoldersRoute } from "./routes/folders/schema.js";
 import {
 	copyMediaToClipboard,
 	getMediaFile,
 	getThumbnail,
 	listMedia,
+	moveMedia,
 	replaceMediaTags,
 	restoreMedia,
 	trashMedia,
@@ -23,6 +26,7 @@ import {
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
+	moveMediaRoute,
 	replaceMediaTagsRoute,
 	restoreMediaRoute,
 	trashMediaRoute,
@@ -55,6 +59,8 @@ const apiRoutes = new OpenAPIHono({
 	.openapi(restoreMediaRoute, restoreMedia)
 	.openapi(copyMediaToClipboardRoute, copyMediaToClipboard)
 	.openapi(replaceMediaTagsRoute, replaceMediaTags)
+	.openapi(moveMediaRoute, moveMedia)
+	.openapi(listFoldersRoute, listFolders)
 	.openapi(listTagsRoute, listTags)
 	.openapi(startSyncRoute, startSync)
 	.openapi(readSyncStatusRoute, readSyncStatus);

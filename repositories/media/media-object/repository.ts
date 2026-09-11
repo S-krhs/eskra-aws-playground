@@ -97,6 +97,24 @@ export const mediaObjectRepository = {
 		});
 	},
 
+	/**
+	 * The folders media is actually filed into, by path.
+	 * Trashed rows are left out, and so is the empty path an unfiled object carries.
+	 */
+	findAllLogicalPaths: async (): Promise<string[]> => {
+		const prisma = getPrismaClient();
+		const rows = await prisma.mediaObject.findMany({
+			where: { trashedAt: null, logicalPath: { not: "" } },
+			distinct: ["logicalPath"],
+			select: { logicalPath: true },
+			orderBy: { logicalPath: "asc" },
+		});
+
+		return rows.map((row) => {
+			return row.logicalPath;
+		});
+	},
+
 	/** Returns trashed objects too. */
 	findById: async (id: string): Promise<MediaObject | undefined> => {
 		const prisma = getPrismaClient();

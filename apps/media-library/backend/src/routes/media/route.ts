@@ -5,6 +5,7 @@ import { copyMediaToClipboardOperation } from "./operations/copy-media-to-clipbo
 import { getMediaFileOperation } from "./operations/get-media-file-operation.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
+import { moveMediaOperation } from "./operations/move-media-operation.js";
 import { replaceMediaTagsOperation } from "./operations/replace-media-tags-operation.js";
 import { setMediaTrashedOperation } from "./operations/set-media-trashed-operation.js";
 import type {
@@ -12,6 +13,7 @@ import type {
 	getMediaFileRoute,
 	getThumbnailRoute,
 	listMediaRoute,
+	moveMediaRoute,
 	replaceMediaTagsRoute,
 	restoreMediaRoute,
 	trashMediaRoute,
@@ -200,6 +202,19 @@ export const replaceMediaTags: RouteHandler<
 	const result = await replaceMediaTagsOperation({
 		mediaId: c.req.valid("param").id,
 		tagNames: c.req.valid("json").tags,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.json(result.data, 200);
+};
+
+export const moveMedia: RouteHandler<typeof moveMediaRoute> = async (c) => {
+	const result = await moveMediaOperation({
+		mediaId: c.req.valid("param").id,
+		logicalPath: c.req.valid("json").logicalPath,
 	});
 
 	if (result.kind === "NOT_FOUND") {
