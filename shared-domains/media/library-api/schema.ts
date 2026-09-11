@@ -33,6 +33,12 @@ export const mediaIdParamSchema = z.object({
 	id: z.uuid(),
 });
 
+/** The original is shown inline unless this asks for it as a file. */
+export const mediaFileQuerySchema = z.object({
+	// A boolean would read "false" as true, so the one value that means anything is spelled out
+	download: z.literal("1").optional(),
+});
+
 /** One media object as the screen sees it. The R2 key never leaves the server, so only the thumbnail's presence is reported. */
 export const mediaSchema = z
 	.object({

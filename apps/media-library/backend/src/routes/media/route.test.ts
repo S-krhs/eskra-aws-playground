@@ -13,7 +13,7 @@ vi.mock(
 );
 
 const storageRepository = vi.hoisted(() => {
-	return { getThumbnail: vi.fn() };
+	return { getThumbnail: vi.fn(), get: vi.fn() };
 });
 
 vi.mock(
@@ -58,6 +58,14 @@ beforeEach(() => {
 		body: new Response(new Uint8Array([1, 2, 3])).body,
 		contentType: "image/webp",
 		byteSize: 3,
+		contentRange: undefined,
+		isPartial: false,
+	});
+	storageRepository.get.mockReset();
+	storageRepository.get.mockResolvedValue({
+		body: new Response(new Uint8Array([4, 5, 6, 7])).body,
+		contentType: "image/jpeg",
+		byteSize: 4,
 		contentRange: undefined,
 		isPartial: false,
 	});
@@ -197,5 +205,105 @@ describe("getThumbnail", () => {
 			message: "リクエストの項目が不正です: id",
 		});
 		expect(objectRepository.findUntrashedById).not.toHaveBeenCalled();
+	});
+});
+
+describe("getMediaFile", () => {
+	it("returns the original, and says it takes a Range so a video can seek", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get("content-type")).toBe("image/jpeg");
+		expect(response.headers.get("content-length")).toBe("4");
+		expect(response.headers.get("accept-ranges")).toBe("bytes");
+		expect(response.headers.get("etag")).toBe('"abc123"');
+		expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+			new Uint8Array([4, 5, 6, 7]),
+		);
+	});
+
+	it("passes the Range through and answers 206 with the range storage reported", async () => {
+		storageRepository.get.mockResolvedValue({
+			body: new Response(new Uint8Array([5, 6])).body,
+			contentType: "image/jpeg",
+			byteSize: 2,
+			contentRange: "bytes 1-2/4",
+			isPartial: true,
+		});
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file`,
+			{ headers: { range: "bytes=1-2" } },
+		);
+
+		expect(response.status).toBe(206);
+		expect(response.headers.get("content-range")).toBe("bytes 1-2/4");
+		expect(storageRepository.get).toHaveBeenCalledWith({
+			key: storedMedia.objectKey,
+			range: "bytes=1-2",
+		});
+	});
+
+	it("carries the file name in a form a non-ASCII name survives", async () => {
+		objectRepository.findUntrashedById.mockResolvedValue({
+			...storedMedia,
+			fileName: "イラスト.jpg",
+		});
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file`,
+		);
+
+		expect(response.headers.get("content-disposition")).toBe(
+			"inline; filename*=UTF-8''%E3%82%A4%E3%83%A9%E3%82%B9%E3%83%88.jpg",
+		);
+	});
+
+	it("asks the browser to save it rather than show it when download is asked for", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file?download=1`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get("content-disposition")).toBe(
+			"attachment; filename*=UTF-8''photo.jpg",
+		);
+	});
+
+	it("answers 304 without reading storage when the caller already holds this content", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file`,
+			{ headers: { "if-none-match": '"abc123"' } },
+		);
+
+		expect(response.status).toBe(304);
+		expect(storageRepository.get).not.toHaveBeenCalled();
+	});
+
+	it("answers 404 for a media object that isn't there or has been trashed", async () => {
+		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file`,
+		);
+
+		expect(response.status).toBe(404);
+		expect(await response.json()).toEqual({
+			message: "そのメディアはありません",
+		});
+	});
+
+	it("refuses a download value it doesn't define", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file?download=yes`,
+		);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toEqual({
+			message: "リクエストの項目が不正です: download",
+		});
+		expect(storageRepository.get).not.toHaveBeenCalled();
 	});
 });

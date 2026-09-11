@@ -1,6 +1,7 @@
 // In scope: the OpenAPI definitions of the media routes — their requests, responses and status codes
 // Out of scope: the handling itself, DB queries, storage access
 import {
+	mediaFileQuerySchema,
 	mediaIdParamSchema,
 	mediaListQuerySchema,
 	mediaListResponseSchema,
@@ -55,6 +56,47 @@ export const getThumbnailRoute = createRoute({
 		},
 		404: {
 			description: "サムネイルがまだ生成されていない",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		500: serverErrorResponse,
+	},
+});
+
+export const getMediaFileRoute = createRoute({
+	method: "get",
+	path: "/media/{id}/file",
+	operationId: "getMediaFile",
+	summary: "メディア 1 件の原本を返す",
+	// The screen reaches this through an <img>/<video> src and an <a href>, so it stays out of the
+	// generated client the same way the thumbnail does — orval selects by tag and by nothing else
+	tags: ["file"],
+	request: { params: mediaIdParamSchema, query: mediaFileQuerySchema },
+	responses: {
+		200: {
+			description: "原本の全体",
+			content: {
+				"application/octet-stream": {
+					schema: z.string().openapi({ format: "binary" }),
+				},
+			},
+		},
+		206: {
+			description: "Range で求められた範囲。動画のシークがこれを使う",
+			content: {
+				"application/octet-stream": {
+					schema: z.string().openapi({ format: "binary" }),
+				},
+			},
+		},
+		304: {
+			description: "If-None-Match が今の ETag と一致し、中身が変わっていない",
+		},
+		400: {
+			description: "id が UUID ではない、または download の値が不正",
+			content: { "application/json": { schema: errorResponseSchema } },
+		},
+		404: {
+			description: "そのメディアがない、またはゴミ箱に入っている",
 			content: { "application/json": { schema: errorResponseSchema } },
 		},
 		500: serverErrorResponse,

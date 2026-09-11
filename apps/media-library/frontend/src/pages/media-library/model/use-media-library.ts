@@ -4,17 +4,24 @@ import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
 import { type MediaList, useMediaList } from "@/features/media-grid";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
+import type { Media } from "@/shared/api";
 
-/** Everything the screen renders from, with the two features already tied together. */
+/** Everything the screen renders from, with the features already tied together. */
 export interface MediaLibrary {
 	filter: MediaFilter;
 	setFilter: (filter: MediaFilter) => void;
 	list: MediaList;
 	status: SyncStatus;
+	/** The media the preview is open on; null while none is. */
+	preview: Media | null;
+	openPreview: (media: Media) => void;
+	closePreview: () => void;
 }
 
 export const useMediaLibrary = (): MediaLibrary => {
 	const [filter, setFilter] = useState<MediaFilter>({});
+	// What the preview shows is the row the listing already handed over, so opening one asks for nothing
+	const [preview, setPreview] = useState<Media | null>(null);
 	const status = useSyncStatus();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
@@ -37,5 +44,17 @@ export const useMediaLibrary = (): MediaLibrary => {
 
 	const list = useMediaList({ filter, syncedAt });
 
-	return { filter, setFilter, list, status };
+	return {
+		filter,
+		setFilter,
+		list,
+		status,
+		preview,
+		openPreview: (media: Media) => {
+			setPreview(media);
+		},
+		closePreview: () => {
+			setPreview(null);
+		},
+	};
 };

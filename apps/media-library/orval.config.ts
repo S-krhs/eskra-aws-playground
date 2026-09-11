@@ -9,10 +9,10 @@ export default defineConfig({
 	mediaLibrary: {
 		input: {
 			target: "../../shared-domains/media/library-api/openapi.json",
-			// The thumbnail answers with an image the screen reaches through an <img> src, so there is
-			// nothing for a generated fetcher to type. orval selects endpoints by tag alone, which is
-			// why that route carries one.
-			filters: { mode: "exclude", tags: ["thumbnail"] },
+			// The thumbnail and the original both answer with a file the screen reaches through an
+			// element's own attribute, so there is nothing for a generated fetcher to type. orval
+			// selects endpoints by tag alone, which is why those routes carry one.
+			filters: { mode: "exclude", tags: ["thumbnail", "file"] },
 		},
 		output: {
 			target: "./frontend/src/shared/api/generated/media-library.ts",

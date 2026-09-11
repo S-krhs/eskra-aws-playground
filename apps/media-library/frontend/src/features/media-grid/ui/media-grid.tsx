@@ -2,6 +2,7 @@
 // Out of scope: fetching the listing, how a tile looks, deciding the filter conditions
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useRef, useState } from "react";
+import type { Media } from "@/shared/api";
 import type { MediaList } from "../api/use-media-list.js";
 import { MediaTile } from "./media-tile.js";
 
@@ -17,7 +18,13 @@ const SCROLL_PADDING = 12;
 const PREFETCH_ROWS = 2;
 
 /** Lays the fetched media out in a grid and appends more as the user scrolls. */
-export const MediaGrid = ({ list }: { list: MediaList }) => {
+export const MediaGrid = ({
+	list,
+	onSelect,
+}: {
+	list: MediaList;
+	onSelect: (media: Media) => void;
+}) => {
 	const container = useRef<HTMLDivElement | null>(null);
 	const [columns, setColumns] = useState(1);
 
@@ -105,7 +112,13 @@ export const MediaGrid = ({ list }: { list: MediaList }) => {
 								}}
 							>
 								{list.items.slice(from, from + columns).map((media) => {
-									return <MediaTile key={media.id} media={media} />;
+									return (
+										<MediaTile
+											key={media.id}
+											media={media}
+											onSelect={onSelect}
+										/>
+									);
 								})}
 							</div>
 						);

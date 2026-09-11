@@ -345,6 +345,94 @@
 				}
 			}
 		},
+		"/media/{id}/file": {
+			"get": {
+				"operationId": "getMediaFile",
+				"summary": "メディア 1 件の原本を返す",
+				"tags": [
+					"file"
+				],
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"required": true,
+						"name": "id",
+						"in": "path"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"enum": [
+								"1"
+							]
+						},
+						"required": false,
+						"name": "download",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "原本の全体",
+						"content": {
+							"application/octet-stream": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"206": {
+						"description": "Range で求められた範囲。動画のシークがこれを使う",
+						"content": {
+							"application/octet-stream": {
+								"schema": {
+									"type": "string",
+									"format": "binary"
+								}
+							}
+						}
+					},
+					"304": {
+						"description": "If-None-Match が今の ETag と一致し、中身が変わっていない"
+					},
+					"400": {
+						"description": "id が UUID ではない、または download の値が不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "そのメディアがない、またはゴミ箱に入っている",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "サーバー側の処理に失敗",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 		"/sync": {
 			"post": {
 				"operationId": "startSync",

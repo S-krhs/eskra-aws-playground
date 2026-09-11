@@ -9,8 +9,12 @@ import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import { loopbackHostGuard } from "./loopback-host-guard.js";
 import { toInvalidRequestResponse } from "./routes/_shared/responses/error-response.js";
-import { getThumbnail, listMedia } from "./routes/media/route.js";
-import { getThumbnailRoute, listMediaRoute } from "./routes/media/schema.js";
+import { getMediaFile, getThumbnail, listMedia } from "./routes/media/route.js";
+import {
+	getMediaFileRoute,
+	getThumbnailRoute,
+	listMediaRoute,
+} from "./routes/media/schema.js";
 import { readSyncStatus, startSync } from "./routes/sync/route.js";
 import { readSyncStatusRoute, startSyncRoute } from "./routes/sync/schema.js";
 
@@ -32,6 +36,7 @@ const apiRoutes = new OpenAPIHono({
 })
 	.openapi(listMediaRoute, listMedia)
 	.openapi(getThumbnailRoute, getThumbnail)
+	.openapi(getMediaFileRoute, getMediaFile)
 	.openapi(startSyncRoute, startSync)
 	.openapi(readSyncStatusRoute, readSyncStatus);
 
