@@ -4,7 +4,7 @@ import { getGetThumbnailUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDuration } from "@/shared/lib";
 
 /**
- * One item in the listing; anything without a thumbnail yet shows only its kind.
+ * Anything without a thumbnail yet shows only its kind.
  * A button rather than a figure, because the whole tile is what opens the media.
  */
 export const MediaTile = ({

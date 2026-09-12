@@ -22,8 +22,8 @@ export interface MediaFile {
  * judged without opening it.
  * NOT_MODIFIED when the caller already holds this content; storage is never read then.
  *
- * `range` is the request's Range header, passed to storage as it stands.
- * `knownEtags` are the etags the caller already holds, with the wire's quoting taken off.
+ * `range` reaches storage as it stands; nothing here reads it.
+ * `knownEtags` arrive with the wire's quoting already taken off.
  */
 export const getMediaFileOperation = async (input: {
 	mediaId: string;

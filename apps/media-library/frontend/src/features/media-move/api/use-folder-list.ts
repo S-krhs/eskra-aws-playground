@@ -3,7 +3,6 @@
 import { useListFolders } from "@/shared/api";
 
 /**
- * The folder paths, by name.
  * Empty while the first read is in flight and where nothing is filed anywhere — a picker reads the
  * same either way, so the two aren't told apart here.
  */

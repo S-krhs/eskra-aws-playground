@@ -96,7 +96,6 @@ export interface UpdateThumbnailInput {
 }
 
 /**
- * Puts one object in the trash, or takes it back out, recording where its stored object moved to.
  * The trash is an area of its own, so the key changes on the way in and back out again; the logical
  * path travels with it, which is what a restore puts the object back under.
  */

@@ -310,7 +310,8 @@ export const mediaStorageRepository = {
 				? buildAreaKeyKeepingName({ area: "inbox", key: input.key })
 				: buildLogicalPathKey(input);
 
-		// Already filed where it is being asked for; copying an object onto itself buys nothing
+		// A caller whose row update didn't land after a move gets past this on the retry, instead of
+		// meeting its own copy in the collision check below
 		if (key === input.key) {
 			return await describeStored(key);
 		}

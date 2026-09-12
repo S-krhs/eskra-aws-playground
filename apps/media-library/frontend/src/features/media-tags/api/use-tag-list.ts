@@ -3,7 +3,6 @@
 import { useListTags } from "@/shared/api";
 
 /**
- * The tag names in use, by name.
  * Empty while the first read is in flight and where nothing is tagged — a picker reads the same either
  * way, so the two aren't told apart here.
  */

@@ -11,7 +11,6 @@ import {
 import { writeImageToClipboard } from "../lib/image-clipboard.js";
 
 /**
- * The two ways one media object goes onto the clipboard.
  * `status` is worth showing beside the buttons — the clipboard itself gives no sign of having taken
  * anything, and copying a large file as a file takes as long as downloading it.
  */
