@@ -30,7 +30,12 @@ export const MediaFilterBar = ({
 	tags: string[];
 	/** The folders there are, offered as completions for the folder field. */
 	folders: string[];
-	onChange: (filter: MediaFilter) => void;
+	/**
+	 * Takes what the filter should become from what it currently is. The folder field hands its value
+	 * over on a delay, by which time a button may have changed another part of the filter, and a copy
+	 * captured back when the key was pressed would put that choice back.
+	 */
+	onChange: (update: (filter: MediaFilter) => MediaFilter) => void;
 }) => {
 	// The field holds what is being typed and hands it over once it settles, so every keystroke doesn't
 	// become a query key of its own and blank the grid on the way past
@@ -40,17 +45,24 @@ export const MediaFilterBar = ({
 	);
 	const commitFolder = (value: string) => {
 		clearTimeout(commitTimer.current);
-		onChange({ ...filter, logicalPath: value || undefined });
+		onChange((current) => {
+			return { ...current, logicalPath: value || undefined };
+		});
 	};
 	const selectState = (value: ListMediaState) => {
 		if (value === "inbox") {
+			// 未整理 has no folder to be in, so a commit still waiting would put one back
 			clearTimeout(commitTimer.current);
 			setFolder("");
-			onChange({ ...filter, state: value, logicalPath: undefined });
+			onChange((current) => {
+				return { ...current, state: value, logicalPath: undefined };
+			});
 			return;
 		}
 
-		onChange({ ...filter, state: value });
+		onChange((current) => {
+			return { ...current, state: value };
+		});
 	};
 
 	return (
@@ -95,9 +107,11 @@ export const MediaFilterBar = ({
 								type="button"
 								aria-pressed={isActive}
 								onClick={() => {
-									onChange({
-										...filter,
-										contentTypePrefix: kind.value || undefined,
+									onChange((current) => {
+										return {
+											...current,
+											contentTypePrefix: kind.value || undefined,
+										};
 									});
 								}}
 								className={`btn join-item btn-sm md:flex-1 ${isActive ? "btn-primary" : ""}`}
@@ -147,7 +161,11 @@ export const MediaFilterBar = ({
 				<select
 					value={filter.tag ?? ""}
 					onChange={(event) => {
-						onChange({ ...filter, tag: event.target.value || undefined });
+						const { value } = event.target;
+
+						onChange((current) => {
+							return { ...current, tag: value || undefined };
+						});
 					}}
 					className="select select-sm w-36 md:w-full"
 				>
