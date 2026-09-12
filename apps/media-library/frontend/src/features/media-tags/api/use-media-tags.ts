@@ -9,7 +9,6 @@ import {
 	useReplaceMediaTags,
 } from "@/shared/api";
 
-/** Saving the tags of one media object, and how the last save went. */
 export interface MediaTags {
 	save: (mediaId: string, tags: string[]) => void;
 	status: MutationStatus;

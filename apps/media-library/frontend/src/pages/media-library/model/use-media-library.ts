@@ -35,7 +35,6 @@ export interface MediaLibrary {
 	tagSuggestions: string[];
 	/** The folders there are, for narrowing the listing and for filing media into one. */
 	folderSuggestions: string[];
-	/** The media the preview is open on; null while none is. */
 	preview: Media | null;
 	openPreview: (media: Media) => void;
 	closePreview: () => void;

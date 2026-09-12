@@ -32,8 +32,6 @@
 	--color-error: oklch(63% 0.21 25);
 	--color-error-content: oklch(100% 0 0);
 
-	/* Frames stay square: a rounded tile eats the corners of the thumbnail it clips. Only the tag
-	   chips keep a pill, and a standalone button asks for one with rounded-full where it is written */
 	--radius-selector: 2rem;
 	--radius-field: 0.25rem;
 	--radius-box: 0.25rem;

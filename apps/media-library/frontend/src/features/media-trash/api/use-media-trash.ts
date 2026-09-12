@@ -9,7 +9,6 @@ import {
 	useTrashMedia,
 } from "@/shared/api";
 
-/** The two moves the screen can make on one media object, and how the last one went. */
 export interface MediaTrash {
 	trash: (mediaId: string) => void;
 	restore: (mediaId: string) => void;

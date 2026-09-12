@@ -4,7 +4,6 @@ import { useCallback, useState } from "react";
 import { getGetMediaFileUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
 
-/** Everything about the media worth reading beside it, in the order it reads best. */
 const toDetails = (media: Media): { label: string; value: string }[] => {
 	return [
 		{ label: "種別", value: media.contentType },

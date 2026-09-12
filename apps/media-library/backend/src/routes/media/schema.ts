@@ -109,8 +109,6 @@ export const trashMediaRoute = createRoute({
 	request: { params: mediaIdParamSchema },
 	responses: {
 		204: {
-			// Nothing to report: the caller knows which media it asked about, and the listing is where
-			// the new state is read from
 			description: "ゴミ箱に入れた。R2 の実体も _deleted/ へ移る",
 		},
 		400: {

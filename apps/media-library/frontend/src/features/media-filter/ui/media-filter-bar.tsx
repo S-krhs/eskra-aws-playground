@@ -27,7 +27,6 @@ export const MediaFilterBar = ({
 	onChange,
 }: {
 	filter: MediaFilter;
-	/** The tags there are to narrow by; the caller reads them. */
 	tags: string[];
 	/** The folders there are, offered as completions for the folder field. */
 	folders: string[];

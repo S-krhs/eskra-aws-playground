@@ -9,7 +9,6 @@ import type { ListMediaState } from "@/shared/api";
 export interface MediaFilter {
 	logicalPath?: string;
 	contentTypePrefix?: string;
-	/** Narrows to the media carrying this tag. */
 	tag?: string;
 	/** Which of the three sides to read; omitted reads the library. */
 	state?: ListMediaState;

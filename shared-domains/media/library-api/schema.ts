@@ -107,7 +107,6 @@ export const mediaMoveRequestSchema = z
 	})
 	.openapi("MediaMoveRequest");
 
-/** Where a media object ended up, as the screen shows it. */
 export const mediaLocationResponseSchema = z
 	.object({
 		logicalPath: z.string(),

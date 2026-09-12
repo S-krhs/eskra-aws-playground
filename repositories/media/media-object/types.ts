@@ -123,13 +123,11 @@ export interface MediaObjectCursor {
  */
 export type MediaObjectPageState = "inbox" | "filed" | "trashed";
 
-/** Listing conditions. */
 export interface FindMediaObjectPageInput {
 	state: MediaObjectPageState;
 	/** Narrows to one folder. The inbox is the empty path itself, so it takes none. */
 	logicalPath?: string;
 	contentTypePrefix?: string;
-	/** Narrows to the objects carrying this tag. */
 	tagName?: string;
 	limit: number;
 	cursor?: MediaObjectCursor;
