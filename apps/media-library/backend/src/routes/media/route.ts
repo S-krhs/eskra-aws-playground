@@ -1,27 +1,54 @@
 // In scope: turning each media operation's result into a response
 // Out of scope: registering the routes, reading the DB or storage, the shape of what comes back
 import type { RouteHandler } from "@hono/zod-openapi";
+import {
+	parseIfNoneMatch,
+	REVALIDATE_CACHE_CONTROL,
+	toStrongEtag,
+	toWeakEtag,
+} from "../_shared/responses/etag.js";
+import { copyMediaToClipboardOperation } from "./operations/copy-media-to-clipboard-operation.js";
+import { getMediaFileOperation } from "./operations/get-media-file-operation.js";
 import { getThumbnailOperation } from "./operations/get-thumbnail-operation.js";
 import { listMediaOperation } from "./operations/list-media-operation.js";
-import type { getThumbnailRoute, listMediaRoute } from "./schema.js";
+import { moveMediaOperation } from "./operations/move-media-operation.js";
+import { replaceMediaTagsOperation } from "./operations/replace-media-tags-operation.js";
+import { restoreMediaOperation } from "./operations/restore-media-operation.js";
+import { trashMediaOperation } from "./operations/trash-media-operation.js";
+import type {
+	copyMediaToClipboardRoute,
+	getMediaFileRoute,
+	getThumbnailRoute,
+	listMediaRoute,
+	moveMediaRoute,
+	replaceMediaTagsRoute,
+	restoreMediaRoute,
+	trashMediaRoute,
+} from "./schema.js";
 
-// A rebuilt thumbnail keeps its id and therefore its URL, so the ETag is the only thing that tells the
-// browser the picture changed. Revalidating on every read costs one 304 and can't serve a stale one.
-const THUMBNAIL_CACHE_CONTROL = "private, max-age=0, must-revalidate";
+// The same answer whether the media was never registered or is gone; nothing the caller does differs
+const MEDIA_NOT_FOUND_MESSAGE = "そのメディアはありません";
 
-/** Weak, because the value identifies the source object's content rather than the thumbnail's bytes. */
-const toWeakEtag = (etag: string): string => {
-	return `W/"${etag}"`;
+/**
+ * A file name that isn't ASCII can't travel in the header as it stands, so it goes in RFC 5987's
+ * `filename*`. Without `filename` beside it a browser falls back to the last path segment, which is
+ * the id — acceptable, and the alternative is transliterating a Japanese name into something wrong.
+ */
+const buildContentDisposition = (
+	fileName: string,
+	isDownload: boolean,
+): string => {
+	return `${isDownload ? "attachment" : "inline"}; filename*=UTF-8''${encodeExtValue(fileName)}`;
 };
 
-/** If-None-Match carries a comma-separated list, and each entry may be quoted and marked weak. */
-const parseIfNoneMatch = (header: string | undefined): string[] => {
-	if (!header) {
-		return [];
-	}
-
-	return header.split(",").map((entry) => {
-		return entry.trim().replace(/^W\//, "").replace(/^"|"$/g, "");
+/**
+ * `encodeURIComponent` leaves `'`, `(`, `)` and `*` alone, and an ext-value allows none of them. The
+ * apostrophe is the one that breaks rather than merely bends the rule: it reads as the delimiter the
+ * charset and language sit behind, cutting off the name the browser saves under.
+ */
+const encodeExtValue = (value: string): string => {
+	return encodeURIComponent(value).replace(/['()*]/g, (character) => {
+		return `%${character.charCodeAt(0).toString(16).toUpperCase()}`;
 	});
 };
 
@@ -40,8 +67,10 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 	}
 
 	const result = await listMediaOperation({
+		state: query.state,
 		logicalPath: query.logicalPath,
 		contentTypePrefix: query.contentTypePrefix,
+		tagName: query.tag,
 		limit: query.limit,
 		cursor:
 			query.cursorUploadedAt && query.cursorId
@@ -68,13 +97,119 @@ export const getThumbnail: RouteHandler<typeof getThumbnailRoute> = async (
 	if (result.kind === "NOT_MODIFIED") {
 		return c.body(null, 304, {
 			etag: toWeakEtag(result.etag),
-			"cache-control": THUMBNAIL_CACHE_CONTROL,
+			"cache-control": REVALIDATE_CACHE_CONTROL,
 		});
 	}
 
 	return c.body(result.data.body, 200, {
 		"content-type": result.data.contentType,
-		"cache-control": THUMBNAIL_CACHE_CONTROL,
+		"cache-control": REVALIDATE_CACHE_CONTROL,
 		etag: toWeakEtag(result.data.etag),
 	});
+};
+
+export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
+	c,
+) => {
+	const result = await getMediaFileOperation({
+		mediaId: c.req.valid("param").id,
+		range: c.req.header("range"),
+		knownEtags: parseIfNoneMatch(c.req.header("if-none-match")),
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	if (result.kind === "NOT_MODIFIED") {
+		return c.body(null, 304, {
+			etag: toStrongEtag(result.etag),
+			"cache-control": REVALIDATE_CACHE_CONTROL,
+		});
+	}
+
+	const file = result.data;
+
+	return c.body(file.body, file.isPartial ? 206 : 200, {
+		"content-type": file.contentType,
+		"content-length": String(file.byteSize),
+		etag: toStrongEtag(file.etag),
+		// A browser only sends Range once the server has said it takes one, so a <video> can't seek
+		// without this
+		"accept-ranges": "bytes",
+		"content-disposition": buildContentDisposition(
+			file.fileName,
+			c.req.valid("query").download === "1",
+		),
+		"cache-control": REVALIDATE_CACHE_CONTROL,
+		...(file.contentRange ? { "content-range": file.contentRange } : {}),
+	});
+};
+
+export const trashMedia: RouteHandler<typeof trashMediaRoute> = async (c) => {
+	const result = await trashMediaOperation({
+		mediaId: c.req.valid("param").id,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.body(null, 204);
+};
+
+export const restoreMedia: RouteHandler<typeof restoreMediaRoute> = async (
+	c,
+) => {
+	const result = await restoreMediaOperation({
+		mediaId: c.req.valid("param").id,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.body(null, 204);
+};
+
+export const copyMediaToClipboard: RouteHandler<
+	typeof copyMediaToClipboardRoute
+> = async (c) => {
+	const result = await copyMediaToClipboardOperation({
+		mediaId: c.req.valid("param").id,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.body(null, 204);
+};
+
+export const replaceMediaTags: RouteHandler<
+	typeof replaceMediaTagsRoute
+> = async (c) => {
+	const result = await replaceMediaTagsOperation({
+		mediaId: c.req.valid("param").id,
+		tagNames: c.req.valid("json").tags,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.json(result.data, 200);
+};
+
+export const moveMedia: RouteHandler<typeof moveMediaRoute> = async (c) => {
+	const result = await moveMediaOperation({
+		mediaId: c.req.valid("param").id,
+		logicalPath: c.req.valid("json").logicalPath,
+	});
+
+	if (result.kind === "NOT_FOUND") {
+		return c.json({ message: MEDIA_NOT_FOUND_MESSAGE }, 404);
+	}
+
+	return c.json(result.data, 200);
 };

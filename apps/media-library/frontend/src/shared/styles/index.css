@@ -33,8 +33,8 @@
 	--color-error-content: oklch(100% 0 0);
 
 	--radius-selector: 2rem;
-	--radius-field: 0.75rem;
-	--radius-box: 1.25rem;
+	--radius-field: 0.25rem;
+	--radius-box: 0.25rem;
 	--size-selector: 0.25rem;
 	--size-field: 0.25rem;
 	--border: 1px;

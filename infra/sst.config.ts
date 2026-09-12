@@ -88,6 +88,8 @@ export default $config({
 		);
 
 		// The Neon pooled connection string the runtime uses, held as a Secret
+		// repositories (Prisma) contracts this as the DATABASE_URL env var, so every consumer sets it
+		// through environment rather than a link — the same path the tests outside SST take
 		const databaseUrl = new sst.Secret("DatabaseUrl");
 
 		// Credentials are kept in a separate Secret per Discord application
@@ -206,8 +208,6 @@ export default $config({
 				runtime: "nodejs22.x",
 				timeout: "30 seconds",
 				memory: "512 MB",
-				// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
-				// through environment rather than a link
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 				},
@@ -345,8 +345,6 @@ export default $config({
 				timeout: "15 minutes",
 				memory: "1 GB",
 				link: [gcpServiceAccountKey],
-				// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
-				// through environment rather than a link
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 					BIGQUERY_DATASET: bigQueryDatasetId,
@@ -548,8 +546,6 @@ export default $config({
 				timeout: "2 minutes",
 				memory: "2 GB",
 				link: [animeAnalysisDiscordWebhookUrl],
-				// repositories (Prisma) contracts the DB connection as the DATABASE_URL env var, so it goes
-				// through environment rather than a link (the same path the tests outside SST take)
 				environment: {
 					DATABASE_URL: databaseUrl.value,
 				},

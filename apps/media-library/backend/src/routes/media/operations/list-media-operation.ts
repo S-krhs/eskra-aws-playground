@@ -1,13 +1,18 @@
 // In scope: reading one page of the listing and shaping it for the screen
 // Out of scope: validating the query, HTTP status codes, DB query construction
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
-import type { MediaObjectCursor } from "@eskra-aws-playground/repositories/media/media-object/types.js";
+import type {
+	MediaObjectCursor,
+	MediaObjectPageState,
+} from "@eskra-aws-playground/repositories/media/media-object/types.js";
 import type { MediaListResponse } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 export const listMediaOperation = async (input: {
+	state: MediaObjectPageState;
 	logicalPath?: string;
 	contentTypePrefix?: string;
+	tagName?: string;
 	limit: number;
 	cursor?: MediaObjectCursor;
 }): Promise<OperationResult<MediaListResponse>> => {
@@ -29,6 +34,7 @@ export const listMediaOperation = async (input: {
 					height: media.height,
 					durationMs: media.durationMs,
 					hasThumbnail: media.hasThumbnail,
+					tags: media.tags,
 					uploadedAt: media.uploadedAt.toISOString(),
 				};
 			}),

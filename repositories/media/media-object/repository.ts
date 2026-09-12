@@ -2,7 +2,7 @@
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
 import { buildThumbnailKey } from "../_shared/formatter/object-key.js";
-import type { MediaObjectRow } from "../_shared/virtual/media-object-row.js";
+import type { MediaObjectWithTagsRow } from "../_shared/virtual/media-object-row.js";
 import type {
 	FindMediaObjectPageInput,
 	InsertMediaObjectInput,
@@ -14,9 +14,16 @@ import type {
 	RefreshMediaObjectInput,
 	RelocateMediaObjectInput,
 	UpdateThumbnailInput,
+	UpdateTrashedLocationInput,
 } from "./types.js";
 
-const toMediaObject = (row: MediaObjectRow): MediaObject => {
+// Read alongside every whole row, so a caller never has to ask for the tags separately
+const TAG_NAMES_SELECTION = {
+	select: { tag: { select: { name: true } } },
+	orderBy: { tag: { name: "asc" } },
+} as const;
+
+const toMediaObject = (row: MediaObjectWithTagsRow): MediaObject => {
 	return {
 		id: row.id,
 		objectKey: row.objectKey,
@@ -29,6 +36,9 @@ const toMediaObject = (row: MediaObjectRow): MediaObject => {
 		height: row.height ?? undefined,
 		durationMs: row.durationMs ?? undefined,
 		hasThumbnail: row.thumbnailKey !== null,
+		tags: row.tags.map((link) => {
+			return link.tag.name;
+		}),
 		uploadedAt: row.uploadedAt,
 		syncedAt: row.syncedAt,
 		trashedAt: row.trashedAt ?? undefined,
@@ -88,10 +98,31 @@ export const mediaObjectRepository = {
 		});
 	},
 
+	/**
+	 * The folders media is actually filed into, by path.
+	 * Trashed rows are left out, and so is the empty path an unfiled object carries.
+	 */
+	findAllLogicalPaths: async (): Promise<string[]> => {
+		const prisma = getPrismaClient();
+		const rows = await prisma.mediaObject.findMany({
+			where: { trashedAt: null, logicalPath: { not: "" } },
+			distinct: ["logicalPath"],
+			select: { logicalPath: true },
+			orderBy: { logicalPath: "asc" },
+		});
+
+		return rows.map((row) => {
+			return row.logicalPath;
+		});
+	},
+
 	/** Returns trashed objects too. */
 	findById: async (id: string): Promise<MediaObject | undefined> => {
 		const prisma = getPrismaClient();
-		const row = await prisma.mediaObject.findUnique({ where: { id } });
+		const row = await prisma.mediaObject.findUnique({
+			where: { id },
+			include: { tags: TAG_NAMES_SELECTION },
+		});
 
 		return row ? toMediaObject(row) : undefined;
 	},
@@ -101,25 +132,34 @@ export const mediaObjectRepository = {
 		const prisma = getPrismaClient();
 		const row = await prisma.mediaObject.findFirst({
 			where: { id, trashedAt: null },
+			include: { tags: TAG_NAMES_SELECTION },
 		});
 
 		return row ? toMediaObject(row) : undefined;
 	},
 
-	/** One page, newest first, excluding trashed objects. */
+	/** One page, newest first, of whichever of the three sides the input names. */
 	findPage: async (
 		input: FindMediaObjectPageInput,
 	): Promise<MediaObjectPage> => {
 		const prisma = getPrismaClient();
 		const rows = await prisma.mediaObject.findMany({
 			where: {
-				trashedAt: null,
-				logicalPath: input.logicalPath,
+				trashedAt: input.state === "trashed" ? { not: null } : null,
+				// The inbox and the library are the same side of the trash, split on the logical path:
+				// an object nothing has filed carries the empty one. The trash keeps the path each
+				// object was filed under, so it answers for both kinds on whatever path it is given
+				logicalPath: input.state === "inbox" ? "" : input.logicalPath,
+				NOT: input.state === "filed" ? { logicalPath: "" } : undefined,
 				contentType: input.contentTypePrefix
 					? { startsWith: input.contentTypePrefix }
 					: undefined,
+				tags: input.tagName
+					? { some: { tag: { name: input.tagName } } }
+					: undefined,
 				...(input.cursor ? toCursorFilter(input.cursor) : {}),
 			},
+			include: { tags: TAG_NAMES_SELECTION },
 			orderBy: [{ uploadedAt: "desc" }, { id: "desc" }],
 			// Read one extra row so the next page can be detected without a separate COUNT
 			take: input.limit + 1,
@@ -156,6 +196,24 @@ export const mediaObjectRepository = {
 					? { ...location, byteSize: BigInt(location.byteSize) }
 					: {}),
 			},
+		});
+
+		return result.count;
+	},
+
+	/**
+	 * Puts one object in the trash, or takes it back out when `trashedAt` is null, recording the key
+	 * its stored object now sits under.
+	 * Returns the number of rows updated, so a row that isn't there reads as 0 rather than throwing.
+	 */
+	updateTrashedLocation: async (
+		input: UpdateTrashedLocationInput,
+	): Promise<number> => {
+		const prisma = getPrismaClient();
+		const { id, byteSize, ...values } = input;
+		const result = await prisma.mediaObject.updateMany({
+			where: { id },
+			data: { ...values, byteSize: BigInt(byteSize) },
 		});
 
 		return result.count;

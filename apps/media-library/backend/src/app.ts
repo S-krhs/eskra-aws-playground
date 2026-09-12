@@ -9,10 +9,32 @@ import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import { loopbackHostGuard } from "./loopback-host-guard.js";
 import { toInvalidRequestResponse } from "./routes/_shared/responses/error-response.js";
-import { getThumbnail, listMedia } from "./routes/media/route.js";
-import { getThumbnailRoute, listMediaRoute } from "./routes/media/schema.js";
+import { listFolders } from "./routes/folders/route.js";
+import { listFoldersRoute } from "./routes/folders/schema.js";
+import {
+	copyMediaToClipboard,
+	getMediaFile,
+	getThumbnail,
+	listMedia,
+	moveMedia,
+	replaceMediaTags,
+	restoreMedia,
+	trashMedia,
+} from "./routes/media/route.js";
+import {
+	copyMediaToClipboardRoute,
+	getMediaFileRoute,
+	getThumbnailRoute,
+	listMediaRoute,
+	moveMediaRoute,
+	replaceMediaTagsRoute,
+	restoreMediaRoute,
+	trashMediaRoute,
+} from "./routes/media/schema.js";
 import { readSyncStatus, startSync } from "./routes/sync/route.js";
 import { readSyncStatusRoute, startSyncRoute } from "./routes/sync/schema.js";
+import { listTags } from "./routes/tags/route.js";
+import { listTagsRoute } from "./routes/tags/schema.js";
 
 // serveStatic joins this onto each request path, so an absolute one resolves the same wherever the
 // process was started from
@@ -32,6 +54,14 @@ const apiRoutes = new OpenAPIHono({
 })
 	.openapi(listMediaRoute, listMedia)
 	.openapi(getThumbnailRoute, getThumbnail)
+	.openapi(getMediaFileRoute, getMediaFile)
+	.openapi(trashMediaRoute, trashMedia)
+	.openapi(restoreMediaRoute, restoreMedia)
+	.openapi(copyMediaToClipboardRoute, copyMediaToClipboard)
+	.openapi(replaceMediaTagsRoute, replaceMediaTags)
+	.openapi(moveMediaRoute, moveMedia)
+	.openapi(listFoldersRoute, listFolders)
+	.openapi(listTagsRoute, listTags)
 	.openapi(startSyncRoute, startSync)
 	.openapi(readSyncStatusRoute, readSyncStatus);
 

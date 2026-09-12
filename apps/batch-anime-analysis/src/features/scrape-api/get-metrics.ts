@@ -11,7 +11,6 @@ const FETCH_TIMEOUT_MS = 10_000;
 
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 
-/** The source definition pulling metrics out of an API. */
 export type ApiSource = {
 	type: "api";
 	url: string;
@@ -20,11 +19,7 @@ export type ApiSource = {
 	value: JsonValueTarget;
 };
 
-/**
- * Takes an API source definition, fetches the JSON, and returns the metric list
- * @param source how to pull metrics out of the API
- * @returns the parsed metrics and how many were excluded as unconvertible
- */
+/** Fetches the JSON the source points at and builds the metric list out of it. */
 export const getApiMetrics = async (
 	source: ApiSource,
 ): Promise<MetricBuildResult> => {

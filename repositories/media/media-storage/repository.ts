@@ -2,11 +2,15 @@
 // Out of scope: reading metadata's meaning, DB rows, thumbnail generation
 import type { _Object } from "@aws-sdk/client-s3";
 import {
+	AbortMultipartUploadCommand,
+	CompleteMultipartUploadCommand,
 	CopyObjectCommand,
+	CreateMultipartUploadCommand,
 	DeleteObjectCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
 	ListObjectsV2Command,
+	UploadPartCopyCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getMediaBucket, getR2Client } from "../../client/r2.js";
@@ -14,6 +18,7 @@ import { buildCopySource } from "../_shared/formatter/copy-source.js";
 import {
 	buildAreaKeyKeepingName,
 	buildAreaObjectKey,
+	buildLogicalPathKey,
 	buildThumbnailKey,
 	extractLogicalPath,
 	resolveArea,
@@ -23,6 +28,7 @@ import type {
 	GetStoredObjectInput,
 	MediaStorageArea,
 	MoveIntoAreaInput,
+	MoveToLogicalPathInput,
 	NamedMediaStorageArea,
 	StoredObjectBody,
 	StoredObjectLocation,
@@ -38,6 +44,11 @@ import type {
 const COPY_SOURCE_METADATA_KEY = "copied-from";
 
 const MAX_KEY_SEQUENCE = 100;
+
+// A single CopyObject tops out at 5GB, so anything larger is assembled out of ranged parts
+const MAX_SINGLE_COPY_BYTES = 5 * 1024 * 1024 * 1024;
+// One UploadPartCopy per part; at this size the 10000-part limit still reaches 5TB
+const COPY_PART_SIZE_BYTES = 512 * 1024 * 1024;
 
 const THUMBNAIL_CONTENT_TYPE = "image/webp";
 
@@ -251,33 +262,70 @@ export const mediaStorageRepository = {
 	},
 
 	/**
-	 * Moves an object into an area, keeping its file name. Errors rather than overwriting when that
-	 * name is already taken there, and undoes the copy if the source can't be removed afterwards.
+	 * Moves an object into an area, keeping its file name and — where `logicalPath` is passed — the
+	 * folder it was filed under. Errors rather than overwriting when that name is already taken there,
+	 * and undoes the copy if the source can't be removed afterwards.
+	 * One already sitting at the destination answers as done, so a caller whose row update didn't land
+	 * can retry without meeting its own copy in that check.
 	 */
 	moveIntoArea: async (
 		input: MoveIntoAreaInput,
 	): Promise<StoredObjectLocation> => {
-		const bucket = getMediaBucket();
 		const key = buildAreaKeyKeepingName(input);
+
+		if (key === input.key) {
+			return await describeStored(key);
+		}
 
 		if (await mediaStorageRepository.headIfExists(key)) {
 			throw new Error(`移動先の key が既に埋まっています: ${key}`);
 		}
 
-		await getR2Client().send(
-			new CopyObjectCommand({
-				Bucket: bucket,
-				Key: key,
-				CopySource: buildCopySource(bucket, input.key),
-			}),
-		);
+		await copyWithinBucket({ sourceKey: input.key, destinationKey: key });
 
 		const location = await describeStored(key);
 
 		try {
 			await mediaStorageRepository.delete(input.key);
 		} catch (error) {
-			await mediaStorageRepository.delete(key);
+			await undoCopy(key);
+
+			throw error;
+		}
+
+		return location;
+	},
+
+	/**
+	 * Files one object under a logical path, keeping the name it already has. An empty path puts it
+	 * back in the inbox: where an unfiled object sits is this package's layout, not the bucket root.
+	 * Errors rather than overwriting a taken destination, and undoes the copy if the source can't be
+	 * removed afterwards — the same terms as `moveIntoArea`.
+	 */
+	moveToLogicalPath: async (
+		input: MoveToLogicalPathInput,
+	): Promise<StoredObjectLocation> => {
+		const key =
+			input.logicalPath === ""
+				? buildAreaKeyKeepingName({ area: "inbox", key: input.key })
+				: buildLogicalPathKey(input);
+
+		if (key === input.key) {
+			return await describeStored(key);
+		}
+
+		if (await mediaStorageRepository.headIfExists(key)) {
+			throw new Error(`移動先の key が既に埋まっています: ${key}`);
+		}
+
+		await copyWithinBucket({ sourceKey: input.key, destinationKey: key });
+
+		const location = await describeStored(key);
+
+		try {
+			await mediaStorageRepository.delete(input.key);
+		} catch (error) {
+			await undoCopy(key);
 
 			throw error;
 		}
@@ -318,6 +366,114 @@ export const mediaStorageRepository = {
 			new DeleteObjectCommand({ Bucket: getMediaBucket(), Key: key }),
 		);
 	},
+};
+
+/** Never throws: a failure dropping the copy must not replace the error that made the move give up. */
+const undoCopy = async (key: string): Promise<void> => {
+	try {
+		await mediaStorageRepository.delete(key);
+	} catch {}
+};
+
+/**
+ * Copies one object to another key in the same bucket, carrying its metadata over — the media's id
+ * lives there, and an object that arrives without one is taken in as something new by the next sync.
+ * Past what a single request can copy, the object is assembled out of ranged parts instead.
+ */
+const copyWithinBucket = async (input: {
+	sourceKey: string;
+	destinationKey: string;
+}): Promise<void> => {
+	const client = getR2Client();
+	const bucket = getMediaBucket();
+	const source = await mediaStorageRepository.head(input.sourceKey);
+	const copySource = buildCopySource(bucket, input.sourceKey);
+
+	if (source.byteSize <= MAX_SINGLE_COPY_BYTES) {
+		// Without MetadataDirective the metadata comes across on its own
+		await client.send(
+			new CopyObjectCommand({
+				Bucket: bucket,
+				Key: input.destinationKey,
+				CopySource: copySource,
+			}),
+		);
+
+		return;
+	}
+
+	// A multipart copy starts an object of its own, so what CopyObject would have carried over is
+	// restated here
+	const created = await client.send(
+		new CreateMultipartUploadCommand({
+			Bucket: bucket,
+			Key: input.destinationKey,
+			ContentType: source.contentType,
+			Metadata: source.metadata,
+		}),
+	);
+	const uploadId = created.UploadId;
+
+	if (!uploadId) {
+		throw new Error(
+			`R2 が multipart copy の upload id を返しませんでした: ${input.destinationKey}`,
+		);
+	}
+
+	try {
+		const parts: { PartNumber: number; ETag: string }[] = [];
+
+		for (
+			let start = 0;
+			start < source.byteSize;
+			start += COPY_PART_SIZE_BYTES
+		) {
+			const end = Math.min(start + COPY_PART_SIZE_BYTES, source.byteSize) - 1;
+			const partNumber = parts.length + 1;
+			const copied = await client.send(
+				new UploadPartCopyCommand({
+					Bucket: bucket,
+					Key: input.destinationKey,
+					UploadId: uploadId,
+					PartNumber: partNumber,
+					CopySource: copySource,
+					CopySourceRange: `bytes=${start}-${end}`,
+				}),
+			);
+			const etag = copied.CopyPartResult?.ETag;
+
+			if (!etag) {
+				throw new Error(
+					`R2 が multipart copy の part ${partNumber} の etag を返しませんでした: ${input.destinationKey}`,
+				);
+			}
+
+			parts.push({ PartNumber: partNumber, ETag: etag });
+		}
+
+		await client.send(
+			new CompleteMultipartUploadCommand({
+				Bucket: bucket,
+				Key: input.destinationKey,
+				UploadId: uploadId,
+				MultipartUpload: { Parts: parts },
+			}),
+		);
+	} catch (error) {
+		// The parts already copied are billed until the upload is abandoned, but failing to abandon it
+		// must not replace the error that got us here
+		try {
+			await client.send(
+				new AbortMultipartUploadCommand({
+					Bucket: bucket,
+					Key: input.destinationKey,
+					UploadId: uploadId,
+				}),
+			);
+		} catch {}
+
+		throw error;
+	}
 };
 
 /**

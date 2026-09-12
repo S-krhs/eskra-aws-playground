@@ -16,15 +16,32 @@
 
 | 経路 | 用途 |
 | --- | --- |
-| `GET /api/media` | 一覧。`logicalPath`・`contentTypePrefix`・`limit` で絞り、`cursorUploadedAt` と `cursorId` で続きを取る |
+| `GET /api/media` | 一覧。`logicalPath`・`contentTypePrefix`・`tag`・`limit` で絞り、`cursorUploadedAt` と `cursorId` で続きを取る。`state` は `filed`(既定。フォルダへ入れたもの)・`inbox`(まだどこにも入れていないもの)・`trashed`(ゴミ箱)の 3 つ |
 | `GET /api/media/:id/thumbnail` | サムネイル。R2 から取って返す |
+| `GET /api/media/:id/file` | 原本。`Range` を R2 へ素通しするので動画のシークが効く。`?download=1` で保存を促す |
+| `POST /api/media/:id/trash` | ゴミ箱に入れる。R2 の実体も `_deleted/` へ移し、入っていたフォルダはその下に保つ(204) |
+| `POST /api/media/:id/restore` | ゴミ箱から戻す。`_deleted/` の下に保っていたフォルダへ戻す(204) |
+| `POST /api/media/:id/clipboard` | 原本を Windows の `%TEMP%\eskra-media-library\<id>\` へ書き、`Set-Clipboard` でファイルとして置く(204) |
+| `PATCH /api/media/:id` | フォルダへ移す。R2 の Copy+Delete(5GB 超は multipart copy)と DB の付け替えを行う。空文字で `_inbox/` へ戻す |
+| `PUT /api/media/:id/tags` | タグを入れ替える。知らない名前は作り、誰も使わなくなったタグは消す |
+| `GET /api/folders` | 登録済みのフォルダと、メディアが実際に入っているフォルダを名前順に返す |
+| `GET /api/tags` | 使われているタグを名前順に返す |
 | `POST /api/sync` | 同期 Lambda を非同期で起動する。完了は待たない(202) |
 | `GET /api/sync/status` | 直近の実行と、実行中の実行を返す |
 
 ## 画面
 
 - 一覧は仮想スクロールで、末尾に近づくと次のページを継ぎ足す(1 ページ 200 件)。
-- フォルダ(論理パス)と種別(画像 / 動画)で絞り込める。条件を変えると先頭から取り直す。
+- フォルダ(論理パス)と種別(画像 / 動画)で絞り込める。条件を変えると先頭から取り直す。未整理はフォルダを持たないメディアそのものなので、そこではフォルダ欄を出さない。
+- タイルを押すと原本を開く。画像はそのまま、動画はその場で再生する(シークは `Range` で取り直す)。ダウンロードもここから。
+- フォルダは開いたメディアの「フォルダ」欄で移す。空にすると `_inbox/` へ戻って未整理に並ぶ。無いフォルダ名を打てば、そこへ移した時点でフォルダができる。
+- タグは開いたメディアで付け外しする。入力欄は既存のタグを補完し、外したタグがどこにも残らなければ一覧からも消える。
+- 「タグ」で絞り込むと、そのタグが付いたメディアだけを出す。
+- 「表示」で未整理・ライブラリ・ゴミ箱を切り替える。取り込んだメディアはまず未整理に入り、フォルダへ移してはじめてライブラリに並ぶ。
+- ゴミ箱に入れると R2 の実体も `_deleted/` へ移り、開いたメディアから元のフォルダへ戻せる。実体を消すことはない。
+- コピーは 2 種類。「画像としてコピー」はブラウザのクリップボードへ画像として置く(PNG 以外は PNG に変換する)。
+  「ファイルとしてコピー」は backend が Windows の `%TEMP%` へ書き出してファイル参照を置くので、動画でも使えるしエクスプローラーへ貼れる。
+  貼り付けるまで参照が要るため、書き出したファイルは消さない(Windows の TEMP 掃除に任せる)。
 - 同期ボタンで `POST /api/sync` を叩き、実行中は 2 秒ごとに進捗を読む。終わった時点で一覧を取り直す。
 - 画面の API client は `shared-domains/media/library-api/openapi.json` から生成します。route を変えたら `generate:api` を実行してください。
 

@@ -3,16 +3,16 @@
 //
 // The listing's cursor is two fields, which orval's useInfinite can't express (it takes one param
 // name), so the infinite query is written by hand on top of the generated fetcher.
+//
+// Every endpoint is generated, including the two that answer with a file. Their fetcher and hook go
+// unused — the screen reaches those through an <img>/<video>/<a> — but the URL builder generated
+// beside them is what keeps their paths from being written a second time by hand.
 import { defineConfig } from "orval";
 
 export default defineConfig({
 	mediaLibrary: {
 		input: {
 			target: "../../shared-domains/media/library-api/openapi.json",
-			// The thumbnail answers with an image the screen reaches through an <img> src, so there is
-			// nothing for a generated fetcher to type. orval selects endpoints by tag alone, which is
-			// why that route carries one.
-			filters: { mode: "exclude", tags: ["thumbnail"] },
 		},
 		output: {
 			target: "./frontend/src/shared/api/generated/media-library.ts",

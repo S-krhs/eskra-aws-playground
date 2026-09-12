@@ -47,14 +47,34 @@ export const buildAreaObjectKey = (input: {
 	return `${AREA_PREFIXES[input.area]}/${fileName}${extension ? `.${extension}` : ""}`;
 };
 
-/** The key an object keeps its file name at when it moves between areas. */
+/**
+ * The key an object keeps its file name at when it moves between areas.
+ * `logicalPath` puts it under that path inside the area, so an object moved out of a folder reads back
+ * with the folder it came from — which is how it finds its way home again.
+ */
 export const buildAreaKeyKeepingName = (input: {
 	area: NamedMediaStorageArea;
 	key: string;
+	logicalPath?: string;
+}): string => {
+	const fileName = input.key.slice(input.key.lastIndexOf("/") + 1);
+	const path = input.logicalPath ? `${input.logicalPath}/` : "";
+
+	return `${AREA_PREFIXES[input.area]}/${path}${fileName}`;
+};
+
+/**
+ * The key an object takes once it is filed into a folder, keeping the name it already has.
+ * The logical path sits at the top of the bucket rather than under an area's prefix: the named areas
+ * are this package's own staging ground, and a filed object has left them.
+ */
+export const buildLogicalPathKey = (input: {
+	key: string;
+	logicalPath: string;
 }): string => {
 	const fileName = input.key.slice(input.key.lastIndexOf("/") + 1);
 
-	return `${AREA_PREFIXES[input.area]}/${fileName}`;
+	return `${input.logicalPath}/${fileName}`;
 };
 
 /** A thumbnail is named after the media's id alone, so moving the media never has to touch it. */

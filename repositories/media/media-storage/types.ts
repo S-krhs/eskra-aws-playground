@@ -50,6 +50,14 @@ export interface CopyIntoAreaInput {
 export interface MoveIntoAreaInput {
 	key: string;
 	area: Exclude<NamedMediaStorageArea, "thumbnail">;
+	/** Kept inside the area, so an object moved out of a folder still reads back with that folder. */
+	logicalPath?: string;
+}
+
+/** Where to file one object. An empty `logicalPath` puts it back where nothing is filed yet. */
+export interface MoveToLogicalPathInput {
+	key: string;
+	logicalPath: string;
 }
 
 export interface StoredObjectMetadata {

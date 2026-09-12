@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	buildAreaKeyKeepingName,
 	buildAreaObjectKey,
+	buildLogicalPathKey,
 	buildThumbnailKey,
 	extractLogicalPath,
 	resolveArea,
@@ -95,6 +96,50 @@ describe("buildThumbnailKey", () => {
 		expect(buildThumbnailKey("018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40")).toBe(
 			"_thumb/018f3a2c-6b41-7c9d-9f02-1a5e8c3d7b40.webp",
 		);
+	});
+});
+
+describe("buildAreaKeyKeepingName", () => {
+	it("keeps the file name and drops whatever came before it", () => {
+		expect(
+			buildAreaKeyKeepingName({
+				area: "inbox",
+				key: "_pending/20260907-133045123.png",
+			}),
+		).toBe("_inbox/20260907-133045123.png");
+	});
+
+	// The trash holds the path so a restore knows where the object came from
+	it("keeps the folder inside the area when one is passed", () => {
+		const key = buildAreaKeyKeepingName({
+			area: "deleted",
+			key: "photos/2024/20260907-133045123.png",
+			logicalPath: "photos/2024",
+		});
+
+		expect(key).toBe("_deleted/photos/2024/20260907-133045123.png");
+		expect(extractLogicalPath(key)).toBe("photos/2024");
+	});
+});
+
+describe("buildLogicalPathKey", () => {
+	it("keeps the name and files it under the folder", () => {
+		expect(
+			buildLogicalPathKey({
+				key: "_inbox/20260907-133045123.png",
+				logicalPath: "photos/2024",
+			}),
+		).toBe("photos/2024/20260907-133045123.png");
+	});
+
+	it("reads back as the path it was filed under", () => {
+		const key = buildLogicalPathKey({
+			key: "photos/2024/20260907-133045123.png",
+			logicalPath: "illust",
+		});
+
+		expect(key).toBe("illust/20260907-133045123.png");
+		expect(extractLogicalPath(key)).toBe("illust");
 	});
 });
 

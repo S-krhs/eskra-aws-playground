@@ -15,7 +15,7 @@ export interface Thumbnail {
  * NOT_GENERATED until the sync has made one; the screen falls back to a placeholder.
  * NOT_MODIFIED when the caller already holds this content — the body is never read from storage then.
  *
- * `knownEtags` are the etags the caller already holds, with the wire's quoting taken off.
+ * `knownEtags` arrive with the wire's quoting already taken off.
  */
 export const getThumbnailOperation = async (input: {
 	mediaId: string;
@@ -26,8 +26,9 @@ export const getThumbnailOperation = async (input: {
 		{ kind: "NOT_GENERATED" } | { kind: "NOT_MODIFIED"; etag: string }
 	>
 > => {
-	// A trashed object stays out of the listing, so its thumbnail stays unreadable too
-	const media = await mediaObjectRepository.findUntrashedById(input.mediaId);
+	// Read past the trash on purpose: the trash is a listing of its own, and deciding what to restore
+	// means seeing what is in it
+	const media = await mediaObjectRepository.findById(input.mediaId);
 
 	if (!media?.hasThumbnail) {
 		return { kind: "NOT_GENERATED" };

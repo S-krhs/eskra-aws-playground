@@ -98,31 +98,26 @@ describe.skipIf(!testDatabaseUrl)(
 			});
 		});
 
-		// A later run has to be able to tell that an earlier one is already going
-		it("returns the older one when two runs are in flight", async () => {
+		// The single slot is what stops two syncs walking R2 at once, so a second one takes no row at all
+		it("refuses a run while another is unfinished, leaving the first holding the slot", async () => {
 			await mediaSyncRunRepository.insert(runId, startedAt);
-			await mediaSyncRunRepository.insert(
-				laterRunId,
-				new Date("2099-09-07T02:00:00.000Z"),
-			);
 
-			expect((await mediaSyncRunRepository.findUnfinished())?.id).toBe(runId);
-		});
-
-		// startedAt is taken before the row is inserted, so two runs can end up in the opposite order.
-		// Unless the row inserted first wins, both runs decide they are oldest and run twice
-		it("returns the run inserted first even when startedAt says otherwise", async () => {
-			await mediaSyncRunRepository.insert(
-				runId,
-				new Date("2099-09-07T02:00:00.000Z"),
-			);
-			await mediaSyncRunRepository.insert(laterRunId, startedAt);
-
+			expect(
+				await mediaSyncRunRepository.insert(
+					laterRunId,
+					new Date("2099-09-07T02:00:00.000Z"),
+				),
+			).toBeUndefined();
 			expect((await mediaSyncRunRepository.findUnfinished())?.id).toBe(runId);
 		});
 
 		it("reports the most recently started run as the latest", async () => {
 			await mediaSyncRunRepository.insert(runId, startedAt);
+			await mediaSyncRunRepository.updateFinished({
+				id: runId,
+				...progress,
+				finishedAt: new Date("2099-09-07T00:05:00.000Z"),
+			});
 			await mediaSyncRunRepository.insert(
 				laterRunId,
 				new Date("2099-09-07T02:00:00.000Z"),

@@ -131,6 +131,8 @@ export const mediaSyncJob = async (event: unknown): Promise<BatchResponse> => {
 		// 4. Walk R2 and keep only the media. Thumbnails aren't media themselves and are excluded, as
 		//    are extensions off the list — without that, text files and folder placeholders get taken
 		//    in, and thumbnail generation fails on them forever and keeps backing up the DLQ.
+		//    The trash area stays in: what sits there is still a registered row, so leaving it out
+		//    would read as the media having disappeared from R2 and delete those rows for real.
 		const scanned = (await mediaStorageRepository.listAll()).filter(
 			(object) => {
 				return (

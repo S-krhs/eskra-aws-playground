@@ -2,6 +2,7 @@
 // Out of scope: fetching the listing, how a tile looks, deciding the filter conditions
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useRef, useState } from "react";
+import type { Media } from "@/shared/api";
 import type { MediaList } from "../api/use-media-list.js";
 import { MediaTile } from "./media-tile.js";
 
@@ -17,7 +18,13 @@ const SCROLL_PADDING = 12;
 const PREFETCH_ROWS = 2;
 
 /** Lays the fetched media out in a grid and appends more as the user scrolls. */
-export const MediaGrid = ({ list }: { list: MediaList }) => {
+export const MediaGrid = ({
+	list,
+	onSelect,
+}: {
+	list: MediaList;
+	onSelect: (media: Media) => void;
+}) => {
 	const container = useRef<HTMLDivElement | null>(null);
 	const [columns, setColumns] = useState(1);
 
@@ -69,15 +76,27 @@ export const MediaGrid = ({ list }: { list: MediaList }) => {
 	});
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex min-h-0 flex-1 flex-col">
+			{/* Reads how far the listing has been scrolled in; the API gives no total, so it counts what is here */}
+			<div className="flex shrink-0 items-center gap-2 border-base-300 border-b bg-base-100 px-3 py-2">
+				<p className="text-base-content/60 text-xs">
+					{list.items.length} 件{list.hasMore ? "以上" : ""}
+				</p>
+				{list.isLoading ? (
+					<span className="loading loading-dots loading-xs text-base-content/40" />
+				) : null}
+			</div>
+
 			{list.error ? (
-				<p role="alert" className="alert alert-error mx-3 mt-3">
+				<p role="alert" className="alert alert-error m-3">
 					{list.error}
 				</p>
 			) : null}
 
+			{/* Kept outside the scroll element: anything added in front of the virtual container would
+			    shift its origin away from the padding scrollMargin assumes */}
 			{list.items.length === 0 && !list.isLoading && !list.error ? (
-				<p className="py-8 text-center text-base-content/60 text-sm">
+				<p className="px-3 py-10 text-center text-base-content/60 text-sm">
 					表示するメディアがありません。同期を実行すると R2
 					の中身を取り込みます。
 				</p>
@@ -105,19 +124,19 @@ export const MediaGrid = ({ list }: { list: MediaList }) => {
 								}}
 							>
 								{list.items.slice(from, from + columns).map((media) => {
-									return <MediaTile key={media.id} media={media} />;
+									return (
+										<MediaTile
+											key={media.id}
+											media={media}
+											onSelect={onSelect}
+										/>
+									);
 								})}
 							</div>
 						);
 					})}
 				</div>
 			</div>
-
-			{list.isLoading ? (
-				<p className="py-3 text-center text-base-content/60 text-sm">
-					<span className="loading loading-dots loading-sm" />
-				</p>
-			) : null}
 		</div>
 	);
 };

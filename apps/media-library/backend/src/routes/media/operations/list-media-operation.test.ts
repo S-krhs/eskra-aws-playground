@@ -27,6 +27,7 @@ const storedMedia = {
 	height: 3000,
 	durationMs: undefined,
 	hasThumbnail: true,
+	tags: ["風景"],
 	uploadedAt,
 	syncedAt: uploadedAt,
 	trashedAt: undefined,
@@ -43,7 +44,7 @@ describe("listMediaOperation", () => {
 			nextCursor: undefined,
 		});
 
-		const result = await listMediaOperation({ limit: 200 });
+		const result = await listMediaOperation({ state: "filed", limit: 200 });
 
 		expect(result).toEqual({
 			kind: "OK",
@@ -59,6 +60,7 @@ describe("listMediaOperation", () => {
 						height: 3000,
 						durationMs: undefined,
 						hasThumbnail: true,
+						tags: ["風景"],
 						uploadedAt: uploadedAt.toISOString(),
 					},
 				],
@@ -73,7 +75,7 @@ describe("listMediaOperation", () => {
 			nextCursor: { uploadedAt, id: mediaId },
 		});
 
-		const result = await listMediaOperation({ limit: 1 });
+		const result = await listMediaOperation({ state: "filed", limit: 1 });
 
 		expect(result.data.nextCursor).toEqual({
 			uploadedAt: uploadedAt.toISOString(),

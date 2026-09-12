@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getThumbnailOperation } from "./get-thumbnail-operation.js";
 
 const objectRepository = vi.hoisted(() => {
-	return { findUntrashedById: vi.fn() };
+	return { findById: vi.fn() };
 });
 
 vi.mock(
@@ -43,8 +43,8 @@ const storedMedia = {
 };
 
 beforeEach(() => {
-	objectRepository.findUntrashedById.mockReset();
-	objectRepository.findUntrashedById.mockResolvedValue(storedMedia);
+	objectRepository.findById.mockReset();
+	objectRepository.findById.mockResolvedValue(storedMedia);
 	storageRepository.getThumbnail.mockReset();
 	storageRepository.getThumbnail.mockResolvedValue({
 		body: new Response(new Uint8Array([1, 2, 3])).body,
@@ -69,18 +69,29 @@ describe("getThumbnailOperation", () => {
 		});
 	});
 
-	it("reads the row through the exclusion the listing applies, so a trashed one is unreachable", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue(undefined);
+	it("reads a trashed object's thumbnail, which is what the trash listing shows", async () => {
+		objectRepository.findById.mockResolvedValue({
+			...storedMedia,
+			trashedAt: new Date("2026-09-11T00:00:00.000Z"),
+		});
 
 		const result = await getThumbnailOperation({ mediaId, knownEtags: [] });
 
-		expect(objectRepository.findUntrashedById).toHaveBeenCalledWith(mediaId);
+		expect(result.kind).toBe("OK");
+	});
+
+	it("reports it missing only when no row carries the id", async () => {
+		objectRepository.findById.mockResolvedValue(undefined);
+
+		const result = await getThumbnailOperation({ mediaId, knownEtags: [] });
+
+		expect(objectRepository.findById).toHaveBeenCalledWith(mediaId);
 		expect(result).toEqual({ kind: "NOT_GENERATED" });
 		expect(storageRepository.getThumbnail).not.toHaveBeenCalled();
 	});
 
 	it("reports NOT_GENERATED while the sync hasn't made one", async () => {
-		objectRepository.findUntrashedById.mockResolvedValue({
+		objectRepository.findById.mockResolvedValue({
 			...storedMedia,
 			hasThumbnail: false,
 		});

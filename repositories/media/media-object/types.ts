@@ -20,9 +20,11 @@ export interface MediaObject {
 	durationMs: number | undefined;
 	/** The key itself stays inside this package — read the thumbnail through the storage repository. */
 	hasThumbnail: boolean;
+	/** The names it carries, in the order they are listed in. */
+	tags: string[];
 	uploadedAt: Date;
 	syncedAt: Date;
-	/** Only ever read here — a listing skips a trashed row, and no method in this package writes it. */
+	/** When it was put in the trash. The stored object moves into the trash area along with it. */
 	trashedAt: Date | undefined;
 }
 
@@ -93,16 +95,39 @@ export interface UpdateThumbnailInput {
 	location?: Omit<RelocateMediaObjectInput, "id">;
 }
 
+/**
+ * The trash is an area of its own, so the key changes on the way in and back out again; the logical
+ * path travels with it, which is what a restore puts the object back under.
+ */
+export interface UpdateTrashedLocationInput {
+	id: string;
+	trashedAt: Date | null;
+	objectKey: string;
+	logicalPath: string;
+	byteSize: number;
+	etag: string;
+	syncedAt: Date;
+}
+
 /** A position in the listing — the last item of the previous page. */
 export interface MediaObjectCursor {
 	uploadedAt: Date;
 	id: string;
 }
 
-/** Listing conditions; trashed objects are always excluded. */
+/**
+ * Which set of rows a listing reads.
+ * An object that has been taken in but filed nowhere carries the empty logical path, and that is what
+ * separates `inbox` from `filed`; `trashed` holds both kinds, each under the path it had.
+ */
+export type MediaObjectPageState = "inbox" | "filed" | "trashed";
+
 export interface FindMediaObjectPageInput {
+	state: MediaObjectPageState;
+	/** Narrows to one folder. The inbox is the empty path itself, so it takes none. */
 	logicalPath?: string;
 	contentTypePrefix?: string;
+	tagName?: string;
 	limit: number;
 	cursor?: MediaObjectCursor;
 }

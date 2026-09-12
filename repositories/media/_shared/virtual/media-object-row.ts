@@ -18,3 +18,8 @@ export interface MediaObjectRow {
 	syncedAt: Date;
 	trashedAt: Date | null;
 }
+
+/** The same row read together with its tag links, for the queries that report what a media carries. */
+export interface MediaObjectWithTagsRow extends MediaObjectRow {
+	tags: { tag: { name: string } }[];
+}

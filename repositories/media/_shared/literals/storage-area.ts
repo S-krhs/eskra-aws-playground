@@ -4,12 +4,13 @@
 /**
  * The areas a caller names instead of building a key. `pending` is where an upload waits for its
  * thumbnail, `inbox` is where media goes once it has one, `failed` is where thumbnail generation
- * gave up on it, and `thumbnail` holds the thumbnails.
+ * gave up on it, `deleted` is where media put in the trash waits, and `thumbnail` holds the thumbnails.
  */
 export type NamedMediaStorageArea =
 	| "pending"
 	| "inbox"
 	| "failed"
+	| "deleted"
 	| "thumbnail";
 
 /** `other` is media filed into a folder of its own, which is where everything sorted ends up. */
@@ -20,5 +21,6 @@ export const AREA_PREFIXES = {
 	pending: "_pending",
 	inbox: "_inbox",
 	failed: "_failed",
+	deleted: "_deleted",
 	thumbnail: "_thumb",
 } as const satisfies Record<NamedMediaStorageArea, string>;
