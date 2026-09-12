@@ -370,12 +370,12 @@ export const mediaStorageRepository = {
 	},
 };
 
-/** Drops the copy a move made, once the move turned out not to go through. */
+/** Never throws: a failure dropping the copy must not replace the error that made the move give up. */
 const undoCopy = async (key: string): Promise<void> => {
 	try {
 		await mediaStorageRepository.delete(key);
 	} catch {
-		// Best effort — the copy is left behind rather than losing why the source couldn't be dropped
+		// The copy is left behind rather than losing why the source couldn't be dropped
 	}
 };
 

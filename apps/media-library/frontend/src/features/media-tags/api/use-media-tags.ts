@@ -18,9 +18,9 @@ export const useMediaTags = (): MediaTags => {
 	const queryClient = useQueryClient();
 	const replace = useReplaceMediaTags({
 		mutation: {
-			// One save carries the whole set rather than the one chip that moved, so two toggled in quick
-			// succession must not overtake each other — the later request's set is the one that has to
-			// land last. A shared scope is what makes the query library run them one after another
+			// One save carries the whole set rather than the chip that moved, so two chips toggled in
+			// quick succession must land in the order they were asked for. A shared scope is what runs
+			// them one after another instead of at once
 			scope: { id: "replace-media-tags" },
 			onSuccess: async () => {
 				// A name used for the first time, or left on nothing, changes what there is to pick from,

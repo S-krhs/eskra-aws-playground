@@ -51,7 +51,7 @@ export const MediaFilterBar = ({
 	};
 	const selectState = (value: ListMediaState) => {
 		if (value === "inbox") {
-			// 未整理 has no folder to be in, so a commit still waiting would put one back
+			// The inbox side has no folder to be in, so a commit still waiting would put one back
 			clearTimeout(commitTimer.current);
 			setFolder("");
 			onChange((current) => {
