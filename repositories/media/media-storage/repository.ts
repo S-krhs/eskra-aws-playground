@@ -271,6 +271,13 @@ export const mediaStorageRepository = {
 	): Promise<StoredObjectLocation> => {
 		const key = buildAreaKeyKeepingName(input);
 
+		// Already in the area under that name; copying an object onto itself buys nothing. A caller whose
+		// row update didn't land after a move gets past this on the retry instead of meeting its own copy
+		// in the collision check below
+		if (key === input.key) {
+			return await describeStored(key);
+		}
+
 		if (await mediaStorageRepository.headIfExists(key)) {
 			throw new Error(`移動先の key が既に埋まっています: ${key}`);
 		}
@@ -282,7 +289,7 @@ export const mediaStorageRepository = {
 		try {
 			await mediaStorageRepository.delete(input.key);
 		} catch (error) {
-			await mediaStorageRepository.delete(key);
+			await undoCopy(key);
 
 			throw error;
 		}
@@ -320,7 +327,7 @@ export const mediaStorageRepository = {
 		try {
 			await mediaStorageRepository.delete(input.key);
 		} catch (error) {
-			await mediaStorageRepository.delete(key);
+			await undoCopy(key);
 
 			throw error;
 		}
@@ -361,6 +368,15 @@ export const mediaStorageRepository = {
 			new DeleteObjectCommand({ Bucket: getMediaBucket(), Key: key }),
 		);
 	},
+};
+
+/** Drops the copy a move made, once the move turned out not to go through. */
+const undoCopy = async (key: string): Promise<void> => {
+	try {
+		await mediaStorageRepository.delete(key);
+	} catch {
+		// Best effort — the copy is left behind rather than losing why the source couldn't be dropped
+	}
 };
 
 /**
@@ -449,13 +465,17 @@ const copyWithinBucket = async (input: {
 		);
 	} catch (error) {
 		// The parts already copied are billed until the upload is abandoned
-		await client.send(
-			new AbortMultipartUploadCommand({
-				Bucket: bucket,
-				Key: input.destinationKey,
-				UploadId: uploadId,
-			}),
-		);
+		try {
+			await client.send(
+				new AbortMultipartUploadCommand({
+					Bucket: bucket,
+					Key: input.destinationKey,
+					UploadId: uploadId,
+				}),
+			);
+		} catch {
+			// Best effort — the parts stay billed rather than losing why the copy failed
+		}
 
 		throw error;
 	}
