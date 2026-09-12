@@ -14,7 +14,6 @@ export type WebpageElementSource = {
 	index?: number;
 };
 
-/** The source definition pulling metrics out of a webpage. */
 export type WebpageSource = {
 	type: "webpage";
 	url: string;
@@ -53,11 +52,7 @@ export const buildHtmlParseOptions = (
 	};
 };
 
-/**
- * Takes a webpage source definition, fetches the HTML, and returns the metric list
- * @param source how to pull metrics out of the webpage
- * @returns the parsed metrics and how many were excluded as unconvertible
- */
+/** Fetches the HTML the source points at and builds the metric list out of it. */
 export const getWebpageMetrics = async (
 	source: WebpageSource,
 ): Promise<MetricBuildResult> => {

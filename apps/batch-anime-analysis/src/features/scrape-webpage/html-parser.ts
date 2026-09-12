@@ -22,7 +22,6 @@ export type HtmlValueTarget =
 			target: HtmlElementTarget;
 	  };
 
-/** How metrics are built out of HTML. */
 export interface HtmlParseOptions {
 	wrapper: HtmlElementTarget;
 	itemsSelector: string;

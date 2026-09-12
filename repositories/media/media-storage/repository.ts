@@ -265,14 +265,14 @@ export const mediaStorageRepository = {
 	 * Moves an object into an area, keeping its file name and — where `logicalPath` is passed — the
 	 * folder it was filed under. Errors rather than overwriting when that name is already taken there,
 	 * and undoes the copy if the source can't be removed afterwards.
+	 * One already sitting at the destination answers as done, so a caller whose row update didn't land
+	 * can retry without meeting its own copy in that check.
 	 */
 	moveIntoArea: async (
 		input: MoveIntoAreaInput,
 	): Promise<StoredObjectLocation> => {
 		const key = buildAreaKeyKeepingName(input);
 
-		// A caller whose row update didn't land after a move gets past this on the retry, instead of
-		// meeting its own copy in the collision check below
 		if (key === input.key) {
 			return await describeStored(key);
 		}
@@ -310,8 +310,6 @@ export const mediaStorageRepository = {
 				? buildAreaKeyKeepingName({ area: "inbox", key: input.key })
 				: buildLogicalPathKey(input);
 
-		// A caller whose row update didn't land after a move gets past this on the retry, instead of
-		// meeting its own copy in the collision check below
 		if (key === input.key) {
 			return await describeStored(key);
 		}
