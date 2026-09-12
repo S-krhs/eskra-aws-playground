@@ -42,9 +42,9 @@ const buildContentDisposition = (
 };
 
 /**
- * `encodeURIComponent` leaves `'`, `(`, `)` and `*` as they are, and none of the four is allowed in an
- * ext-value. An apostrophe is the one that actually breaks: it reads as the delimiter the charset and
- * language sit behind, and the name a browser saves the file under is cut off there.
+ * `encodeURIComponent` leaves `'`, `(`, `)` and `*` alone, and an ext-value allows none of them. The
+ * apostrophe is the one that breaks rather than merely bends the rule: it reads as the delimiter the
+ * charset and language sit behind, cutting off the name the browser saves under.
  */
 const encodeExtValue = (value: string): string => {
 	return encodeURIComponent(value).replace(/['()*]/g, (character) => {

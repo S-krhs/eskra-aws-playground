@@ -24,7 +24,6 @@ import type { Media } from "@/shared/api";
 /** Everything the screen renders from, with the features already tied together. */
 export interface MediaLibrary {
 	filter: MediaFilter;
-	/** Takes the next filter from the one in place, so a control deciding late doesn't undo a later one. */
 	setFilter: (update: (filter: MediaFilter) => MediaFilter) => void;
 	list: MediaList;
 	status: SyncStatus;

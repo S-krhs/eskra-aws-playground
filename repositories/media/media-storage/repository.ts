@@ -271,9 +271,8 @@ export const mediaStorageRepository = {
 	): Promise<StoredObjectLocation> => {
 		const key = buildAreaKeyKeepingName(input);
 
-		// Already in the area under that name; copying an object onto itself buys nothing. A caller whose
-		// row update didn't land after a move gets past this on the retry instead of meeting its own copy
-		// in the collision check below
+		// A caller whose row update didn't land after a move gets past this on the retry, instead of
+		// meeting its own copy in the collision check below
 		if (key === input.key) {
 			return await describeStored(key);
 		}
@@ -374,9 +373,7 @@ export const mediaStorageRepository = {
 const undoCopy = async (key: string): Promise<void> => {
 	try {
 		await mediaStorageRepository.delete(key);
-	} catch {
-		// The copy is left behind rather than losing why the source couldn't be dropped
-	}
+	} catch {}
 };
 
 /**
@@ -464,7 +461,8 @@ const copyWithinBucket = async (input: {
 			}),
 		);
 	} catch (error) {
-		// The parts already copied are billed until the upload is abandoned
+		// The parts already copied are billed until the upload is abandoned, but failing to abandon it
+		// must not replace the error that got us here
 		try {
 			await client.send(
 				new AbortMultipartUploadCommand({
@@ -473,9 +471,7 @@ const copyWithinBucket = async (input: {
 					UploadId: uploadId,
 				}),
 			);
-		} catch {
-			// Best effort — the parts stay billed rather than losing why the copy failed
-		}
+		} catch {}
 
 		throw error;
 	}

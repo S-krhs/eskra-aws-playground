@@ -31,9 +31,8 @@ export const MediaFilterBar = ({
 	/** The folders there are, offered as completions for the folder field. */
 	folders: string[];
 	/**
-	 * Takes what the filter should become from what it currently is. The folder field hands its value
-	 * over on a delay, by which time a button may have changed another part of the filter, and a copy
-	 * captured back when the key was pressed would put that choice back.
+	 * The folder field hands its value over on a delay, by which time a button may have changed another
+	 * part of the filter — a copy captured back when the key was pressed would put that choice back.
 	 */
 	onChange: (update: (filter: MediaFilter) => MediaFilter) => void;
 }) => {
