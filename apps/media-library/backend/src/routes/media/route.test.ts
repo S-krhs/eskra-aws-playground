@@ -379,6 +379,21 @@ describe("getMediaFile", () => {
 		);
 	});
 
+	it("escapes the characters encodeURIComponent leaves behind, which an ext-value has no room for", async () => {
+		objectRepository.findById.mockResolvedValue({
+			...storedMedia,
+			fileName: "Don't Stop (2024)*.mp4",
+		});
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}/file`,
+		);
+
+		expect(response.headers.get("content-disposition")).toBe(
+			"inline; filename*=UTF-8''Don%27t%20Stop%20%282024%29%2A.mp4",
+		);
+	});
+
 	it("asks the browser to save it rather than show it when download is asked for", async () => {
 		const response = await createApp().request(
 			`${uiOrigin}/api/media/${mediaId}/file?download=1`,

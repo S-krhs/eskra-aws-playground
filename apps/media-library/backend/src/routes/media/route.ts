@@ -38,7 +38,18 @@ const buildContentDisposition = (
 	fileName: string,
 	isDownload: boolean,
 ): string => {
-	return `${isDownload ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+	return `${isDownload ? "attachment" : "inline"}; filename*=UTF-8''${encodeExtValue(fileName)}`;
+};
+
+/**
+ * `encodeURIComponent` leaves `'`, `(`, `)` and `*` as they are, and none of the four is allowed in an
+ * ext-value. An apostrophe is the one that actually breaks: it reads as the delimiter the charset and
+ * language sit behind, and the name a browser saves the file under is cut off there.
+ */
+const encodeExtValue = (value: string): string => {
+	return encodeURIComponent(value).replace(/['()*]/g, (character) => {
+		return `%${character.charCodeAt(0).toString(16).toUpperCase()}`;
+	});
 };
 
 export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
