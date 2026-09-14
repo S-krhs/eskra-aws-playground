@@ -25,8 +25,10 @@ export const MediaTile = ({
 	const isVideo = media.contentType.startsWith("video/");
 
 	return (
-		// The checkbox sits beside the button rather than inside it: a button can't hold another control
-		<div className="group relative h-full select-none">
+		// The checkbox sits beside the button rather than inside it: a button can't hold another control.
+		// min-h-0 because a grid item's automatic minimum is its content: the image would stretch the row
+		// past its fixed height into the next one
+		<div className="group relative h-full min-h-0 select-none">
 			<button
 				type="button"
 				onClick={(event) => {
@@ -81,8 +83,11 @@ export const MediaTile = ({
 						nativeEvent instanceof MouseEvent && nativeEvent.shiftKey,
 					);
 				}}
+				// daisyUI's checkbox sits in a layer nested inside utilities, so a plain utility beats it: a
+				// background left on while checked hides the fill and the white tick. The theme's round
+				// selector radius would read as a radio button, hence rounded-xs.
 				// A pointer that can't hover would never reveal it, so it always shows there
-				className={`checkbox checkbox-primary checkbox-sm absolute top-1.5 left-1.5 bg-base-100 ${isSelecting ? "" : "opacity-0 pointer-coarse:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"}`}
+				className={`checkbox checkbox-primary checkbox-sm absolute top-1.5 left-1.5 rounded-xs not-checked:bg-base-100 ${isSelecting ? "" : "opacity-0 pointer-coarse:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"}`}
 			/>
 		</div>
 	);
