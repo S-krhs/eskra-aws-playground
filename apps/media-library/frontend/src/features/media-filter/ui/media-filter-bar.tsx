@@ -10,9 +10,32 @@ import { useTagFilter } from "../model/use-tag-filter.js";
 const FOLDER_COMMIT_DELAY_MS = 300;
 
 const STATES = [
-	{ label: "未整理", value: "inbox" },
-	{ label: "ライブラリ", value: "filed" },
-	{ label: "ゴミ箱", value: "trashed" },
+	{
+		label: "未整理",
+		value: "inbox",
+		icon: [
+			"M5 4h14l2 9v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6Z",
+			"M3 13h5l1.5 2.5h5L16 13h5",
+		],
+	},
+	{
+		label: "ライブラリ",
+		value: "filed",
+		icon: [
+			"M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z",
+		],
+	},
+	{
+		label: "ゴミ箱",
+		value: "trashed",
+		icon: [
+			"M4 7h16",
+			"M9 7V4h6v3",
+			"M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12",
+			"M10 11v5",
+			"M14 11v5",
+		],
+	},
 ] as const;
 
 const KINDS = [
@@ -74,25 +97,41 @@ export const MediaFilterBar = ({
 				<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
 					表示
 				</legend>
-				<div className="join md:join-vertical md:w-full">
+				{/* A place to look in rather than a condition, so it reads as a file manager's list, not a switch */}
+				<ul className="menu menu-horizontal md:menu-vertical w-full gap-0.5 p-0">
 					{STATES.map((state) => {
 						const isActive = (filter.state ?? "filed") === state.value;
 
 						return (
-							<button
-								key={state.value}
-								type="button"
-								aria-pressed={isActive}
-								onClick={() => {
-									selectState(state.value);
-								}}
-								className={`btn join-item btn-sm ${isActive ? "btn-primary" : ""}`}
-							>
-								{state.label}
-							</button>
+							<li key={state.value}>
+								<button
+									type="button"
+									aria-pressed={isActive}
+									onClick={() => {
+										selectState(state.value);
+									}}
+									className={`gap-2.5 ${isActive ? "bg-primary/10 font-medium text-primary" : "text-base-content/80"}`}
+								>
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth={1.8}
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										aria-hidden="true"
+										className="size-4 shrink-0"
+									>
+										{state.icon.map((d) => {
+											return <path key={d} d={d} />;
+										})}
+									</svg>
+									{state.label}
+								</button>
+							</li>
 						);
 					})}
-				</div>
+				</ul>
 			</fieldset>
 
 			<fieldset>
