@@ -2,6 +2,7 @@
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
 import { buildThumbnailKey } from "../_shared/formatter/object-key.js";
+import { toMediaObjectWhere } from "../_shared/query/media-object-filter.js";
 import type { MediaObjectWithTagsRow } from "../_shared/virtual/media-object-row.js";
 import type {
 	FindMediaObjectPageInput,
@@ -145,19 +146,7 @@ export const mediaObjectRepository = {
 		const prisma = getPrismaClient();
 		const rows = await prisma.mediaObject.findMany({
 			where: {
-				trashedAt: input.state === "trashed" ? { not: null } : null,
-				// The inbox and the library are the same side of the trash, split on the logical path:
-				// an object nothing has filed carries the empty one. The trash keeps the path each
-				// object was filed under, so it answers for both kinds on whatever path it is given
-				logicalPath: input.state === "inbox" ? "" : input.logicalPath,
-				NOT: input.state === "filed" ? { logicalPath: "" } : undefined,
-				contentType: input.contentTypePrefix
-					? { startsWith: input.contentTypePrefix }
-					: undefined,
-				// One `some` per name: a single `some` with `in` would keep an object carrying any of them
-				AND: input.tagNames?.map((name) => {
-					return { tags: { some: { tag: { name } } } };
-				}),
+				...toMediaObjectWhere(input),
 				...(input.cursor ? toCursorFilter(input.cursor) : {}),
 			},
 			include: { tags: TAG_NAMES_SELECTION },

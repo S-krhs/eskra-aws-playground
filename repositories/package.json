@@ -12,6 +12,7 @@
 		"./media/_shared/virtual/*.js": null,
 		"./media/_shared/literals/*.js": null,
 		"./media/_shared/formatter/*.js": null,
+		"./media/_shared/query/*.js": null,
 		"./media/*.test.js": null,
 		"./media/*.js": {
 			"types": "./dist/media/*.d.ts",

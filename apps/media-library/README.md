@@ -25,7 +25,7 @@
 | `PATCH /api/media/:id` | フォルダへ移す。R2 の Copy+Delete(5GB 超は multipart copy)と DB の付け替えを行う。空文字で `_inbox/` へ戻す |
 | `PUT /api/media/:id/tags` | タグを入れ替える。知らない名前は作り、誰も使わなくなったタグは消す |
 | `GET /api/folders` | 登録済みのフォルダと、メディアが実際に入っているフォルダを名前順に返す |
-| `GET /api/tags` | 使われているタグを、付いているメディアの件数と一緒に件数の多い順で返す(ゴミ箱と未整理のメディアも数える) |
+| `GET /api/tags` | 使われているタグを、付いているメディアの件数と一緒に件数の多い順で返す。`state`・`logicalPath`・`contentTypePrefix`・`tag` を一覧と同じように渡すと、その絞り込みに合うメディアだけを数え、どれにも付いていないタグは返さない。`state` を省くとゴミ箱と未整理も含めて数える |
 | `POST /api/sync` | 同期 Lambda を非同期で起動する。完了は待たない(202) |
 | `GET /api/sync/status` | 直近の実行と、実行中の実行を返す |
 

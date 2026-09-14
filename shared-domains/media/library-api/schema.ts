@@ -22,31 +22,31 @@ export const mediaCursorSchema = z
 	})
 	.openapi("MediaCursor");
 
+/**
+ * Which of the three sides to read. `inbox` is what has been taken in but not filed into a folder yet,
+ * `filed` is the library proper, and `trashed` is both of them once they are in the trash.
+ * They never mix, so one listing answers for all three.
+ */
+const mediaStateSchema = z.enum(["inbox", "filed", "trashed"]);
+
+/**
+ * Narrows to the media carrying every tag named, one per repeated key.
+ * The validator hands a key given once over as a plain string, so it is wrapped before being read.
+ */
+const tagNamesQuerySchema = z.preprocess(
+	(value) => {
+		return typeof value === "string" ? [value] : value;
+	},
+	z.array(z.string().min(1).max(MEDIA_TAG_MAX_LENGTH)).max(MEDIA_TAG_MAX_COUNT),
+);
+
 /** The cursor's two fields have to travel together; that pairing is checked in the route, since OpenAPI can't state it. */
 export const mediaListQuerySchema = z.object({
-	/**
-	 * Which of the three sides to read. `inbox` is what has been taken in but not filed into a folder
-	 * yet, `filed` is the library proper, and `trashed` is both of them once they are in the trash.
-	 * They never mix, so one listing answers for all three.
-	 */
-	state: z.enum(["inbox", "filed", "trashed"]).default("filed"),
+	state: mediaStateSchema.default("filed"),
 	/** Narrows to one folder. The inbox is the media no folder holds, so it takes none. */
 	logicalPath: z.string().min(1).optional(),
 	contentTypePrefix: z.string().min(1).optional(),
-	/**
-	 * Narrows to the media carrying every tag named, one per repeated key.
-	 * The validator hands a key given once over as a plain string, so it is wrapped before being read.
-	 */
-	tag: z
-		.preprocess(
-			(value) => {
-				return typeof value === "string" ? [value] : value;
-			},
-			z
-				.array(z.string().min(1).max(MEDIA_TAG_MAX_LENGTH))
-				.max(MEDIA_TAG_MAX_COUNT),
-		)
-		.optional(),
+	tag: tagNamesQuerySchema.optional(),
 	limit: z.coerce
 		.number()
 		.int()
@@ -149,7 +149,18 @@ export const tagListResponseSchema = z
 	})
 	.openapi("TagListResponse");
 
-/** The count covers trashed media and media still in the inbox too. */
+/**
+ * The narrowing the listing takes, for counting the tags on what it would list. Unlike the listing,
+ * `state` has no default: leaving it out counts every side at once, trashed media and the inbox included.
+ */
+export const tagUsageListQuerySchema = z.object({
+	state: mediaStateSchema.optional(),
+	logicalPath: z.string().min(1).optional(),
+	contentTypePrefix: z.string().min(1).optional(),
+	tag: tagNamesQuerySchema.optional(),
+});
+
+/** The count covers only the media the query narrowed to. */
 export const tagUsageSchema = z
 	.object({
 		name: z.string(),
@@ -157,7 +168,7 @@ export const tagUsageSchema = z
 	})
 	.openapi("TagUsage");
 
-/** The tags in use, the one carried by the most media first. */
+/** The tags carried by at least one of the media counted, the one carried by the most first. */
 export const tagUsageListResponseSchema = z
 	.object({
 		tags: z.array(tagUsageSchema),

@@ -91,7 +91,7 @@ describe.skipIf(!testDatabaseUrl)("mediaTagRepository (integration)", () => {
 
 		await mediaTagRepository.replaceObjectTags(mediaId, [landscapeTag]);
 
-		const names = (await mediaTagRepository.findAll()).map((tag) => {
+		const names = (await mediaTagRepository.findUsages({})).map((tag) => {
 			return tag.name;
 		});
 		expect(names).toContain(landscapeTag);
@@ -113,7 +113,7 @@ describe.skipIf(!testDatabaseUrl)("mediaTagRepository (integration)", () => {
 		await mediaTagRepository.replaceObjectTags(mediaId, tagNames);
 		await mediaTagRepository.replaceObjectTags(otherMediaId, [landscapeTag]);
 
-		const tags = (await mediaTagRepository.findAll()).filter((tag) => {
+		const tags = (await mediaTagRepository.findUsages({})).filter((tag) => {
 			return tagNames.includes(tag.name);
 		});
 
@@ -125,6 +125,60 @@ describe.skipIf(!testDatabaseUrl)("mediaTagRepository (integration)", () => {
 			{ name: landscapeTag, mediaCount: 2 },
 			{ name: referenceTag, mediaCount: 1 },
 		]);
+	});
+
+	it("counts only the media carrying the tags named, alongside those tags themselves", async () => {
+		await insertMedia(mediaId, "a.png");
+		await insertMedia(otherMediaId, "b.png");
+		await mediaTagRepository.replaceObjectTags(mediaId, tagNames);
+		await mediaTagRepository.replaceObjectTags(otherMediaId, [landscapeTag]);
+
+		const tags = await mediaTagRepository.findUsages({
+			state: "filed",
+			logicalPath,
+			tagNames: [referenceTag],
+		});
+
+		// A tie falls back to the name order, which puts this one first
+		expect(
+			tags.map((tag) => {
+				return { name: tag.name, mediaCount: tag.mediaCount };
+			}),
+		).toEqual([
+			{ name: referenceTag, mediaCount: 1 },
+			{ name: landscapeTag, mediaCount: 1 },
+		]);
+	});
+
+	it("leaves out a tag carried only on the other side of the trash, unless no state is named", async () => {
+		await insertMedia(mediaId, "a.png");
+		await insertMedia(otherMediaId, "b.png");
+		await mediaTagRepository.replaceObjectTags(mediaId, [landscapeTag]);
+		await mediaTagRepository.replaceObjectTags(otherMediaId, [referenceTag]);
+		await mediaObjectRepository.updateTrashedLocation({
+			id: otherMediaId,
+			trashedAt: syncedAt,
+			objectKey: `${keyPrefix}_deleted/b.png`,
+			logicalPath,
+			byteSize: 1234,
+			etag: "etag-1",
+			syncedAt,
+		});
+
+		const toNames = (tags: { name: string }[]): string[] => {
+			return tags.map((tag) => {
+				return tag.name;
+			});
+		};
+
+		expect(
+			toNames(
+				await mediaTagRepository.findUsages({ state: "filed", logicalPath }),
+			),
+		).toEqual([landscapeTag]);
+		expect(
+			toNames(await mediaTagRepository.findUsages({ logicalPath })),
+		).toEqual([referenceTag, landscapeTag]);
 	});
 
 	it("narrows the listing to the media carrying every tag named", async () => {

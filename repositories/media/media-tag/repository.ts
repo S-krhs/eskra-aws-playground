@@ -1,28 +1,41 @@
-// In scope: reading the tags in use, and replacing the ones one media object carries
+// In scope: reading the tags on the media a filter keeps, and replacing the ones one media object carries
 // Out of scope: MediaObject rows, storage, deciding which tags a caller means, normalising a name
 import { getPrismaClient } from "../../client/prisma.js";
+import { toMediaObjectWhere } from "../_shared/query/media-object-filter.js";
+import type { MediaObjectFilter } from "../media-object/types.js";
 import type { MediaTag, MediaTagUsage } from "./types.js";
 
 export const mediaTagRepository = {
-	/** Every tag in use, the one carried by the most media objects first and ties by name. */
-	findAll: async (): Promise<MediaTagUsage[]> => {
+	/**
+	 * The tags carried by at least one of the media objects the filter keeps, with how many of those carry
+	 * each — the one carried by the most first and ties by name. An empty filter counts every object.
+	 */
+	findUsages: async (filter: MediaObjectFilter): Promise<MediaTagUsage[]> => {
 		const prisma = getPrismaClient();
+		const counted = { mediaObject: toMediaObjectWhere(filter) };
 		const tags = await prisma.mediaTag.findMany({
+			where: { mediaObjects: { some: counted } },
 			select: {
 				id: true,
 				name: true,
-				_count: { select: { mediaObjects: true } },
+				_count: { select: { mediaObjects: { where: counted } } },
 			},
-			orderBy: [{ mediaObjects: { _count: "desc" } }, { name: "asc" }],
+			orderBy: { name: "asc" },
 		});
 
-		return tags.map((tag) => {
-			return {
-				id: tag.id,
-				name: tag.name,
-				mediaCount: tag._count.mediaObjects,
-			};
-		});
+		// Prisma can order by a relation's whole count but not by a filtered one, so the count order is
+		// applied here; the sort is stable, which keeps the name order within a tie
+		return tags
+			.map((tag) => {
+				return {
+					id: tag.id,
+					name: tag.name,
+					mediaCount: tag._count.mediaObjects,
+				};
+			})
+			.sort((a, b) => {
+				return b.mediaCount - a.mediaCount;
+			});
 	},
 
 	/**

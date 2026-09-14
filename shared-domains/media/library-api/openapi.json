@@ -893,14 +893,71 @@
 		"/tags": {
 			"get": {
 				"operationId": "listTags",
-				"summary": "使われているタグを、付いているメディアの多い順に返す",
+				"summary": "絞り込みに合うメディアに付いているタグを、付いている件数の多い順に返す",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"enum": [
+								"inbox",
+								"filed",
+								"trashed"
+							]
+						},
+						"required": false,
+						"name": "state",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1
+						},
+						"required": false,
+						"name": "logicalPath",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "string",
+							"minLength": 1
+						},
+						"required": false,
+						"name": "contentTypePrefix",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 64
+							},
+							"maxItems": 50
+						},
+						"required": false,
+						"name": "tag",
+						"in": "query"
+					}
+				],
 				"responses": {
 					"200": {
-						"description": "使われているタグと、それが付いているメディアの件数",
+						"description": "絞り込みに合うメディアに付いているタグと、そのうち何件に付いているか",
 						"content": {
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/TagUsageListResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "query の項目が不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}

@@ -47,7 +47,7 @@ vi.mock(
 );
 
 const tagRepository = vi.hoisted(() => {
-	return { findAll: vi.fn(), replaceObjectTags: vi.fn() };
+	return { findUsages: vi.fn(), replaceObjectTags: vi.fn() };
 });
 
 vi.mock(
@@ -102,8 +102,8 @@ beforeEach(() => {
 	objectRepository.updateTrashedLocation.mockResolvedValue(1);
 	windowsClipboard.copyFileToWindowsClipboard.mockReset();
 	windowsClipboard.copyFileToWindowsClipboard.mockResolvedValue(undefined);
-	tagRepository.findAll.mockReset();
-	tagRepository.findAll.mockResolvedValue([
+	tagRepository.findUsages.mockReset();
+	tagRepository.findUsages.mockResolvedValue([
 		{ id: 2, name: "風景", mediaCount: 3 },
 		{ id: 1, name: "資料", mediaCount: 1 },
 	]);
@@ -614,6 +614,45 @@ describe("listTags", () => {
 				{ name: "資料", mediaCount: 1 },
 			],
 		});
+	});
+
+	it("counts only the media the query narrows to, passing on every repeated tag", async () => {
+		const tags = ["風景", "資料"]
+			.map((tag) => {
+				return `tag=${encodeURIComponent(tag)}`;
+			})
+			.join("&");
+		const response = await createApp().request(
+			`${uiOrigin}/api/tags?state=trashed&logicalPath=photos&contentTypePrefix=image%2F&${tags}`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(tagRepository.findUsages).toHaveBeenCalledWith({
+			state: "trashed",
+			logicalPath: "photos",
+			contentTypePrefix: "image/",
+			tagNames: ["風景", "資料"],
+		});
+	});
+
+	it("names no state when none is asked for, so every side is counted", async () => {
+		await createApp().request(`${uiOrigin}/api/tags`);
+
+		expect(tagRepository.findUsages).toHaveBeenCalledWith({
+			state: undefined,
+			logicalPath: undefined,
+			contentTypePrefix: undefined,
+			tagNames: undefined,
+		});
+	});
+
+	it("refuses a state it doesn't know", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/tags?state=everything`,
+		);
+
+		expect(response.status).toBe(400);
+		expect(tagRepository.findUsages).not.toHaveBeenCalled();
 	});
 });
 
