@@ -1,7 +1,6 @@
 // In scope: reading the tags on the media a filter keeps, and replacing the ones one media object carries
 // Out of scope: MediaObject rows, storage, deciding which tags a caller means, normalising a name
 import { getPrismaClient } from "../../client/prisma.js";
-import { toMediaObjectWhere } from "../_shared/query/media-object-filter.js";
 import type { MediaObjectFilter } from "../media-object/types.js";
 import type { MediaTag, MediaTagUsage } from "./types.js";
 
@@ -10,9 +9,32 @@ export const mediaTagRepository = {
 	 * The tags carried by at least one of the media objects the filter keeps, with how many of those carry
 	 * each — the one carried by the most first and ties by name.
 	 */
-	findUsages: async (filter: MediaObjectFilter): Promise<MediaTagUsage[]> => {
+	findUsages: async (input: MediaObjectFilter): Promise<MediaTagUsage[]> => {
 		const prisma = getPrismaClient();
-		const counted = { mediaObject: toMediaObjectWhere(filter) };
+		const counted = {
+			// Written out the same as the condition mediaObjectRepository.findPage lists under, so a count
+			// describes what that listing shows
+			mediaObject: {
+				trashedAt:
+					input.state === undefined
+						? undefined
+						: input.state === "trashed"
+							? { not: null }
+							: null,
+				// The inbox and the library are the same side of the trash, split on the logical path: an
+				// object nothing has filed carries the empty one. The trash keeps the path each object was
+				// filed under, so it answers for both kinds on whatever path it is given
+				logicalPath: input.state === "inbox" ? "" : input.logicalPath,
+				NOT: input.state === "filed" ? { logicalPath: "" } : undefined,
+				contentType: input.contentTypePrefix
+					? { startsWith: input.contentTypePrefix }
+					: undefined,
+				// One `some` per name: a single `some` with `in` would keep an object carrying any of them
+				AND: input.tagNames?.map((name) => {
+					return { tags: { some: { tag: { name } } } };
+				}),
+			},
+		};
 		const tags = await prisma.mediaTag.findMany({
 			where: { mediaObjects: { some: counted } },
 			select: {
