@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { MediaFilter } from "@/entities/media";
 import type { ListMediaState, TagUsage } from "@/shared/api";
+import { ClearInputButton } from "@/shared/ui";
 import { useTagFilter } from "../model/use-tag-filter.js";
 
 // Long enough that a folder name is typed out before the listing is asked for again
@@ -149,17 +150,13 @@ export const MediaFilterBar = ({
 							}}
 						/>
 						{folder === "" ? null : (
-							<button
-								type="button"
-								aria-label="フォルダの入力を消す"
+							<ClearInputButton
+								label="フォルダの入力を消す"
 								onClick={() => {
 									setFolder("");
 									commitFolder("");
 								}}
-								className="btn btn-ghost btn-xs btn-circle text-base-content/60"
-							>
-								✕
-							</button>
+							/>
 						)}
 					</label>
 					<datalist id="media-filter-folders">
@@ -187,7 +184,7 @@ export const MediaFilterBar = ({
 				<div className="flex flex-col gap-2.5">
 					<label className="input input-sm w-full pe-1 sm:w-64 md:w-full">
 						<input
-							type="search"
+							type="text"
 							aria-label="タグを検索"
 							placeholder="タグを検索"
 							value={tagFilter.query}
@@ -196,16 +193,12 @@ export const MediaFilterBar = ({
 							}}
 						/>
 						{tagFilter.query === "" ? null : (
-							<button
-								type="button"
-								aria-label="タグの検索を消す"
+							<ClearInputButton
+								label="タグの検索を消す"
 								onClick={() => {
 									tagFilter.setQuery("");
 								}}
-								className="btn btn-ghost btn-xs btn-circle text-base-content/60"
-							>
-								✕
-							</button>
+							/>
 						)}
 					</label>
 					{tagFilter.offeredTags.length === 0 ? (

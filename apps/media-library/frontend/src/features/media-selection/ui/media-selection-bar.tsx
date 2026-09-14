@@ -2,11 +2,13 @@
 // Out of scope: holding the selection, sending the requests, the words for how a run is going
 import { useState } from "react";
 import type { ListMediaState } from "@/shared/api";
+import { ClearInputButton } from "@/shared/ui";
 
 /** `message` stays once the selection has emptied, so how the run ended still reads. */
 export const MediaSelectionBar = ({
 	selectedCount,
 	listedCount,
+	hasMore,
 	state,
 	folderSuggestions,
 	isBusy,
@@ -19,6 +21,8 @@ export const MediaSelectionBar = ({
 }: {
 	selectedCount: number;
 	listedCount: number;
+	/** The listing goes on past what has been read in, and selecting all takes only what has. */
+	hasMore: boolean;
 	state: ListMediaState;
 	folderSuggestions: string[];
 	/** Holds back only the actions; selecting stays open during a run. */
@@ -45,7 +49,9 @@ export const MediaSelectionBar = ({
 					onClick={onSelectAll}
 					className="btn btn-ghost btn-sm rounded-full"
 				>
-					{listedCount} 件をすべて選択
+					{hasMore
+						? `読み込み済みの ${listedCount} 件を選択`
+						: `${listedCount} 件をすべて選択`}
 				</button>
 			) : null}
 			{selectedCount === 0 ? null : (
@@ -83,16 +89,12 @@ export const MediaSelectionBar = ({
 									}}
 								/>
 								{folder === "" ? null : (
-									<button
-										type="button"
-										aria-label="フォルダの入力を消す"
+									<ClearInputButton
+										label="フォルダの入力を消す"
 										onClick={() => {
 											setFolder("");
 										}}
-										className="btn btn-ghost btn-xs btn-circle text-base-content/60"
-									>
-										✕
-									</button>
+									/>
 								)}
 							</label>
 							<datalist id="media-selection-folders">

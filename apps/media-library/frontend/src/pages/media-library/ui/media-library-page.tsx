@@ -109,6 +109,7 @@ export const MediaLibraryPage = () => {
 						<MediaSelectionBar
 							selectedCount={selection.selectedIds.size}
 							listedCount={list.items.length}
+							hasMore={list.hasMore}
 							state={filter.state ?? "filed"}
 							folderSuggestions={folderSuggestions}
 							isBusy={selectionActions.status.kind === "pending"}

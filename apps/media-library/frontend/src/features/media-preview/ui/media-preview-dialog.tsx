@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { getGetMediaFileUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
+import { ClearInputButton } from "@/shared/ui";
 
 const toDetails = (media: Media): { label: string; value: string }[] => {
 	return [
@@ -145,16 +146,12 @@ export const MediaPreviewDialog = ({
 									/>
 									{/* Clearing only empties the field; 移す still has to be pressed to send it to the inbox */}
 									{folder === "" || isTrashed ? null : (
-										<button
-											type="button"
-											aria-label="フォルダの入力を消す"
+										<ClearInputButton
+											label="フォルダの入力を消す"
 											onClick={() => {
 												setFolder("");
 											}}
-											className="btn btn-ghost btn-xs btn-circle text-base-content/60"
-										>
-											✕
-										</button>
+										/>
 									)}
 								</label>
 								<datalist id="media-folder-suggestions">
