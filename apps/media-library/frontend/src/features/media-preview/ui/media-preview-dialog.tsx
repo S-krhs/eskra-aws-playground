@@ -277,7 +277,7 @@ export const MediaPreviewDialog = ({
 							onClick={onRestore}
 							className="btn btn-sm rounded-full"
 						>
-							元に戻す
+							ゴミ箱から戻す
 						</button>
 					) : (
 						<button

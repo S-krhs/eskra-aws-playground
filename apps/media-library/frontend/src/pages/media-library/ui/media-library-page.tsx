@@ -27,9 +27,9 @@ const RUN_WORDS: Record<
 		failed: "ゴミ箱へ入れられませんでした",
 	},
 	restore: {
-		doing: "元に戻しています",
-		done: "元に戻しました",
-		failed: "元に戻せませんでした",
+		doing: "ゴミ箱から戻しています",
+		done: "ゴミ箱から戻しました",
+		failed: "ゴミ箱から戻せませんでした",
 	},
 };
 
