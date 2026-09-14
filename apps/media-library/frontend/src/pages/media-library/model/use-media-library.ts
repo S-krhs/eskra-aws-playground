@@ -13,6 +13,12 @@ import {
 	useMediaMove,
 } from "@/features/media-move";
 import {
+	type MediaSelection,
+	type MediaSelectionActions,
+	useMediaSelection,
+	useMediaSelectionActions,
+} from "@/features/media-selection";
+import {
 	type MediaTags,
 	useMediaTags,
 	useTagList,
@@ -31,6 +37,8 @@ export interface MediaLibrary {
 	clipboard: MediaClipboard;
 	tags: MediaTags;
 	move: MediaMove;
+	selection: MediaSelection;
+	selectionActions: MediaSelectionActions;
 	/** The tags in use, for narrowing the listing and for completing a new one. */
 	tagSuggestions: string[];
 	/** The folders there are, for narrowing the listing and for filing media into one. */
@@ -49,6 +57,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const clipboard = useMediaClipboard();
 	const tags = useMediaTags();
 	const move = useMediaMove();
+	const selectionActions = useMediaSelectionActions();
 	const tagSuggestions = useTagList();
 	const folderSuggestions = useFolderList();
 
@@ -71,6 +80,11 @@ export const useMediaLibrary = (): MediaLibrary => {
 	}
 
 	const list = useMediaList({ filter, syncedAt });
+	const selection = useMediaSelection(
+		list.items.map((media) => {
+			return media.id;
+		}),
+	);
 
 	return {
 		filter,
@@ -81,6 +95,8 @@ export const useMediaLibrary = (): MediaLibrary => {
 		clipboard,
 		tags,
 		move,
+		selection,
+		selectionActions,
 		tagSuggestions,
 		folderSuggestions,
 		preview,

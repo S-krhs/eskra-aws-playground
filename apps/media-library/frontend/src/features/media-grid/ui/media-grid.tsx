@@ -1,7 +1,7 @@
 // In scope: the listing's virtual scroll and asking for more as the end comes into view
 // Out of scope: fetching the listing, how a tile looks, deciding the filter conditions
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useCallback, useRef, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
 import type { Media } from "@/shared/api";
 import type { MediaList } from "../api/use-media-list.js";
 import { MediaTile } from "./media-tile.js";
@@ -20,10 +20,16 @@ const PREFETCH_ROWS = 2;
 /** Lays the fetched media out in a grid and appends more as the user scrolls. */
 export const MediaGrid = ({
 	list,
-	onSelect,
+	selectedIds,
+	toolbar,
+	onOpen,
+	onToggle,
 }: {
 	list: MediaList;
-	onSelect: (media: Media) => void;
+	selectedIds: ReadonlySet<string>;
+	toolbar: ReactNode;
+	onOpen: (media: Media) => void;
+	onToggle: (mediaId: string, isRange: boolean) => void;
 }) => {
 	const container = useRef<HTMLDivElement | null>(null);
 	const [columns, setColumns] = useState(1);
@@ -78,13 +84,14 @@ export const MediaGrid = ({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
 			{/* Reads how far the listing has been scrolled in; the API gives no total, so it counts what is here */}
-			<div className="flex shrink-0 items-center gap-2 border-base-300 border-b bg-base-100 px-3 py-2">
+			<div className="flex shrink-0 flex-wrap items-center gap-2 border-base-300 border-b bg-base-100 px-3 py-2">
 				<p className="text-base-content/60 text-xs">
 					{list.items.length} 件{list.hasMore ? "以上" : ""}
 				</p>
 				{list.isLoading ? (
 					<span className="loading loading-dots loading-xs text-base-content/40" />
 				) : null}
+				<div className="ml-auto">{toolbar}</div>
 			</div>
 
 			{list.error ? (
@@ -128,7 +135,10 @@ export const MediaGrid = ({
 										<MediaTile
 											key={media.id}
 											media={media}
-											onSelect={onSelect}
+											isSelected={selectedIds.has(media.id)}
+											isSelecting={selectedIds.size > 0}
+											onOpen={onOpen}
+											onToggle={onToggle}
 										/>
 									);
 								})}
