@@ -3,9 +3,8 @@
 import { readRejection, readResponseFailure } from "@/shared/api";
 
 /**
- * Never two at once: storage checks that a destination key is free and only then copies into it, so
- * two objects sharing a file name moved into one folder together could both pass the check, and one
- * would overwrite the other before both sources are deleted.
+ * Never two at once: the server queues every move itself, so sending them together gains nothing and
+ * only holds each request open until its turn comes.
  * A failure doesn't stop the rest.
  */
 export const sendInTurn = async (input: {
