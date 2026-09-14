@@ -197,6 +197,35 @@
 					"folders"
 				]
 			},
+			"TagUsageListResponse": {
+				"type": "object",
+				"properties": {
+					"tags": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/TagUsage"
+						}
+					}
+				},
+				"required": [
+					"tags"
+				]
+			},
+			"TagUsage": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"mediaCount": {
+						"type": "number"
+					}
+				},
+				"required": [
+					"name",
+					"mediaCount"
+				]
+			},
 			"SyncStatusResponse": {
 				"type": "object",
 				"properties": {
@@ -864,14 +893,14 @@
 		"/tags": {
 			"get": {
 				"operationId": "listTags",
-				"summary": "使われているタグを名前順に返す",
+				"summary": "使われているタグを、付いているメディアの多い順に返す",
 				"responses": {
 					"200": {
-						"description": "使われているタグ",
+						"description": "使われているタグと、それが付いているメディアの件数",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/TagListResponse"
+									"$ref": "#/components/schemas/TagUsageListResponse"
 								}
 							}
 						}

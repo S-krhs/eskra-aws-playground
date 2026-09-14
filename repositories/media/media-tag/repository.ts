@@ -1,16 +1,27 @@
 // In scope: reading the tags in use, and replacing the ones one media object carries
 // Out of scope: MediaObject rows, storage, deciding which tags a caller means, normalising a name
 import { getPrismaClient } from "../../client/prisma.js";
-import type { MediaTag } from "./types.js";
+import type { MediaTag, MediaTagUsage } from "./types.js";
 
 export const mediaTagRepository = {
-	/** Every tag in use, by name. */
-	findAll: async (): Promise<MediaTag[]> => {
+	/** Every tag in use, the one carried by the most media objects first and ties by name. */
+	findAll: async (): Promise<MediaTagUsage[]> => {
 		const prisma = getPrismaClient();
+		const tags = await prisma.mediaTag.findMany({
+			select: {
+				id: true,
+				name: true,
+				_count: { select: { mediaObjects: true } },
+			},
+			orderBy: [{ mediaObjects: { _count: "desc" } }, { name: "asc" }],
+		});
 
-		return await prisma.mediaTag.findMany({
-			select: { id: true, name: true },
-			orderBy: { name: "asc" },
+		return tags.map((tag) => {
+			return {
+				id: tag.id,
+				name: tag.name,
+				mediaCount: tag._count.mediaObjects,
+			};
 		});
 	},
 

@@ -104,8 +104,8 @@ beforeEach(() => {
 	windowsClipboard.copyFileToWindowsClipboard.mockResolvedValue(undefined);
 	tagRepository.findAll.mockReset();
 	tagRepository.findAll.mockResolvedValue([
-		{ id: 1, name: "資料" },
-		{ id: 2, name: "風景" },
+		{ id: 2, name: "風景", mediaCount: 3 },
+		{ id: 1, name: "資料", mediaCount: 1 },
 	]);
 	tagRepository.replaceObjectTags.mockReset();
 	tagRepository.replaceObjectTags.mockResolvedValue([{ id: 2, name: "風景" }]);
@@ -604,11 +604,16 @@ describe("replaceMediaTags", () => {
 });
 
 describe("listTags", () => {
-	it("answers with the tag names in use, and not their ids", async () => {
+	it("answers with the tags in use and how many media carry each, and not their ids", async () => {
 		const response = await createApp().request(`${uiOrigin}/api/tags`);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ tags: ["資料", "風景"] });
+		expect(await response.json()).toEqual({
+			tags: [
+				{ name: "風景", mediaCount: 3 },
+				{ name: "資料", mediaCount: 1 },
+			],
+		});
 	});
 });
 

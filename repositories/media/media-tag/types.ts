@@ -6,3 +6,8 @@ export interface MediaTag {
 	id: number;
 	name: string;
 }
+
+/** A tag with how many media objects carry it, trashed ones and ones still in the inbox included. */
+export interface MediaTagUsage extends MediaTag {
+	mediaCount: number;
+}

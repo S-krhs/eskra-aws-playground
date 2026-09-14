@@ -149,6 +149,21 @@ export const tagListResponseSchema = z
 	})
 	.openapi("TagListResponse");
 
+/** One tag in use. The count covers trashed media and media still in the inbox too. */
+export const tagUsageSchema = z
+	.object({
+		name: z.string(),
+		mediaCount: z.number(),
+	})
+	.openapi("TagUsage");
+
+/** The tags in use, the one carried by the most media first. */
+export const tagUsageListResponseSchema = z
+	.object({
+		tags: z.array(tagUsageSchema),
+	})
+	.openapi("TagUsageListResponse");
+
 /** One sync run. A null finishedAt means it is still going. */
 export const syncRunSchema = z
 	.object({
@@ -175,6 +190,7 @@ export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
 export type Media = z.infer<typeof mediaSchema>;
 export type MediaListResponse = z.infer<typeof mediaListResponseSchema>;
 export type TagListResponse = z.infer<typeof tagListResponseSchema>;
+export type TagUsageListResponse = z.infer<typeof tagUsageListResponseSchema>;
 export type FolderListResponse = z.infer<typeof folderListResponseSchema>;
 export type MediaLocationResponse = z.infer<typeof mediaLocationResponseSchema>;
 export type SyncRun = z.infer<typeof syncRunSchema>;

@@ -106,6 +106,27 @@ describe.skipIf(!testDatabaseUrl)("mediaTagRepository (integration)", () => {
 		expect((await mediaObjectRepository.findById(mediaId))?.tags).toEqual([]);
 	});
 
+	it("counts the media carrying each tag and puts the most carried first", async () => {
+		await insertMedia(mediaId, "a.png");
+		await insertMedia(otherMediaId, "b.png");
+		// The name order is the other way round, so passing on it alone can't satisfy this
+		await mediaTagRepository.replaceObjectTags(mediaId, tagNames);
+		await mediaTagRepository.replaceObjectTags(otherMediaId, [landscapeTag]);
+
+		const tags = (await mediaTagRepository.findAll()).filter((tag) => {
+			return tagNames.includes(tag.name);
+		});
+
+		expect(
+			tags.map((tag) => {
+				return { name: tag.name, mediaCount: tag.mediaCount };
+			}),
+		).toEqual([
+			{ name: landscapeTag, mediaCount: 2 },
+			{ name: referenceTag, mediaCount: 1 },
+		]);
+	});
+
 	it("narrows the listing to the media carrying every tag named", async () => {
 		await insertMedia(mediaId, "a.png");
 		await insertMedia(otherMediaId, "b.png");
