@@ -154,9 +154,10 @@ export const mediaObjectRepository = {
 				contentType: input.contentTypePrefix
 					? { startsWith: input.contentTypePrefix }
 					: undefined,
-				tags: input.tagName
-					? { some: { tag: { name: input.tagName } } }
-					: undefined,
+				// One `some` per name: a single `some` with `in` would keep an object carrying any of them
+				AND: input.tagNames?.map((name) => {
+					return { tags: { some: { tag: { name } } } };
+				}),
 				...(input.cursor ? toCursorFilter(input.cursor) : {}),
 			},
 			include: { tags: TAG_NAMES_SELECTION },

@@ -33,7 +33,20 @@ export const mediaListQuerySchema = z.object({
 	/** Narrows to one folder. The inbox is the media no folder holds, so it takes none. */
 	logicalPath: z.string().min(1).optional(),
 	contentTypePrefix: z.string().min(1).optional(),
-	tag: z.string().min(1).max(MEDIA_TAG_MAX_LENGTH).optional(),
+	/**
+	 * Narrows to the media carrying every tag named, one per repeated key.
+	 * The validator hands a key given once over as a plain string, so it is wrapped before being read.
+	 */
+	tag: z
+		.preprocess(
+			(value) => {
+				return typeof value === "string" ? [value] : value;
+			},
+			z
+				.array(z.string().min(1).max(MEDIA_TAG_MAX_LENGTH))
+				.max(MEDIA_TAG_MAX_COUNT),
+		)
+		.optional(),
 	limit: z.coerce
 		.number()
 		.int()

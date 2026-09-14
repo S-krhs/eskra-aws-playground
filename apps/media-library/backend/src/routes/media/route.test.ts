@@ -222,7 +222,15 @@ describe("listMedia", () => {
 		await createApp().request(`${uiOrigin}/api/media?tag=風景`);
 
 		expect(objectRepository.findPage).toHaveBeenCalledWith(
-			expect.objectContaining({ tagName: "風景" }),
+			expect.objectContaining({ tagNames: ["風景"] }),
+		);
+	});
+
+	it("narrows the listing to every tag the key repeats", async () => {
+		await createApp().request(`${uiOrigin}/api/media?tag=風景&tag=資料`);
+
+		expect(objectRepository.findPage).toHaveBeenCalledWith(
+			expect.objectContaining({ tagNames: ["風景", "資料"] }),
 		);
 	});
 

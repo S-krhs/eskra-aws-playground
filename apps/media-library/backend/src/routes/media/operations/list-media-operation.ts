@@ -12,7 +12,7 @@ export const listMediaOperation = async (input: {
 	state: MediaObjectPageState;
 	logicalPath?: string;
 	contentTypePrefix?: string;
-	tagName?: string;
+	tagNames?: string[];
 	limit: number;
 	cursor?: MediaObjectCursor;
 }): Promise<OperationResult<MediaListResponse>> => {

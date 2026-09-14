@@ -70,7 +70,7 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 		state: query.state,
 		logicalPath: query.logicalPath,
 		contentTypePrefix: query.contentTypePrefix,
-		tagName: query.tag,
+		tagNames: query.tag,
 		limit: query.limit,
 		cursor:
 			query.cursorUploadedAt && query.cursorId

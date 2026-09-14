@@ -106,15 +106,16 @@ describe.skipIf(!testDatabaseUrl)("mediaTagRepository (integration)", () => {
 		expect((await mediaObjectRepository.findById(mediaId))?.tags).toEqual([]);
 	});
 
-	it("narrows the listing to the media carrying one tag", async () => {
+	it("narrows the listing to the media carrying every tag named", async () => {
 		await insertMedia(mediaId, "a.png");
 		await insertMedia(otherMediaId, "b.png");
-		await mediaTagRepository.replaceObjectTags(mediaId, [referenceTag]);
+		await mediaTagRepository.replaceObjectTags(mediaId, tagNames);
+		await mediaTagRepository.replaceObjectTags(otherMediaId, [referenceTag]);
 
 		const page = await mediaObjectRepository.findPage({
 			state: "filed",
 			logicalPath,
-			tagName: referenceTag,
+			tagNames,
 			limit: 10,
 		});
 

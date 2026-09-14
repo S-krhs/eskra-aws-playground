@@ -127,7 +127,8 @@ export interface FindMediaObjectPageInput {
 	/** Narrows to one folder. The inbox is the empty path itself, so it takes none. */
 	logicalPath?: string;
 	contentTypePrefix?: string;
-	tagName?: string;
+	/** Narrows to the objects carrying every one of these. */
+	tagNames?: string[];
 	limit: number;
 	cursor?: MediaObjectCursor;
 }
