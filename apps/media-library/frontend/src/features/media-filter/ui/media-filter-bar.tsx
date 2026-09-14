@@ -1,8 +1,9 @@
-// In scope: the folder and kind filter controls
+// In scope: the folder, kind and tag filter controls
 // Out of scope: fetching the listing, showing the results, starting a sync
 import { useRef, useState } from "react";
 import type { MediaFilter } from "@/entities/media";
 import type { ListMediaState } from "@/shared/api";
+import { useTagFilter } from "../model/use-tag-filter.js";
 
 // Long enough that a folder name is typed out before the listing is asked for again
 const FOLDER_COMMIT_DELAY_MS = 300;
@@ -42,6 +43,7 @@ export const MediaFilterBar = ({
 	const commitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
 	);
+	const tagFilter = useTagFilter({ tags, filter, onChange });
 	const commitFolder = (value: string) => {
 		clearTimeout(commitTimer.current);
 		onChange((current) => {
@@ -66,9 +68,9 @@ export const MediaFilterBar = ({
 
 	return (
 		// Wraps as a row while the screen is narrow, and stacks once it is the sidebar's column
-		<div className="flex flex-wrap items-end gap-x-4 gap-y-3 md:flex-col md:flex-nowrap md:items-stretch md:gap-4">
+		<div className="flex flex-wrap items-end gap-x-4 gap-y-3 md:flex-col md:flex-nowrap md:items-stretch md:gap-5">
 			<fieldset>
-				<legend className="mb-1 font-medium text-base-content/60 text-xs">
+				<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
 					表示
 				</legend>
 				<div className="join md:join-vertical md:w-full">
@@ -93,7 +95,7 @@ export const MediaFilterBar = ({
 			</fieldset>
 
 			<fieldset>
-				<legend className="mb-1 font-medium text-base-content/60 text-xs">
+				<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
 					種別
 				</legend>
 				<div className="join md:w-full">
@@ -123,14 +125,15 @@ export const MediaFilterBar = ({
 			</fieldset>
 
 			{filter.state === "inbox" ? null : (
-				<>
-					<label className="flex flex-col gap-1">
-						<span className="font-medium text-base-content/60 text-xs">
-							フォルダ
-						</span>
+				<fieldset>
+					<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
+						フォルダ
+					</legend>
+					<label className="input input-sm w-48 pe-1 md:w-full">
 						<input
 							type="text"
 							list="media-filter-folders"
+							aria-label="フォルダ"
 							value={folder}
 							placeholder="例: photos/2024"
 							onChange={(event) => {
@@ -144,40 +147,98 @@ export const MediaFilterBar = ({
 							onBlur={(event) => {
 								commitFolder(event.target.value);
 							}}
-							className="input input-sm w-48 md:w-full"
 						/>
+						{folder === "" ? null : (
+							<button
+								type="button"
+								aria-label="フォルダの入力を消す"
+								onClick={() => {
+									setFolder("");
+									commitFolder("");
+								}}
+								className="btn btn-ghost btn-xs btn-circle text-base-content/60"
+							>
+								✕
+							</button>
+						)}
 					</label>
 					<datalist id="media-filter-folders">
 						{folders.map((path) => {
 							return <option key={path} value={path} />;
 						})}
 					</datalist>
-				</>
+				</fieldset>
 			)}
 
-			<label className="flex flex-col gap-1">
-				<span className="font-medium text-base-content/60 text-xs">タグ</span>
-				<select
-					value={filter.tag ?? ""}
-					onChange={(event) => {
-						const { value } = event.target;
+			<fieldset className="basis-full md:basis-auto">
+				{/* The clear link shares the legend's line so it appearing doesn't push the buttons down */}
+				<legend className="mb-1.5 flex w-full items-center justify-between font-medium text-base-content/60 text-xs">
+					タグ
+					{tagFilter.selectedTags.length === 0 ? null : (
+						<button
+							type="button"
+							onClick={tagFilter.clear}
+							className="link link-hover font-normal"
+						>
+							{tagFilter.selectedTags.length} 件の選択を解除
+						</button>
+					)}
+				</legend>
+				<div className="flex flex-col gap-2.5">
+					<label className="input input-sm w-full pe-1 sm:w-64 md:w-full">
+						<input
+							type="search"
+							aria-label="タグを検索"
+							placeholder="タグを検索"
+							value={tagFilter.query}
+							onChange={(event) => {
+								tagFilter.setQuery(event.target.value);
+							}}
+						/>
+						{tagFilter.query === "" ? null : (
+							<button
+								type="button"
+								aria-label="タグの検索を消す"
+								onClick={() => {
+									tagFilter.setQuery("");
+								}}
+								className="btn btn-ghost btn-xs btn-circle text-base-content/60"
+							>
+								✕
+							</button>
+						)}
+					</label>
+					{tagFilter.offeredTags.length === 0 ? (
+						<p className="px-1 text-base-content/50 text-xs">
+							{tags.length === 0
+								? "タグはまだありません"
+								: "一致するタグはありません"}
+						</p>
+					) : (
+						// Capped while it sits above the grid, so a long list doesn't push the media off the screen;
+						// the sidebar scrolls as a whole instead
+						<div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto md:max-h-none md:overflow-visible">
+							{tagFilter.offeredTags.map((tag) => {
+								const isSelected = tagFilter.selectedTags.includes(tag);
 
-						onChange((current) => {
-							return { ...current, tag: value || undefined };
-						});
-					}}
-					className="select select-sm w-36 md:w-full"
-				>
-					<option value="">すべて</option>
-					{tags.map((tag) => {
-						return (
-							<option key={tag} value={tag}>
-								{tag}
-							</option>
-						);
-					})}
-				</select>
-			</label>
+								return (
+									<button
+										key={tag}
+										type="button"
+										aria-pressed={isSelected}
+										onClick={() => {
+											tagFilter.toggle(tag);
+										}}
+										className={`btn btn-sm h-7 max-w-full rounded-full px-3 font-normal ${isSelected ? "btn-primary" : "border-base-300 bg-base-100"}`}
+									>
+										<span className="truncate">{tag}</span>
+									</button>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</fieldset>
 		</div>
 	);
 };
