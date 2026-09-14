@@ -2,6 +2,7 @@
 // Out of scope: rendering the buttons, fetching the tags in use, the rest of the filter
 import { useState } from "react";
 import type { MediaFilter } from "@/entities/media";
+import type { TagUsage } from "@/shared/api";
 
 export interface TagFilter {
 	selectedTags: string[];
@@ -9,7 +10,7 @@ export interface TagFilter {
 	 * Every selected tag is included whether the search matches it or not, even once nothing carries it —
 	 * its button is the only way to turn it back off.
 	 */
-	offeredTags: string[];
+	offeredTags: TagUsage[];
 	query: string;
 	setQuery: (query: string) => void;
 	toggle: (tag: string) => void;
@@ -17,7 +18,7 @@ export interface TagFilter {
 }
 
 export const useTagFilter = (input: {
-	tags: string[];
+	tags: TagUsage[];
 	filter: MediaFilter;
 	onChange: (update: (filter: MediaFilter) => MediaFilter) => void;
 }): TagFilter => {
@@ -31,11 +32,20 @@ export const useTagFilter = (input: {
 		// Selected ones aren't moved to the front, so a button doesn't jump away from under the pointer
 		offeredTags: [
 			...input.tags,
-			...selectedTags.filter((tag) => {
-				return !input.tags.includes(tag);
-			}),
+			...selectedTags
+				.filter((name) => {
+					return !input.tags.some((tag) => {
+						return tag.name === name;
+					});
+				})
+				.map((name) => {
+					return { name, mediaCount: 0 };
+				}),
 		].filter((tag) => {
-			return selectedTags.includes(tag) || tag.toLowerCase().includes(needle);
+			return (
+				selectedTags.includes(tag.name) ||
+				tag.name.toLowerCase().includes(needle)
+			);
 		}),
 		query,
 		setQuery,

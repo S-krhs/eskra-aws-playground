@@ -77,6 +77,15 @@ export interface FolderListResponse {
   folders: string[];
 }
 
+export interface TagUsage {
+  name: string;
+  mediaCount: number;
+}
+
+export interface TagUsageListResponse {
+  tags: TagUsage[];
+}
+
 export interface SyncRun {
   id: string;
   startedAt: string;
@@ -1319,7 +1328,7 @@ export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, 
 
 
 export type listTagsResponse200 = {
-  data: TagListResponse
+  data: TagUsageListResponse
   status: 200
 }
 
@@ -1346,7 +1355,7 @@ export const getListTagsUrl = () => {
 }
 
 /**
- * @summary 使われているタグを名前順に返す
+ * @summary 使われているタグを、付いているメディアの多い順に返す
  */
 export const listTags = async ( options?: RequestInit): Promise<listTagsResponse> => {
 
@@ -1424,7 +1433,7 @@ export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary 使われているタグを名前順に返す
+ * @summary 使われているタグを、付いているメディアの多い順に返す
  */
 
 export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(

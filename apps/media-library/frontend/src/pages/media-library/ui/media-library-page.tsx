@@ -58,6 +58,7 @@ export const MediaLibraryPage = () => {
 		move,
 		selection,
 		selectionActions,
+		tagUsages,
 		tagSuggestions,
 		folderSuggestions,
 		preview,
@@ -84,7 +85,7 @@ export const MediaLibraryPage = () => {
 				<h1 className="font-bold text-sm">メディアライブラリ</h1>
 				<MediaFilterBar
 					filter={filter}
-					tags={tagSuggestions}
+					tags={tagUsages}
 					folders={folderSuggestions}
 					onChange={setFilter}
 				/>

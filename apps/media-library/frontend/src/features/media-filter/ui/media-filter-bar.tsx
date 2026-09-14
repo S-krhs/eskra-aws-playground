@@ -2,7 +2,7 @@
 // Out of scope: fetching the listing, showing the results, starting a sync
 import { useRef, useState } from "react";
 import type { MediaFilter } from "@/entities/media";
-import type { ListMediaState } from "@/shared/api";
+import type { ListMediaState, TagUsage } from "@/shared/api";
 import { useTagFilter } from "../model/use-tag-filter.js";
 
 // Long enough that a folder name is typed out before the listing is asked for again
@@ -28,7 +28,7 @@ export const MediaFilterBar = ({
 	onChange,
 }: {
 	filter: MediaFilter;
-	tags: string[];
+	tags: TagUsage[];
 	/** The folders there are, offered as completions for the folder field. */
 	folders: string[];
 	/**
@@ -219,19 +219,20 @@ export const MediaFilterBar = ({
 						// the sidebar scrolls as a whole instead
 						<div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto md:max-h-none md:overflow-visible">
 							{tagFilter.offeredTags.map((tag) => {
-								const isSelected = tagFilter.selectedTags.includes(tag);
+								const isSelected = tagFilter.selectedTags.includes(tag.name);
 
 								return (
 									<button
-										key={tag}
+										key={tag.name}
 										type="button"
 										aria-pressed={isSelected}
 										onClick={() => {
-											tagFilter.toggle(tag);
+											tagFilter.toggle(tag.name);
 										}}
-										className={`btn btn-sm h-7 max-w-full rounded-full px-3 font-normal ${isSelected ? "btn-primary" : "border-base-300 bg-base-100"}`}
+										className={`btn btn-sm h-7 max-w-full gap-1 rounded-full px-3 font-normal ${isSelected ? "btn-primary" : "border-base-300 bg-base-100"}`}
 									>
-										<span className="truncate">{tag}</span>
+										<span className="truncate">{tag.name}</span>
+										<span className="opacity-60">({tag.mediaCount})</span>
 									</button>
 								);
 							})}

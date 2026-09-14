@@ -9,6 +9,7 @@ export type {
 	replaceMediaTagsResponse,
 	restoreMediaResponse,
 	SyncRun,
+	TagUsage,
 	trashMediaResponse,
 } from "./generated/media-library.js";
 export {

@@ -25,7 +25,7 @@ import {
 } from "@/features/media-tags";
 import { type MediaTrash, useMediaTrash } from "@/features/media-trash";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
-import type { Media } from "@/shared/api";
+import type { Media, TagUsage } from "@/shared/api";
 
 /** Everything the screen renders from, with the features already tied together. */
 export interface MediaLibrary {
@@ -39,7 +39,9 @@ export interface MediaLibrary {
 	move: MediaMove;
 	selection: MediaSelection;
 	selectionActions: MediaSelectionActions;
-	/** The tags in use, for narrowing the listing and for completing a new one. */
+	/** The tags in use, most carried first, for narrowing the listing. */
+	tagUsages: TagUsage[];
+	/** The same tags by name, for completing a new one. */
 	tagSuggestions: string[];
 	/** The folders there are, for narrowing the listing and for filing media into one. */
 	folderSuggestions: string[];
@@ -58,7 +60,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const tags = useMediaTags();
 	const move = useMediaMove();
 	const selectionActions = useMediaSelectionActions();
-	const tagSuggestions = useTagList();
+	const tagUsages = useTagList();
 	const folderSuggestions = useFolderList();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
@@ -97,7 +99,10 @@ export const useMediaLibrary = (): MediaLibrary => {
 		move,
 		selection,
 		selectionActions,
-		tagSuggestions,
+		tagUsages,
+		tagSuggestions: tagUsages.map((tag) => {
+			return tag.name;
+		}),
 		folderSuggestions,
 		preview,
 		openPreview: (media: Media) => {

@@ -149,7 +149,7 @@ export const tagListResponseSchema = z
 	})
 	.openapi("TagListResponse");
 
-/** One tag in use. The count covers trashed media and media still in the inbox too. */
+/** The count covers trashed media and media still in the inbox too. */
 export const tagUsageSchema = z
 	.object({
 		name: z.string(),
