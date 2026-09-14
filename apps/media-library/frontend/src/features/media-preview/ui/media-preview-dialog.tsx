@@ -86,7 +86,7 @@ export const MediaPreviewDialog = ({
 		<dialog ref={openModal} className="modal" onClose={onClose}>
 			{/* Padding is dropped so the header, the media, the details and the actions can each own their
 			    own edge; the media then takes every pixel the other three leave */}
-			<div className="modal-box flex h-[92dvh] w-[94vw] max-w-[96rem] flex-col overflow-hidden p-0">
+			<div className="modal-box flex h-[92dvh] w-[94vw] max-w-384 flex-col overflow-hidden p-0">
 				<header className="flex shrink-0 items-center gap-2 border-base-300 border-b px-3 py-2">
 					<h2
 						className="min-w-0 flex-1 truncate font-bold text-sm"
