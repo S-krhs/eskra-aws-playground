@@ -131,18 +131,32 @@ export const MediaPreviewDialog = ({
 								フォルダ
 							</h3>
 							<div className="flex gap-1.5">
-								<input
-									type="text"
-									list="media-folder-suggestions"
-									aria-label="フォルダ"
-									placeholder="未整理"
-									value={folder}
-									disabled={isTrashed}
-									onChange={(event) => {
-										setFolder(event.target.value);
-									}}
-									className="input input-sm min-w-0 flex-1"
-								/>
+								<label className="input input-sm min-w-0 flex-1 pe-1">
+									<input
+										type="text"
+										list="media-folder-suggestions"
+										aria-label="フォルダ"
+										placeholder="未整理"
+										value={folder}
+										disabled={isTrashed}
+										onChange={(event) => {
+											setFolder(event.target.value);
+										}}
+									/>
+									{/* Clearing only empties the field; 移す still has to be pressed to send it to the inbox */}
+									{folder === "" || isTrashed ? null : (
+										<button
+											type="button"
+											aria-label="フォルダの入力を消す"
+											onClick={() => {
+												setFolder("");
+											}}
+											className="btn btn-ghost btn-xs btn-circle text-base-content/60"
+										>
+											✕
+										</button>
+									)}
+								</label>
 								<datalist id="media-folder-suggestions">
 									{folderSuggestions.map((path) => {
 										return <option key={path} value={path} />;

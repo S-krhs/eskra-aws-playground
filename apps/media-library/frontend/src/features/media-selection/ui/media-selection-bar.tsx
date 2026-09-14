@@ -69,19 +69,32 @@ export const MediaSelectionBar = ({
 						</button>
 					) : (
 						<>
-							<input
-								type="text"
-								list="media-selection-folders"
-								aria-label="移すフォルダ"
-								placeholder={
-									state === "inbox" ? "移すフォルダ" : "空欄で未整理へ"
-								}
-								value={folder}
-								onChange={(event) => {
-									setFolder(event.target.value);
-								}}
-								className="input input-sm w-40"
-							/>
+							<label className="input input-sm w-40 pe-1">
+								<input
+									type="text"
+									list="media-selection-folders"
+									aria-label="移すフォルダ"
+									placeholder={
+										state === "inbox" ? "移すフォルダ" : "空欄で未整理へ"
+									}
+									value={folder}
+									onChange={(event) => {
+										setFolder(event.target.value);
+									}}
+								/>
+								{folder === "" ? null : (
+									<button
+										type="button"
+										aria-label="フォルダの入力を消す"
+										onClick={() => {
+											setFolder("");
+										}}
+										className="btn btn-ghost btn-xs btn-circle text-base-content/60"
+									>
+										✕
+									</button>
+								)}
+							</label>
 							<datalist id="media-selection-folders">
 								{folderSuggestions.map((path) => {
 									return <option key={path} value={path} />;
