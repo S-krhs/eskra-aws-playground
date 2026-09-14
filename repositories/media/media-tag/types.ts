@@ -6,3 +6,8 @@ export interface MediaTag {
 	id: number;
 	name: string;
 }
+
+/** A tag with how many of the media objects counted carry it. */
+export interface MediaTagUsage extends MediaTag {
+	mediaCount: number;
+}

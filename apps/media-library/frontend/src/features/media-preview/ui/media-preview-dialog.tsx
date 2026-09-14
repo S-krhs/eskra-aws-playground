@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { getGetMediaFileUrl, type Media } from "@/shared/api";
 import { formatByteSize, formatDateTime, formatDuration } from "@/shared/lib";
+import { ClearInputButton } from "@/shared/ui";
 
 const toDetails = (media: Media): { label: string; value: string }[] => {
 	return [
@@ -86,7 +87,7 @@ export const MediaPreviewDialog = ({
 		<dialog ref={openModal} className="modal" onClose={onClose}>
 			{/* Padding is dropped so the header, the media, the details and the actions can each own their
 			    own edge; the media then takes every pixel the other three leave */}
-			<div className="modal-box flex h-[92dvh] w-[94vw] max-w-[96rem] flex-col overflow-hidden p-0">
+			<div className="modal-box flex h-[92dvh] w-[94vw] max-w-384 flex-col overflow-hidden p-0">
 				<header className="flex shrink-0 items-center gap-2 border-base-300 border-b px-3 py-2">
 					<h2
 						className="min-w-0 flex-1 truncate font-bold text-sm"
@@ -131,18 +132,28 @@ export const MediaPreviewDialog = ({
 								フォルダ
 							</h3>
 							<div className="flex gap-1.5">
-								<input
-									type="text"
-									list="media-folder-suggestions"
-									aria-label="フォルダ"
-									placeholder="未整理"
-									value={folder}
-									disabled={isTrashed}
-									onChange={(event) => {
-										setFolder(event.target.value);
-									}}
-									className="input input-sm min-w-0 flex-1"
-								/>
+								<label className="input input-sm min-w-0 flex-1 pe-1">
+									<input
+										type="text"
+										list="media-folder-suggestions"
+										aria-label="フォルダ"
+										placeholder="未整理"
+										value={folder}
+										disabled={isTrashed}
+										onChange={(event) => {
+											setFolder(event.target.value);
+										}}
+									/>
+									{/* Clearing only empties the field; 移す still has to be pressed to send it to the inbox */}
+									{folder === "" || isTrashed ? null : (
+										<ClearInputButton
+											label="フォルダの入力を消す"
+											onClick={() => {
+												setFolder("");
+											}}
+										/>
+									)}
+								</label>
 								<datalist id="media-folder-suggestions">
 									{folderSuggestions.map((path) => {
 										return <option key={path} value={path} />;

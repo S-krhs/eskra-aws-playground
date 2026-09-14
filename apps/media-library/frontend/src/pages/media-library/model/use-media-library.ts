@@ -13,13 +13,19 @@ import {
 	useMediaMove,
 } from "@/features/media-move";
 import {
+	type MediaSelection,
+	type MediaSelectionActions,
+	useMediaSelection,
+	useMediaSelectionActions,
+} from "@/features/media-selection";
+import {
 	type MediaTags,
 	useMediaTags,
 	useTagList,
 } from "@/features/media-tags";
 import { type MediaTrash, useMediaTrash } from "@/features/media-trash";
 import { type SyncStatus, useSyncStatus } from "@/features/sync-control";
-import type { Media } from "@/shared/api";
+import type { Media, TagUsage } from "@/shared/api";
 
 /** Everything the screen renders from, with the features already tied together. */
 export interface MediaLibrary {
@@ -31,7 +37,11 @@ export interface MediaLibrary {
 	clipboard: MediaClipboard;
 	tags: MediaTags;
 	move: MediaMove;
-	/** The tags in use, for narrowing the listing and for completing a new one. */
+	selection: MediaSelection;
+	selectionActions: MediaSelectionActions;
+	/** The tags on the media the filter keeps, most carried first, for narrowing the listing further. */
+	tagUsages: TagUsage[];
+	/** Every tag in use by name, whichever side its media sit on, for completing a new one. */
 	tagSuggestions: string[];
 	/** The folders there are, for narrowing the listing and for filing media into one. */
 	folderSuggestions: string[];
@@ -49,7 +59,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const clipboard = useMediaClipboard();
 	const tags = useMediaTags();
 	const move = useMediaMove();
-	const tagSuggestions = useTagList();
+	const selectionActions = useMediaSelectionActions();
 	const folderSuggestions = useFolderList();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
@@ -71,6 +81,13 @@ export const useMediaLibrary = (): MediaLibrary => {
 	}
 
 	const list = useMediaList({ filter, syncedAt });
+	const tagUsages = useTagList({ filter, syncedAt });
+	const tagsInUse = useTagList({ syncedAt });
+	const selection = useMediaSelection(
+		list.items.map((media) => {
+			return media.id;
+		}),
+	);
 
 	return {
 		filter,
@@ -81,7 +98,12 @@ export const useMediaLibrary = (): MediaLibrary => {
 		clipboard,
 		tags,
 		move,
-		tagSuggestions,
+		selection,
+		selectionActions,
+		tagUsages,
+		tagSuggestions: tagsInUse.map((tag) => {
+			return tag.name;
+		}),
 		folderSuggestions,
 		preview,
 		openPreview: (media: Media) => {

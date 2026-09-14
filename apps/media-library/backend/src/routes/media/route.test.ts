@@ -47,7 +47,7 @@ vi.mock(
 );
 
 const tagRepository = vi.hoisted(() => {
-	return { findAll: vi.fn(), replaceObjectTags: vi.fn() };
+	return { findUsages: vi.fn(), replaceObjectTags: vi.fn() };
 });
 
 vi.mock(
@@ -102,10 +102,10 @@ beforeEach(() => {
 	objectRepository.updateTrashedLocation.mockResolvedValue(1);
 	windowsClipboard.copyFileToWindowsClipboard.mockReset();
 	windowsClipboard.copyFileToWindowsClipboard.mockResolvedValue(undefined);
-	tagRepository.findAll.mockReset();
-	tagRepository.findAll.mockResolvedValue([
-		{ id: 1, name: "資料" },
-		{ id: 2, name: "風景" },
+	tagRepository.findUsages.mockReset();
+	tagRepository.findUsages.mockResolvedValue([
+		{ id: 2, name: "風景", mediaCount: 3 },
+		{ id: 1, name: "資料", mediaCount: 1 },
 	]);
 	tagRepository.replaceObjectTags.mockReset();
 	tagRepository.replaceObjectTags.mockResolvedValue([{ id: 2, name: "風景" }]);
@@ -222,7 +222,15 @@ describe("listMedia", () => {
 		await createApp().request(`${uiOrigin}/api/media?tag=風景`);
 
 		expect(objectRepository.findPage).toHaveBeenCalledWith(
-			expect.objectContaining({ tagName: "風景" }),
+			expect.objectContaining({ tagNames: ["風景"] }),
+		);
+	});
+
+	it("narrows the listing to every tag the key repeats", async () => {
+		await createApp().request(`${uiOrigin}/api/media?tag=風景&tag=資料`);
+
+		expect(objectRepository.findPage).toHaveBeenCalledWith(
+			expect.objectContaining({ tagNames: ["風景", "資料"] }),
 		);
 	});
 
@@ -596,11 +604,55 @@ describe("replaceMediaTags", () => {
 });
 
 describe("listTags", () => {
-	it("answers with the tag names in use, and not their ids", async () => {
+	it("answers with the tags in use and how many media carry each, and not their ids", async () => {
 		const response = await createApp().request(`${uiOrigin}/api/tags`);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ tags: ["資料", "風景"] });
+		expect(await response.json()).toEqual({
+			tags: [
+				{ name: "風景", mediaCount: 3 },
+				{ name: "資料", mediaCount: 1 },
+			],
+		});
+	});
+
+	it("counts only the media the query narrows to, passing on every repeated tag", async () => {
+		const tags = ["風景", "資料"]
+			.map((tag) => {
+				return `tag=${encodeURIComponent(tag)}`;
+			})
+			.join("&");
+		const response = await createApp().request(
+			`${uiOrigin}/api/tags?state=trashed&logicalPath=photos&contentTypePrefix=image%2F&${tags}`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(tagRepository.findUsages).toHaveBeenCalledWith({
+			state: "trashed",
+			logicalPath: "photos",
+			contentTypePrefix: "image/",
+			tagNames: ["風景", "資料"],
+		});
+	});
+
+	it("names no state when none is asked for, so every side is counted", async () => {
+		await createApp().request(`${uiOrigin}/api/tags`);
+
+		expect(tagRepository.findUsages).toHaveBeenCalledWith({
+			state: undefined,
+			logicalPath: undefined,
+			contentTypePrefix: undefined,
+			tagNames: undefined,
+		});
+	});
+
+	it("refuses a state it doesn't know", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/tags?state=everything`,
+		);
+
+		expect(response.status).toBe(400);
+		expect(tagRepository.findUsages).not.toHaveBeenCalled();
 	});
 });
 

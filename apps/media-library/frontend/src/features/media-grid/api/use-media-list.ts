@@ -27,7 +27,7 @@ export const useMediaList = (input: {
 	filter: MediaFilter;
 	syncedAt: string | null | undefined;
 }): MediaList => {
-	const { state, logicalPath, contentTypePrefix, tag } = input.filter;
+	const { state, logicalPath, contentTypePrefix, tags: tag } = input.filter;
 	const query = useInfiniteQuery({
 		enabled: input.syncedAt !== undefined,
 		queryKey: [

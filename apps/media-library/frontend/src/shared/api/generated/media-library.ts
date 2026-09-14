@@ -77,6 +77,15 @@ export interface FolderListResponse {
   folders: string[];
 }
 
+export interface TagUsage {
+  name: string;
+  mediaCount: number;
+}
+
+export interface TagUsageListResponse {
+  tags: TagUsage[];
+}
+
 export interface SyncRun {
   id: string;
   startedAt: string;
@@ -106,10 +115,11 @@ logicalPath?: string;
  */
 contentTypePrefix?: string;
 /**
- * @minLength 1
- * @maxLength 64
+ * @maxItems 50
+ * @items.minLength 1
+ * @items.maxLength 64
  */
-tag?: string;
+tag?: string[];
 /**
  * @minimum 1
  * @maximum 500
@@ -137,6 +147,33 @@ export type GetMediaFileDownload = typeof GetMediaFileDownload[keyof typeof GetM
 
 export const GetMediaFileDownload = {
   NUMBER_1: '1',
+} as const;
+
+export type ListTagsParams = {
+state?: ListTagsState;
+/**
+ * @minLength 1
+ */
+logicalPath?: string;
+/**
+ * @minLength 1
+ */
+contentTypePrefix?: string;
+/**
+ * @maxItems 50
+ * @items.minLength 1
+ * @items.maxLength 64
+ */
+tag?: string[];
+};
+
+export type ListTagsState = typeof ListTagsState[keyof typeof ListTagsState];
+
+
+export const ListTagsState = {
+  inbox: 'inbox',
+  filed: 'filed',
+  trashed: 'trashed',
 } as const;
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -189,6 +226,14 @@ export const getListMediaUrl = (params?: ListMediaParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["tag"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value))
@@ -1310,8 +1355,13 @@ export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, 
 
 
 export type listTagsResponse200 = {
-  data: TagListResponse
+  data: TagUsageListResponse
   status: 200
+}
+
+export type listTagsResponse400 = {
+  data: ErrorResponse
+  status: 400
 }
 
 export type listTagsResponse500 = {
@@ -1322,26 +1372,41 @@ export type listTagsResponse500 = {
 export type listTagsResponseSuccess = (listTagsResponse200) & {
   headers: Headers;
 };
-export type listTagsResponseError = (listTagsResponse500) & {
+export type listTagsResponseError = (listTagsResponse400 | listTagsResponse500) & {
   headers: Headers;
 };
 
 export type listTagsResponse = (listTagsResponseSuccess | listTagsResponseError)
 
-export const getListTagsUrl = () => {
+export const getListTagsUrl = (params?: ListTagsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["tag"];
 
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
-  return `/api/tags`
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tags?${stringifiedParams}` : `/api/tags`
 }
 
 /**
- * @summary 使われているタグを名前順に返す
+ * @summary 絞り込みに合うメディアに付いているタグを、付いている件数の多い順に返す
  */
-export const listTags = async ( options?: RequestInit): Promise<listTagsResponse> => {
+export const listTags = async (params?: ListTagsParams, options?: RequestInit): Promise<listTagsResponse> => {
 
-  const res = await fetch(getListTagsUrl(),
+  const res = await fetch(getListTagsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1361,23 +1426,23 @@ export const listTags = async ( options?: RequestInit): Promise<listTagsResponse
 
 
 
-export const getListTagsQueryKey = () => {
+export const getListTagsQueryKey = (params?: ListTagsParams,) => {
     return [
-    `/api/tags`
+    `/api/tags`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListTagsQueryOptions = <TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
+export const getListTagsQueryOptions = <TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(params?: ListTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListTagsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListTagsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTags>>> = ({ signal }) => listTags({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTags>>> = ({ signal }) => listTags(params, { signal, ...fetchOptions });
 
 
 
@@ -1391,7 +1456,7 @@ export type ListTagsQueryError = ErrorResponse
 
 
 export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
+ params: undefined |  ListTagsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listTags>>,
           TError,
@@ -1401,7 +1466,7 @@ export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
+ params?: ListTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listTags>>,
           TError,
@@ -1411,19 +1476,19 @@ export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
+ params?: ListTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary 使われているタグを名前順に返す
+ * @summary 絞り込みに合うメディアに付いているタグを、付いている件数の多い順に返す
  */
 
 export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = ErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
+ params?: ListTagsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTagsQueryOptions(options)
+  const queryOptions = getListTagsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

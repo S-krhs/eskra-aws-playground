@@ -33,6 +33,22 @@ const hasMessage = (data: unknown): data is { message: string } => {
 	);
 };
 
+export const readRejection = (error: unknown): string => {
+	return error instanceof Error ? error.message : String(error);
+};
+
+/** Undefined when the response is a success. */
+export const readResponseFailure = (response: unknown): string | undefined => {
+	if (!hasStatus(response) || response.status < 400) {
+		return undefined;
+	}
+
+	// A body that isn't this API's leaves only the status to go on, which still beats reading as a success
+	return hasMessage(response.data)
+		? response.data.message
+		: `HTTP ${response.status}`;
+};
+
 /**
  * The generated client resolves a 4xx or a 5xx as a status rather than rejecting, while a request that
  * never reached the server rejects as usual. Reading only the first leaves a stopped backend looking
@@ -50,25 +66,13 @@ export const toMutationStatus = (mutation: {
 	}
 
 	if (mutation.isError) {
-		return {
-			kind: "failed",
-			message:
-				mutation.error instanceof Error
-					? mutation.error.message
-					: String(mutation.error),
-		};
+		return { kind: "failed", message: readRejection(mutation.error) };
 	}
 
-	const response = mutation.data;
+	const failure = readResponseFailure(mutation.data);
 
-	if (hasStatus(response) && response.status >= 400) {
-		return {
-			kind: "failed",
-			// A body that isn't this API's leaves only the status to go on, which still beats reading as a success
-			message: hasMessage(response.data)
-				? response.data.message
-				: `HTTP ${response.status}`,
-		};
+	if (failure !== undefined) {
+		return { kind: "failed", message: failure };
 	}
 
 	return mutation.isSuccess ? { kind: "done" } : { kind: "idle" };

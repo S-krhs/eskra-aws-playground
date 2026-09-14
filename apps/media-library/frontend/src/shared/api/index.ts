@@ -3,12 +3,14 @@
 export type {
 	copyMediaToClipboardResponse,
 	ListMediaState,
+	ListTagsParams,
 	Media,
 	MediaCursor,
 	moveMediaResponse,
 	replaceMediaTagsResponse,
 	restoreMediaResponse,
 	SyncRun,
+	TagUsage,
 	trashMediaResponse,
 } from "./generated/media-library.js";
 export {
@@ -20,6 +22,9 @@ export {
 	getListMediaQueryKey,
 	getListTagsQueryKey,
 	listMedia,
+	moveMedia,
+	restoreMedia,
+	trashMedia,
 	useCopyMediaToClipboard,
 	useListFolders,
 	useListTags,
@@ -30,5 +35,10 @@ export {
 	useStartSync,
 	useTrashMedia,
 } from "./generated/media-library.js";
-export { type MutationStatus, toMutationStatus } from "./mutation-status.js";
+export {
+	type MutationStatus,
+	readRejection,
+	readResponseFailure,
+	toMutationStatus,
+} from "./mutation-status.js";
 export { queryClient } from "./query-client.js";

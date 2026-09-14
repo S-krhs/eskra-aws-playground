@@ -1,11 +1,50 @@
-// In scope: assembling the filter, listing, preview, trash and sync features into one screen, and the
-//           words each of them reports itself with
+// In scope: assembling the filter, listing, selection, preview, trash and sync features into one screen,
+//           and the words each of them reports itself with
 // Out of scope: each feature's implementation, calling the API, formatting
 import { MediaFilterBar } from "@/features/media-filter";
 import { MediaGrid } from "@/features/media-grid";
 import { MediaPreviewDialog } from "@/features/media-preview";
+import {
+	MediaSelectionBar,
+	type SelectionAction,
+	type SelectionRunStatus,
+} from "@/features/media-selection";
 import { SyncControl } from "@/features/sync-control";
 import { useMediaLibrary } from "../model/use-media-library.js";
+
+const RUN_WORDS: Record<
+	SelectionAction,
+	{ doing: string; done: string; failed: string }
+> = {
+	move: {
+		doing: "移しています",
+		done: "移しました",
+		failed: "移せませんでした",
+	},
+	trash: {
+		doing: "ゴミ箱へ入れています",
+		done: "ゴミ箱へ入れました",
+		failed: "ゴミ箱へ入れられませんでした",
+	},
+	restore: {
+		doing: "元に戻しています",
+		done: "元に戻しました",
+		failed: "元に戻せませんでした",
+	},
+};
+
+const describeRun = (status: SelectionRunStatus): string | undefined => {
+	switch (status.kind) {
+		case "idle":
+			return undefined;
+		case "pending":
+			return `${status.settledCount} / ${status.totalCount} 件を${RUN_WORDS[status.action].doing}…`;
+		case "done":
+			return `${status.totalCount} 件を${RUN_WORDS[status.action].done}`;
+		case "failed":
+			return `${status.totalCount} 件のうち ${status.failedCount} 件を${RUN_WORDS[status.action].failed}: ${status.message}`;
+	}
+};
 
 export const MediaLibraryPage = () => {
 	const {
@@ -17,6 +56,9 @@ export const MediaLibraryPage = () => {
 		clipboard,
 		tags,
 		move,
+		selection,
+		selectionActions,
+		tagUsages,
 		tagSuggestions,
 		folderSuggestions,
 		preview,
@@ -43,7 +85,7 @@ export const MediaLibraryPage = () => {
 				<h1 className="font-bold text-sm">メディアライブラリ</h1>
 				<MediaFilterBar
 					filter={filter}
-					tags={tagSuggestions}
+					tags={tagUsages}
 					folders={folderSuggestions}
 					onChange={setFilter}
 				/>
@@ -58,7 +100,45 @@ export const MediaLibraryPage = () => {
 						{trash.status.message}
 					</p>
 				) : null}
-				<MediaGrid list={list} onSelect={openPreview} />
+				<MediaGrid
+					list={list}
+					selectedIds={selection.selectedIds}
+					onOpen={openPreview}
+					onToggle={selection.toggle}
+					toolbar={
+						<MediaSelectionBar
+							selectedCount={selection.selectedIds.size}
+							listedCount={list.items.length}
+							hasMore={list.hasMore}
+							state={filter.state ?? "filed"}
+							folderSuggestions={folderSuggestions}
+							isBusy={selectionActions.status.kind === "pending"}
+							message={describeRun(selectionActions.status)}
+							onSelectAll={selection.selectAll}
+							onClear={selection.clear}
+							// What went through is let go of, so a failure is left selected to try again
+							onMove={(logicalPath) => {
+								selectionActions.move(
+									[...selection.selectedIds],
+									logicalPath,
+									selection.deselect,
+								);
+							}}
+							onTrash={() => {
+								selectionActions.trash(
+									[...selection.selectedIds],
+									selection.deselect,
+								);
+							}}
+							onRestore={() => {
+								selectionActions.restore(
+									[...selection.selectedIds],
+									selection.deselect,
+								);
+							}}
+						/>
+					}
+				/>
 			</main>
 			{preview ? (
 				<MediaPreviewDialog

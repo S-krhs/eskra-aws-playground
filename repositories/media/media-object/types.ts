@@ -122,12 +122,18 @@ export interface MediaObjectCursor {
  */
 export type MediaObjectPageState = "inbox" | "filed" | "trashed";
 
-export interface FindMediaObjectPageInput {
-	state: MediaObjectPageState;
+/** An omitted field narrows nothing, `state` included. */
+export interface MediaObjectFilter {
+	state?: MediaObjectPageState;
 	/** Narrows to one folder. The inbox is the empty path itself, so it takes none. */
 	logicalPath?: string;
 	contentTypePrefix?: string;
-	tagName?: string;
+	/** Narrows to the objects carrying every one of these. */
+	tagNames?: string[];
+}
+
+export interface FindMediaObjectPageInput extends MediaObjectFilter {
+	state: MediaObjectPageState;
 	limit: number;
 	cursor?: MediaObjectCursor;
 }

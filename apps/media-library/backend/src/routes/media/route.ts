@@ -1,6 +1,7 @@
 // In scope: turning each media operation's result into a response
 // Out of scope: registering the routes, reading the DB or storage, the shape of what comes back
 import type { RouteHandler } from "@hono/zod-openapi";
+import { runInTurn } from "../../features/storage-moves/run-in-turn.js";
 import {
 	parseIfNoneMatch,
 	REVALIDATE_CACHE_CONTROL,
@@ -70,7 +71,7 @@ export const listMedia: RouteHandler<typeof listMediaRoute> = async (c) => {
 		state: query.state,
 		logicalPath: query.logicalPath,
 		contentTypePrefix: query.contentTypePrefix,
-		tagName: query.tag,
+		tagNames: query.tag,
 		limit: query.limit,
 		cursor:
 			query.cursorUploadedAt && query.cursorId
@@ -147,8 +148,8 @@ export const getMediaFile: RouteHandler<typeof getMediaFileRoute> = async (
 };
 
 export const trashMedia: RouteHandler<typeof trashMediaRoute> = async (c) => {
-	const result = await trashMediaOperation({
-		mediaId: c.req.valid("param").id,
+	const result = await runInTurn(() => {
+		return trashMediaOperation({ mediaId: c.req.valid("param").id });
 	});
 
 	if (result.kind === "NOT_FOUND") {
@@ -161,8 +162,8 @@ export const trashMedia: RouteHandler<typeof trashMediaRoute> = async (c) => {
 export const restoreMedia: RouteHandler<typeof restoreMediaRoute> = async (
 	c,
 ) => {
-	const result = await restoreMediaOperation({
-		mediaId: c.req.valid("param").id,
+	const result = await runInTurn(() => {
+		return restoreMediaOperation({ mediaId: c.req.valid("param").id });
 	});
 
 	if (result.kind === "NOT_FOUND") {
@@ -202,9 +203,11 @@ export const replaceMediaTags: RouteHandler<
 };
 
 export const moveMedia: RouteHandler<typeof moveMediaRoute> = async (c) => {
-	const result = await moveMediaOperation({
-		mediaId: c.req.valid("param").id,
-		logicalPath: c.req.valid("json").logicalPath,
+	const result = await runInTurn(() => {
+		return moveMediaOperation({
+			mediaId: c.req.valid("param").id,
+			logicalPath: c.req.valid("json").logicalPath,
+		});
 	});
 
 	if (result.kind === "NOT_FOUND") {

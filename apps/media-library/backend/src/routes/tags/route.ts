@@ -5,7 +5,13 @@ import { listTagsOperation } from "./operations/list-tags-operation.js";
 import type { listTagsRoute } from "./schema.js";
 
 export const listTags: RouteHandler<typeof listTagsRoute> = async (c) => {
-	const result = await listTagsOperation();
+	const query = c.req.valid("query");
+	const result = await listTagsOperation({
+		state: query.state,
+		logicalPath: query.logicalPath,
+		contentTypePrefix: query.contentTypePrefix,
+		tagNames: query.tag,
+	});
 
 	return c.json(result.data, 200);
 };
