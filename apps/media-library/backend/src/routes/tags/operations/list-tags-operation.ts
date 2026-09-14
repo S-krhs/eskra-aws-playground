@@ -5,7 +5,6 @@ import { mediaTagRepository } from "@eskra-aws-playground/repositories/media/med
 import type { TagUsageListResponse } from "@eskra-aws-playground/shared-domains/media/library-api/schema.js";
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
-/** An omitted `state` counts every side at once. */
 export const listTagsOperation = async (input: {
 	state?: MediaObjectPageState;
 	logicalPath?: string;

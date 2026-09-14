@@ -122,7 +122,7 @@ export interface MediaObjectCursor {
  */
 export type MediaObjectPageState = "inbox" | "filed" | "trashed";
 
-/** Which rows a listing or a count reads. An omitted field narrows nothing, `state` included. */
+/** An omitted field narrows nothing, `state` included. */
 export interface MediaObjectFilter {
 	state?: MediaObjectPageState;
 	/** Narrows to one folder. The inbox is the empty path itself, so it takes none. */

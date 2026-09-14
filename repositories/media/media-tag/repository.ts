@@ -8,7 +8,7 @@ import type { MediaTag, MediaTagUsage } from "./types.js";
 export const mediaTagRepository = {
 	/**
 	 * The tags carried by at least one of the media objects the filter keeps, with how many of those carry
-	 * each — the one carried by the most first and ties by name. An empty filter counts every object.
+	 * each — the one carried by the most first and ties by name.
 	 */
 	findUsages: async (filter: MediaObjectFilter): Promise<MediaTagUsage[]> => {
 		const prisma = getPrismaClient();

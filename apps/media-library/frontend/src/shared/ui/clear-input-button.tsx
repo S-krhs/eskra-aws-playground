@@ -4,7 +4,7 @@
 /**
  * Sits inside a daisyUI `label.input`, after its field.
  * Pressing it leaves focus in the field: a field that hands its value over on blur would otherwise hand
- * over what was typed just before this empties it, and ask for that too.
+ * over what was typed just before this empties it.
  */
 export const ClearInputButton = ({
 	label,
