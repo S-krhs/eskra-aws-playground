@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListMediaQueryKey,
+	getListTagsQueryKey,
 	type MutationStatus,
 	toMutationStatus,
 	useRestoreMedia,
@@ -18,12 +19,16 @@ export interface MediaTrash {
 export const useMediaTrash = (): MediaTrash => {
 	const queryClient = useQueryClient();
 	// Both sides of the trash are listed under this key's prefix, so one invalidation covers whichever
-	// of them is open, along with every filter already fetched under it
-	const refreshListing = async () => {
-		await queryClient.invalidateQueries({ queryKey: getListMediaQueryKey() });
+	// of them is open, along with every filter already fetched under it. The tag counts follow the side
+	// being counted, so they go the same way
+	const refresh = async () => {
+		await Promise.all([
+			queryClient.invalidateQueries({ queryKey: getListMediaQueryKey() }),
+			queryClient.invalidateQueries({ queryKey: getListTagsQueryKey() }),
+		]);
 	};
-	const trash = useTrashMedia({ mutation: { onSuccess: refreshListing } });
-	const restore = useRestoreMedia({ mutation: { onSuccess: refreshListing } });
+	const trash = useTrashMedia({ mutation: { onSuccess: refresh } });
+	const restore = useRestoreMedia({ mutation: { onSuccess: refresh } });
 	const trashStatus = toMutationStatus(trash);
 
 	return {

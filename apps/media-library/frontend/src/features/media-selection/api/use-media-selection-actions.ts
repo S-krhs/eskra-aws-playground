@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
+	getListTagsQueryKey,
 	moveMedia,
 	restoreMedia,
 	trashMedia,
@@ -73,11 +74,12 @@ export const useMediaSelectionActions = (): MediaSelectionActions => {
 				},
 			});
 		},
-		// A move can bring a folder into being
+		// A move can bring a folder into being, and each of the three changes which media a tag count covers
 		onSettled: async () => {
 			await Promise.all([
 				queryClient.invalidateQueries({ queryKey: getListMediaQueryKey() }),
 				queryClient.invalidateQueries({ queryKey: getListFoldersQueryKey() }),
+				queryClient.invalidateQueries({ queryKey: getListTagsQueryKey() }),
 			]);
 		},
 	});

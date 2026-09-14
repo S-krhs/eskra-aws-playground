@@ -9,6 +9,8 @@ export interface TagFilter {
 	/**
 	 * Every selected tag is included whether the search matches it or not, even once nothing carries it —
 	 * its button is the only way to turn it back off.
+	 * Nothing caps how many are picked: a tag is only on offer while some media carries it alongside every
+	 * one already picked, and no media carries more tags than a listing can be narrowed by.
 	 */
 	offeredTags: TagUsage[];
 	query: string;

@@ -39,9 +39,9 @@ export interface MediaLibrary {
 	move: MediaMove;
 	selection: MediaSelection;
 	selectionActions: MediaSelectionActions;
-	/** The tags in use, most carried first, for narrowing the listing. */
+	/** The tags on the media the filter keeps, most carried first, for narrowing the listing further. */
 	tagUsages: TagUsage[];
-	/** The same tags by name, for completing a new one. */
+	/** Every tag in use by name, whichever side its media sit on, for completing a new one. */
 	tagSuggestions: string[];
 	/** The folders there are, for narrowing the listing and for filing media into one. */
 	folderSuggestions: string[];
@@ -60,7 +60,6 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const tags = useMediaTags();
 	const move = useMediaMove();
 	const selectionActions = useMediaSelectionActions();
-	const tagUsages = useTagList();
 	const folderSuggestions = useFolderList();
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
@@ -82,6 +81,8 @@ export const useMediaLibrary = (): MediaLibrary => {
 	}
 
 	const list = useMediaList({ filter, syncedAt });
+	const tagUsages = useTagList({ filter, syncedAt });
+	const tagsInUse = useTagList({ syncedAt });
 	const selection = useMediaSelection(
 		list.items.map((media) => {
 			return media.id;
@@ -100,7 +101,7 @@ export const useMediaLibrary = (): MediaLibrary => {
 		selection,
 		selectionActions,
 		tagUsages,
-		tagSuggestions: tagUsages.map((tag) => {
+		tagSuggestions: tagsInUse.map((tag) => {
 			return tag.name;
 		}),
 		folderSuggestions,

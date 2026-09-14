@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	getListFoldersQueryKey,
 	getListMediaQueryKey,
+	getListTagsQueryKey,
 	type MutationStatus,
 	toMutationStatus,
 	useMoveMedia,
@@ -24,10 +25,12 @@ export const useMediaMove = (): MediaMove => {
 	const move = useMoveMedia({
 		mutation: {
 			onSuccess: async () => {
-				// The listing carries the folder it shows, and a folder can have come into being here
+				// The listing carries the folder it shows, a folder can have come into being here, and the tag
+				// counts cover only the folder being narrowed to
 				await Promise.all([
 					queryClient.invalidateQueries({ queryKey: getListMediaQueryKey() }),
 					queryClient.invalidateQueries({ queryKey: getListFoldersQueryKey() }),
+					queryClient.invalidateQueries({ queryKey: getListTagsQueryKey() }),
 				]);
 			},
 		},

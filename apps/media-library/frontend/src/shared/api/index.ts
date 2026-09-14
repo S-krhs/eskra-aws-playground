@@ -3,6 +3,7 @@
 export type {
 	copyMediaToClipboardResponse,
 	ListMediaState,
+	ListTagsParams,
 	Media,
 	MediaCursor,
 	moveMediaResponse,

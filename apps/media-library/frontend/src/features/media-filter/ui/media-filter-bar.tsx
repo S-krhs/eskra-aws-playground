@@ -211,7 +211,7 @@ export const MediaFilterBar = ({
 					{tagFilter.offeredTags.length === 0 ? (
 						<p className="px-1 text-base-content/50 text-xs">
 							{tags.length === 0
-								? "タグはまだありません"
+								? "付いているタグはありません"
 								: "一致するタグはありません"}
 						</p>
 					) : (
