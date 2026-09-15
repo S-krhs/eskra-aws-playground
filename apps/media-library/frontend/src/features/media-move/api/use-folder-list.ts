@@ -6,8 +6,10 @@ import { useListFolders } from "@/shared/api";
  * Empty while the first read is in flight and where nothing is filed anywhere — a picker reads the
  * same either way, so the two aren't told apart here.
  */
-export const useFolderList = (): string[] => {
-	const query = useListFolders();
+export const useFolderList = (input: { isArchived: boolean }): string[] => {
+	const query = useListFolders(
+		input.isArchived ? { archived: "1" } : undefined,
+	);
 
 	return query.data?.status === 200 ? query.data.data.folders : [];
 };

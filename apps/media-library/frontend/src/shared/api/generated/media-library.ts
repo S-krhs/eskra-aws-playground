@@ -28,6 +28,7 @@ export interface Media {
   id: string;
   fileName: string;
   logicalPath: string;
+  isArchived: boolean;
   contentType: string;
   byteSize: number;
   width?: number;
@@ -67,10 +68,12 @@ export interface MediaTagsRequest {
 
 export interface MediaLocationResponse {
   logicalPath: string;
+  isArchived: boolean;
 }
 
 export interface MediaMoveRequest {
   logicalPath: '' | string;
+  isArchived: boolean;
 }
 
 export interface FolderListResponse {
@@ -135,6 +138,7 @@ export type ListMediaState = typeof ListMediaState[keyof typeof ListMediaState];
 export const ListMediaState = {
   inbox: 'inbox',
   filed: 'filed',
+  archived: 'archived',
   trashed: 'trashed',
 } as const;
 
@@ -146,6 +150,17 @@ export type GetMediaFileDownload = typeof GetMediaFileDownload[keyof typeof GetM
 
 
 export const GetMediaFileDownload = {
+  NUMBER_1: '1',
+} as const;
+
+export type ListFoldersParams = {
+archived?: ListFoldersArchived;
+};
+
+export type ListFoldersArchived = typeof ListFoldersArchived[keyof typeof ListFoldersArchived];
+
+
+export const ListFoldersArchived = {
   NUMBER_1: '1',
 } as const;
 
@@ -173,6 +188,7 @@ export type ListTagsState = typeof ListTagsState[keyof typeof ListTagsState];
 export const ListTagsState = {
   inbox: 'inbox',
   filed: 'filed',
+  archived: 'archived',
   trashed: 'trashed',
 } as const;
 
@@ -1232,6 +1248,11 @@ export type listFoldersResponse200 = {
   status: 200
 }
 
+export type listFoldersResponse400 = {
+  data: ErrorResponse
+  status: 400
+}
+
 export type listFoldersResponse500 = {
   data: ErrorResponse
   status: 500
@@ -1240,26 +1261,33 @@ export type listFoldersResponse500 = {
 export type listFoldersResponseSuccess = (listFoldersResponse200) & {
   headers: Headers;
 };
-export type listFoldersResponseError = (listFoldersResponse500) & {
+export type listFoldersResponseError = (listFoldersResponse400 | listFoldersResponse500) & {
   headers: Headers;
 };
 
 export type listFoldersResponse = (listFoldersResponseSuccess | listFoldersResponseError)
 
-export const getListFoldersUrl = () => {
+export const getListFoldersUrl = (params?: ListFoldersParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/folders`
+  return stringifiedParams.length > 0 ? `/api/folders?${stringifiedParams}` : `/api/folders`
 }
 
 /**
  * @summary メディアを入れられるフォルダを名前順に返す
  */
-export const listFolders = async ( options?: RequestInit): Promise<listFoldersResponse> => {
+export const listFolders = async (params?: ListFoldersParams, options?: RequestInit): Promise<listFoldersResponse> => {
 
-  const res = await fetch(getListFoldersUrl(),
+  const res = await fetch(getListFoldersUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1279,23 +1307,23 @@ export const listFolders = async ( options?: RequestInit): Promise<listFoldersRe
 
 
 
-export const getListFoldersQueryKey = () => {
+export const getListFoldersQueryKey = (params?: ListFoldersParams,) => {
     return [
-    `/api/folders`
+    `/api/folders`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListFoldersQueryOptions = <TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
+export const getListFoldersQueryOptions = <TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(params?: ListFoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListFoldersQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListFoldersQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFolders>>> = ({ signal }) => listFolders({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFolders>>> = ({ signal }) => listFolders(params, { signal, ...fetchOptions });
 
 
 
@@ -1309,7 +1337,7 @@ export type ListFoldersQueryError = ErrorResponse
 
 
 export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>> & Pick<
+ params: undefined |  ListFoldersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listFolders>>,
           TError,
@@ -1319,7 +1347,7 @@ export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>> & Pick<
+ params?: ListFoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listFolders>>,
           TError,
@@ -1329,7 +1357,7 @@ export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
+ params?: ListFoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1337,11 +1365,11 @@ export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, 
  */
 
 export function useListFolders<TData = Awaited<ReturnType<typeof listFolders>>, TError = ErrorResponse>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
+ params?: ListFoldersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFolders>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListFoldersQueryOptions(options)
+  const queryOptions = getListFoldersQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -40,6 +40,7 @@ export interface MediaSelectionActions {
 	move: (
 		mediaIds: string[],
 		logicalPath: string,
+		isArchived: boolean,
 		onFinished: (succeededIds: string[]) => void,
 	) => void;
 	trash: (
@@ -127,13 +128,13 @@ export const useMediaSelectionActions = (): MediaSelectionActions => {
 	};
 
 	return {
-		move: (mediaIds, logicalPath, onFinished) => {
+		move: (mediaIds, logicalPath, isArchived, onFinished) => {
 			start(
 				{
 					action: "move",
 					ids: mediaIds,
 					send: (id) => {
-						return moveMedia(id, { logicalPath });
+						return moveMedia(id, { logicalPath, isArchived });
 					},
 				},
 				onFinished,

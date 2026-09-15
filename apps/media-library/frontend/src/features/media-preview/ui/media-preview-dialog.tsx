@@ -29,6 +29,7 @@ export const MediaPreviewDialog = ({
 	isTrashed,
 	tagSuggestions,
 	folderSuggestions,
+	archiveFolderSuggestions,
 	message,
 	onChangeTags,
 	onMove,
@@ -44,10 +45,12 @@ export const MediaPreviewDialog = ({
 	tagSuggestions: string[];
 	/** The folders there are, offered the same way. A folder not among them is made by moving into it. */
 	folderSuggestions: string[];
+	/** Offered in place of `folderSuggestions` while the archive is ticked. */
+	archiveFolderSuggestions: string[];
 	message: string | undefined;
 	onChangeTags: (tags: string[]) => void;
-	/** An empty path takes the media back out of every folder. */
-	onMove: (logicalPath: string) => void;
+	/** An empty path takes the media back out of every folder; `isArchived` files it into the archive instead. */
+	onMove: (logicalPath: string, isArchived: boolean) => void;
 	onCopyImage: () => void;
 	onCopyFile: () => void;
 	onTrash: () => void;
@@ -67,6 +70,7 @@ export const MediaPreviewDialog = ({
 	// Where the media is being filed, held while it is typed. A move answers with where it landed, but
 	// what is in the field is what the user is still working on
 	const [folder, setFolder] = useState(media.logicalPath);
+	const [isArchived, setIsArchived] = useState(media.isArchived);
 	const changeTags = (next: string[]) => {
 		setTags(next);
 		onChangeTags(next);
@@ -137,7 +141,7 @@ export const MediaPreviewDialog = ({
 										type="text"
 										list="media-folder-suggestions"
 										aria-label="フォルダ"
-										placeholder="未整理"
+										placeholder={isArchived ? "アーカイブのフォルダ" : "未整理"}
 										value={folder}
 										disabled={isTrashed}
 										onChange={(event) => {
@@ -155,21 +159,42 @@ export const MediaPreviewDialog = ({
 									)}
 								</label>
 								<datalist id="media-folder-suggestions">
-									{folderSuggestions.map((path) => {
+									{(isArchived
+										? archiveFolderSuggestions
+										: folderSuggestions
+									).map((path) => {
 										return <option key={path} value={path} />;
 									})}
 								</datalist>
 								<button
 									type="button"
-									disabled={isTrashed || folder.trim() === media.logicalPath}
+									// The archive holds folders only, so an empty path has nowhere in it to go
+									disabled={
+										isTrashed ||
+										(folder.trim() === media.logicalPath &&
+											isArchived === media.isArchived) ||
+										(isArchived && folder.trim() === "")
+									}
 									onClick={() => {
-										onMove(folder.trim());
+										onMove(folder.trim(), isArchived);
 									}}
 									className="btn btn-sm rounded-full"
 								>
 									移す
 								</button>
 							</div>
+							<label className="label gap-1.5 text-base-content text-xs">
+								<input
+									type="checkbox"
+									checked={isArchived}
+									disabled={isTrashed}
+									onChange={(event) => {
+										setIsArchived(event.target.checked);
+									}}
+									className="checkbox checkbox-xs"
+								/>
+								アーカイブ
+							</label>
 							{isTrashed ? (
 								<p className="text-base-content/60 text-xs">
 									ゴミ箱にある間は整理できません

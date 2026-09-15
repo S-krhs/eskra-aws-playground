@@ -11,6 +11,7 @@ export const MediaSelectionBar = ({
 	hasMore,
 	state,
 	folderSuggestions,
+	archiveFolderSuggestions,
 	isBusy,
 	message,
 	onSelectAll,
@@ -25,17 +26,21 @@ export const MediaSelectionBar = ({
 	hasMore: boolean;
 	state: ListMediaState;
 	folderSuggestions: string[];
+	/** Offered in place of `folderSuggestions` while the archive is ticked. */
+	archiveFolderSuggestions: string[];
 	/** Holds back only the actions; selecting stays open during a run. */
 	isBusy: boolean;
 	message: string | undefined;
 	onSelectAll: () => void;
 	onClear: () => void;
-	/** An empty path takes the media back out of every folder. */
-	onMove: (logicalPath: string) => void;
+	/** An empty path takes the media back out of every folder; `isArchived` files it into the archive instead. */
+	onMove: (logicalPath: string, isArchived: boolean) => void;
 	onTrash: () => void;
 	onRestore: () => void;
 }) => {
 	const [folder, setFolder] = useState("");
+	// Starts ticked inside the archive, where moving media along to another of its folders is the likely aim
+	const [isArchived, setIsArchived] = useState(state === "archived");
 	const logicalPath = folder.trim();
 
 	return (
@@ -81,7 +86,11 @@ export const MediaSelectionBar = ({
 									list="media-selection-folders"
 									aria-label="移すフォルダ"
 									placeholder={
-										state === "inbox" ? "移すフォルダ" : "空欄で未整理へ"
+										isArchived
+											? "アーカイブのフォルダ"
+											: state === "inbox"
+												? "移すフォルダ"
+												: "空欄で未整理へ"
 									}
 									value={folder}
 									onChange={(event) => {
@@ -98,16 +107,34 @@ export const MediaSelectionBar = ({
 								)}
 							</label>
 							<datalist id="media-selection-folders">
-								{folderSuggestions.map((path) => {
+								{(isArchived
+									? archiveFolderSuggestions
+									: folderSuggestions
+								).map((path) => {
 									return <option key={path} value={path} />;
 								})}
 							</datalist>
+							<label className="label gap-1.5 text-base-content text-xs">
+								<input
+									type="checkbox"
+									checked={isArchived}
+									onChange={(event) => {
+										setIsArchived(event.target.checked);
+									}}
+									className="checkbox checkbox-xs"
+								/>
+								アーカイブ
+							</label>
 							<button
 								type="button"
-								// On the inbox side an empty path would file each media where it already sits
-								disabled={isBusy || (state === "inbox" && logicalPath === "")}
+								// On the inbox side an empty path would file each media where it already sits, and the
+								// archive holds folders only
+								disabled={
+									isBusy ||
+									(logicalPath === "" && (isArchived || state === "inbox"))
+								}
 								onClick={() => {
-									onMove(logicalPath);
+									onMove(logicalPath, isArchived);
 								}}
 								className="btn btn-sm rounded-full"
 							>

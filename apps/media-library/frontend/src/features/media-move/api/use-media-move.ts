@@ -1,4 +1,4 @@
-// In scope: filing one media object into a folder, and refreshing what shows where it sits
+// In scope: filing one media object into a folder of the library or the archive, and refreshing what shows where it sits
 // Out of scope: rendering, holding the folder being typed, reading the folders there are, the words shown for it
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,7 +16,7 @@ import {
  * the screen has something to say in the meantime.
  */
 export interface MediaMove {
-	move: (mediaId: string, logicalPath: string) => void;
+	move: (mediaId: string, logicalPath: string, isArchived: boolean) => void;
 	status: MutationStatus;
 }
 
@@ -25,8 +25,8 @@ export const useMediaMove = (): MediaMove => {
 	const move = useMoveMedia({
 		mutation: {
 			onSuccess: async () => {
-				// The listing carries the folder it shows, a folder can have come into being here, and the tag
-				// counts cover only the folder being narrowed to
+				// The listing carries the folder it shows, a folder of either side can have come into being or
+				// emptied here, and the tag counts cover only the folder being narrowed to
 				await Promise.all([
 					queryClient.invalidateQueries({ queryKey: getListMediaQueryKey() }),
 					queryClient.invalidateQueries({ queryKey: getListFoldersQueryKey() }),
@@ -37,8 +37,8 @@ export const useMediaMove = (): MediaMove => {
 	});
 
 	return {
-		move: (mediaId, logicalPath) => {
-			move.mutate({ id: mediaId, data: { logicalPath } });
+		move: (mediaId, logicalPath, isArchived) => {
+			move.mutate({ id: mediaId, data: { logicalPath, isArchived } });
 		},
 		status: toMutationStatus(move),
 	};

@@ -45,6 +45,11 @@ export interface MediaLibrary {
 	tagSuggestions: string[];
 	/** The folders there are, for narrowing the listing and for filing media into one. */
 	folderSuggestions: string[];
+	/** The archive's folders, for opening one and for archiving media into one. */
+	archiveFolders: string[];
+	/** The search over the archive's folders, kept here so it outlives opening one of them. */
+	archiveQuery: string;
+	setArchiveQuery: (query: string) => void;
 	preview: Media | null;
 	openPreview: (media: Media) => void;
 	closePreview: () => void;
@@ -54,13 +59,15 @@ export const useMediaLibrary = (): MediaLibrary => {
 	const [filter, setFilter] = useState<MediaFilter>({});
 	// What the preview shows is the row the listing already handed over, so opening one asks for nothing
 	const [preview, setPreview] = useState<Media | null>(null);
+	const [archiveQuery, setArchiveQuery] = useState("");
 	const status = useSyncStatus();
 	const trash = useMediaTrash();
 	const clipboard = useMediaClipboard();
 	const tags = useMediaTags();
 	const move = useMediaMove();
 	const selectionActions = useMediaSelectionActions();
-	const folderSuggestions = useFolderList();
+	const folderSuggestions = useFolderList({ isArchived: false });
+	const archiveFolders = useFolderList({ isArchived: true });
 
 	// The listing is keyed off the last sync that closed out, so taking one in shows up without anything
 	// having to watch for it. `latest` covers the run in flight as well and reports no finish time while
@@ -105,6 +112,9 @@ export const useMediaLibrary = (): MediaLibrary => {
 			return tag.name;
 		}),
 		folderSuggestions,
+		archiveFolders,
+		archiveQuery,
+		setArchiveQuery,
 		preview,
 		openPreview: (media: Media) => {
 			setPreview(media);
