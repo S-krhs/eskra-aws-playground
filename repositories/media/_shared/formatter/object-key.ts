@@ -1,4 +1,4 @@
-// In scope: the key an object takes in the media bucket, and reading an area or logical path back out of one
+// In scope: the key an object takes in the media bucket, and reading an area, a logical path or being archived back out of one
 // Out of scope: what the areas are, talking to storage, DB rows, what object metadata means, thumbnail generation
 import { getJstDateTimeParts } from "@eskra-aws-playground/libs/date/jst-date-time-parts.js";
 import {
@@ -9,6 +9,11 @@ import {
 
 const THUMBNAIL_EXTENSION = "webp";
 
+/** For narrowing a query to an area without building a key. */
+export const buildAreaKeyPrefix = (area: NamedMediaStorageArea): string => {
+	return `${AREA_PREFIXES[area]}/`;
+};
+
 /** Anything outside the named areas reads as "other" — media filed into a folder by hand lands there. */
 export const resolveArea = (key: string): MediaStorageArea => {
 	for (const [area, prefix] of Object.entries(AREA_PREFIXES)) {
@@ -18,6 +23,31 @@ export const resolveArea = (key: string): MediaStorageArea => {
 	}
 
 	return "other";
+};
+
+/**
+ * An archived object put in the trash carries the archive's prefix along under the trash's, and that is
+ * taken off too — it says where a restore goes, not a folder.
+ */
+const splitArea = (
+	key: string,
+): { area: MediaStorageArea; isArchived: boolean; path: string } => {
+	const area = resolveArea(key);
+
+	if (area === "other") {
+		return { area, isArchived: false, path: key };
+	}
+
+	const path = key.slice(buildAreaKeyPrefix(area).length);
+	const archivePrefix = buildAreaKeyPrefix("archive");
+
+	if (area === "archive") {
+		return { area, isArchived: true, path };
+	}
+
+	return area === "deleted" && path.startsWith(archivePrefix)
+		? { area, isArchived: true, path: path.slice(archivePrefix.length) }
+		: { area, isArchived: false, path };
 };
 
 /** Formats the modified time as the JST string a key uses: 2026-09-07T04:30:45.123Z becomes 20260907-133045123. */
@@ -50,7 +80,8 @@ export const buildAreaObjectKey = (input: {
 /**
  * The key an object keeps its file name at when it moves between areas.
  * `logicalPath` puts it under that path inside the area, so an object moved out of a folder reads back
- * with the folder it came from — which is how it finds its way home again.
+ * with the folder it came from — which is how it finds its way home again. An archived object going into
+ * the trash also keeps the archive's prefix, so its way home leads back into the archive.
  */
 export const buildAreaKeyKeepingName = (input: {
 	area: NamedMediaStorageArea;
@@ -58,23 +89,31 @@ export const buildAreaKeyKeepingName = (input: {
 	logicalPath?: string;
 }): string => {
 	const fileName = input.key.slice(input.key.lastIndexOf("/") + 1);
+	const archive =
+		input.area === "deleted" && splitArea(input.key).isArchived
+			? buildAreaKeyPrefix("archive")
+			: "";
 	const path = input.logicalPath ? `${input.logicalPath}/` : "";
 
-	return `${AREA_PREFIXES[input.area]}/${path}${fileName}`;
+	return `${AREA_PREFIXES[input.area]}/${archive}${path}${fileName}`;
 };
 
 /**
  * The key an object takes once it is filed into a folder, keeping the name it already has.
  * The logical path sits at the top of the bucket rather than under an area's prefix: the named areas
- * are this package's own staging ground, and a filed object has left them.
+ * are this package's own staging ground, and a filed object has left them. An archived one is the
+ * exception, kept under the archive's prefix so it stays apart from the library.
  */
 export const buildLogicalPathKey = (input: {
 	key: string;
 	logicalPath: string;
+	isArchived: boolean;
 }): string => {
 	const fileName = input.key.slice(input.key.lastIndexOf("/") + 1);
+	const archive = input.isArchived ? buildAreaKeyPrefix("archive") : "";
+	const path = input.logicalPath ? `${input.logicalPath}/` : "";
 
-	return `${input.logicalPath}/${fileName}`;
+	return `${archive}${path}${fileName}`;
 };
 
 /** A thumbnail is named after the media's id alone, so moving the media never has to touch it. */
@@ -88,10 +127,13 @@ export const buildThumbnailKey = (mediaId: string): string => {
  * A key left with no directory part has no logical path, and returns an empty string.
  */
 export const extractLogicalPath = (key: string): string => {
-	const area = resolveArea(key);
-	const path =
-		area === "other" ? key : key.slice(AREA_PREFIXES[area].length + 1);
+	const { path } = splitArea(key);
 	const separatorIndex = path.lastIndexOf("/");
 
 	return separatorIndex === -1 ? "" : path.slice(0, separatorIndex);
+};
+
+/** Whether a key sits in the archive, or in the trash after being taken out of it. */
+export const isArchivedKey = (key: string): boolean => {
+	return splitArea(key).isArchived;
 };

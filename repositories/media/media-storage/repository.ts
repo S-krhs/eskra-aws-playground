@@ -21,6 +21,7 @@ import {
 	buildLogicalPathKey,
 	buildThumbnailKey,
 	extractLogicalPath,
+	isArchivedKey,
 	resolveArea,
 } from "../_shared/formatter/object-key.js";
 import type {
@@ -297,8 +298,9 @@ export const mediaStorageRepository = {
 	},
 
 	/**
-	 * Files one object under a logical path, keeping the name it already has. An empty path puts it
-	 * back in the inbox: where an unfiled object sits is this package's layout, not the bucket root.
+	 * Files one object under a logical path, keeping the name it already has. An empty path outside the
+	 * archive puts it back in the inbox: where an unfiled object sits is this package's layout, not the
+	 * bucket root.
 	 * Errors rather than overwriting a taken destination, and undoes the copy if the source can't be
 	 * removed afterwards — the same terms as `moveIntoArea`.
 	 */
@@ -306,7 +308,7 @@ export const mediaStorageRepository = {
 		input: MoveToLogicalPathInput,
 	): Promise<StoredObjectLocation> => {
 		const key =
-			input.logicalPath === ""
+			input.logicalPath === "" && !input.isArchived
 				? buildAreaKeyKeepingName({ area: "inbox", key: input.key })
 				: buildLogicalPathKey(input);
 
@@ -520,6 +522,7 @@ const describeStored = async (key: string): Promise<StoredObjectLocation> => {
 	return {
 		key,
 		logicalPath: extractLogicalPath(key),
+		isArchived: isArchivedKey(key),
 		byteSize: stored.byteSize,
 		etag: stored.etag,
 	};

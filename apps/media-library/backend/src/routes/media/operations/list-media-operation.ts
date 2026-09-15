@@ -28,6 +28,7 @@ export const listMediaOperation = async (input: {
 					id: media.id,
 					fileName: media.fileName,
 					logicalPath: media.logicalPath,
+					isArchived: media.isArchived,
 					contentType: media.contentType,
 					byteSize: media.byteSize,
 					width: media.width,

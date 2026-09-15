@@ -6,15 +6,27 @@ import type { FolderListResponse } from "@eskra-aws-playground/shared-domains/me
 import type { OperationResult } from "../../_shared/intermediate-models/operation-result.js";
 
 /**
- * A folder exists either because something is filed there or because it was registered on its own,
- * and the two lists overlap — a folder emptied by moving its media out is only in the second.
+ * A library folder exists either because something is filed there or because it was registered on its
+ * own, and the two lists overlap — a folder emptied by moving its media out is only in the second.
+ * Only the library's folders are ever registered, so an archive folder is there only while it holds media.
  */
-export const listFoldersOperation = async (): Promise<
-	OperationResult<FolderListResponse>
-> => {
+export const listFoldersOperation = async (input: {
+	isArchived: boolean;
+}): Promise<OperationResult<FolderListResponse>> => {
+	if (input.isArchived) {
+		return {
+			kind: "OK",
+			data: {
+				folders: await mediaObjectRepository.findAllLogicalPaths({
+					isArchived: true,
+				}),
+			},
+		};
+	}
+
 	const [registered, inUse] = await Promise.all([
 		mediaFolderRepository.findAll(),
-		mediaObjectRepository.findAllLogicalPaths(),
+		mediaObjectRepository.findAllLogicalPaths({ isArchived: false }),
 	]);
 
 	return {

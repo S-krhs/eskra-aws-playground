@@ -29,6 +29,7 @@ const trashedMedia = {
 	id: mediaId,
 	objectKey: "_deleted/photos/2024/20260907-133045123.png",
 	logicalPath: "photos/2024",
+	isArchived: false,
 	fileName: "イラスト.png",
 	contentType: "image/png",
 	byteSize: 1024,
@@ -64,6 +65,7 @@ describe("restoreMediaOperation", () => {
 		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
 			key: trashedMedia.objectKey,
 			logicalPath: "photos/2024",
+			isArchived: false,
 		});
 		expect(objectRepository.updateTrashedLocation).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -73,6 +75,23 @@ describe("restoreMediaOperation", () => {
 			}),
 		);
 		expect(result).toEqual({ kind: "OK", data: undefined });
+	});
+
+	it("puts media trashed out of the archive back into the archive", async () => {
+		objectRepository.findById.mockResolvedValue({
+			...trashedMedia,
+			objectKey: "_deleted/_archive/backup/20260907-133045123.png",
+			logicalPath: "backup",
+			isArchived: true,
+		});
+
+		await restoreMediaOperation({ mediaId });
+
+		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
+			key: "_deleted/_archive/backup/20260907-133045123.png",
+			logicalPath: "backup",
+			isArchived: true,
+		});
 	});
 
 	it("leaves one that isn't in the trash where it already is", async () => {

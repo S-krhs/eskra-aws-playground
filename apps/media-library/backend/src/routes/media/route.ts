@@ -203,10 +203,21 @@ export const replaceMediaTags: RouteHandler<
 };
 
 export const moveMedia: RouteHandler<typeof moveMediaRoute> = async (c) => {
+	const body = c.req.valid("json");
+
+	// The archive holds folders only, and no field-level schema can tie the path to the flag
+	if (body.isArchived && body.logicalPath === "") {
+		return c.json(
+			{ message: "アーカイブへ移すときは logicalPath を指定してください" },
+			400,
+		);
+	}
+
 	const result = await runInTurn(() => {
 		return moveMediaOperation({
 			mediaId: c.req.valid("param").id,
-			logicalPath: c.req.valid("json").logicalPath,
+			logicalPath: body.logicalPath,
+			isArchived: body.isArchived,
 		});
 	});
 

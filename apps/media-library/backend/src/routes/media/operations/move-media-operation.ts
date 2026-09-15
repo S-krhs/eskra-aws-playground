@@ -1,4 +1,4 @@
-// In scope: filing one media object into a folder — moving the stored object and re-pointing its row
+// In scope: filing one media object into a folder of the library or the archive — moving the stored object and re-pointing its row
 // Out of scope: validating the path, HTTP status codes, how a key is built, listing folders
 import { mediaFolderRepository } from "@eskra-aws-playground/repositories/media/media-folder/repository.js";
 import { mediaObjectRepository } from "@eskra-aws-playground/repositories/media/media-object/repository.js";
@@ -14,6 +14,7 @@ import type { OperationResult } from "../../_shared/intermediate-models/operatio
 export const moveMediaOperation = async (input: {
 	mediaId: string;
 	logicalPath: string;
+	isArchived: boolean;
 }): Promise<OperationResult<MediaLocationResponse, { kind: "NOT_FOUND" }>> => {
 	const media = await mediaObjectRepository.findUntrashedById(input.mediaId);
 
@@ -24,6 +25,7 @@ export const moveMediaOperation = async (input: {
 	const moved = await mediaStorageRepository.moveToLogicalPath({
 		key: media.objectKey,
 		logicalPath: input.logicalPath,
+		isArchived: input.isArchived,
 	});
 
 	// A row deleted while the object was moving is left to the next sync, which reads the object's own
@@ -39,10 +41,14 @@ export const moveMediaOperation = async (input: {
 		},
 	]);
 
-	// Registered so the folder keeps being offered once the last media moves back out of it
-	if (moved.logicalPath !== "") {
+	// Registered so the folder keeps being offered once the last media moves back out of it. Not for the
+	// archive: the registered folders are offered for filing into the library
+	if (moved.logicalPath !== "" && !moved.isArchived) {
 		await mediaFolderRepository.insert(moved.logicalPath);
 	}
 
-	return { kind: "OK", data: { logicalPath: moved.logicalPath } };
+	return {
+		kind: "OK",
+		data: { logicalPath: moved.logicalPath, isArchived: moved.isArchived },
+	};
 };

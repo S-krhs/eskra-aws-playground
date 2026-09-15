@@ -1,9 +1,14 @@
 // In scope: registering, re-keying and deleting MediaObject rows, and reading them one at a time or by page
 // Out of scope: reading/writing R2, key construction, tag and folder operations, thumbnail generation
 import { getPrismaClient } from "../../client/prisma.js";
-import { buildThumbnailKey } from "../_shared/formatter/object-key.js";
+import {
+	buildAreaKeyPrefix,
+	buildThumbnailKey,
+	isArchivedKey,
+} from "../_shared/formatter/object-key.js";
 import type { MediaObjectWithTagsRow } from "../_shared/virtual/media-object-row.js";
 import type {
+	FindLogicalPathsInput,
 	FindMediaObjectPageInput,
 	InsertMediaObjectInput,
 	MediaObject,
@@ -17,6 +22,8 @@ import type {
 	UpdateTrashedLocationInput,
 } from "./types.js";
 
+const ARCHIVE_KEY_PREFIX = buildAreaKeyPrefix("archive");
+
 // Read alongside every whole row, so a caller never has to ask for the tags separately
 const TAG_NAMES_SELECTION = {
 	select: { tag: { select: { name: true } } },
@@ -28,6 +35,7 @@ const toMediaObject = (row: MediaObjectWithTagsRow): MediaObject => {
 		id: row.id,
 		objectKey: row.objectKey,
 		logicalPath: row.logicalPath,
+		isArchived: isArchivedKey(row.objectKey),
 		fileName: row.fileName,
 		contentType: row.contentType,
 		byteSize: Number(row.byteSize),
@@ -102,10 +110,18 @@ export const mediaObjectRepository = {
 	 * The folders media is actually filed into, by path.
 	 * Trashed rows are left out, and so is the empty path an unfiled object carries.
 	 */
-	findAllLogicalPaths: async (): Promise<string[]> => {
+	findAllLogicalPaths: async (
+		input: FindLogicalPathsInput,
+	): Promise<string[]> => {
 		const prisma = getPrismaClient();
 		const rows = await prisma.mediaObject.findMany({
-			where: { trashedAt: null, logicalPath: { not: "" } },
+			where: {
+				trashedAt: null,
+				logicalPath: { not: "" },
+				objectKey: input.isArchived
+					? { startsWith: ARCHIVE_KEY_PREFIX }
+					: { not: { startsWith: ARCHIVE_KEY_PREFIX } },
+			},
 			distinct: ["logicalPath"],
 			select: { logicalPath: true },
 			orderBy: { logicalPath: "asc" },
@@ -138,7 +154,7 @@ export const mediaObjectRepository = {
 		return row ? toMediaObject(row) : undefined;
 	},
 
-	/** One page, newest first, of whichever of the three sides the input names. */
+	/** One page, newest first, of whichever of the four sides the input names. */
 	findPage: async (
 		input: FindMediaObjectPageInput,
 	): Promise<MediaObjectPage> => {
@@ -153,6 +169,14 @@ export const mediaObjectRepository = {
 						: input.state === "trashed"
 							? { not: null }
 							: null,
+				// The archive is told apart by where its objects are stored, and the inbox and the library
+				// share everything else
+				objectKey:
+					input.state === undefined || input.state === "trashed"
+						? undefined
+						: input.state === "archived"
+							? { startsWith: ARCHIVE_KEY_PREFIX }
+							: { not: { startsWith: ARCHIVE_KEY_PREFIX } },
 				// The inbox and the library are the same side of the trash, split on the logical path: an
 				// object nothing has filed carries the empty one. The trash keeps the path each object was
 				// filed under, so it answers for both kinds on whatever path it is given
