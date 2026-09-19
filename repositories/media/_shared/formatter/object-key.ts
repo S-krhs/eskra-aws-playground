@@ -116,6 +116,25 @@ export const buildLogicalPathKey = (input: {
 	return `${archive}${path}${fileName}`;
 };
 
+/**
+ * The same key with a counter before the extension, for a moving object whose name is already taken at
+ * the destination. A name built by `buildAreaObjectKey` is only kept apart within its own area, so a
+ * later file sharing a modified millisecond can follow an earlier one into the same folder under the
+ * same name.
+ */
+export const buildSequencedKey = (input: {
+	key: string;
+	sequence: number;
+}): string => {
+	const fileNameStart = input.key.lastIndexOf("/") + 1;
+	const extensionStart = input.key.lastIndexOf(".");
+	// A dot opening the file name, as in `.env`, is part of the name rather than an extension
+	const stemEnd =
+		extensionStart > fileNameStart ? extensionStart : input.key.length;
+
+	return `${input.key.slice(0, stemEnd)}-${input.sequence}${input.key.slice(stemEnd)}`;
+};
+
 /** A thumbnail is named after the media's id alone, so moving the media never has to touch it. */
 export const buildThumbnailKey = (mediaId: string): string => {
 	return `${AREA_PREFIXES.thumbnail}/${mediaId}.${THUMBNAIL_EXTENSION}`;

@@ -3,6 +3,7 @@ import {
 	buildAreaKeyKeepingName,
 	buildAreaObjectKey,
 	buildLogicalPathKey,
+	buildSequencedKey,
 	buildThumbnailKey,
 	extractLogicalPath,
 	isArchivedKey,
@@ -179,6 +180,31 @@ describe("buildLogicalPathKey", () => {
 		expect(key).toBe("_archive/backup/20260907-133045123.mp4");
 		expect(extractLogicalPath(key)).toBe("backup");
 		expect(isArchivedKey(key)).toBe(true);
+	});
+});
+
+describe("buildSequencedKey", () => {
+	it("puts the counter before the extension, the way a new key takes one", () => {
+		expect(
+			buildSequencedKey({
+				key: "_archive/backup/20260907-133045123.mp4",
+				sequence: 2,
+			}),
+		).toBe("_archive/backup/20260907-133045123-2.mp4");
+	});
+
+	it("appends the counter when the name has no extension", () => {
+		expect(buildSequencedKey({ key: "photos/a", sequence: 2 })).toBe(
+			"photos/a-2",
+		);
+	});
+
+	// A dot in a folder name must not be read as the file's extension
+	it("reads the extension from the file name alone", () => {
+		expect(buildSequencedKey({ key: "v1.2/a", sequence: 3 })).toBe("v1.2/a-3");
+		expect(buildSequencedKey({ key: "photos/.env", sequence: 2 })).toBe(
+			"photos/.env-2",
+		);
 	});
 });
 
