@@ -3,8 +3,10 @@ import {
 	buildAreaKeyKeepingName,
 	buildAreaObjectKey,
 	buildLogicalPathKey,
+	buildSequencedKey,
 	buildThumbnailKey,
 	extractLogicalPath,
+	isArchivedKey,
 	resolveArea,
 } from "./object-key.js";
 
@@ -15,6 +17,7 @@ describe("resolveArea", () => {
 		expect(resolveArea("_pending/a.png")).toBe("pending");
 		expect(resolveArea("_inbox/a.png")).toBe("inbox");
 		expect(resolveArea("_failed/a.png")).toBe("failed");
+		expect(resolveArea("_archive/backup/a.mp4")).toBe("archive");
 		expect(resolveArea("_thumb/a.webp")).toBe("thumbnail");
 	});
 
@@ -119,6 +122,29 @@ describe("buildAreaKeyKeepingName", () => {
 
 		expect(key).toBe("_deleted/photos/2024/20260907-133045123.png");
 		expect(extractLogicalPath(key)).toBe("photos/2024");
+		expect(isArchivedKey(key)).toBe(false);
+	});
+
+	// Otherwise a restore would put it back in the library under the same folder name
+	it("keeps an archived object's archive prefix inside the trash", () => {
+		const key = buildAreaKeyKeepingName({
+			area: "deleted",
+			key: "_archive/backup/20260907-133045123.mp4",
+			logicalPath: "backup",
+		});
+
+		expect(key).toBe("_deleted/_archive/backup/20260907-133045123.mp4");
+		expect(extractLogicalPath(key)).toBe("backup");
+		expect(isArchivedKey(key)).toBe(true);
+	});
+
+	it("drops the archive prefix when the destination isn't the trash", () => {
+		expect(
+			buildAreaKeyKeepingName({
+				area: "inbox",
+				key: "_archive/backup/20260907-133045123.mp4",
+			}),
+		).toBe("_inbox/20260907-133045123.mp4");
 	});
 });
 
@@ -128,6 +154,7 @@ describe("buildLogicalPathKey", () => {
 			buildLogicalPathKey({
 				key: "_inbox/20260907-133045123.png",
 				logicalPath: "photos/2024",
+				isArchived: false,
 			}),
 		).toBe("photos/2024/20260907-133045123.png");
 	});
@@ -136,10 +163,60 @@ describe("buildLogicalPathKey", () => {
 		const key = buildLogicalPathKey({
 			key: "photos/2024/20260907-133045123.png",
 			logicalPath: "illust",
+			isArchived: false,
 		});
 
 		expect(key).toBe("illust/20260907-133045123.png");
 		expect(extractLogicalPath(key)).toBe("illust");
+	});
+
+	it("files an archived object under the archive's prefix", () => {
+		const key = buildLogicalPathKey({
+			key: "_deleted/_archive/backup/20260907-133045123.mp4",
+			logicalPath: "backup",
+			isArchived: true,
+		});
+
+		expect(key).toBe("_archive/backup/20260907-133045123.mp4");
+		expect(extractLogicalPath(key)).toBe("backup");
+		expect(isArchivedKey(key)).toBe(true);
+	});
+});
+
+describe("buildSequencedKey", () => {
+	it("puts the counter before the extension, the way a new key takes one", () => {
+		expect(
+			buildSequencedKey({
+				key: "_archive/backup/20260907-133045123.mp4",
+				sequence: 2,
+			}),
+		).toBe("_archive/backup/20260907-133045123-2.mp4");
+	});
+
+	it("appends the counter when the name has no extension", () => {
+		expect(buildSequencedKey({ key: "photos/a", sequence: 2 })).toBe(
+			"photos/a-2",
+		);
+	});
+
+	// A dot in a folder name must not be read as the file's extension
+	it("reads the extension from the file name alone", () => {
+		expect(buildSequencedKey({ key: "v1.2/a", sequence: 3 })).toBe("v1.2/a-3");
+		expect(buildSequencedKey({ key: "photos/.env", sequence: 2 })).toBe(
+			"photos/.env-2",
+		);
+	});
+});
+
+describe("isArchivedKey", () => {
+	it("reads media anywhere outside the archive as not archived", () => {
+		expect(isArchivedKey("_inbox/a.mp4")).toBe(false);
+		expect(isArchivedKey("photos/_archive/a.mp4")).toBe(false);
+		expect(isArchivedKey("_archives/a.mp4")).toBe(false);
+	});
+
+	it("reads the prefix nested under an area other than the trash as a folder", () => {
+		expect(isArchivedKey("_inbox/_archive/a.mp4")).toBe(false);
 	});
 });
 

@@ -244,6 +244,50 @@ describe.skipIf(!testDatabaseUrl)("mediaObjectRepository (integration)", () => {
 		).toEqual([newerId]);
 	});
 
+	// Archived keys can't take the run's key prefix — the archive is read off the key's start — so the
+	// run's own folder keeps these rows apart instead
+	it("splits the archive from the library on where the object is stored", async () => {
+		const folder = `archive-test-${testId}`;
+		await mediaObjectRepository.insertMany([
+			buildInput(olderId, "a.mp4", "2026-09-01T00:00:00.000Z", {
+				objectKey: `_archive/${folder}/a.mp4`,
+				logicalPath: folder,
+			}),
+			buildInput(newerId, "b.mp4", "2026-09-02T00:00:00.000Z", {
+				objectKey: `${keyPrefix}${folder}/b.mp4`,
+				logicalPath: folder,
+			}),
+		]);
+
+		const archive = await mediaObjectRepository.findPage({
+			state: "archived",
+			logicalPath: folder,
+			limit: 10,
+		});
+		expect(
+			archive.objects.map((object) => {
+				return object.id;
+			}),
+		).toEqual([olderId]);
+		expect(archive.objects[0]?.isArchived).toBe(true);
+
+		const library = await mediaObjectRepository.findPage({
+			state: "filed",
+			logicalPath: folder,
+			limit: 10,
+		});
+		expect(
+			library.objects.map((object) => {
+				return object.id;
+			}),
+		).toEqual([newerId]);
+		expect(library.objects[0]?.isArchived).toBe(false);
+
+		expect(
+			await mediaObjectRepository.findAllLogicalPaths({ isArchived: true }),
+		).toContain(folder);
+	});
+
 	it("reads the trash as the other side of the same listing", async () => {
 		await mediaObjectRepository.insertMany([
 			buildInput(olderId, "a.png", "2026-09-01T00:00:00.000Z"),

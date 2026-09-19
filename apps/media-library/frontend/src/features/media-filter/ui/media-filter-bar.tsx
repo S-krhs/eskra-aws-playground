@@ -26,6 +26,15 @@ const STATES = [
 		],
 	},
 	{
+		label: "アーカイブ",
+		value: "archived",
+		icon: [
+			"M3 5h18v4H3Z",
+			"M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9",
+			"M10 13h4",
+		],
+	},
+	{
 		label: "ゴミ箱",
 		value: "trashed",
 		icon: [
@@ -75,8 +84,14 @@ export const MediaFilterBar = ({
 		});
 	};
 	const selectState = (value: ListMediaState) => {
-		if (value === "inbox") {
-			// The inbox side has no folder to be in, so a commit still waiting would put one back
+		// The inbox has no folder to be in, and an archive folder is opened from the archive's own list rather
+		// than typed here, so crossing into either or out of the archive drops the folder — a commit still
+		// waiting would put one back. Picking the archive from inside one of its folders returns to that list
+		if (
+			value === "inbox" ||
+			value === "archived" ||
+			filter.state === "archived"
+		) {
 			clearTimeout(commitTimer.current);
 			setFolder("");
 			onChange((current) => {
@@ -164,7 +179,7 @@ export const MediaFilterBar = ({
 				</div>
 			</fieldset>
 
-			{filter.state === "inbox" ? null : (
+			{filter.state === "inbox" || filter.state === "archived" ? null : (
 				<fieldset>
 					<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
 						フォルダ

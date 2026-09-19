@@ -50,6 +50,9 @@
 					"logicalPath": {
 						"type": "string"
 					},
+					"isArchived": {
+						"type": "boolean"
+					},
 					"contentType": {
 						"type": "string"
 					},
@@ -83,6 +86,7 @@
 					"id",
 					"fileName",
 					"logicalPath",
+					"isArchived",
 					"contentType",
 					"byteSize",
 					"hasThumbnail",
@@ -154,10 +158,14 @@
 				"properties": {
 					"logicalPath": {
 						"type": "string"
+					},
+					"isArchived": {
+						"type": "boolean"
 					}
 				},
 				"required": [
-					"logicalPath"
+					"logicalPath",
+					"isArchived"
 				]
 			},
 			"MediaMoveRequest": {
@@ -177,10 +185,14 @@
 								"maxLength": 512
 							}
 						]
+					},
+					"isArchived": {
+						"type": "boolean"
 					}
 				},
 				"required": [
-					"logicalPath"
+					"logicalPath",
+					"isArchived"
 				]
 			},
 			"FolderListResponse": {
@@ -318,6 +330,7 @@
 							"enum": [
 								"inbox",
 								"filed",
+								"archived",
 								"trashed"
 							],
 							"default": "filed"
@@ -830,7 +843,7 @@
 						}
 					},
 					"400": {
-						"description": "id が UUID ではない、またはフォルダのパスが不正",
+						"description": "id が UUID ではない、フォルダのパスが不正、またはアーカイブへ移すのにパスが空",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -866,13 +879,36 @@
 			"get": {
 				"operationId": "listFolders",
 				"summary": "メディアを入れられるフォルダを名前順に返す",
+				"parameters": [
+					{
+						"schema": {
+							"type": "string",
+							"enum": [
+								"1"
+							]
+						},
+						"required": false,
+						"name": "archived",
+						"in": "query"
+					}
+				],
 				"responses": {
 					"200": {
-						"description": "登録済みのフォルダと、メディアが実際に入っているフォルダ",
+						"description": "ライブラリなら登録済みのフォルダと、メディアが実際に入っているフォルダ。アーカイブならメディアが入っているフォルダ",
 						"content": {
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/FolderListResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "archived の値が不正",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
@@ -901,6 +937,7 @@
 							"enum": [
 								"inbox",
 								"filed",
+								"archived",
 								"trashed"
 							]
 						},

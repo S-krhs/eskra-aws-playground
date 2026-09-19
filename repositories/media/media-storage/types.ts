@@ -25,6 +25,8 @@ export interface StoredObjectSummary {
 export interface StoredObjectLocation {
 	key: string;
 	logicalPath: string;
+	/** Whether it landed in the archive — or in the trash, on its way out of the archive. */
+	isArchived: boolean;
 	byteSize: number;
 	etag: string;
 }
@@ -54,10 +56,11 @@ export interface MoveIntoAreaInput {
 	logicalPath?: string;
 }
 
-/** Where to file one object. An empty `logicalPath` puts it back where nothing is filed yet. */
+/** Where to file one object. An empty `logicalPath` outside the archive puts it back where nothing is filed yet. */
 export interface MoveToLogicalPathInput {
 	key: string;
 	logicalPath: string;
+	isArchived: boolean;
 }
 
 export interface StoredObjectMetadata {

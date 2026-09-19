@@ -5,7 +5,9 @@ import { listFoldersOperation } from "./operations/list-folders-operation.js";
 import type { listFoldersRoute } from "./schema.js";
 
 export const listFolders: RouteHandler<typeof listFoldersRoute> = async (c) => {
-	const result = await listFoldersOperation();
+	const result = await listFoldersOperation({
+		isArchived: c.req.valid("query").archived === "1",
+	});
 
 	return c.json(result.data, 200);
 };

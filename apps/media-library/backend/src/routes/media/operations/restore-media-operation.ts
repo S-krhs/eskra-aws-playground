@@ -28,6 +28,7 @@ export const restoreMediaOperation = async (input: {
 	const moved = await mediaStorageRepository.moveToLogicalPath({
 		key: media.objectKey,
 		logicalPath: media.logicalPath,
+		isArchived: media.isArchived,
 	});
 
 	await mediaObjectRepository.updateTrashedLocation({

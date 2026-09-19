@@ -19,8 +19,10 @@ import {
 	buildAreaKeyKeepingName,
 	buildAreaObjectKey,
 	buildLogicalPathKey,
+	buildSequencedKey,
 	buildThumbnailKey,
 	extractLogicalPath,
+	isArchivedKey,
 	resolveArea,
 } from "../_shared/formatter/object-key.js";
 import type {
@@ -38,11 +40,11 @@ import type {
 	UploadThumbnailInput,
 } from "./types.js";
 
-// Files sharing a modified time are rare; going past this points at a skew in what is being taken in
 // Written beside the caller's metadata so a retried copy can recognise what it already produced. It is
 // this package's own bookkeeping, kept apart from the metadata a caller passes
 const COPY_SOURCE_METADATA_KEY = "copied-from";
 
+// Files sharing a modified time are rare; going past this points at a skew in what is being taken in
 const MAX_KEY_SEQUENCE = 100;
 
 // A single CopyObject tops out at 5GB, so anything larger is assembled out of ranged parts
@@ -263,23 +265,22 @@ export const mediaStorageRepository = {
 
 	/**
 	 * Moves an object into an area, keeping its file name and — where `logicalPath` is passed — the
-	 * folder it was filed under. Errors rather than overwriting when that name is already taken there,
-	 * and undoes the copy if the source can't be removed afterwards.
+	 * folder it was filed under. A name already taken there gets a counter rather than being
+	 * overwritten, so the returned key can differ from the one the name alone would give. Undoes the
+	 * copy if the source can't be removed afterwards.
 	 * One already sitting at the destination answers as done, so a caller whose row update didn't land
 	 * can retry without meeting its own copy in that check.
 	 */
 	moveIntoArea: async (
 		input: MoveIntoAreaInput,
 	): Promise<StoredObjectLocation> => {
-		const key = buildAreaKeyKeepingName(input);
+		const destination = buildAreaKeyKeepingName(input);
 
-		if (key === input.key) {
-			return await describeStored(key);
+		if (destination === input.key) {
+			return await describeStored(destination);
 		}
 
-		if (await mediaStorageRepository.headIfExists(key)) {
-			throw new Error(`移動先の key が既に埋まっています: ${key}`);
-		}
+		const key = await resolveFreeMoveKey(destination);
 
 		await copyWithinBucket({ sourceKey: input.key, destinationKey: key });
 
@@ -297,26 +298,25 @@ export const mediaStorageRepository = {
 	},
 
 	/**
-	 * Files one object under a logical path, keeping the name it already has. An empty path puts it
-	 * back in the inbox: where an unfiled object sits is this package's layout, not the bucket root.
-	 * Errors rather than overwriting a taken destination, and undoes the copy if the source can't be
-	 * removed afterwards — the same terms as `moveIntoArea`.
+	 * Files one object under a logical path, keeping the name it already has. An empty path outside the
+	 * archive puts it back in the inbox: where an unfiled object sits is this package's layout, not the
+	 * bucket root.
+	 * A taken name gets a counter rather than being overwritten, and the copy is undone if the source
+	 * can't be removed afterwards — the same terms as `moveIntoArea`.
 	 */
 	moveToLogicalPath: async (
 		input: MoveToLogicalPathInput,
 	): Promise<StoredObjectLocation> => {
-		const key =
-			input.logicalPath === ""
+		const destination =
+			input.logicalPath === "" && !input.isArchived
 				? buildAreaKeyKeepingName({ area: "inbox", key: input.key })
 				: buildLogicalPathKey(input);
 
-		if (key === input.key) {
-			return await describeStored(key);
+		if (destination === input.key) {
+			return await describeStored(destination);
 		}
 
-		if (await mediaStorageRepository.headIfExists(key)) {
-			throw new Error(`移動先の key が既に埋まっています: ${key}`);
-		}
+		const key = await resolveFreeMoveKey(destination);
 
 		await copyWithinBucket({ sourceKey: input.key, destinationKey: key });
 
@@ -509,6 +509,24 @@ const resolveFreeAreaKey = async (input: {
 	);
 };
 
+/** Steps past a destination another object already holds, numbering the way `resolveFreeAreaKey` does. */
+const resolveFreeMoveKey = async (destination: string): Promise<string> => {
+	for (let sequence = 0; sequence <= MAX_KEY_SEQUENCE; sequence += 1) {
+		const key =
+			sequence === 0
+				? destination
+				: buildSequencedKey({ key: destination, sequence: sequence + 1 });
+
+		if (!(await mediaStorageRepository.headIfExists(key))) {
+			return key;
+		}
+	}
+
+	throw new Error(
+		`移動先で同じ名前の key が ${MAX_KEY_SEQUENCE} 件を超えて埋まっています: ${destination}`,
+	);
+};
+
 /**
  * Reads back what was just written. A copy's etag doesn't always match the original's (when the
  * original went up as multipart), so registering the source's would make the next sync read it as
@@ -520,6 +538,7 @@ const describeStored = async (key: string): Promise<StoredObjectLocation> => {
 	return {
 		key,
 		logicalPath: extractLogicalPath(key),
+		isArchived: isArchivedKey(key),
 		byteSize: stored.byteSize,
 		etag: stored.etag,
 	};

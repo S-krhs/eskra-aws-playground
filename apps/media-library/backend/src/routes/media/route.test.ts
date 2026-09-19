@@ -74,6 +74,7 @@ const storedMedia = {
 	id: mediaId,
 	objectKey: "library/2026/01/02/photo.jpg",
 	logicalPath: "2026/01",
+	isArchived: false,
 	fileName: "photo.jpg",
 	contentType: "image/jpeg",
 	byteSize: 1024,
@@ -124,6 +125,7 @@ beforeEach(() => {
 	storageRepository.moveToLogicalPath.mockResolvedValue({
 		key: "photos/2024/photo.jpg",
 		logicalPath: "photos/2024",
+		isArchived: false,
 		byteSize: 1024,
 		etag: "def456",
 	});
@@ -160,6 +162,7 @@ describe("listMedia", () => {
 					id: mediaId,
 					fileName: "photo.jpg",
 					logicalPath: "2026/01",
+					isArchived: false,
 					contentType: "image/jpeg",
 					byteSize: 1024,
 					width: 4000,
@@ -510,6 +513,7 @@ describe("restoreMedia", () => {
 		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
 			key: "_deleted/2026/01/photo.jpg",
 			logicalPath: storedMedia.logicalPath,
+			isArchived: false,
 		});
 		expect(objectRepository.updateTrashedLocation).toHaveBeenCalledWith(
 			expect.objectContaining({ id: mediaId, trashedAt: null }),
@@ -663,15 +667,19 @@ describe("moveMedia", () => {
 			{
 				method: "PATCH",
 				headers: { origin: uiOrigin, "content-type": "application/json" },
-				body: JSON.stringify({ logicalPath: "photos/2024" }),
+				body: JSON.stringify({ logicalPath: "photos/2024", isArchived: false }),
 			},
 		);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ logicalPath: "photos/2024" });
+		expect(await response.json()).toEqual({
+			logicalPath: "photos/2024",
+			isArchived: false,
+		});
 		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
 			key: storedMedia.objectKey,
 			logicalPath: "photos/2024",
+			isArchived: false,
 		});
 	});
 
@@ -681,7 +689,10 @@ describe("moveMedia", () => {
 			{
 				method: "PATCH",
 				headers: { origin: uiOrigin, "content-type": "application/json" },
-				body: JSON.stringify({ logicalPath: "_thumb/sneaky" }),
+				body: JSON.stringify({
+					logicalPath: "_thumb/sneaky",
+					isArchived: false,
+				}),
 			},
 		);
 
@@ -695,7 +706,24 @@ describe("moveMedia", () => {
 			{
 				method: "PATCH",
 				headers: { origin: uiOrigin, "content-type": "application/json" },
-				body: JSON.stringify({ logicalPath: "photos/../../etc" }),
+				body: JSON.stringify({
+					logicalPath: "photos/../../etc",
+					isArchived: false,
+				}),
+			},
+		);
+
+		expect(response.status).toBe(400);
+		expect(storageRepository.moveToLogicalPath).not.toHaveBeenCalled();
+	});
+
+	it("refuses archiving without a folder", async () => {
+		const response = await createApp().request(
+			`${uiOrigin}/api/media/${mediaId}`,
+			{
+				method: "PATCH",
+				headers: { origin: uiOrigin, "content-type": "application/json" },
+				body: JSON.stringify({ logicalPath: "", isArchived: true }),
 			},
 		);
 
@@ -711,6 +739,20 @@ describe("listFolders", () => {
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({
 			folders: ["2026/01", "photos/2024"],
+		});
+	});
+
+	it("answers with the archive's folders when asked for them", async () => {
+		objectRepository.findAllLogicalPaths.mockResolvedValue(["backup"]);
+
+		const response = await createApp().request(
+			`${uiOrigin}/api/folders?archived=1`,
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ folders: ["backup"] });
+		expect(objectRepository.findAllLogicalPaths).toHaveBeenCalledWith({
+			isArchived: true,
 		});
 	});
 });

@@ -11,6 +11,8 @@ export interface MediaObject {
 	objectKey: string;
 	/** Where the object sits inside its area, as the storage repository reports it. */
 	logicalPath: string;
+	/** Read off the key, so a trashed object still says whether a restore takes it back into the archive. */
+	isArchived: boolean;
 	fileName: string;
 	contentType: string;
 	byteSize: number;
@@ -115,12 +117,17 @@ export interface MediaObjectCursor {
 	id: string;
 }
 
+export interface FindLogicalPathsInput {
+	isArchived: boolean;
+}
+
 /**
  * Which set of rows a listing reads.
  * An object that has been taken in but filed nowhere carries the empty logical path, and that is what
- * separates `inbox` from `filed`; `trashed` holds both kinds, each under the path it had.
+ * separates `inbox` from `filed`; `archived` is what was filed into the archive instead, which neither of
+ * those shows; `trashed` holds every kind, each under the path it had.
  */
-export type MediaObjectPageState = "inbox" | "filed" | "trashed";
+export type MediaObjectPageState = "inbox" | "filed" | "archived" | "trashed";
 
 /** An omitted field narrows nothing, `state` included. */
 export interface MediaObjectFilter {

@@ -1,8 +1,11 @@
 // In scope: reading the tags on the media a filter keeps, and replacing the ones one media object carries
 // Out of scope: MediaObject rows, storage, deciding which tags a caller means, normalising a name
 import { getPrismaClient } from "../../client/prisma.js";
+import { buildAreaKeyPrefix } from "../_shared/formatter/object-key.js";
 import type { MediaObjectFilter } from "../media-object/types.js";
 import type { MediaTag, MediaTagUsage } from "./types.js";
+
+const ARCHIVE_KEY_PREFIX = buildAreaKeyPrefix("archive");
 
 export const mediaTagRepository = {
 	/**
@@ -21,6 +24,14 @@ export const mediaTagRepository = {
 						: input.state === "trashed"
 							? { not: null }
 							: null,
+				// The archive is told apart by where its objects are stored, and the inbox and the library
+				// share everything else
+				objectKey:
+					input.state === undefined || input.state === "trashed"
+						? undefined
+						: input.state === "archived"
+							? { startsWith: ARCHIVE_KEY_PREFIX }
+							: { not: { startsWith: ARCHIVE_KEY_PREFIX } },
 				// The inbox and the library are the same side of the trash, split on the logical path: an
 				// object nothing has filed carries the empty one. The trash keeps the path each object was
 				// filed under, so it answers for both kinds on whatever path it is given

@@ -214,7 +214,8 @@ export const moveMediaRoute = createRoute({
 			},
 		},
 		400: {
-			description: "id が UUID ではない、またはフォルダのパスが不正",
+			description:
+				"id が UUID ではない、フォルダのパスが不正、またはアーカイブへ移すのにパスが空",
 			content: { "application/json": { schema: errorResponseSchema } },
 		},
 		404: {

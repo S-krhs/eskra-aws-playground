@@ -1,6 +1,10 @@
-// In scope: assembling the filter, listing, selection, preview, trash and sync features into one screen,
-//           and the words each of them reports itself with
+// In scope: assembling the filter, listing, archive, selection, preview, trash and sync features into one
+//           screen, and the words each of them reports itself with
 // Out of scope: each feature's implementation, calling the API, formatting
+import {
+	ArchiveFolderHeader,
+	ArchiveFolderList,
+} from "@/features/media-archive";
 import { MediaFilterBar } from "@/features/media-filter";
 import { MediaGrid } from "@/features/media-grid";
 import { MediaPreviewDialog } from "@/features/media-preview";
@@ -61,10 +65,14 @@ export const MediaLibraryPage = () => {
 		tagUsages,
 		tagSuggestions,
 		folderSuggestions,
+		archiveFolders,
+		archiveQuery,
+		setArchiveQuery,
 		preview,
 		openPreview,
 		closePreview,
 	} = useMediaLibrary();
+	const isArchive = filter.state === "archived";
 	// The preview has one line to report with, and only one of these is ever going at a time. A failure
 	// arrives already worded, so only what to say while it goes is written here
 	const actionMessage =
@@ -100,45 +108,72 @@ export const MediaLibraryPage = () => {
 						{trash.status.message}
 					</p>
 				) : null}
-				<MediaGrid
-					list={list}
-					selectedIds={selection.selectedIds}
-					onOpen={openPreview}
-					onToggle={selection.toggle}
-					toolbar={
-						<MediaSelectionBar
-							selectedCount={selection.selectedIds.size}
-							listedCount={list.items.length}
-							hasMore={list.hasMore}
-							state={filter.state ?? "filed"}
-							folderSuggestions={folderSuggestions}
-							isBusy={selectionActions.status.kind === "pending"}
-							message={describeRun(selectionActions.status)}
-							onSelectAll={selection.selectAll}
-							onClear={selection.clear}
-							// What went through is let go of, so a failure is left selected to try again
-							onMove={(logicalPath) => {
-								selectionActions.move(
-									[...selection.selectedIds],
-									logicalPath,
-									selection.deselect,
-								);
-							}}
-							onTrash={() => {
-								selectionActions.trash(
-									[...selection.selectedIds],
-									selection.deselect,
-								);
-							}}
-							onRestore={() => {
-								selectionActions.restore(
-									[...selection.selectedIds],
-									selection.deselect,
-								);
-							}}
+				{isArchive && filter.logicalPath === undefined ? (
+					<ArchiveFolderList
+						folders={archiveFolders}
+						query={archiveQuery}
+						onQueryChange={setArchiveQuery}
+						onOpen={(logicalPath) => {
+							setFilter((current) => {
+								return { ...current, logicalPath };
+							});
+						}}
+					/>
+				) : (
+					<>
+						{isArchive && filter.logicalPath !== undefined ? (
+							<ArchiveFolderHeader
+								logicalPath={filter.logicalPath}
+								onBack={() => {
+									setFilter((current) => {
+										return { ...current, logicalPath: undefined };
+									});
+								}}
+							/>
+						) : null}
+						<MediaGrid
+							list={list}
+							selectedIds={selection.selectedIds}
+							onOpen={openPreview}
+							onToggle={selection.toggle}
+							toolbar={
+								<MediaSelectionBar
+									selectedCount={selection.selectedIds.size}
+									listedCount={list.items.length}
+									hasMore={list.hasMore}
+									state={filter.state ?? "filed"}
+									folderSuggestions={folderSuggestions}
+									archiveFolderSuggestions={archiveFolders}
+									isBusy={selectionActions.status.kind === "pending"}
+									message={describeRun(selectionActions.status)}
+									onSelectAll={selection.selectAll}
+									onClear={selection.clear}
+									// What went through is let go of, so a failure is left selected to try again
+									onMove={(logicalPath, isArchived) => {
+										selectionActions.move(
+											[...selection.selectedIds],
+											logicalPath,
+											isArchived,
+											selection.deselect,
+										);
+									}}
+									onTrash={() => {
+										selectionActions.trash(
+											[...selection.selectedIds],
+											selection.deselect,
+										);
+									}}
+									onRestore={() => {
+										selectionActions.restore(
+											[...selection.selectedIds],
+											selection.deselect,
+										);
+									}}
+								/>
+							}
 						/>
-					}
-				/>
+					</>
+				)}
 			</main>
 			{preview ? (
 				<MediaPreviewDialog
@@ -146,12 +181,13 @@ export const MediaLibraryPage = () => {
 					isTrashed={filter.state === "trashed"}
 					tagSuggestions={tagSuggestions}
 					folderSuggestions={folderSuggestions}
+					archiveFolderSuggestions={archiveFolders}
 					message={actionMessage}
 					onChangeTags={(next) => {
 						tags.save(preview.id, next);
 					}}
-					onMove={(logicalPath) => {
-						move.move(preview.id, logicalPath);
+					onMove={(logicalPath, isArchived) => {
+						move.move(preview.id, logicalPath, isArchived);
 					}}
 					onCopyImage={() => {
 						clipboard.copyImage(preview);

@@ -63,6 +63,7 @@ beforeEach(() => {
 	storageRepository.moveToLogicalPath.mockResolvedValue({
 		key: "photos/2024/20260907-133045123.png",
 		logicalPath: "photos/2024",
+		isArchived: false,
 		byteSize: 1024,
 		// A copy can land on an etag of its own, which is why the row takes the one read back
 		etag: "def456",
@@ -76,11 +77,13 @@ describe("moveMediaOperation", () => {
 		const result = await moveMediaOperation({
 			mediaId,
 			logicalPath: "photos/2024",
+			isArchived: false,
 		});
 
 		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
 			key: storedMedia.objectKey,
 			logicalPath: "photos/2024",
+			isArchived: false,
 		});
 		expect(objectRepository.relocateMany).toHaveBeenCalledWith([
 			expect.objectContaining({
@@ -92,12 +95,16 @@ describe("moveMediaOperation", () => {
 		]);
 		expect(result).toEqual({
 			kind: "OK",
-			data: { logicalPath: "photos/2024" },
+			data: { logicalPath: "photos/2024", isArchived: false },
 		});
 	});
 
 	it("registers the folder, so it stays on offer once its last media moves out", async () => {
-		await moveMediaOperation({ mediaId, logicalPath: "photos/2024" });
+		await moveMediaOperation({
+			mediaId,
+			logicalPath: "photos/2024",
+			isArchived: false,
+		});
 
 		expect(folderRepository.insert).toHaveBeenCalledWith("photos/2024");
 	});
@@ -106,13 +113,48 @@ describe("moveMediaOperation", () => {
 		storageRepository.moveToLogicalPath.mockResolvedValue({
 			key: "_inbox/20260907-133045123.png",
 			logicalPath: "",
+			isArchived: false,
 			byteSize: 1024,
 			etag: "abc123",
 		});
 
-		const result = await moveMediaOperation({ mediaId, logicalPath: "" });
+		const result = await moveMediaOperation({
+			mediaId,
+			logicalPath: "",
+			isArchived: false,
+		});
 
-		expect(result).toEqual({ kind: "OK", data: { logicalPath: "" } });
+		expect(result).toEqual({
+			kind: "OK",
+			data: { logicalPath: "", isArchived: false },
+		});
+		expect(folderRepository.insert).not.toHaveBeenCalled();
+	});
+
+	it("archives the media without registering its folder", async () => {
+		storageRepository.moveToLogicalPath.mockResolvedValue({
+			key: "_archive/backup/20260907-133045123.png",
+			logicalPath: "backup",
+			isArchived: true,
+			byteSize: 1024,
+			etag: "def456",
+		});
+
+		const result = await moveMediaOperation({
+			mediaId,
+			logicalPath: "backup",
+			isArchived: true,
+		});
+
+		expect(storageRepository.moveToLogicalPath).toHaveBeenCalledWith({
+			key: storedMedia.objectKey,
+			logicalPath: "backup",
+			isArchived: true,
+		});
+		expect(result).toEqual({
+			kind: "OK",
+			data: { logicalPath: "backup", isArchived: true },
+		});
 		expect(folderRepository.insert).not.toHaveBeenCalled();
 	});
 
@@ -122,6 +164,7 @@ describe("moveMediaOperation", () => {
 		const result = await moveMediaOperation({
 			mediaId,
 			logicalPath: "photos/2024",
+			isArchived: false,
 		});
 
 		expect(result).toEqual({ kind: "NOT_FOUND" });

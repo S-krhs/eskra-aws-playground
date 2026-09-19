@@ -23,11 +23,12 @@ export const mediaCursorSchema = z
 	.openapi("MediaCursor");
 
 /**
- * Which of the three sides to read. `inbox` is what has been taken in but not filed into a folder yet,
- * `filed` is the library proper, and `trashed` is both of them once they are in the trash.
- * They never mix, so one listing answers for all three.
+ * Which of the four sides to read. `inbox` is what has been taken in but not filed into a folder yet,
+ * `filed` is the library proper, `archived` is what was filed into the archive instead, and `trashed` is
+ * every one of them once it is in the trash.
+ * They never mix, so one listing answers for all four.
  */
-const mediaStateSchema = z.enum(["inbox", "filed", "trashed"]);
+const mediaStateSchema = z.enum(["inbox", "filed", "archived", "trashed"]);
 
 /**
  * Narrows to the media carrying every tag named, one per repeated key.
@@ -73,6 +74,8 @@ export const mediaSchema = z
 		id: z.uuid(),
 		fileName: z.string(),
 		logicalPath: z.string(),
+		// Stays true in the trash, where it says a restore takes the media back into the archive
+		isArchived: z.boolean(),
 		contentType: z.string(),
 		byteSize: z.number(),
 		width: z.number().optional(),
@@ -113,18 +116,28 @@ export const mediaFolderPathSchema = z
 		});
 	});
 
-/** Where to file one media object. The empty path takes it back out of every folder. */
+/**
+ * Where to file one media object. The empty path takes it back out of every folder — but not into the
+ * archive, which holds folders only; that pairing is checked in the route, since OpenAPI can't state it.
+ */
 export const mediaMoveRequestSchema = z
 	.object({
 		logicalPath: z.union([z.literal(""), mediaFolderPathSchema]),
+		isArchived: z.boolean(),
 	})
 	.openapi("MediaMoveRequest");
 
 export const mediaLocationResponseSchema = z
 	.object({
 		logicalPath: z.string(),
+		isArchived: z.boolean(),
 	})
 	.openapi("MediaLocationResponse");
+
+export const folderListQuerySchema = z.object({
+	// The same spelled-out value as `download`, since a boolean would read "false" as true
+	archived: z.literal("1").optional(),
+});
 
 /** The folders there are to file into, whether or not anything is filed there yet. */
 export const folderListResponseSchema = z
