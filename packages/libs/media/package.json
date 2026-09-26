@@ -22,6 +22,6 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"zod": "^4.5.3"
+		"zod": "^4.6.5"
 	}
 }
