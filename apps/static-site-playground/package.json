@@ -17,16 +17,16 @@
 	"dependencies": {
 		"@astrojs/react": "^6.0.6",
 		"@tailwindcss/vite": "^4.3.3",
-		"astro": "^7.3.3",
+		"astro": "^7.3.5",
 		"cookie": "^2.0.1",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
 		"tailwindcss": "^4.3.3"
 	},
 	"devDependencies": {
-		"@feature-sliced/steiger-plugin": "^0.7.0",
+		"@feature-sliced/steiger-plugin": "^0.8.0",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
-		"steiger": "^0.6.0"
+		"steiger": "^0.7.0"
 	}
 }
