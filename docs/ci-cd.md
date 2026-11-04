@@ -4,6 +4,7 @@
 
 - `.github/workflows/deploy.yml`: `main` への push で実行。
 - `.github/workflows/backfill-anime-bigquery.yml`: 手動実行（`workflow_dispatch`）。過去分のアニメ指標を BigQuery へ連携する。
+- `.github/workflows/dependabot-triage.yml`: dependabot の PR の CI が終わると実行。通れば `develop` へ merge してブランチを削除し、落ちたら Claude が修正を push するか、直さない理由を PR にコメントする。
 
 deploy の流れ:
 
@@ -45,6 +46,7 @@ npm run build:ffmpeg-layer            # .tmp/layers/ffmpeg
 - `KAGUYA_DISCORD_INTERACTION_PUBLIC_KEY`
 - `KAGUYA_DISCORD_APPLICATION_ID`
 - `MEDIA_SYNC_TOKEN`（メディアライブラリ管理ツールが `/media/sync` に付ける bearer token）
+- `CLAUDE_CODE_OAUTH_TOKEN`（`claude setup-token` で発行する。dependabot PR の修正に使う）
 
 app/job 固有の secret は該当 app の README を参照。
 
@@ -93,6 +95,12 @@ CD が deploy 直前に `npm run db:migrate`（`prisma migrate deploy`）を実�
 3. OAuth2 URL Generator で scope に `bot` と `applications.commands` を付けた招待 URL を生成し、対象 guild へ招待する。
 4. `<Bot>_DISCORD_*` の 3 値を GitHub Secrets へ登録する。ローカルで同期する stage には `<Bot>Discord*` の SST secret を直接設定する。
 5. 初回 deploy 後、出力された Function URL に `/discord/interactions/<bot 名>` を付け、各 Portal の **Interactions Endpoint URL** に設定する（エンドポイントが deploy 済みで動作している状態でのみ保存できる。以降 URL は変わらない）。
+
+## dependabot PR の自動処理のセットアップ
+
+1. リポジトリの既定ブランチを `develop` にする（Settings → General → Default branch）。
+2. [Claude GitHub App](https://github.com/apps/claude) をこのリポジトリにインストールする。
+3. `claude setup-token` で発行したトークンを GitHub Secrets の `CLAUDE_CODE_OAUTH_TOKEN` へ登録する。
 
 ## AWS 認証
 
