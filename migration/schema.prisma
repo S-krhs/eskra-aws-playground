@@ -58,6 +58,8 @@ model DiscordGuildSetting {
 }
 
 model DiscordUserSetting {
+  // setting_key ごとに何が一意かが違うため一意制約は置かず、重複させるかは使う側で決める
+  id             BigInt   @id @default(autoincrement())
   applicationKey String   @map("application_key") @db.VarChar(64)
   guildId        String   @map("guild_id") @db.VarChar(20)
   userId         String   @map("user_id") @db.VarChar(20)
@@ -66,7 +68,6 @@ model DiscordUserSetting {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@id([applicationKey, guildId, userId, settingKey])
   @@index([applicationKey, settingKey])
   @@map("discord_user_settings")
   @@schema("playground")

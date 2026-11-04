@@ -31,7 +31,7 @@ export const interactionJobMessageSchema = z.discriminatedUnion("job", [
 	z.object({
 		job: z.literal(interactionJobNames.gambleCheckDisable),
 		...callbackShape,
-		guildId: snowflakeSchema,
+		channelId: snowflakeSchema,
 		userId: snowflakeSchema,
 	}),
 	z.object({

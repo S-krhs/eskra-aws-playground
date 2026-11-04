@@ -27,7 +27,7 @@ export const gambleCheckDisableOperation = async (
 		DiscordEphemeralResponsePayload | DiscordDeferredMessageResponsePayload
 	>
 > => {
-	if (interaction.context.kind !== "guild") {
+	if (interaction.context.kind !== "guild" || !interaction.context.channelId) {
 		return ephemeralOperation("サーバー内のチャンネルで使ってね～");
 	}
 
@@ -35,7 +35,7 @@ export const gambleCheckDisableOperation = async (
 		job: interactionJobNames.gambleCheckDisable,
 		applicationId: callback.applicationId,
 		token: callback.token,
-		guildId: interaction.context.guildId,
+		channelId: interaction.context.channelId,
 		userId: interaction.userId,
 	};
 	const sender = new SqsMessageSender(Resource.PlaygroundInteractionQueue.url);

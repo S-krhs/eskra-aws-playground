@@ -1,7 +1,6 @@
-// In scope: saving, deleting and reading a ChannelSetting keyed by applicationKey, settingKey, guildId and userId
-// Out of scope: discovering Discord IDs, permission checks, interpreting a settingKey, routing
+// In scope: inserting, deleting and reading ChannelSetting rows by applicationKey, settingKey, channelId and userId
+// Out of scope: discovering Discord IDs, permission checks, interpreting a settingKey, deciding whether a duplicate row is allowed, routing
 import { getPrismaClient } from "../../client/prisma.js";
-import { Prisma } from "../../generated/prisma/client.js";
 import {
 	channelSettingConfigurationSchema,
 	discordSnowflakeSchema,
@@ -10,7 +9,7 @@ import type {
 	ChannelSetting,
 	DeleteChannelSettingInput,
 	FindChannelSettingsInput,
-	SaveChannelSettingInput,
+	InsertChannelSettingInput,
 } from "./types.js";
 
 interface ChannelSettingRow {
@@ -37,8 +36,11 @@ const toChannelSetting = (row: ChannelSettingRow): ChannelSetting => {
 };
 
 export const channelSettingRepository = {
-	/** Saves the setting for one guild and target user, returning it as stored. */
-	save: async (input: SaveChannelSettingInput): Promise<ChannelSetting> => {
+	/**
+	 * Inserts one row and returns it as stored. The table holds no unique key, so a row for the same
+	 * channel and user is added again rather than rejected.
+	 */
+	insert: async (input: InsertChannelSettingInput): Promise<ChannelSetting> => {
 		const configuration = channelSettingConfigurationSchema.parse({
 			version: 1,
 			channelId: input.channelId,
@@ -46,59 +48,37 @@ export const channelSettingRepository = {
 		const guildId = discordSnowflakeSchema.parse(input.guildId);
 		const userId = discordSnowflakeSchema.parse(input.userId);
 		const prisma = getPrismaClient();
-		const row = await prisma.discordUserSetting.upsert({
-			where: {
-				applicationKey_guildId_userId_settingKey: {
-					applicationKey: input.applicationKey,
-					guildId,
-					userId,
-					settingKey: input.settingKey,
-				},
-			},
-			create: {
+		const row = await prisma.discordUserSetting.create({
+			data: {
 				applicationKey: input.applicationKey,
 				guildId,
 				userId,
 				settingKey: input.settingKey,
 				configuration,
 			},
-			update: { configuration },
 			select: channelSettingSelect,
 		});
 
 		return toChannelSetting(row);
 	},
 
-	/** Returns the deleted setting, or null when there was nothing to delete. */
-	deleteByGuildIdAndUserId: async (
+	/** Deletes every row for this user in this channel and returns how many there were. */
+	deleteByChannelIdAndUserId: async (
 		input: DeleteChannelSettingInput,
-	): Promise<ChannelSetting | null> => {
-		const guildId = discordSnowflakeSchema.parse(input.guildId);
+	): Promise<number> => {
+		const channelId = discordSnowflakeSchema.parse(input.channelId);
 		const userId = discordSnowflakeSchema.parse(input.userId);
 		const prisma = getPrismaClient();
-		try {
-			const row = await prisma.discordUserSetting.delete({
-				where: {
-					applicationKey_guildId_userId_settingKey: {
-						applicationKey: input.applicationKey,
-						guildId,
-						userId,
-						settingKey: input.settingKey,
-					},
-				},
-				select: channelSettingSelect,
-			});
+		const result = await prisma.discordUserSetting.deleteMany({
+			where: {
+				applicationKey: input.applicationKey,
+				userId,
+				settingKey: input.settingKey,
+				configuration: { path: ["channelId"], equals: channelId },
+			},
+		});
 
-			return toChannelSetting(row);
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === "P2025"
-			) {
-				return null;
-			}
-			throw error;
-		}
+		return result.count;
 	},
 
 	/** Validates the stored settings and returns them in a stable order. */
@@ -109,9 +89,10 @@ export const channelSettingRepository = {
 		const rows = await prisma.discordUserSetting.findMany({
 			where: {
 				applicationKey: input.applicationKey,
+				userId: input.userId,
 				settingKey: input.settingKey,
 			},
-			orderBy: [{ guildId: "asc" }, { userId: "asc" }],
+			orderBy: [{ guildId: "asc" }, { userId: "asc" }, { id: "asc" }],
 			select: channelSettingSelect,
 		});
 
