@@ -8,7 +8,7 @@ export const ArchiveFolderHeader = ({
 	onBack: () => void;
 }) => {
 	return (
-		<div className="flex shrink-0 items-center gap-2 border-base-300 border-b bg-base-100 px-3 py-2">
+		<div className="border-base-300 bg-base-100 flex shrink-0 items-center gap-2 border-b px-3 py-2">
 			<button
 				type="button"
 				onClick={onBack}
@@ -16,7 +16,7 @@ export const ArchiveFolderHeader = ({
 			>
 				← フォルダ一覧
 			</button>
-			<h2 className="min-w-0 truncate font-medium text-sm" title={logicalPath}>
+			<h2 className="min-w-0 truncate text-sm font-medium" title={logicalPath}>
 				{logicalPath}
 			</h2>
 		</div>

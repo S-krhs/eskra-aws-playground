@@ -20,7 +20,7 @@ export const ToggleButton = ({ pressed, onPress, children }: Props) => {
 	return (
 		<button
 			type="button"
-			className={`cursor-pointer select-none p-[3px] leading-none focus-visible:outline-dotted focus-visible:outline-1 focus-visible:outline-black focus-visible:-outline-offset-4 ${bevelClasses}`}
+			className={`cursor-pointer p-[3px] leading-none select-none focus-visible:outline-1 focus-visible:-outline-offset-4 focus-visible:outline-black focus-visible:outline-dotted ${bevelClasses}`}
 			aria-pressed={pressed}
 			onClick={onPress}
 		>

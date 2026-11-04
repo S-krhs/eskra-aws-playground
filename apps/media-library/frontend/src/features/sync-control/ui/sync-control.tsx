@@ -39,7 +39,7 @@ export const SyncControl = ({ status }: { status: SyncStatus }) => {
 	const progress = toProgress(status);
 
 	return (
-		<div className="flex flex-col gap-2 border-base-300 border-t pt-3 md:pt-4">
+		<div className="border-base-300 flex flex-col gap-2 border-t pt-3 md:pt-4">
 			<button
 				type="button"
 				disabled={isBusy}

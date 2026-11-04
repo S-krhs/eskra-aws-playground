@@ -109,7 +109,7 @@ export const MediaFilterBar = ({
 		// Wraps as a row while the screen is narrow, and stacks once it is the sidebar's column
 		<div className="flex flex-wrap items-end gap-x-4 gap-y-3 md:flex-col md:flex-nowrap md:items-stretch md:gap-5">
 			<fieldset>
-				<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
+				<legend className="text-base-content/60 mb-1.5 text-xs font-medium">
 					表示
 				</legend>
 				{/* A place to look in rather than a condition, so it reads as a file manager's list, not a switch */}
@@ -125,7 +125,7 @@ export const MediaFilterBar = ({
 									onClick={() => {
 										selectState(state.value);
 									}}
-									className={`gap-2.5 ${isActive ? "bg-primary/10 font-medium text-primary" : "text-base-content/80"}`}
+									className={`gap-2.5 ${isActive ? "bg-primary/10 text-primary font-medium" : "text-base-content/80"}`}
 								>
 									<svg
 										viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ export const MediaFilterBar = ({
 			</fieldset>
 
 			<fieldset>
-				<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
+				<legend className="text-base-content/60 mb-1.5 text-xs font-medium">
 					種別
 				</legend>
 				<div className="join md:w-full">
@@ -181,7 +181,7 @@ export const MediaFilterBar = ({
 
 			{filter.state === "inbox" || filter.state === "archived" ? null : (
 				<fieldset>
-					<legend className="mb-1.5 font-medium text-base-content/60 text-xs">
+					<legend className="text-base-content/60 mb-1.5 text-xs font-medium">
 						フォルダ
 					</legend>
 					<label className="input input-sm w-48 pe-1 md:w-full">
@@ -223,7 +223,7 @@ export const MediaFilterBar = ({
 
 			<fieldset className="basis-full md:basis-auto">
 				{/* The clear link shares the legend's line so it appearing doesn't push the buttons down */}
-				<legend className="mb-1.5 flex w-full items-center justify-between font-medium text-base-content/60 text-xs">
+				<legend className="text-base-content/60 mb-1.5 flex w-full items-center justify-between text-xs font-medium">
 					タグ
 					{tagFilter.selectedTags.length === 0 ? null : (
 						<button
@@ -256,7 +256,7 @@ export const MediaFilterBar = ({
 						)}
 					</label>
 					{tagFilter.offeredTags.length === 0 ? (
-						<p className="px-1 text-base-content/50 text-xs">
+						<p className="text-base-content/50 px-1 text-xs">
 							{tags.length === 0
 								? "付いているタグはありません"
 								: "一致するタグはありません"}
