@@ -8,8 +8,6 @@ updates:
     directories:
       - "/"
       - "/infra/layers/browser-runtime/nodejs"
-    # version update の PR を default branch(main)ではなく develop 向けに作る
-    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -36,7 +34,6 @@ updates:
           - patch
   - package-ecosystem: github-actions
     directory: "/"
-    target-branch: develop
     schedule:
       interval: weekly
     groups:
