@@ -4,7 +4,7 @@
 
 - `.github/workflows/deploy.yml`: `main` への push で実行。
 - `.github/workflows/backfill-anime-bigquery.yml`: 手動実行（`workflow_dispatch`）。過去分のアニメ指標を BigQuery へ連携する。
-- `.github/workflows/dependabot-triage.yml`: dependabot の PR の CI が終わると実行。通れば `develop` へ merge してブランチを削除し、落ちたら Claude が修正を push するか、直さない理由を PR にコメントする。
+- `.github/workflows/dependabot-triage.yml`: dependabot の PR の CI が終わると実行。通れば `develop` へ merge してブランチを削除する。落ちたら Claude が修正を push し、直さない場合も含めて結果を PR にコメントする。Claude がコメント済みの PR と、dependabot 以外のコミットの後に落ちた PR は自動では直さない（Claude のコメントを消すと、次に CI が落ちたときに再び直しに行く）。
 
 deploy の流れ:
 
