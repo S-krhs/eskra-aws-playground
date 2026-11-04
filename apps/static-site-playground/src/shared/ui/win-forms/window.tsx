@@ -37,9 +37,9 @@ const ControlButton = ({
 	return (
 		<button
 			type="button"
-			className={`bevel-raised grid h-[15px] w-[17px] place-items-center bg-face text-[9px] leading-none ${
+			className={`bevel-raised bg-face grid h-[15px] w-[17px] place-items-center text-[9px] leading-none ${
 				disabled
-					? "cursor-default text-bevel-shadow [text-shadow:1px_1px_0_#ffffff]"
+					? "text-bevel-shadow cursor-default [text-shadow:1px_1px_0_#ffffff]"
 					: "active:bevel-sunken cursor-pointer text-black"
 			}`}
 			aria-label={label}
@@ -163,14 +163,14 @@ export const Window = ({
 
 	const titleBar = (
 		<div
-			className={`flex touch-none select-none items-center gap-1 bg-linear-90 from-title-bar-start to-title-bar-end py-1 pr-0.5 pl-1 text-white ${isDraggable ? "cursor-move" : ""}`}
+			className={`from-title-bar-start to-title-bar-end flex touch-none items-center gap-1 bg-linear-90 py-1 pr-0.5 pl-1 text-white select-none ${isDraggable ? "cursor-move" : ""}`}
 			onPointerDown={isDraggable ? startDrag : undefined}
 			onPointerMove={isDraggable ? moveDrag : undefined}
 			onPointerUp={isDraggable ? endDrag : undefined}
 			onPointerCancel={isDraggable ? endDrag : undefined}
 		>
 			<span aria-hidden="true">▣</span>
-			<h1 className="flex-1 truncate font-bold text-[13px] leading-4 tracking-[0.02em]">
+			<h1 className="flex-1 truncate text-[13px] leading-4 font-bold tracking-[0.02em]">
 				{title}
 			</h1>
 			<span className="flex gap-0.5">{controls}</span>

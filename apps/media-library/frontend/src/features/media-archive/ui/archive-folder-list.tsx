@@ -28,7 +28,7 @@ export const ArchiveFolderList = ({
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
-			<div className="flex shrink-0 flex-wrap items-center gap-2 border-base-300 border-b bg-base-100 px-3 py-2">
+			<div className="border-base-300 bg-base-100 flex shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
 				<label className="input input-sm w-full pe-1 sm:w-80">
 					<input
 						type="text"
@@ -54,7 +54,7 @@ export const ArchiveFolderList = ({
 			</div>
 
 			{matched.length === 0 ? (
-				<p className="px-3 py-10 text-center text-base-content/60 text-sm">
+				<p className="text-base-content/60 px-3 py-10 text-center text-sm">
 					{folders.length === 0
 						? "アーカイブしたフォルダはありません"
 						: "一致するフォルダはありません"}
@@ -70,7 +70,7 @@ export const ArchiveFolderList = ({
 									onClick={() => {
 										onOpen(path);
 									}}
-									className="btn h-auto min-h-11 w-full justify-start gap-2.5 border-base-300 bg-base-100 px-3 py-2 font-normal"
+									className="btn border-base-300 bg-base-100 h-auto min-h-11 w-full justify-start gap-2.5 px-3 py-2 font-normal"
 								>
 									<svg
 										viewBox="0 0 24 24"
@@ -80,7 +80,7 @@ export const ArchiveFolderList = ({
 										strokeLinecap="round"
 										strokeLinejoin="round"
 										aria-hidden="true"
-										className="size-4 shrink-0 text-base-content/60"
+										className="text-base-content/60 size-4 shrink-0"
 									>
 										<path d={FOLDER_ICON} />
 									</svg>

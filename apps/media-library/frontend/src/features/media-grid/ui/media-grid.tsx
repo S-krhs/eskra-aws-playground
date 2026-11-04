@@ -84,7 +84,7 @@ export const MediaGrid = ({
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
 			{/* Reads how far the listing has been scrolled in; the API gives no total, so it counts what is here */}
-			<div className="flex shrink-0 flex-wrap items-center gap-2 border-base-300 border-b bg-base-100 px-3 py-2">
+			<div className="border-base-300 bg-base-100 flex shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
 				<p className="text-base-content/60 text-xs">
 					{list.items.length} 件{list.hasMore ? "以上" : ""}
 				</p>
@@ -103,7 +103,7 @@ export const MediaGrid = ({
 			{/* Kept outside the scroll element: anything added in front of the virtual container would
 			    shift its origin away from the padding scrollMargin assumes */}
 			{list.items.length === 0 && !list.isLoading && !list.error ? (
-				<p className="px-3 py-10 text-center text-base-content/60 text-sm">
+				<p className="text-base-content/60 px-3 py-10 text-center text-sm">
 					表示するメディアがありません。同期を実行すると R2
 					の中身を取り込みます。
 				</p>

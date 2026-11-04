@@ -88,9 +88,9 @@ export const MediaLibraryPage = () => {
 
 	return (
 		// The sidebar only forms once there is width for it; below that the same blocks stack above the grid
-		<div className="flex h-dvh flex-col bg-base-200 text-base-content md:flex-row">
-			<aside className="flex shrink-0 flex-col gap-4 border-base-300 border-b bg-base-100 p-3 md:w-60 md:overflow-y-auto md:border-r md:border-b-0">
-				<h1 className="font-bold text-sm">メディアライブラリ</h1>
+		<div className="bg-base-200 text-base-content flex h-dvh flex-col md:flex-row">
+			<aside className="border-base-300 bg-base-100 flex shrink-0 flex-col gap-4 border-b p-3 md:w-60 md:overflow-y-auto md:border-r md:border-b-0">
+				<h1 className="text-sm font-bold">メディアライブラリ</h1>
 				<MediaFilterBar
 					filter={filter}
 					tags={tagUsages}
