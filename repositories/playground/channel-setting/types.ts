@@ -4,9 +4,9 @@ import type { ApplicationKey } from "../_shared/literals/application-key.js";
 import type { SettingKey } from "../_shared/literals/setting-key.js";
 
 /**
- * The Discord channel setting for one guild and target user. Settings are split into a table per
- * scope — one for a whole guild, one for a user inside it — rather than a nullable user id or a
- * reserved value standing in for "everyone".
+ * The Discord channel setting for one target user in one channel of a guild. Settings are split into
+ * a table per scope — one for a whole guild, one for a user inside it — rather than a nullable user id
+ * or a reserved value standing in for "everyone".
  */
 export interface ChannelSetting {
 	guildId: string;
@@ -14,7 +14,7 @@ export interface ChannelSetting {
 	userId: string;
 }
 
-export interface SaveChannelSettingInput {
+export interface InsertChannelSettingInput {
 	applicationKey: ApplicationKey;
 	settingKey: SettingKey;
 	guildId: string;
@@ -25,11 +25,12 @@ export interface SaveChannelSettingInput {
 export interface DeleteChannelSettingInput {
 	applicationKey: ApplicationKey;
 	settingKey: SettingKey;
-	guildId: string;
+	channelId: string;
 	userId: string;
 }
 
 export interface FindChannelSettingsInput {
 	applicationKey: ApplicationKey;
 	settingKey: SettingKey;
+	userId?: string;
 }

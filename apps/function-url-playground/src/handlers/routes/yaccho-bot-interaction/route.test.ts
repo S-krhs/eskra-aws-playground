@@ -266,9 +266,10 @@ describe("yacchoBotInteractionRoute", () => {
 		expect(body.data?.flags).toBe(64);
 	});
 
-	it("enqueues the removal job for gamble-check-disable", async () => {
+	it("enqueues the removal job for gamble-check-disable in a server channel", async () => {
 		const rawBody = buildCommandInteractionBody("gamble-check-disable", {
 			guild_id: "555555555555555555",
+			channel_id: "666666666666666666",
 			member: { user: { id: targetUserId } },
 		});
 
@@ -281,7 +282,7 @@ describe("yacchoBotInteractionRoute", () => {
 					job: "gamble-check-disable",
 					applicationId,
 					token,
-					guildId: "555555555555555555",
+					channelId: "666666666666666666",
 					userId: targetUserId,
 				},
 			},

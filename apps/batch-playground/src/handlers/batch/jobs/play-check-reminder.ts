@@ -7,6 +7,7 @@ import { settingKeys } from "@eskra-aws-playground/repositories/playground/_shar
 import { channelSettingRepository } from "@eskra-aws-playground/repositories/playground/channel-setting/repository.js";
 import { REMINDER_CHOICES } from "@eskra-aws-playground/shared-domains/discord/play-check-reminder/choices.js";
 import { Resource } from "sst/resource";
+import { toDistinctAssignments } from "@/features/channel-assignment/channel-assignments.js";
 import {
 	buildReminderChoicesMessage,
 	buildReminderQuestionMessage,
@@ -20,12 +21,21 @@ export const playCheckReminderJob = async (
 	_event: unknown,
 ): Promise<BatchResponse> => {
 	logger.start();
-	// 1. Resolve the Yaccho Bot token and the registered user settings.
+	// 1. Resolve the Yaccho Bot token and the registered assignments, each repeat counted once.
 	const discordBotToken = Resource.YacchoDiscordBotToken.value;
-	const configs = await channelSettingRepository.findMany({
+	const settings = await channelSettingRepository.findMany({
 		applicationKey: applicationKeys.yacchoBot,
 		settingKey: settingKeys.playCheckReminder,
 	});
+	const configs = toDistinctAssignments(
+		settings.map((setting) => {
+			return {
+				applicationKey: applicationKeys.yacchoBot,
+				settingKey: settingKeys.playCheckReminder,
+				...setting,
+			};
+		}),
+	);
 
 	// 2. Post the question and choices to every setting; one failure doesn't stop the rest.
 	const botClient = new DiscordBotClient(discordBotToken);

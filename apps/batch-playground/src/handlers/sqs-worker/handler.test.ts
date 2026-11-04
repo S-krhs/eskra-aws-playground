@@ -11,8 +11,9 @@ const discordInteraction = vi.hoisted(() => {
 
 const channelSettingRepository = vi.hoisted(() => {
 	return {
-		save: vi.fn(),
-		deleteByGuildIdAndUserId: vi.fn(),
+		findMany: vi.fn(),
+		insert: vi.fn(),
+		deleteByChannelIdAndUserId: vi.fn(),
 	};
 });
 
@@ -51,12 +52,17 @@ const buildEvent = (bodies: unknown[]) => {
 beforeEach(() => {
 	discordInteraction.editOriginalResponse.mockReset();
 	discordInteraction.constructorCalls.length = 0;
-	channelSettingRepository.save.mockReset();
-	channelSettingRepository.deleteByGuildIdAndUserId.mockReset();
+	channelSettingRepository.findMany.mockReset();
+	channelSettingRepository.insert.mockReset();
+	channelSettingRepository.deleteByChannelIdAndUserId.mockReset();
 });
 
 describe("sqs-worker handler", () => {
-	it("saves the setting for gamble-check-enable and swaps in the final message", async () => {
+	it("inserts the setting for gamble-check-enable and swaps in the final message", async () => {
+		channelSettingRepository.findMany.mockResolvedValue([
+			{ guildId: "111", channelId: "444", userId: "333" },
+		]);
+
 		const response = await handler(
 			buildEvent([
 				{
@@ -70,7 +76,12 @@ describe("sqs-worker handler", () => {
 			]),
 		);
 
-		expect(channelSettingRepository.save).toHaveBeenCalledWith({
+		expect(channelSettingRepository.findMany).toHaveBeenCalledWith({
+			applicationKey: "yaccho-bot",
+			settingKey: "play-check-reminder",
+			userId: "333",
+		});
+		expect(channelSettingRepository.insert).toHaveBeenCalledWith({
 			applicationKey: "yaccho-bot",
 			settingKey: "play-check-reminder",
 			guildId: "111",
@@ -85,26 +96,72 @@ describe("sqs-worker handler", () => {
 		expect(response).toEqual({ batchItemFailures: [] });
 	});
 
-	it("switches the wording for gamble-check-disable on whether anything was deleted", async () => {
-		channelSettingRepository.deleteByGuildIdAndUserId.mockResolvedValue(false);
+	it("skips the insert for gamble-check-enable when the caller already has that channel, still swapping in the final message", async () => {
+		channelSettingRepository.findMany.mockResolvedValue([
+			{ guildId: "111", channelId: "222", userId: "333" },
+		]);
 
-		await handler(
+		const response = await handler(
 			buildEvent([
 				{
-					job: "gamble-check-disable",
+					job: "gamble-check-enable",
 					applicationId: "999",
 					token: "tok",
 					guildId: "111",
+					channelId: "222",
 					userId: "333",
 				},
 			]),
 		);
 
+		expect(channelSettingRepository.insert).not.toHaveBeenCalled();
 		expect(discordInteraction.editOriginalResponse).toHaveBeenCalledWith({
-			content: "よよよ……リマインダーはまだ設定されていないのです～",
+			content: "うけたまかしこまつかまつり〜",
 			allowed_mentions: { parse: [] },
 		});
+		expect(response).toEqual({ batchItemFailures: [] });
 	});
+
+	it.each([
+		{ deletedCount: 1, content: "りょ～！またね～" },
+		{
+			deletedCount: 0,
+			content:
+				"よよよ……このチャンネルにはリマインダーがまだ設定されていないのです～",
+		},
+	])(
+		"deletes the channel's setting for gamble-check-disable and words the result for $deletedCount deleted",
+		async ({ deletedCount, content }) => {
+			channelSettingRepository.deleteByChannelIdAndUserId.mockResolvedValue(
+				deletedCount,
+			);
+
+			await handler(
+				buildEvent([
+					{
+						job: "gamble-check-disable",
+						applicationId: "999",
+						token: "tok",
+						channelId: "222",
+						userId: "333",
+					},
+				]),
+			);
+
+			expect(
+				channelSettingRepository.deleteByChannelIdAndUserId,
+			).toHaveBeenCalledWith({
+				applicationKey: "yaccho-bot",
+				settingKey: "play-check-reminder",
+				channelId: "222",
+				userId: "333",
+			});
+			expect(discordInteraction.editOriginalResponse).toHaveBeenCalledWith({
+				content,
+				allowed_mentions: { parse: [] },
+			});
+		},
+	);
 
 	it("strips the buttons and swaps in the result for play-check-reminder-choice", async () => {
 		await handler(
