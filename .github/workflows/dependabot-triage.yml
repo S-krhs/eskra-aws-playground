@@ -29,7 +29,7 @@ jobs:
     outputs:
       number: ${{ steps.pr.outputs.number }}
       head-by-dependabot: ${{ steps.pr.outputs.head-by-dependabot }}
-      claude-commented: ${{ steps.pr.outputs.claude-commented }}
+      claude-declined: ${{ steps.pr.outputs.claude-declined }}
     steps:
       # CI の後に push された PR は、その push の CI に任せる
       - id: pr
@@ -41,14 +41,14 @@ jobs:
           number=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&head=$GITHUB_REPOSITORY_OWNER:$HEAD_BRANCH" \
             --jq '.[] | select(.user.login == "dependabot[bot]" and .base.ref == "develop" and .head.sha == $ENV.HEAD_SHA) | .number')
           head_author=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" --jq '.author.login // ""')
-          claude_comments=0
+          declined=0
           if [ -n "$number" ]; then
-            claude_comments=$(gh api "repos/$GITHUB_REPOSITORY/issues/$number/comments?per_page=100" \
-              --jq '[.[] | select(.user.login == "claude[bot]")] | length')
+            declined=$(gh api "repos/$GITHUB_REPOSITORY/issues/$number/comments?per_page=100" \
+              --jq '[.[] | select(.user.login == "claude[bot]" and (.body | contains("<!-- dependabot-triage:declined -->")))] | length')
           fi
           echo "number=$number" >> "$GITHUB_OUTPUT"
           echo "head-by-dependabot=$([ "$head_author" = "dependabot[bot]" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "claude-commented=$([ "$claude_comments" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "claude-declined=$([ "$declined" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   merge:
     needs: inspect
@@ -77,7 +77,7 @@ jobs:
       needs.inspect.outputs.number != '' &&
       github.event.workflow_run.conclusion == 'failure' &&
       needs.inspect.outputs.head-by-dependabot == 'true' &&
-      needs.inspect.outputs.claude-commented == 'false'
+      needs.inspect.outputs.claude-declined == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -110,7 +110,7 @@ jobs:
                - Fix when the repo has to follow the new version: a renamed option, a new lint or format rule, a changed type, or a pin that must move in step with another file (the browser-runtime layer and `packages/libs/browser`).
                - Don't fix when the code can't run with the new version; when fixing means downgrading the bumped package, skipping or deleting tests, or rewriting app logic; when it only fails merged into develop, or fails on develop itself; when it doesn't reproduce at all (a transient failure); or when the fix touches `.github/workflows/` (the token can't push workflow changes).
             4. To fix: follow CLAUDE.md and `.claude/rules/`, invoke the skill for the kind of code you touch, and make `npx turbo run typecheck`, `npm run lint` and `npm run test` pass. Commit per CLAUDE.md and push with `git push origin HEAD:${{ github.event.workflow_run.head_branch }}`. CI reruns on the push, and this workflow merges the PR once it passes.
-            5. Either way, post one comment on the PR in Japanese with `gh pr comment`: the cause, then either what you changed, or why you didn't fix it and what a human should do (close the PR, add an `ignore` to `.github/dependabot.yml`, or fix it by hand).
+            5. Either way, post one comment on the PR in Japanese with `gh pr comment`: the cause, then either what you changed, or why you didn't fix it and what a human should do (close the PR, add an `ignore` to `.github/dependabot.yml`, or fix it by hand). If you didn't fix it, end the comment with the line `<!-- dependabot-triage:declined -->`; this workflow then leaves the PR alone until that comment is deleted.
 
             Never merge, close or retarget the PR, and never push to any other branch.
           claude_args: >-
