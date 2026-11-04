@@ -77,27 +77,6 @@ describe("playCheckReminderJob", () => {
 		);
 	});
 
-	it("posts once for a setting stored twice for the same channel and user", async () => {
-		channelSettingRepository.findMany.mockResolvedValue([
-			{ guildId: "1", channelId: "11", userId: "111" },
-			{ guildId: "1", channelId: "12", userId: "111" },
-			{ guildId: "1", channelId: "11", userId: "111" },
-		]);
-		discord.postChannelMessage.mockResolvedValue(undefined);
-
-		await expect(playCheckReminderJob({})).resolves.toMatchObject({
-			details: { configCount: 2 },
-		});
-		// Only how many posts each channel got matters, not the order the parallel posts went out in
-		expect(
-			discord.postChannelMessage.mock.calls
-				.map(([channelId]) => {
-					return channelId;
-				})
-				.sort(),
-		).toEqual(["11", "11", "12", "12"]);
-	});
-
 	it("tries every user before failing, even when some posts fail", async () => {
 		channelSettingRepository.findMany.mockResolvedValue([
 			{

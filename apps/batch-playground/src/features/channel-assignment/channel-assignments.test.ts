@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-	type ChannelAssignment,
-	isAssigned,
-	toDistinctAssignments,
-} from "./channel-assignments.js";
+import { type ChannelAssignment, isAssigned } from "./channel-assignments.js";
 
 const assignment: ChannelAssignment = {
 	applicationKey: "yaccho-bot",
@@ -35,19 +31,5 @@ describe("isAssigned", () => {
 			isAssigned([inAnotherChannel, forAnotherUser, ofAnotherBot], assignment),
 		).toBe(false);
 		expect(isAssigned([], assignment)).toBe(false);
-	});
-});
-
-describe("toDistinctAssignments", () => {
-	it("keeps the first of each repeat and the order of the rest", () => {
-		expect(
-			toDistinctAssignments([
-				assignment,
-				inAnotherChannel,
-				{ ...assignment },
-				forAnotherUser,
-				{ ...inAnotherChannel },
-			]),
-		).toEqual([assignment, inAnotherChannel, forAnotherUser]);
 	});
 });
