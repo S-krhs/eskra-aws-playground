@@ -7,6 +7,8 @@ on:
       - CI
     types:
       - completed
+    branches:
+      - "dependabot/**"
 
 permissions:
   contents: read
@@ -20,8 +22,7 @@ jobs:
     # fork の PR は head_repository が一致しないので除く
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.head_repository.full_name == github.repository &&
-      startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read
