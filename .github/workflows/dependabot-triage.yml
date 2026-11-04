@@ -1,0 +1,154 @@
+name: Dependabot triage
+
+# dependabot の PR は CI が通れば develop へ merge し、落ちたら Claude に直させる
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - "dependabot/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-triage-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    # fork の PR は head_repository が一致しないので除く
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      number: ${{ steps.pr.outputs.number }}
+      head-by-dependabot: ${{ steps.pr.outputs.head-by-dependabot }}
+      claude-declined: ${{ steps.pr.outputs.claude-declined }}
+    steps:
+      # CI の後に push された PR は、その push の CI に任せる
+      - id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          number=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&head=$GITHUB_REPOSITORY_OWNER:$HEAD_BRANCH" \
+            --jq '.[] | select(.user.login == "dependabot[bot]" and .base.ref == "develop" and .head.sha == $ENV.HEAD_SHA) | .number')
+          head_author=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" --jq '.author.login // ""')
+          declined=0
+          if [ -n "$number" ]; then
+            declined=$(gh api "repos/$GITHUB_REPOSITORY/issues/$number/comments?per_page=100" \
+              --jq '[.[] | select(.user.login == "claude[bot]" and (.body | contains("<!-- dependabot-triage:declined -->")))] | length')
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "head-by-dependabot=$([ "$head_author" = "dependabot[bot]" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "claude-declined=$([ "$declined" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  merge:
+    needs: inspect
+    if: needs.inspect.outputs.number != '' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # 同時に merge された PR で base が動くと失敗するため、間を空けて再試行する
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ needs.inspect.outputs.number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          for delay in 10 20 40 80; do
+            gh pr merge "$NUMBER" --repo "$GITHUB_REPOSITORY" --merge --delete-branch --match-head-commit "$HEAD_SHA" && exit 0
+            [ "$(gh pr view "$NUMBER" --repo "$GITHUB_REPOSITORY" --json state --jq .state)" = MERGED ] && exit 0
+            sleep "$delay"
+          done
+          exit 1
+
+  fix:
+    needs: inspect
+    if: >-
+      needs.inspect.outputs.number != '' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      needs.inspect.outputs.head-by-dependabot == 'true' &&
+      needs.inspect.outputs.claude-declined == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      # Claude GitHub App の token を OIDC で受け取る
+      id-token: write
+    steps:
+      # GITHUB_TOKEN を残すと Claude の push が App の token ではなくそちらで行われる
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: dependabot[bot]
+          additional_permissions: |
+            actions: read
+          prompt: |
+            You are handling Dependabot PR #${{ needs.inspect.outputs.number }} in ${{ github.repository }}. The head commit of its branch `${{ github.event.workflow_run.head_branch }}` is checked out (detached), and its CI run failed: ${{ github.event.workflow_run.html_url }}
+
+            1. Find the cause. `gh run view ${{ github.event.workflow_run.id }} --log-failed` shows the failing step. Reproduce it after `npm ci` with the steps of `.github/workflows/ci.yml`; `npm run typecheck` and `npm run validate` call `systemd-run`, which doesn't work here.
+            2. CI tested the branch merged into `origin/develop`. If the failure doesn't reproduce on the branch, check the merged tree with `git merge --no-commit --no-ff origin/develop`, then undo it with `git merge --abort`. Run `npm ci` after each, so `node_modules` matches the tree.
+            3. Decide whether to fix it on this branch.
+               - Fix when the repo has to follow the new version: a renamed option, a new lint or format rule, a changed type, or a pin that must move in step with another file (the browser-runtime layer and `packages/libs/browser`).
+               - Don't fix when the code can't run with the new version; when fixing means downgrading the bumped package, skipping or deleting tests, or rewriting app logic; when it only fails merged into develop, or fails on develop itself; when it doesn't reproduce at all (a transient failure); or when the fix touches `.github/workflows/` (the token can't push workflow changes).
+            4. To fix: follow CLAUDE.md and `.claude/rules/`, invoke the skill for the kind of code you touch, and make `npx turbo run typecheck`, `npm run lint` and `npm run test` pass. Commit per CLAUDE.md and push with `git push origin HEAD:${{ github.event.workflow_run.head_branch }}`. CI reruns on the push, and this workflow merges the PR once it passes.
+            5. Either way, post one comment on the PR in Japanese with `gh pr comment`: the cause, then either what you changed, or why you didn't fix it and what a human should do (close the PR, add an `ignore` to `.github/dependabot.yml`, or fix it by hand). If it only fails merged into develop, suggest commenting `@dependabot rebase`; if develop itself fails, suggest doing that after develop is fixed. If you didn't fix it, end the comment with the line `<!-- dependabot-triage:declined -->`; this workflow then leaves the PR alone until that comment is deleted, so say so in the comment.
+
+            Never merge, close or retarget the PR, and never push to any other branch.
+          claude_args: >-
+            --max-turns 80
+            --allowedTools "Read,Edit,Write,Glob,Grep,Skill,Bash(npm ci:*),Bash(npm install:*),Bash(npm run:*),Bash(npm view:*),Bash(npx turbo:*),Bash(npx biome:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git merge:*),Bash(git add:*),Bash(git rm:*),Bash(git mv:*),Bash(git restore:*),Bash(git commit:*),Bash(git push origin HEAD:${{ github.event.workflow_run.head_branch }}),Bash(gh run view:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*)"
+
+  # 認証エラーや上限到達で Claude が途中で止まった場合
+  fix-failed:
+    needs:
+      - inspect
+      - fix
+    if: failure() && needs.fix.result == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ needs.inspect.outputs.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh pr comment "$NUMBER" --repo "$GITHUB_REPOSITORY" --body "Claude による自動修正が途中で失敗しました。手で確認してください: $RUN_URL"
+
+  # Claude の修正や手で入れたコミットの後に落ちたものは、自動では直さない
+  report:
+    needs: inspect
+    if: >-
+      needs.inspect.outputs.number != '' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      needs.inspect.outputs.head-by-dependabot == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ needs.inspect.outputs.number }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          gh pr comment "$NUMBER" --repo "$GITHUB_REPOSITORY" --body "dependabot 以外のコミットが入った後に CI が落ちたため、自動では修正しません。手で確認してください: $RUN_URL"

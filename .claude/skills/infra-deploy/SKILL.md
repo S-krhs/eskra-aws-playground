@@ -20,6 +20,7 @@ Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic and Clou
 
 ## Constraints that aren't obvious from the code
 
+- The repository's default branch is `develop`; deploy runs from `main`. Dependabot reads `.github/dependabot.yml` from the default branch and always opens security updates against it, and a `workflow_run` workflow only fires from the default branch's copy.
 - `sst.config.ts` depends on types SST generates under `.sst/platform`, which don't exist in CI — so typecheck is scoped to `infra/config/` (settings), `infra/layers/` (layer-definition tests) and `infra/local/` (the WSL-local run's settings) via `infra/tsconfig.json`'s `include`. Lint still covers `sst.config.ts`.
 - `develop` stage is CD-only, protected two ways: a guard at the top of `run()` rejects every `run()`-evaluating command (`deploy`/`dev`/`refresh`) except `diff` (checked via `GITHUB_ACTIONS` env first, then SST's internal `$cli.command` — env check has to come first to keep `$cli` out of the CD path), and `app()`'s `protect` rejects `sst remove`, which doesn't evaluate `run()`. Neither `sst secret set` nor `sst secret list` goes through either guard, so `develop` secrets are set from CD only — never run those locally against `--stage develop`.
 - Scheduled Scheduler crons aren't created under `sst dev` — that's meant for local iteration, and a stray cron left firing after the dev session ends would be bad.
@@ -32,7 +33,7 @@ Lambda functions, EventBridge Scheduler, SQS queues/DLQs, the SNS topic and Clou
 ## Before you're done
 
 - Node.js version in the workflow vs. the Lambda runtime — intentional?
-- Workflow default permissions read-only, `id-token: write` only on the job assuming the AWS role?
+- Workflow default permissions read-only, `id-token: write` only on a job exchanging an OIDC token (the AWS role, the Claude GitHub App)?
 - Any `uses:` action targeting a deprecated Node.js runtime?
 - New required env var → updated the GitHub Secrets list in `docs/ci-cd.md` and the app's README?
 - Destructive migration → noted in the PR body?
