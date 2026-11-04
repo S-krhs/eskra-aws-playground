@@ -18,6 +18,11 @@
 			"tailwindDirectives": true
 		}
 	},
+	"markdown": {
+		"formatter": {
+			"enabled": false
+		}
+	},
 	"linter": {
 		"rules": {
 			"style": {
@@ -47,7 +52,7 @@
 			"linter": {
 				"rules": {
 					"nursery": {
-						"useSortedClasses": "error",
+						"useTailwindSortedClasses": "error",
 						"useTailwindShorthandClasses": "error"
 					}
 				}

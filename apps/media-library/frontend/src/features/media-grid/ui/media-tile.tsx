@@ -39,9 +39,9 @@ export const MediaTile = ({
 
 					onOpen(media);
 				}}
-				className={`flex size-full flex-col overflow-hidden rounded-xs border bg-base-100 text-left transition-colors hover:border-primary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-primary ${isSelected ? "border-primary ring-2 ring-primary" : "border-base-300"}`}
+				className={`bg-base-100 hover:border-primary focus-visible:border-primary focus-visible:outline-primary flex size-full flex-col overflow-hidden rounded-xs border text-left transition-colors focus-visible:outline-2 ${isSelected ? "border-primary ring-primary ring-2" : "border-base-300"}`}
 			>
-				<span className="relative flex min-h-0 flex-1 items-center justify-center bg-base-200">
+				<span className="bg-base-200 relative flex min-h-0 flex-1 items-center justify-center">
 					{media.hasThumbnail ? (
 						<img
 							src={getGetThumbnailUrl(media.id)}
@@ -56,16 +56,16 @@ export const MediaTile = ({
 					)}
 					{media.durationMs === undefined ? null : (
 						// A plain chip rather than a badge: a pill over a square thumbnail reads as a stray blob
-						<span className="absolute right-1 bottom-1 rounded-xs bg-neutral/85 px-1 py-0.5 font-mono text-[11px] text-neutral-content">
+						<span className="bg-neutral/85 text-neutral-content absolute right-1 bottom-1 rounded-xs px-1 py-0.5 font-mono text-[11px]">
 							{formatDuration(media.durationMs)}
 						</span>
 					)}
 				</span>
-				<span className="block w-full shrink-0 border-base-300 border-t px-2 py-1.5">
+				<span className="border-base-300 block w-full shrink-0 border-t px-2 py-1.5">
 					<span className="block truncate text-xs" title={media.fileName}>
 						{media.fileName}
 					</span>
-					<span className="block text-[11px] text-base-content/50">
+					<span className="text-base-content/50 block text-[11px]">
 						{formatByteSize(media.byteSize)}
 					</span>
 				</span>
@@ -87,7 +87,7 @@ export const MediaTile = ({
 				// background left on while checked hides the fill and the white tick. The theme's round
 				// selector radius would read as a radio button, hence rounded-xs.
 				// A pointer that can't hover would never reveal it, so it always shows there
-				className={`checkbox checkbox-primary checkbox-sm absolute top-1.5 left-1.5 rounded-xs not-checked:bg-base-100 ${isSelecting ? "" : "opacity-0 pointer-coarse:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"}`}
+				className={`checkbox checkbox-primary checkbox-sm not-checked:bg-base-100 absolute top-1.5 left-1.5 rounded-xs ${isSelecting ? "" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"}`}
 			/>
 		</div>
 	);

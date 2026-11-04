@@ -21,7 +21,7 @@ interface Props {
 export const BalanceDisplay = ({ tone, text }: Props) => {
 	return (
 		<output
-			className={`bevel-sunken block bg-white px-2.5 py-1.5 text-right font-['MS_Gothic','Osaka-Mono',monospace] font-bold text-2xl ${toneClasses[tone]}`}
+			className={`bevel-sunken block bg-white px-2.5 py-1.5 text-right font-['MS_Gothic','Osaka-Mono',monospace] text-2xl font-bold ${toneClasses[tone]}`}
 		>
 			{text}
 		</output>

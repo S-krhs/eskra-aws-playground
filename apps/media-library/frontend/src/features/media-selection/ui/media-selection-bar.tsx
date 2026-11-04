@@ -61,7 +61,7 @@ export const MediaSelectionBar = ({
 			) : null}
 			{selectedCount === 0 ? null : (
 				<>
-					<p className="font-medium text-xs">{selectedCount} 件を選択中</p>
+					<p className="text-xs font-medium">{selectedCount} 件を選択中</p>
 					<button
 						type="button"
 						onClick={onClear}
@@ -114,7 +114,7 @@ export const MediaSelectionBar = ({
 									return <option key={path} value={path} />;
 								})}
 							</datalist>
-							<label className="label gap-1.5 text-base-content text-xs">
+							<label className="label text-base-content gap-1.5 text-xs">
 								<input
 									type="checkbox"
 									checked={isArchived}

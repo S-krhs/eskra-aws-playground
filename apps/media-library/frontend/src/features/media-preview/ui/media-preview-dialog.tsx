@@ -92,9 +92,9 @@ export const MediaPreviewDialog = ({
 			{/* Padding is dropped so the header, the media, the details and the actions can each own their
 			    own edge; the media then takes every pixel the other three leave */}
 			<div className="modal-box flex h-[92dvh] w-[94vw] max-w-384 flex-col overflow-hidden p-0">
-				<header className="flex shrink-0 items-center gap-2 border-base-300 border-b px-3 py-2">
+				<header className="border-base-300 flex shrink-0 items-center gap-2 border-b px-3 py-2">
 					<h2
-						className="min-w-0 flex-1 truncate font-bold text-sm"
+						className="min-w-0 flex-1 truncate text-sm font-bold"
 						title={media.fileName}
 					>
 						{media.fileName}
@@ -112,7 +112,7 @@ export const MediaPreviewDialog = ({
 
 				<div className="flex min-h-0 flex-1 flex-col lg:flex-row">
 					{/* Dark behind the original: the theme's light ground washes a photo out and hides where it ends */}
-					<div className="flex min-h-0 flex-1 items-center justify-center bg-neutral p-2">
+					<div className="bg-neutral flex min-h-0 flex-1 items-center justify-center p-2">
 						{isVideo ? (
 							// biome-ignore lint/a11y/useMediaCaption: personal media taken in from a folder, with no caption track to point at
 							<video
@@ -130,9 +130,9 @@ export const MediaPreviewDialog = ({
 						)}
 					</div>
 
-					<aside className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto border-base-300 border-t bg-base-100 p-3 lg:w-80 lg:border-t-0 lg:border-l">
+					<aside className="border-base-300 bg-base-100 flex w-full shrink-0 flex-col gap-4 overflow-y-auto border-t p-3 lg:w-80 lg:border-t-0 lg:border-l">
 						<section className="flex flex-col gap-1.5">
-							<h3 className="font-medium text-base-content/60 text-xs">
+							<h3 className="text-base-content/60 text-xs font-medium">
 								フォルダ
 							</h3>
 							<div className="flex gap-1.5">
@@ -183,7 +183,7 @@ export const MediaPreviewDialog = ({
 									移す
 								</button>
 							</div>
-							<label className="label gap-1.5 text-base-content text-xs">
+							<label className="label text-base-content gap-1.5 text-xs">
 								<input
 									type="checkbox"
 									checked={isArchived}
@@ -203,7 +203,7 @@ export const MediaPreviewDialog = ({
 						</section>
 
 						<section className="flex flex-col gap-1.5">
-							<h3 className="font-medium text-base-content/60 text-xs">タグ</h3>
+							<h3 className="text-base-content/60 text-xs font-medium">タグ</h3>
 							{tags.length === 0 ? null : (
 								<div className="flex flex-wrap items-center gap-1">
 									{tags.map((tag) => {
@@ -259,7 +259,7 @@ export const MediaPreviewDialog = ({
 						</section>
 
 						<section className="flex flex-col gap-1.5">
-							<h3 className="font-medium text-base-content/60 text-xs">詳細</h3>
+							<h3 className="text-base-content/60 text-xs font-medium">詳細</h3>
 							<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
 								{toDetails(media).map((detail) => {
 									return (
@@ -276,9 +276,9 @@ export const MediaPreviewDialog = ({
 					</aside>
 				</div>
 
-				<footer className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-base-300 border-t px-3 py-2">
+				<footer className="border-base-300 flex shrink-0 flex-wrap items-center justify-end gap-2 border-t px-3 py-2">
 					{message ? (
-						<p className="mr-auto text-base-content/60 text-xs">{message}</p>
+						<p className="text-base-content/60 mr-auto text-xs">{message}</p>
 					) : null}
 					{isVideo ? null : (
 						<button

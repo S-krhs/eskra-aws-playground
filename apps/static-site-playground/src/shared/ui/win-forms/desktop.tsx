@@ -137,7 +137,7 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 						<button
 							key={icon.id}
 							type="button"
-							className={`flex ${openingCount > 0 ? "cursor-hourglass" : "cursor-default"} select-none flex-col items-center gap-1 border border-transparent p-1 text-white focus-visible:border-white focus-visible:border-dotted`}
+							className={`flex ${openingCount > 0 ? "cursor-hourglass" : "cursor-default"} flex-col items-center gap-1 border border-transparent p-1 text-white select-none focus-visible:border-dotted focus-visible:border-white`}
 							onClick={() => {
 								return handleIconClick(icon.id);
 							}}
@@ -149,7 +149,7 @@ export const Desktop = ({ icons }: { icons: readonly DesktopIcon[] }) => {
 							}}
 						>
 							<img
-								className="bevel-raised size-12 bg-face p-0.5"
+								className="bevel-raised bg-face size-12 p-0.5"
 								src={icon.image}
 								alt=""
 							/>
