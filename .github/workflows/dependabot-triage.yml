@@ -90,7 +90,7 @@ jobs:
             1. Find the cause. `gh run view ${{ github.event.workflow_run.id }} --log-failed` shows the failing step; reproduce it after `npm ci`. If the branch conflicts with `origin/develop`, merge `origin/develop` first and regenerate `package-lock.json` with `npm install`.
             2. Decide whether to fix it on this branch.
                - Fix when the repo has to follow the new version: a renamed option, a new lint or format rule, a changed type, or a pin that must move in step with another file (the browser-runtime layer and `packages/libs/browser`).
-               - Don't fix when the update itself is unusable here (a broken package layout, a pre-release, a version the code can't run with), or when fixing means downgrading the bumped package, skipping or deleting tests, or rewriting app logic.
+               - Don't fix when the code can't run with the new version, or when fixing means downgrading the bumped package, skipping or deleting tests, or rewriting app logic.
             3. To fix: follow CLAUDE.md and `.claude/rules/`, invoke the skill for the kind of code you touch, and make `npx turbo run typecheck`, `npm run lint` and `npm run test` pass. Commit per CLAUDE.md and push with `git push origin HEAD:${{ github.event.workflow_run.head_branch }}`. CI reruns on the push, and this workflow merges the PR once it passes.
             4. Either way, post one comment on the PR in Japanese with `gh pr comment`: the cause, then either what you changed, or why you didn't fix it and what a human should do (close the PR, add an `ignore` to `.github/dependabot.yml`, or fix it by hand).
 

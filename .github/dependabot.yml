@@ -11,12 +11,6 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    ignore:
-      # chromium-bidi は 17.0.2 の後 Chrome のバージョン番号(157.0.8103-45 など)に切り替わり、
-      # playwright-core が require する lib/cjs/ を含まなくなったため上げない
-      - dependency-name: chromium-bidi
-        versions:
-          - ">= 100"
     groups:
       # browser 実行依存は root と layer でバージョンがずれると layer-dependencies テストが
       # 落ちるため、group-by で directory をまたいで 1 PR にまとめる。
