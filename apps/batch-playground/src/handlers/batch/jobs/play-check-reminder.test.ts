@@ -88,11 +88,14 @@ describe("playCheckReminderJob", () => {
 		await expect(playCheckReminderJob({})).resolves.toMatchObject({
 			details: { configCount: 2 },
 		});
+		// Only how many posts each channel got matters, not the order the parallel posts went out in
 		expect(
-			discord.postChannelMessage.mock.calls.map(([channelId]) => {
-				return channelId;
-			}),
-		).toEqual(["11", "12", "11", "12"]);
+			discord.postChannelMessage.mock.calls
+				.map(([channelId]) => {
+					return channelId;
+				})
+				.sort(),
+		).toEqual(["11", "11", "12", "12"]);
 	});
 
 	it("tries every user before failing, even when some posts fail", async () => {

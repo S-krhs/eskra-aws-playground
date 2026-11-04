@@ -20,7 +20,6 @@ type GambleCheckEnableMessage = Extract<
 export const gambleCheckEnableJob = async (
 	message: GambleCheckEnableMessage,
 ): Promise<void> => {
-	// 1. Add the reminder for this channel unless the caller's assignments already hold it.
 	const assignment: ChannelAssignment = {
 		applicationKey: applicationKeys.yacchoBot,
 		settingKey: settingKeys.playCheckReminder,
@@ -44,7 +43,6 @@ export const gambleCheckEnableJob = async (
 		await channelSettingRepository.insert(assignment);
 	}
 
-	// 2. Swap the deferred response for the final message.
 	const client = new DiscordInteractionClient(
 		message.applicationId,
 		message.token,

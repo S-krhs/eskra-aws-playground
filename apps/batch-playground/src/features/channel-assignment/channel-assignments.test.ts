@@ -18,6 +18,10 @@ const inAnotherChannel: ChannelAssignment = {
 	channelId: "12",
 };
 const forAnotherUser: ChannelAssignment = { ...assignment, userId: "112" };
+const ofAnotherBot: ChannelAssignment = {
+	...assignment,
+	applicationKey: "kaguya-bot",
+};
 
 describe("isAssigned", () => {
 	it("finds the same bot feature for the same user in the same channel", () => {
@@ -26,10 +30,10 @@ describe("isAssigned", () => {
 		);
 	});
 
-	it("doesn't count another channel or another user as assigned", () => {
-		expect(isAssigned([inAnotherChannel, forAnotherUser], assignment)).toBe(
-			false,
-		);
+	it("doesn't count another channel, another user or another bot as assigned", () => {
+		expect(
+			isAssigned([inAnotherChannel, forAnotherUser, ofAnotherBot], assignment),
+		).toBe(false);
 		expect(isAssigned([], assignment)).toBe(false);
 	});
 });
