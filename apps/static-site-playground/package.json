@@ -15,10 +15,10 @@
 		"validate": "npm run typecheck && npm run lint"
 	},
 	"dependencies": {
-		"@astrojs/react": "^7.1.2",
-		"@tailwindcss/vite": "^4.3.3",
-		"astro": "^7.4.4",
-		"cookie": "^2.0.1",
+		"@astrojs/react": "^7.1.4",
+		"@tailwindcss/vite": "^4.3.5",
+		"astro": "^7.4.7",
+		"cookie": "^2.0.2",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1",
 		"tailwindcss": "^4.3.3"

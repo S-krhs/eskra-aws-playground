@@ -38,7 +38,7 @@
 		"validate": "npm run typecheck && npm run lint && npm run test"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.6.4",
+		"@biomejs/biome": "^2.6.6",
 		"@hono/zod-openapi": "^1.6.3",
 		"@types/node": "^26.6.6",
 		"prisma": "^7.10.1",
@@ -46,7 +46,7 @@
 		"sst": "^4.17.2",
 		"turbo": "^2.11.10",
 		"typescript": "^7.0.2",
-		"vitest": "^5.0.5",
+		"vitest": "^5.1.0",
 		"zod": "^4.6.7"
 	}
 }
