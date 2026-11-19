@@ -15,9 +15,9 @@
 		"validate": "npm run typecheck && npm run lint"
 	},
 	"dependencies": {
-		"@astrojs/react": "^7.1.4",
+		"@astrojs/react": "^7.1.9",
 		"@tailwindcss/vite": "^4.3.5",
-		"astro": "^7.4.7",
+		"astro": "^7.4.12",
 		"cookie": "^2.0.2",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1",
@@ -27,6 +27,6 @@
 		"@feature-sliced/steiger-plugin": "^0.8.2",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
-		"steiger": "^0.9.0"
+		"steiger": "^0.10.0"
 	}
 }
