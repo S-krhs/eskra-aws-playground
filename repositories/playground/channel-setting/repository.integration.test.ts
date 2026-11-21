@@ -27,6 +27,7 @@ const [guildId, anotherGuildId, invalidGuildId] = guildIds as [
 const userId = `${testId}21`;
 const anotherUserId = `${testId}22`;
 const channelId = `${testId}11`;
+const anotherChannelId = `${testId}12`;
 
 const applicationKey = applicationKeys.yacchoBot;
 const settingKey = settingKeys.playCheckReminder;
@@ -57,9 +58,9 @@ describe.skipIf(!testDatabaseUrl)(
 			await getPrismaClient().$disconnect();
 		});
 
-		it("saves the JSON setting for a guild and target user and reads it back validated", async () => {
+		it("inserts the JSON setting for a channel and target user and reads it back validated", async () => {
 			await expect(
-				channelSettingRepository.save({
+				channelSettingRepository.insert({
 					applicationKey,
 					settingKey,
 					guildId,
@@ -78,111 +79,123 @@ describe.skipIf(!testDatabaseUrl)(
 				userId,
 			});
 
-			const row = await getPrismaClient().discordUserSetting.findUnique({
+			const row = await getPrismaClient().discordUserSetting.findFirst({
 				where: {
-					applicationKey_guildId_userId_settingKey: {
-						applicationKey,
-						guildId,
-						userId,
-						settingKey,
-					},
+					applicationKey,
+					guildId,
+					userId,
+					settingKey,
 				},
 			});
 			expect(row?.configuration).toEqual({ version: 1, channelId });
 		});
 
-		it("overwrites the same guild and target user in place, still one row", async () => {
-			await channelSettingRepository.save({
+		it("keeps another channel in the same guild as its own row, and narrows the read to one target user", async () => {
+			await channelSettingRepository.insert({
 				applicationKey,
 				settingKey,
 				guildId,
 				channelId,
 				userId,
 			});
-			await channelSettingRepository.save({
+			await channelSettingRepository.insert({
 				applicationKey,
 				settingKey,
 				guildId,
-				channelId: `${testId}12`,
+				channelId: anotherChannelId,
 				userId,
 			});
-
-			const rows = await getPrismaClient().discordUserSetting.findMany({
-				where: {
-					applicationKey,
-					guildId,
-					userId,
-					settingKey,
-				},
-			});
-			expect(rows).toHaveLength(1);
-			expect(rows[0]?.configuration).toEqual({
-				version: 1,
-				channelId: `${testId}12`,
-			});
-		});
-
-		it("saves and deletes another user in the same guild independently", async () => {
-			await channelSettingRepository.save({
+			await channelSettingRepository.insert({
 				applicationKey,
 				settingKey,
 				guildId,
 				channelId,
-				userId,
-			});
-			await channelSettingRepository.save({
-				applicationKey,
-				settingKey,
-				guildId,
-				channelId: `${testId}12`,
 				userId: anotherUserId,
 			});
 
 			await expect(
-				channelSettingRepository.deleteByGuildIdAndUserId({
+				channelSettingRepository.findMany({
 					applicationKey,
 					settingKey,
-					guildId,
 					userId,
 				}),
-			).resolves.toEqual({ guildId, channelId, userId });
-
-			const settings = await channelSettingRepository.findMany({
-				applicationKey,
-				settingKey,
-			});
-			expect(
-				settings.map((setting) => {
-					return setting.userId;
-				}),
-			).toEqual([anotherUserId]);
+			).resolves.toEqual([
+				{ guildId, channelId, userId },
+				{ guildId, channelId: anotherChannelId, userId },
+			]);
 		});
 
-		it("deletes the setting and reports whether there was one to delete", async () => {
-			await channelSettingRepository.save({
+		it("inserts the same channel and target user again instead of rejecting it", async () => {
+			const input = {
 				applicationKey,
 				settingKey,
 				guildId,
 				channelId,
 				userId,
+			};
+			await channelSettingRepository.insert(input);
+			await channelSettingRepository.insert(input);
+
+			await expect(
+				channelSettingRepository.findMany({
+					applicationKey,
+					settingKey,
+					userId,
+				}),
+			).resolves.toEqual([
+				{ guildId, channelId, userId },
+				{ guildId, channelId, userId },
+			]);
+		});
+
+		it("deletes only that channel's rows for the target user and reports how many", async () => {
+			const input = {
+				applicationKey,
+				settingKey,
+				guildId,
+				channelId,
+				userId,
+			};
+			await channelSettingRepository.insert(input);
+			await channelSettingRepository.insert(input);
+			await channelSettingRepository.insert({
+				...input,
+				channelId: anotherChannelId,
+			});
+			await channelSettingRepository.insert({
+				...input,
+				userId: anotherUserId,
 			});
 
 			await expect(
-				channelSettingRepository.deleteByGuildIdAndUserId({
+				channelSettingRepository.deleteByChannelIdAndUserId({
 					applicationKey,
 					settingKey,
-					guildId,
+					channelId,
 					userId,
 				}),
-			).resolves.toEqual({ guildId, channelId, userId });
+			).resolves.toBe(2);
 			await expect(
-				channelSettingRepository.deleteByGuildIdAndUserId({
+				channelSettingRepository.deleteByChannelIdAndUserId({
 					applicationKey,
 					settingKey,
-					guildId,
+					channelId,
 					userId,
 				}),
-			).resolves.toBeNull();
+			).resolves.toBe(0);
+
+			const rows = await getPrismaClient().discordUserSetting.findMany({
+				where: { applicationKey, guildId, settingKey },
+				select: { userId: true, configuration: true },
+				orderBy: { id: "asc" },
+			});
+			expect(rows).toEqual([
+				{
+					userId,
+					configuration: { version: 1, channelId: anotherChannelId },
+				},
+				{ userId: anotherUserId, configuration: { version: 1, channelId } },
+			]);
 		});
 
 		it("fails the read when stored JSON violates the schema", async () => {
@@ -206,7 +219,7 @@ describe.skipIf(!testDatabaseUrl)(
 
 		it("fails invalid input before it reaches the DB", async () => {
 			await expect(
-				channelSettingRepository.save({
+				channelSettingRepository.insert({
 					applicationKey,
 					settingKey,
 					guildId: "not-a-snowflake",

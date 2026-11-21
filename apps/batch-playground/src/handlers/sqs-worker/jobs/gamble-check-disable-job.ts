@@ -1,4 +1,4 @@
-// In scope: removing the caller's gamble-check-disable setting and swapping the deferred response's original message for the final content
+// In scope: removing the caller's gamble-check-disable setting in the channel it was run from and swapping the deferred response's original message for the final content
 // Out of scope: job dispatch, interpreting the SQS event, checking where it was run (the route already did)
 import { DiscordInteractionClient } from "@eskra-aws-playground/integration-discord/discord-interaction-client.js";
 import { applicationKeys } from "@eskra-aws-playground/repositories/playground/_shared/literals/application-key.js";
@@ -12,15 +12,15 @@ type GambleCheckDisableMessage = Extract<
 	{ job: typeof interactionJobNames.gambleCheckDisable }
 >;
 
-/** Removes the caller's own reminder setting and swaps the deferred response for the result message. */
+/** Removes the caller's own reminder in the channel it was run from and swaps the deferred response for the result message. */
 export const gambleCheckDisableJob = async (
 	message: GambleCheckDisableMessage,
 ): Promise<void> => {
-	const deletedSetting =
-		await channelSettingRepository.deleteByGuildIdAndUserId({
+	const deletedCount =
+		await channelSettingRepository.deleteByChannelIdAndUserId({
 			applicationKey: applicationKeys.yacchoBot,
 			settingKey: settingKeys.playCheckReminder,
-			guildId: message.guildId,
+			channelId: message.channelId,
 			userId: message.userId,
 		});
 
@@ -29,9 +29,10 @@ export const gambleCheckDisableJob = async (
 		message.token,
 	);
 	await client.editOriginalResponse({
-		content: deletedSetting
-			? "りょ～！またね～"
-			: "よよよ……リマインダーはまだ設定されていないのです～",
+		content:
+			deletedCount > 0
+				? "りょ～！またね～"
+				: "よよよ……このチャンネルにはリマインダーがまだ設定されていないのです～",
 		allowed_mentions: { parse: [] },
 	});
 };

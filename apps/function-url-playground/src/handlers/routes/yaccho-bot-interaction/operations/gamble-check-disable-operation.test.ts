@@ -44,7 +44,7 @@ beforeEach(() => {
 });
 
 describe("gambleCheckDisableOperation", () => {
-	it("enqueues the removal job for the caller and ACKs with an ephemeral deferred response", async () => {
+	it("enqueues the removal job for the current channel and caller, and ACKs with an ephemeral deferred response", async () => {
 		const result = await gambleCheckDisableOperation(guildCommand(), callback);
 
 		expect(sqs.sendMessages).toHaveBeenCalledWith([
@@ -54,7 +54,7 @@ describe("gambleCheckDisableOperation", () => {
 					job: "gamble-check-disable",
 					applicationId: "999",
 					token: "tok",
-					guildId: "111",
+					channelId: "222",
 					userId: "333",
 				},
 			},
@@ -65,28 +65,37 @@ describe("gambleCheckDisableOperation", () => {
 		});
 	});
 
-	it("enqueues nothing and answers immediately with an ephemeral response when run outside a server", async () => {
-		const result = await gambleCheckDisableOperation(
-			{
-				kind: "application-command",
-				userId: "333",
-				command: { name: "gamble-check-disable", options: [] },
-				context: { kind: "direct-message" },
-			},
-			callback,
-		);
-
-		expect(sqs.sendMessages).not.toHaveBeenCalled();
-		expect(result).toEqual({
-			kind: "OK",
-			data: {
-				type: 4,
-				data: {
-					content: "サーバー内のチャンネルで使ってね～",
-					flags: 64,
-					allowed_mentions: { parse: [] },
+	it.each([
+		{ label: "outside a server", context: { kind: "direct-message" } },
+		{
+			label: "without a channel",
+			context: { kind: "guild", guildId: "111" },
+		},
+	] as const)(
+		"enqueues nothing and answers immediately with an ephemeral response when run $label",
+		async ({ context }) => {
+			const result = await gambleCheckDisableOperation(
+				{
+					kind: "application-command",
+					userId: "333",
+					command: { name: "gamble-check-disable", options: [] },
+					context,
 				},
-			},
-		});
-	});
+				callback,
+			);
+
+			expect(sqs.sendMessages).not.toHaveBeenCalled();
+			expect(result).toEqual({
+				kind: "OK",
+				data: {
+					type: 4,
+					data: {
+						content: "サーバー内のチャンネルで使ってね～",
+						flags: 64,
+						allowed_mentions: { parse: [] },
+					},
+				},
+			});
+		},
+	);
 });
